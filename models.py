@@ -89,6 +89,57 @@ class TestResult(db.Model):
     bandwidth_upload = db.Column(db.Float)  # Mbps
     bandwidth_download = db.Column(db.Float)  # Mbps
     
+    # Advanced network metrics
+    dns_resolution_time = db.Column(db.Float)  # milliseconds
+    tcp_connect_time = db.Column(db.Float)  # milliseconds
+    ssl_handshake_time = db.Column(db.Float)  # milliseconds
+    ttfb = db.Column(db.Float)  # time to first byte in milliseconds
+    jitter = db.Column(db.Float)  # network jitter in milliseconds
+    
+    # Network interface metrics
+    network_bytes_sent = db.Column(db.BigInteger)  # bytes
+    network_bytes_recv = db.Column(db.BigInteger)  # bytes
+    network_packets_sent = db.Column(db.BigInteger)
+    network_packets_recv = db.Column(db.BigInteger)
+    network_errors_in = db.Column(db.Integer)
+    network_errors_out = db.Column(db.Integer)
+    network_drops_in = db.Column(db.Integer)
+    network_drops_out = db.Column(db.Integer)
+    
+    # Enhanced CPU metrics
+    cpu_load_1min = db.Column(db.Float)  # 1-minute load average
+    cpu_load_5min = db.Column(db.Float)  # 5-minute load average
+    cpu_load_15min = db.Column(db.Float)  # 15-minute load average
+    cpu_cores = db.Column(db.Integer)  # number of CPU cores
+    cpu_freq_current = db.Column(db.Float)  # current CPU frequency MHz
+    cpu_context_switches = db.Column(db.BigInteger)  # context switches per second
+    cpu_interrupts = db.Column(db.BigInteger)  # interrupts per second
+    
+    # Enhanced memory metrics
+    memory_available = db.Column(db.BigInteger)  # available memory bytes
+    memory_cached = db.Column(db.BigInteger)  # cached memory bytes
+    memory_buffers = db.Column(db.BigInteger)  # buffer memory bytes
+    memory_shared = db.Column(db.BigInteger)  # shared memory bytes
+    swap_total = db.Column(db.BigInteger)  # total swap bytes
+    swap_used = db.Column(db.BigInteger)  # used swap bytes
+    swap_percent = db.Column(db.Float)  # swap usage percentage
+    
+    # Enhanced disk metrics
+    disk_read_iops = db.Column(db.Float)  # read operations per second
+    disk_write_iops = db.Column(db.Float)  # write operations per second
+    disk_read_bytes_sec = db.Column(db.BigInteger)  # bytes read per second
+    disk_write_bytes_sec = db.Column(db.BigInteger)  # bytes written per second
+    disk_io_util = db.Column(db.Float)  # disk utilization percentage
+    
+    # Process and system metrics
+    process_count = db.Column(db.Integer)  # total running processes
+    tcp_connections = db.Column(db.Integer)  # active TCP connections
+    open_files = db.Column(db.Integer)  # open file descriptors
+    
+    # Temperature metrics (where available)
+    cpu_temperature = db.Column(db.Float)  # CPU temperature in Celsius
+    disk_temperature = db.Column(db.Float)  # disk temperature in Celsius
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -107,5 +158,49 @@ class TestResult(db.Model):
             'traceroute_hops': self.traceroute_hops,
             'traceroute_data': json.loads(self.traceroute_data) if self.traceroute_data else {},
             'bandwidth_upload': self.bandwidth_upload,
-            'bandwidth_download': self.bandwidth_download
+            'bandwidth_download': self.bandwidth_download,
+            # Advanced network metrics
+            'dns_resolution_time': self.dns_resolution_time,
+            'tcp_connect_time': self.tcp_connect_time,
+            'ssl_handshake_time': self.ssl_handshake_time,
+            'ttfb': self.ttfb,
+            'jitter': self.jitter,
+            # Network interface metrics
+            'network_bytes_sent': self.network_bytes_sent,
+            'network_bytes_recv': self.network_bytes_recv,
+            'network_packets_sent': self.network_packets_sent,
+            'network_packets_recv': self.network_packets_recv,
+            'network_errors_in': self.network_errors_in,
+            'network_errors_out': self.network_errors_out,
+            'network_drops_in': self.network_drops_in,
+            'network_drops_out': self.network_drops_out,
+            # Enhanced CPU metrics
+            'cpu_load_1min': self.cpu_load_1min,
+            'cpu_load_5min': self.cpu_load_5min,
+            'cpu_load_15min': self.cpu_load_15min,
+            'cpu_cores': self.cpu_cores,
+            'cpu_freq_current': self.cpu_freq_current,
+            'cpu_context_switches': self.cpu_context_switches,
+            'cpu_interrupts': self.cpu_interrupts,
+            # Enhanced memory metrics
+            'memory_available': self.memory_available,
+            'memory_cached': self.memory_cached,
+            'memory_buffers': self.memory_buffers,
+            'memory_shared': self.memory_shared,
+            'swap_total': self.swap_total,
+            'swap_used': self.swap_used,
+            'swap_percent': self.swap_percent,
+            # Enhanced disk metrics
+            'disk_read_iops': self.disk_read_iops,
+            'disk_write_iops': self.disk_write_iops,
+            'disk_read_bytes_sec': self.disk_read_bytes_sec,
+            'disk_write_bytes_sec': self.disk_write_bytes_sec,
+            'disk_io_util': self.disk_io_util,
+            # Process and system metrics
+            'process_count': self.process_count,
+            'tcp_connections': self.tcp_connections,
+            'open_files': self.open_files,
+            # Temperature metrics
+            'cpu_temperature': self.cpu_temperature,
+            'disk_temperature': self.disk_temperature
         }

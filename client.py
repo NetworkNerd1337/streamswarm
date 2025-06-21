@@ -111,30 +111,155 @@ class StreamSwarmClient:
     def _get_system_metrics(self):
         """Get current system metrics"""
         try:
-            # CPU usage
-            cpu_percent = psutil.cpu_percent(interval=1)
+            metrics = {}
+            
+            # Basic CPU usage
+            metrics['cpu_percent'] = psutil.cpu_percent(interval=1)
+            
+            # Enhanced CPU metrics
+            try:
+                load_avg = psutil.getloadavg()
+                metrics['cpu_load_1min'] = load_avg[0]
+                metrics['cpu_load_5min'] = load_avg[1]
+                metrics['cpu_load_15min'] = load_avg[2]
+            except:
+                metrics['cpu_load_1min'] = None
+                metrics['cpu_load_5min'] = None
+                metrics['cpu_load_15min'] = None
+            
+            metrics['cpu_cores'] = psutil.cpu_count()
+            
+            # CPU frequency
+            try:
+                cpu_freq = psutil.cpu_freq()
+                metrics['cpu_freq_current'] = cpu_freq.current if cpu_freq else None
+            except:
+                metrics['cpu_freq_current'] = None
             
             # Memory usage
             memory = psutil.virtual_memory()
-            
-            # Disk usage
-            disk = psutil.disk_usage('/')
-            
-            return {
-                'cpu_percent': cpu_percent,
+            metrics.update({
                 'memory_percent': memory.percent,
                 'memory_used': memory.used,
                 'memory_total': memory.total,
+                'memory_available': memory.available,
+                'memory_cached': getattr(memory, 'cached', 0),
+                'memory_buffers': getattr(memory, 'buffers', 0),
+                'memory_shared': getattr(memory, 'shared', 0)
+            })
+            
+            # Swap usage
+            try:
+                swap = psutil.swap_memory()
+                metrics.update({
+                    'swap_total': swap.total,
+                    'swap_used': swap.used,
+                    'swap_percent': swap.percent
+                })
+            except:
+                metrics.update({
+                    'swap_total': 0,
+                    'swap_used': 0,
+                    'swap_percent': 0
+                })
+            
+            # Disk usage
+            disk = psutil.disk_usage('/')
+            metrics.update({
                 'disk_percent': disk.percent,
                 'disk_used': disk.used,
                 'disk_total': disk.total
-            }
+            })
+            
+            # Disk I/O metrics
+            try:
+                disk_io = psutil.disk_io_counters()
+                if disk_io:
+                    # Store current values for rate calculation
+                    if not hasattr(self, '_prev_disk_io'):
+                        self._prev_disk_io = {'time': time.time(), 'read_bytes': disk_io.read_bytes, 'write_bytes': disk_io.write_bytes, 'read_count': disk_io.read_count, 'write_count': disk_io.write_count}
+                        metrics.update({
+                            'disk_read_iops': 0,
+                            'disk_write_iops': 0,
+                            'disk_read_bytes_sec': 0,
+                            'disk_write_bytes_sec': 0
+                        })
+                    else:
+                        time_diff = time.time() - self._prev_disk_io['time']
+                        if time_diff > 0:
+                            metrics['disk_read_iops'] = (disk_io.read_count - self._prev_disk_io['read_count']) / time_diff
+                            metrics['disk_write_iops'] = (disk_io.write_count - self._prev_disk_io['write_count']) / time_diff
+                            metrics['disk_read_bytes_sec'] = (disk_io.read_bytes - self._prev_disk_io['read_bytes']) / time_diff
+                            metrics['disk_write_bytes_sec'] = (disk_io.write_bytes - self._prev_disk_io['write_bytes']) / time_diff
+                        
+                        self._prev_disk_io = {'time': time.time(), 'read_bytes': disk_io.read_bytes, 'write_bytes': disk_io.write_bytes, 'read_count': disk_io.read_count, 'write_count': disk_io.write_count}
+            except:
+                metrics.update({
+                    'disk_read_iops': None,
+                    'disk_write_iops': None,
+                    'disk_read_bytes_sec': None,
+                    'disk_write_bytes_sec': None
+                })
+            
+            # Network interface metrics
+            try:
+                net_io = psutil.net_io_counters()
+                if net_io:
+                    metrics.update({
+                        'network_bytes_sent': net_io.bytes_sent,
+                        'network_bytes_recv': net_io.bytes_recv,
+                        'network_packets_sent': net_io.packets_sent,
+                        'network_packets_recv': net_io.packets_recv,
+                        'network_errors_in': net_io.errin,
+                        'network_errors_out': net_io.errout,
+                        'network_drops_in': net_io.dropin,
+                        'network_drops_out': net_io.dropout
+                    })
+            except:
+                metrics.update({
+                    'network_bytes_sent': None,
+                    'network_bytes_recv': None,
+                    'network_packets_sent': None,
+                    'network_packets_recv': None,
+                    'network_errors_in': None,
+                    'network_errors_out': None,
+                    'network_drops_in': None,
+                    'network_drops_out': None
+                })
+            
+            # Process and connection metrics
+            try:
+                metrics['process_count'] = len(psutil.pids())
+                metrics['tcp_connections'] = len([conn for conn in psutil.net_connections() if conn.type == psutil.socket.SOCK_STREAM])
+            except:
+                metrics['process_count'] = None
+                metrics['tcp_connections'] = None
+            
+            # Temperature metrics (where available)
+            try:
+                temps = psutil.sensors_temperatures()
+                if temps:
+                    # Try to get CPU temperature
+                    cpu_temp = None
+                    for name, entries in temps.items():
+                        if 'cpu' in name.lower() or 'core' in name.lower():
+                            if entries:
+                                cpu_temp = entries[0].current
+                                break
+                    metrics['cpu_temperature'] = cpu_temp
+                else:
+                    metrics['cpu_temperature'] = None
+            except:
+                metrics['cpu_temperature'] = None
+            
+            return metrics
+            
         except Exception as e:
             logger.error(f"Error getting system metrics: {e}")
             return {}
     
     def _ping_test(self, destination, count=4):
-        """Perform ping test"""
+        """Perform ping test with jitter calculation"""
         try:
             if platform.system().lower() == 'windows':
                 cmd = ['ping', '-n', str(count), destination]
@@ -173,18 +298,26 @@ class StreamSwarmClient:
                 
                 avg_latency = sum(latencies) / len(latencies) if latencies else None
                 
+                # Calculate jitter (standard deviation of latencies)
+                jitter = None
+                if len(latencies) > 1:
+                    mean = avg_latency
+                    variance = sum((x - mean) ** 2 for x in latencies) / len(latencies)
+                    jitter = variance ** 0.5
+                
                 return {
                     'latency': avg_latency,
                     'packet_loss': packet_loss,
+                    'jitter': jitter,
                     'raw_output': output
                 }
             else:
                 logger.warning(f"Ping failed: {result.stderr}")
-                return {'latency': None, 'packet_loss': 100}
+                return {'latency': None, 'packet_loss': 100, 'jitter': None}
                 
         except Exception as e:
             logger.error(f"Error performing ping test: {e}")
-            return {'latency': None, 'packet_loss': 100}
+            return {'latency': None, 'packet_loss': 100, 'jitter': None}
     
     def _traceroute_test(self, destination):
         """Perform traceroute test"""
@@ -238,6 +371,7 @@ class StreamSwarmClient:
                 # Perform network tests
                 ping_result = self._ping_test(destination)
                 traceroute_result = self._traceroute_test(destination)
+                advanced_network = self._advanced_network_test(destination)
                 
                 # Prepare test result data
                 result_data = {
@@ -247,8 +381,10 @@ class StreamSwarmClient:
                     **system_metrics,
                     'ping_latency': ping_result.get('latency'),
                     'ping_packet_loss': ping_result.get('packet_loss'),
+                    'jitter': ping_result.get('jitter'),
                     'traceroute_hops': traceroute_result.get('hops'),
-                    'traceroute_data': traceroute_result.get('data', [])
+                    'traceroute_data': traceroute_result.get('data', []),
+                    **advanced_network
                 }
                 
                 # Submit results to server
@@ -274,6 +410,104 @@ class StreamSwarmClient:
         # Remove from active tests
         if test_id in self.test_threads:
             del self.test_threads[test_id]
+    
+    def _advanced_network_test(self, destination):
+        """Perform advanced network tests including DNS, TCP, and SSL timing"""
+        metrics = {}
+        
+        try:
+            # DNS resolution timing
+            import socket
+            import time as time_module
+            
+            start_time = time_module.time()
+            try:
+                socket.gethostbyname(destination)
+                dns_time = (time_module.time() - start_time) * 1000  # Convert to milliseconds
+                metrics['dns_resolution_time'] = dns_time
+            except:
+                metrics['dns_resolution_time'] = None
+            
+            # TCP connection timing
+            try:
+                start_time = time_module.time()
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
+                
+                # Try common ports: HTTP (80), HTTPS (443)
+                ports_to_try = [80, 443, 22, 21]
+                tcp_time = None
+                
+                for port in ports_to_try:
+                    try:
+                        result = sock.connect_ex((destination, port))
+                        if result == 0:
+                            tcp_time = (time_module.time() - start_time) * 1000
+                            break
+                    except:
+                        continue
+                    finally:
+                        sock.close()
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(10)
+                        start_time = time_module.time()
+                
+                sock.close()
+                metrics['tcp_connect_time'] = tcp_time
+            except:
+                metrics['tcp_connect_time'] = None
+            
+            # SSL handshake timing (for HTTPS)
+            try:
+                import ssl
+                context = ssl.create_default_context()
+                start_time = time_module.time()
+                
+                with socket.create_connection((destination, 443), timeout=10) as sock:
+                    with context.wrap_socket(sock, server_hostname=destination) as ssock:
+                        ssl_time = (time_module.time() - start_time) * 1000
+                        metrics['ssl_handshake_time'] = ssl_time
+            except:
+                metrics['ssl_handshake_time'] = None
+            
+            # HTTP TTFB (Time to First Byte)
+            try:
+                import urllib.request
+                import urllib.error
+                
+                start_time = time_module.time()
+                try:
+                    response = urllib.request.urlopen(f'http://{destination}', timeout=10)
+                    ttfb = (time_module.time() - start_time) * 1000
+                    metrics['ttfb'] = ttfb
+                    response.close()
+                except urllib.error.HTTPError:
+                    # Even if we get an HTTP error, we still measured TTFB
+                    ttfb = (time_module.time() - start_time) * 1000
+                    metrics['ttfb'] = ttfb
+                except:
+                    # Try HTTPS
+                    try:
+                        start_time = time_module.time()
+                        response = urllib.request.urlopen(f'https://{destination}', timeout=10)
+                        ttfb = (time_module.time() - start_time) * 1000
+                        metrics['ttfb'] = ttfb
+                        response.close()
+                    except:
+                        metrics['ttfb'] = None
+            except:
+                metrics['ttfb'] = None
+                
+        except Exception as e:
+            logger.error(f"Error in advanced network test: {e}")
+            metrics.update({
+                'dns_resolution_time': None,
+                'tcp_connect_time': None,
+                'ssl_handshake_time': None,
+                'ttfb': None
+            })
+        
+        return metrics
     
     def _check_for_tests(self):
         """Check for new tests from server"""

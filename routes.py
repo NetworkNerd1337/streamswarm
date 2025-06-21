@@ -156,7 +156,51 @@ def submit_test_results():
             traceroute_hops=data.get('traceroute_hops'),
             traceroute_data=json.dumps(data.get('traceroute_data', {})),
             bandwidth_upload=data.get('bandwidth_upload'),
-            bandwidth_download=data.get('bandwidth_download')
+            bandwidth_download=data.get('bandwidth_download'),
+            # Advanced network metrics
+            dns_resolution_time=data.get('dns_resolution_time'),
+            tcp_connect_time=data.get('tcp_connect_time'),
+            ssl_handshake_time=data.get('ssl_handshake_time'),
+            ttfb=data.get('ttfb'),
+            jitter=data.get('jitter'),
+            # Network interface metrics
+            network_bytes_sent=data.get('network_bytes_sent'),
+            network_bytes_recv=data.get('network_bytes_recv'),
+            network_packets_sent=data.get('network_packets_sent'),
+            network_packets_recv=data.get('network_packets_recv'),
+            network_errors_in=data.get('network_errors_in'),
+            network_errors_out=data.get('network_errors_out'),
+            network_drops_in=data.get('network_drops_in'),
+            network_drops_out=data.get('network_drops_out'),
+            # Enhanced CPU metrics
+            cpu_load_1min=data.get('cpu_load_1min'),
+            cpu_load_5min=data.get('cpu_load_5min'),
+            cpu_load_15min=data.get('cpu_load_15min'),
+            cpu_cores=data.get('cpu_cores'),
+            cpu_freq_current=data.get('cpu_freq_current'),
+            cpu_context_switches=data.get('cpu_context_switches'),
+            cpu_interrupts=data.get('cpu_interrupts'),
+            # Enhanced memory metrics
+            memory_available=data.get('memory_available'),
+            memory_cached=data.get('memory_cached'),
+            memory_buffers=data.get('memory_buffers'),
+            memory_shared=data.get('memory_shared'),
+            swap_total=data.get('swap_total'),
+            swap_used=data.get('swap_used'),
+            swap_percent=data.get('swap_percent'),
+            # Enhanced disk metrics
+            disk_read_iops=data.get('disk_read_iops'),
+            disk_write_iops=data.get('disk_write_iops'),
+            disk_read_bytes_sec=data.get('disk_read_bytes_sec'),
+            disk_write_bytes_sec=data.get('disk_write_bytes_sec'),
+            disk_io_util=data.get('disk_io_util'),
+            # Process and system metrics
+            process_count=data.get('process_count'),
+            tcp_connections=data.get('tcp_connections'),
+            open_files=data.get('open_files'),
+            # Temperature metrics
+            cpu_temperature=data.get('cpu_temperature'),
+            disk_temperature=data.get('disk_temperature')
         )
         
         db.session.add(result)
@@ -229,7 +273,19 @@ def get_test_data(test_id):
             'memory': {},
             'disk': {},
             'ping_latency': {},
-            'ping_packet_loss': {}
+            'ping_packet_loss': {},
+            'jitter': {},
+            'dns_resolution_time': {},
+            'tcp_connect_time': {},
+            'ssl_handshake_time': {},
+            'ttfb': {},
+            'cpu_load_1min': {},
+            'cpu_load_5min': {},
+            'cpu_load_15min': {},
+            'network_bytes_sent': {},
+            'network_bytes_recv': {},
+            'disk_read_iops': {},
+            'disk_write_iops': {}
         }
     }
     
@@ -269,6 +325,54 @@ def get_test_data(test_id):
         data['metrics']['ping_packet_loss'][client_id].append({
             'x': timestamp,
             'y': result.ping_packet_loss
+        })
+        data['metrics']['jitter'][client_id].append({
+            'x': timestamp,
+            'y': result.jitter
+        })
+        data['metrics']['dns_resolution_time'][client_id].append({
+            'x': timestamp,
+            'y': result.dns_resolution_time
+        })
+        data['metrics']['tcp_connect_time'][client_id].append({
+            'x': timestamp,
+            'y': result.tcp_connect_time
+        })
+        data['metrics']['ssl_handshake_time'][client_id].append({
+            'x': timestamp,
+            'y': result.ssl_handshake_time
+        })
+        data['metrics']['ttfb'][client_id].append({
+            'x': timestamp,
+            'y': result.ttfb
+        })
+        data['metrics']['cpu_load_1min'][client_id].append({
+            'x': timestamp,
+            'y': result.cpu_load_1min
+        })
+        data['metrics']['cpu_load_5min'][client_id].append({
+            'x': timestamp,
+            'y': result.cpu_load_5min
+        })
+        data['metrics']['cpu_load_15min'][client_id].append({
+            'x': timestamp,
+            'y': result.cpu_load_15min
+        })
+        data['metrics']['network_bytes_sent'][client_id].append({
+            'x': timestamp,
+            'y': result.network_bytes_sent
+        })
+        data['metrics']['network_bytes_recv'][client_id].append({
+            'x': timestamp,
+            'y': result.network_bytes_recv
+        })
+        data['metrics']['disk_read_iops'][client_id].append({
+            'x': timestamp,
+            'y': result.disk_read_iops
+        })
+        data['metrics']['disk_write_iops'][client_id].append({
+            'x': timestamp,
+            'y': result.disk_write_iops
         })
     
     return jsonify(data)
