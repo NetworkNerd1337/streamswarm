@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Clients - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-desktop me-2"></i>
+                Connected Clients
+            </h1>
+            <p class="text-muted">Monitor and manage all connected StreamSwarm clients</p>
+        </div>
+    </div>
+
+    <!-- Clients Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Client List
+                        </h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshClients()">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if clients %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Hostname</th>
+                                    <th>IP Address</th>
+                                    <th>System Info</th>
+                                    <th>Last Seen</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients %}
+                                <tr>
+                                    <td>
+                                        {% if client.status == 'online' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-circle me-1"></i>
+                                                Online
+                                            </span>
+                                        {% elif client.status == 'testing' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-play-circle me-1"></i>
+                                                Testing
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-circle me-1"></i>
+                                                Offline
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ client.hostname }}</strong>
+                                    </td>
+                                    <td>
+                                        <code>{{ client.ip_address }}</code>
+                                    </td>
+                                    <td>
+                                        {% if client.system_info %}
+                                            {% set info = client.system_info | from_json %}
+                                            <small class="text-muted">
+                                                {% if info.platform %}
+                                                    {{ info.platform }}<br>
+                                                {% endif %}
+                                                {% if info.cpu_count %}
+                                                    {{ info.cpu_count }} CPUs
+                                                {% endif %}
+                                                {% if info.memory_total %}
+                                                    | {{ (info.memory_total / 1024 / 1024 / 1024) | round(1) }} GB RAM
+                                                {% endif %}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">No info available</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if client.last_seen %}
+                                            <small class="text-muted">
+                                                {{ client.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-info" onclick="viewClientDetails({{ client.id }})">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                            {% if client.status == 'online' %}
+                                            <button class="btn btn-outline-primary" onclick="assignToTest({{ client.id }})">
+                                                <i class="fas fa-flask"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-desktop fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Clients Connected</h5>
+                        <p class="text-muted">
+                            Start a StreamSwarm client to see it appear here.<br>
+                            <code>python client.py --server http://your-server:5000</code>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Details Modal -->
+    <div class="modal fade" id="clientDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-desktop me-2"></i>
+                        Client Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="clientDetailsContent">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status"></div>
+                            <p class="mt-2">Loading client details...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshClients() {
+    location.reload();
+}
+
+function viewClientDetails(clientId) {
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('clientDetailsModal'));
+    modal.show();
+    
+    // Load client details (placeholder implementation)
+    setTimeout(() => {
+        document.getElementById('clientDetailsContent').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>System Information</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Client ID:</strong> ${clientId}</li>
+                        <li><strong>Status:</strong> <span class="badge bg-success">Online</span></li>
+                        <li><strong>Uptime:</strong> 2h 34m</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Recent Metrics</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>CPU Usage:</strong> 12.3%</li>
+                        <li><strong>Memory Usage:</strong> 45.6%</li>
+                        <li><strong>Disk Usage:</strong> 67.8%</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <h6>Test History</h6>
+            <p class="text-muted">Recent test participation and results would be shown here.</p>
+        `;
+    }, 1000);
+}
+
+function assignToTest(clientId) {
+    // Redirect to tests page with client pre-selected
+    window.location.href = '/tests?client=' + clientId;
+}
+
+// Auto-refresh every 30 seconds
+setInterval(() => {
+    if (!document.querySelector('.modal.show')) {
+        refreshClients();
+    }
+}, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">Total Clients</h5>
+                            <h3 class="mb-0" id="total-clients">{{ total_clients }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-desktop fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">Online Clients</h5>
+                            <h3 class="mb-0" id="online-clients">{{ online_clients }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">Total Tests</h5>
+                            <h3 class="mb-0" id="total-tests">{{ total_tests }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-flask fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-1">Active Tests</h5>
+                            <h3 class="mb-0" id="active-tests">{{ active_tests }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-play-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Network Latency Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="latencyChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span class="ms-2">Loading activity...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Resources Overview -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-server me-2"></i>
+                        System Resources Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <canvas id="cpuChart" height="200"></canvas>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <canvas id="memoryChart" height="200"></canvas>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <canvas id="diskChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize dashboard
+    initializeDashboard();
+    
+    // Update stats every 30 seconds
+    setInterval(updateDashboardStats, 30000);
+});
+
+function initializeDashboard() {
+    // Initialize charts
+    initializeLatencyChart();
+    initializeResourceCharts();
+    
+    // Load initial data
+    updateDashboardStats();
+}
+
+function updateDashboardStats() {
+    fetch('/api/dashboard/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-clients').textContent = data.total_clients;
+            document.getElementById('online-clients').textContent = data.online_clients;
+            document.getElementById('total-tests').textContent = data.total_tests;
+            document.getElementById('active-tests').textContent = data.active_tests;
+            
+            updateRecentActivity(data.recent_activity);
+        })
+        .catch(error => {
+            console.error('Error updating dashboard stats:', error);
+        });
+}
+
+function updateRecentActivity(activities) {
+    const container = document.getElementById('recent-activity');
+    
+    if (activities.length === 0) {
+        container.innerHTML = '<p class="text-muted mb-0">No recent activity</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    
+    activities.forEach(activity => {
+        const timestamp = new Date(activity.timestamp).toLocaleTimeString();
+        const latency = activity.ping_latency ? `${activity.ping_latency.toFixed(1)}ms` : 'N/A';
+        
+        html += `
+            <div class="list-group-item list-group-item-action p-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="fw-bold">${activity.client_name}</small>
+                        <br>
+                        <small class="text-muted">${activity.test_name}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-info">${latency}</small>
+                        <br>
+                        <small class="text-muted">${timestamp}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+let latencyChart;
+
+function initializeLatencyChart() {
+    const ctx = document.getElementById('latencyChart').getContext('2d');
+    
+    latencyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Average Network Latency (ms)'
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Latency (ms)'
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+let cpuChart, memoryChart, diskChart;
+
+function initializeResourceCharts() {
+    // CPU Chart
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    cpuChart = new Chart(cpuCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Used', 'Free'],
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#dc3545', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Average CPU Usage'
+                }
+            }
+        }
+    });
+
+    // Memory Chart
+    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+    memoryChart = new Chart(memoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Used', 'Free'],
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#ffc107', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Average Memory Usage'
+                }
+            }
+        }
+    });
+
+    // Disk Chart
+    const diskCtx = document.getElementById('diskChart').getContext('2d');
+    diskChart = new Chart(diskCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Used', 'Free'],
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#17a2b8', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Average Disk Usage'
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

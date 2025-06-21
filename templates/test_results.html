@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}Test Results - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                Test Results: {{ test.name }}
+            </h1>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-{{ 'success' if test.status == 'completed' else 'warning' if test.status == 'running' else 'secondary' }} fs-6">
+                    {{ test.status | title }}
+                </span>
+                <span class="text-muted">Destination: <code>{{ test.destination }}</code></span>
+                <span class="text-muted">Duration: {{ test.duration // 60 }}m {{ test.duration % 60 }}s</span>
+            </div>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('tests') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Tests
+            </a>
+        </div>
+    </div>
+
+    <!-- Test Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Participating Clients</h5>
+                    <h2 class="text-info">{{ clients | length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Data Points</h5>
+                    <h2 class="text-success">{{ results | length }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg Latency</h5>
+                    <h2 class="text-warning" id="avg-latency">--</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Packet Loss</h5>
+                    <h2 class="text-danger" id="avg-packet-loss">--</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Network Latency Over Time
+                        </h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active" onclick="showMetric('ping_latency')">
+                                Latency
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="showMetric('ping_packet_loss')">
+                                Packet Loss
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="networkChart" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-microchip me-2"></i>
+                        CPU Usage
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="cpuChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-memory me-2"></i>
+                        Memory Usage
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="memoryChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-hdd me-2"></i>
+                        Disk Usage
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="diskChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-desktop me-2"></i>
+                        Client Performance Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if clients %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Data Points</th>
+                                    <th>Avg Latency</th>
+                                    <th>Avg Packet Loss</th>
+                                    <th>Avg CPU</th>
+                                    <th>Avg Memory</th>
+                                    <th>Avg Disk</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientSummaryTable">
+                                {% for client in clients %}
+                                <tr>
+                                    <td><strong>{{ client.hostname }}</strong></td>
+                                    <td class="client-data-points" data-client="{{ client.id }}">--</td>
+                                    <td class="client-avg-latency" data-client="{{ client.id }}">--</td>
+                                    <td class="client-avg-packet-loss" data-client="{{ client.id }}">--</td>
+                                    <td class="client-avg-cpu" data-client="{{ client.id }}">--</td>
+                                    <td class="client-avg-memory" data-client="{{ client.id }}">--</td>
+                                    <td class="client-avg-disk" data-client="{{ client.id }}">--</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No client data available for this test.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let testData = {};
+let networkChart, cpuChart, memoryChart, diskChart;
+let currentMetric = 'ping_latency';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadTestData();
+});
+
+function loadTestData() {
+    fetch(`/api/test/{{ test.id }}/data`)
+        .then(response => response.json())
+        .then(data => {
+            testData = data;
+            initializeCharts();
+            updateSummaryStats();
+            updateClientSummary();
+        })
+        .catch(error => {
+            console.error('Error loading test data:', error);
+        });
+}
+
+function initializeCharts() {
+    // Network Chart
+    const networkCtx = document.getElementById('networkChart').getContext('2d');
+    
+    const datasets = Object.keys(testData.clients).map((clientId, index) => {
+        const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
+        const color = colors[index % colors.length];
+        
+        return {
+            label: testData.clients[clientId],
+            data: testData.metrics[currentMetric][clientId] || [],
+            borderColor: color,
+            backgroundColor: color + '20',
+            fill: false,
+            tension: 0.1
+        };
+    });
+
+    networkChart = new Chart(networkCtx, {
+        type: 'line',
+        data: {
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: getMetricTitle(currentMetric)
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
+                        displayFormats: {
+                            minute: 'HH:mm',
+                            hour: 'HH:mm'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: getMetricUnit(currentMetric)
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // System Resource Charts
+    initializeResourceCharts();
+}
+
+function initializeResourceCharts() {
+    const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
+    
+    // CPU Chart
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    const cpuDatasets = Object.keys(testData.clients).map((clientId, index) => ({
+        label: testData.clients[clientId],
+        data: testData.metrics.cpu[clientId] || [],
+        borderColor: colors[index % colors.length],
+        backgroundColor: colors[index % colors.length] + '20',
+        fill: false,
+        tension: 0.1
+    }));
+
+    cpuChart = new Chart(cpuCtx, {
+        type: 'line',
+        data: { datasets: cpuDatasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
+                        displayFormats: { minute: 'HH:mm' }
+                    }
+                },
+                y: {
+                    title: { display: true, text: 'CPU %' },
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Memory Chart
+    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+    const memoryDatasets = Object.keys(testData.clients).map((clientId, index) => ({
+        label: testData.clients[clientId],
+        data: testData.metrics.memory[clientId] || [],
+        borderColor: colors[index % colors.length],
+        backgroundColor: colors[index % colors.length] + '20',
+        fill: false,
+        tension: 0.1
+    }));
+
+    memoryChart = new Chart(memoryCtx, {
+        type: 'line',
+        data: { datasets: memoryDatasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
+                        displayFormats: { minute: 'HH:mm' }
+                    }
+                },
+                y: {
+                    title: { display: true, text: 'Memory %' },
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Disk Chart
+    const diskCtx = document.getElementById('diskChart').getContext('2d');
+    const diskDatasets = Object.keys(testData.clients).map((clientId, index) => ({
+        label: testData.clients[clientId],
+        data: testData.metrics.disk[clientId] || [],
+        borderColor: colors[index % colors.length],
+        backgroundColor: colors[index % colors.length] + '20',
+        fill: false,
+        tension: 0.1
+    }));
+
+    diskChart = new Chart(diskCtx, {
+        type: 'line',
+        data: { datasets: diskDatasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
+                        displayFormats: { minute: 'HH:mm' }
+                    }
+                },
+                y: {
+                    title: { display: true, text: 'Disk %' },
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+function showMetric(metric) {
+    currentMetric = metric;
+    
+    // Update button states
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Update chart
+    const datasets = Object.keys(testData.clients).map((clientId, index) => {
+        const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
+        const color = colors[index % colors.length];
+        
+        return {
+            label: testData.clients[clientId],
+            data: testData.metrics[metric][clientId] || [],
+            borderColor: color,
+            backgroundColor: color + '20',
+            fill: false,
+            tension: 0.1
+        };
+    });
+    
+    networkChart.data.datasets = datasets;
+    networkChart.options.plugins.title.text = getMetricTitle(metric);
+    networkChart.options.scales.y.title.text = getMetricUnit(metric);
+    networkChart.update();
+}
+
+function getMetricTitle(metric) {
+    const titles = {
+        'ping_latency': 'Network Latency Over Time',
+        'ping_packet_loss': 'Packet Loss Over Time'
+    };
+    return titles[metric] || metric;
+}
+
+function getMetricUnit(metric) {
+    const units = {
+        'ping_latency': 'Latency (ms)',
+        'ping_packet_loss': 'Packet Loss (%)'
+    };
+    return units[metric] || metric;
+}
+
+function updateSummaryStats() {
+    // Calculate average latency and packet loss
+    let totalLatency = 0;
+    let totalPacketLoss = 0;
+    let latencyCount = 0;
+    let packetLossCount = 0;
+    
+    Object.keys(testData.clients).forEach(clientId => {
+        const latencyData = testData.metrics.ping_latency[clientId] || [];
+        const packetLossData = testData.metrics.ping_packet_loss[clientId] || [];
+        
+        latencyData.forEach(point => {
+            if (point.y !== null) {
+                totalLatency += point.y;
+                latencyCount++;
+            }
+        });
+        
+        packetLossData.forEach(point => {
+            if (point.y !== null) {
+                totalPacketLoss += point.y;
+                packetLossCount++;
+            }
+        });
+    });
+    
+    const avgLatency = latencyCount > 0 ? (totalLatency / latencyCount).toFixed(1) : '--';
+    const avgPacketLoss = packetLossCount > 0 ? (totalPacketLoss / packetLossCount).toFixed(1) : '--';
+    
+    document.getElementById('avg-latency').textContent = avgLatency + (avgLatency !== '--' ? ' ms' : '');
+    document.getElementById('avg-packet-loss').textContent = avgPacketLoss + (avgPacketLoss !== '--' ? '%' : '');
+}
+
+function updateClientSummary() {
+    Object.keys(testData.clients).forEach(clientId => {
+        const latencyData = testData.metrics.ping_latency[clientId] || [];
+        const packetLossData = testData.metrics.ping_packet_loss[clientId] || [];
+        const cpuData = testData.metrics.cpu[clientId] || [];
+        const memoryData = testData.metrics.memory[clientId] || [];
+        const diskData = testData.metrics.disk[clientId] || [];
+        
+        // Calculate averages
+        const avgLatency = calculateAverage(latencyData);
+        const avgPacketLoss = calculateAverage(packetLossData);
+        const avgCpu = calculateAverage(cpuData);
+        const avgMemory = calculateAverage(memoryData);
+        const avgDisk = calculateAverage(diskData);
+        
+        // Update table cells
+        const dataPointsCell = document.querySelector(`[data-client="${clientId}"].client-data-points`);
+        const latencyCell = document.querySelector(`[data-client="${clientId}"].client-avg-latency`);
+        const packetLossCell = document.querySelector(`[data-client="${clientId}"].client-avg-packet-loss`);
+        const cpuCell = document.querySelector(`[data-client="${clientId}"].client-avg-cpu`);
+        const memoryCell = document.querySelector(`[data-client="${clientId}"].client-avg-memory`);
+        const diskCell = document.querySelector(`[data-client="${clientId}"].client-avg-disk`);
+        
+        if (dataPointsCell) dataPointsCell.textContent = latencyData.length;
+        if (latencyCell) latencyCell.textContent = avgLatency !== null ? avgLatency.toFixed(1) + ' ms' : '--';
+        if (packetLossCell) packetLossCell.textContent = avgPacketLoss !== null ? avgPacketLoss.toFixed(1) + '%' : '--';
+        if (cpuCell) cpuCell.textContent = avgCpu !== null ? avgCpu.toFixed(1) + '%' : '--';
+        if (memoryCell) memoryCell.textContent = avgMemory !== null ? avgMemory.toFixed(1) + '%' : '--';
+        if (diskCell) diskCell.textContent = avgDisk !== null ? avgDisk.toFixed(1) + '%' : '--';
+    });
+}
+
+function calculateAverage(dataPoints) {
+    const validPoints = dataPoints.filter(point => point.y !== null && point.y !== undefined);
+    if (validPoints.length === 0) return null;
+    
+    const sum = validPoints.reduce((acc, point) => acc + point.y, 0);
+    return sum / validPoints.length;
+}
+
+// Auto-refresh data every 30 seconds for running tests
+{% if test.status == 'running' %}
+setInterval(loadTestData, 30000);
+{% endif %}
+</script>
+{% endblock %}
