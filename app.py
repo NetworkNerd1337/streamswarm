@@ -34,5 +34,17 @@ with app.app_context():
     import models
     db.create_all()
 
+# Custom Jinja filters
+@app.template_filter('tojsonfilter')
+def tojson_filter(value):
+    """Convert JSON string to Python object"""
+    if isinstance(value, str):
+        try:
+            import json
+            return json.loads(value)
+        except:
+            return {}
+    return value or {}
+
 # Import routes
 import routes

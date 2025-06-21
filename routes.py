@@ -116,6 +116,11 @@ def get_client_tests(client_id):
             if test.status == 'pending':
                 test.status = 'running'
                 test.started_at = now
+                
+            # Update test client status
+            test_client = TestClient.query.filter_by(test_id=test.id, client_id=client_id).first()
+            if test_client and test_client.status == 'assigned':
+                test_client.status = 'running'
     
     db.session.commit()
     
@@ -151,6 +156,19 @@ def submit_test_results():
         
         db.session.add(result)
         db.session.commit()
+        
+        # Check if test should be marked as completed
+        test = Test.query.get(result.test_id)
+        if test and test.started_at:
+            elapsed_time = (datetime.utcnow() - test.started_at).total_seconds()
+            if elapsed_time >= test.duration:
+                test.status = 'completed'
+                test.completed_at = datetime.utcnow()
+                
+                # Mark test client as completed
+                test_client = TestClient.query.filter_by(test_id=test.id, client_id=result.client_id).first()
+                if test_client:
+                    test_client.status = 'completed'
         
         return jsonify({'status': 'success', 'message': 'Results submitted successfully'})
         
@@ -249,6 +267,122 @@ def get_test_data(test_id):
         })
     
     return jsonify(data)
+
+@app.route('/api/client/<int:client_id>/details', methods=['GET'])
+def get_client_details(client_id):
+    """Get detailed client information"""
+    client = Client.query.get_or_404(client_id)
+    
+    # Get recent test results for this client
+    recent_results = TestResult.query.filter_by(client_id=client_id).order_by(TestResult.timestamp.desc()).limit(10).all()
+    
+    # Calculate uptime (time since client was created)
+    if client.created_at:
+        uptime_seconds = (datetime.utcnow() - client.created_at).total_seconds()
+        uptime_hours = int(uptime_seconds // 3600)
+        uptime_minutes = int((uptime_seconds % 3600) // 60)
+        uptime = f"{uptime_hours}h {uptime_minutes}m"
+    else:
+        uptime = "Unknown"
+    
+    # Get latest metrics
+    latest_result = TestResult.query.filter_by(client_id=client_id).order_by(TestResult.timestamp.desc()).first()
+    
+    metrics = {
+        'cpu_percent': latest_result.cpu_percent if latest_result else None,
+        'memory_percent': latest_result.memory_percent if latest_result else None,
+        'disk_percent': latest_result.disk_percent if latest_result else None
+    }
+    
+    # Get test history
+    test_history = []
+    for result in recent_results:
+        test = Test.query.get(result.test_id)
+        test_history.append({
+            'test_name': test.name if test else 'Unknown',
+            'timestamp': result.timestamp.isoformat(),
+            'ping_latency': result.ping_latency,
+            'ping_packet_loss': result.ping_packet_loss
+        })
+    
+    return jsonify({
+        'client': client.to_dict(),
+        'uptime': uptime,
+        'metrics': metrics,
+        'test_history': test_history
+    })
+
+@app.route('/api/test/<int:test_id>/stop', methods=['POST'])
+def stop_test(test_id):
+    """Stop a running test"""
+    test = Test.query.get_or_404(test_id)
+    
+    if test.status not in ['running', 'pending']:
+        return jsonify({'error': 'Test is not running'}), 400
+    
+    test.status = 'completed'
+    test.completed_at = datetime.utcnow()
+    
+    # Update all test clients to completed status
+    TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})
+    
+    db.session.commit()
+    
+    return jsonify({'status': 'success', 'message': 'Test stopped successfully'})
+
+@app.route('/api/test/<int:test_id>/delete', methods=['DELETE'])
+def delete_test(test_id):
+    """Delete a test and all its associated data"""
+    test = Test.query.get_or_404(test_id)
+    
+    try:
+        # Delete all test results
+        TestResult.query.filter_by(test_id=test_id).delete()
+        
+        # Delete all test client assignments
+        TestClient.query.filter_by(test_id=test_id).delete()
+        
+        # Delete the test itself
+        db.session.delete(test)
+        db.session.commit()
+        
+        return jsonify({'status': 'success', 'message': 'Test deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error deleting test: {str(e)}")
+        return jsonify({'error': 'Failed to delete test'}), 500
+
+@app.route('/api/test/<int:test_id>/progress', methods=['GET'])
+def get_test_progress(test_id):
+    """Get real-time test progress"""
+    test = Test.query.get_or_404(test_id)
+    
+    if test.status not in ['running', 'completed']:
+        return jsonify({'progress': 0, 'status': test.status})
+    
+    if test.status == 'completed':
+        return jsonify({'progress': 100, 'status': 'completed'})
+    
+    if test.started_at:
+        elapsed_time = (datetime.utcnow() - test.started_at).total_seconds()
+        progress = min((elapsed_time / test.duration) * 100, 100)
+        
+        # Auto-complete if duration exceeded
+        if progress >= 100 and test.status == 'running':
+            test.status = 'completed'
+            test.completed_at = datetime.utcnow()
+            TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})
+            db.session.commit()
+            
+        return jsonify({
+            'progress': round(progress, 1),
+            'status': test.status,
+            'elapsed_time': int(elapsed_time),
+            'remaining_time': max(0, test.duration - int(elapsed_time))
+        })
+    
+    return jsonify({'progress': 0, 'status': test.status})
 
 @app.route('/api/dashboard/stats', methods=['GET'])
 def get_dashboard_stats():

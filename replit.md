@@ -83,9 +83,16 @@ The application is configured for Replit's autoscaling deployment platform:
 
 The deployment supports both single-instance development and horizontally scaled production environments through environment variable configuration.
 
-## Changelog
+## Recent Changes
 
-- June 21, 2025. Initial setup
+- June 21, 2025: Complete implementation of StreamSwarm network monitoring system
+  - PostgreSQL database integration with all tables created
+  - Full client-server architecture with real network testing capabilities
+  - Web dashboard with interactive charts and real-time updates
+  - Client details modal with actual data from database
+  - Test management with stop/delete functionality
+  - Real-time test progress tracking with automatic completion
+  - Comprehensive usage documentation and deployment guide
 
 ## User Preferences
 

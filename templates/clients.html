@@ -74,7 +74,7 @@
                                     </td>
                                     <td>
                                         {% if client.system_info %}
-                                            {% set info = client.system_info | from_json %}
+                                            {% set info = client.system_info | safe | tojsonfilter if client.system_info else {} %}
                                             <small class="text-muted">
                                                 {% if info.platform %}
                                                     {{ info.platform }}<br>
@@ -167,32 +167,80 @@ function viewClientDetails(clientId) {
     const modal = new bootstrap.Modal(document.getElementById('clientDetailsModal'));
     modal.show();
     
-    // Load client details (placeholder implementation)
-    setTimeout(() => {
-        document.getElementById('clientDetailsContent').innerHTML = `
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>System Information</h6>
-                    <ul class="list-unstyled">
-                        <li><strong>Client ID:</strong> ${clientId}</li>
-                        <li><strong>Status:</strong> <span class="badge bg-success">Online</span></li>
-                        <li><strong>Uptime:</strong> 2h 34m</li>
-                    </ul>
+    // Show loading
+    document.getElementById('clientDetailsContent').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-2">Loading client details...</p>
+        </div>
+    `;
+    
+    // Load real client details
+    fetch(`/api/client/${clientId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            const client = data.client;
+            const metrics = data.metrics;
+            const testHistory = data.test_history;
+            
+            let statusBadge = '';
+            if (client.status === 'online') {
+                statusBadge = '<span class="badge bg-success">Online</span>';
+            } else if (client.status === 'testing') {
+                statusBadge = '<span class="badge bg-warning">Testing</span>';
+            } else {
+                statusBadge = '<span class="badge bg-secondary">Offline</span>';
+            }
+            
+            let testHistoryHtml = '';
+            if (testHistory.length > 0) {
+                testHistoryHtml = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Test</th><th>Time</th><th>Latency</th></tr></thead><tbody>';
+                testHistory.forEach(test => {
+                    const timestamp = new Date(test.timestamp).toLocaleString();
+                    const latency = test.ping_latency ? `${test.ping_latency.toFixed(1)}ms` : 'N/A';
+                    testHistoryHtml += `<tr><td>${test.test_name}</td><td><small>${timestamp}</small></td><td>${latency}</td></tr>`;
+                });
+                testHistoryHtml += '</tbody></table></div>';
+            } else {
+                testHistoryHtml = '<p class="text-muted">No recent test activity.</p>';
+            }
+            
+            document.getElementById('clientDetailsContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>System Information</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Client ID:</strong> ${client.id}</li>
+                            <li><strong>Hostname:</strong> ${client.hostname}</li>
+                            <li><strong>IP Address:</strong> <code>${client.ip_address}</code></li>
+                            <li><strong>Status:</strong> ${statusBadge}</li>
+                            <li><strong>Uptime:</strong> ${data.uptime}</li>
+                            <li><strong>Last Seen:</strong> <small>${new Date(client.last_seen).toLocaleString()}</small></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Recent Metrics</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>CPU Usage:</strong> ${metrics.cpu_percent ? metrics.cpu_percent.toFixed(1) + '%' : 'N/A'}</li>
+                            <li><strong>Memory Usage:</strong> ${metrics.memory_percent ? metrics.memory_percent.toFixed(1) + '%' : 'N/A'}</li>
+                            <li><strong>Disk Usage:</strong> ${metrics.disk_percent ? metrics.disk_percent.toFixed(1) + '%' : 'N/A'}</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <h6>Recent Metrics</h6>
-                    <ul class="list-unstyled">
-                        <li><strong>CPU Usage:</strong> 12.3%</li>
-                        <li><strong>Memory Usage:</strong> 45.6%</li>
-                        <li><strong>Disk Usage:</strong> 67.8%</li>
-                    </ul>
+                <hr>
+                <h6>Recent Test History</h6>
+                ${testHistoryHtml}
+            `;
+        })
+        .catch(error => {
+            console.error('Error loading client details:', error);
+            document.getElementById('clientDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Failed to load client details. Please try again.
                 </div>
-            </div>
-            <hr>
-            <h6>Test History</h6>
-            <p class="text-muted">Recent test participation and results would be shown here.</p>
-        `;
-    }, 1000);
+            `;
+        });
 }
 
 function assignToTest(clientId) {
