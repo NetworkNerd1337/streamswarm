@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+
+{% block title %}Tutorial - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-graduation-cap me-2"></i>
+                StreamSwarm Tutorial
+            </h1>
+            <p class="lead">Complete guide with real-world use cases and step-by-step instructions</p>
+        </div>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map me-2"></i>
+                        Quick Navigation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Getting Started</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="#architecture" class="text-decoration-none">Understanding the Architecture</a></li>
+                                <li><a href="#server-setup" class="text-decoration-none">Server Setup Guide</a></li>
+                                <li><a href="#client-deployment" class="text-decoration-none">Client Deployment</a></li>
+                                <li><a href="#first-test" class="text-decoration-none">Creating Your First Test</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Advanced Topics</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="#use-cases" class="text-decoration-none">Real-World Use Cases</a></li>
+                                <li><a href="#multi-location" class="text-decoration-none">Multi-Location Monitoring</a></li>
+                                <li><a href="#automation" class="text-decoration-none">Automation & Alerts</a></li>
+                                <li><a href="#troubleshooting" class="text-decoration-none">Troubleshooting</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Architecture Overview -->
+    <div class="row mb-4" id="architecture">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sitemap me-2"></i>
+                        Understanding the Architecture
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-primary">
+                                <i class="fas fa-server me-2"></i>
+                                Server Component
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Central control hub for all monitoring</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Hosts web dashboard for visualization</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Stores data in PostgreSQL database</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Schedules tests across multiple clients</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Provides REST API access</li>
+                            </ul>
+                            
+                            <div class="alert alert-info">
+                                <strong>When to deploy a server:</strong><br>
+                                <small>You need centralized monitoring, test coordination, historical data storage, or management interfaces.</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-info">
+                                <i class="fas fa-desktop me-2"></i>
+                                Client Component
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Lightweight monitoring agent</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Executes network tests (ping, traceroute)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Collects system metrics (CPU, memory, disk)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Reports data to server in real-time</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Receives test assignments from server</li>
+                            </ul>
+                            
+                            <div class="alert alert-warning">
+                                <strong>When to deploy a client:</strong><br>
+                                <small>You want to monitor from a specific location, test connectivity to services, or participate in distributed testing.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Setup -->
+    <div class="row mb-4" id="server-setup">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Server Setup Guide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h6>Basic Development Setup</h6>
+                            <pre class="bg-dark text-light p-3 rounded"><code># Install dependencies
+pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary
+
+# Start server
+python main.py
+
+# Access dashboard
+# Open http://localhost:5000</code></pre>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <h6>Production Configuration</h6>
+                            <pre class="bg-dark text-light p-3 rounded"><code># Set environment variables
+export DATABASE_URL=postgresql://user:pass@host/db
+export SERVER_HOST=0.0.0.0
+export DEBUG=False
+
+# Start with Gunicorn
+gunicorn --bind 0.0.0.0:5000 --workers 4 main:app</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success mt-3">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Pro Tip</h6>
+                        <p class="mb-0">For production use, deploy the server on a reliable host with good network connectivity to all client locations. Consider using a cloud instance or dedicated server.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Deployment -->
+    <div class="row mb-4" id="client-deployment">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-network-wired me-2"></i>
+                        Client Deployment Strategies
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4 mb-3">
+                            <h6 class="text-primary">Single Client</h6>
+                            <pre class="bg-dark text-light p-2 rounded"><code># Basic connection
+python client.py --server http://192.168.1.100:5000
+
+# With custom name
+python client.py --server http://monitoring.company.com:5000 --name "Web-Server-01"</code></pre>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3">
+                            <h6 class="text-info">Multi-Location</h6>
+                            <pre class="bg-dark text-light p-2 rounded"><code># New York Office
+python client.py --server http://monitoring.company.com:5000 --name "NYC-Office"
+
+# London Office
+python client.py --server http://monitoring.company.com:5000 --name "London-Office"</code></pre>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3">
+                            <h6 class="text-warning">Service Mode</h6>
+                            <pre class="bg-dark text-light p-2 rounded"><code># Linux systemd service
+sudo systemctl enable streamswarm-client
+sudo systemctl start streamswarm-client
+
+# Windows service
+nssm install StreamSwarmClient</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="row mb-4" id="use-cases">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        Real-World Use Cases
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-globe me-2"></i>
+                                        Website Performance Monitoring
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Scenario:</strong> E-commerce company monitoring website performance from customer locations worldwide.</p>
+                                    <p><strong>Setup:</strong></p>
+                                    <ul class="small">
+                                        <li>Server: Cloud infrastructure (AWS/Azure/GCP)</li>
+                                        <li>Clients: VPS instances in major cities</li>
+                                        <li>Tests: Website response time monitoring</li>
+                                    </ul>
+                                    <p><strong>Benefits:</strong> Geographic performance insights, CDN effectiveness tracking, regional issue detection.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-building me-2"></i>
+                                        Network Infrastructure Monitoring
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Scenario:</strong> IT department monitoring network connectivity between office locations.</p>
+                                    <p><strong>Setup:</strong></p>
+                                    <ul class="small">
+                                        <li>Server: Internal infrastructure server</li>
+                                        <li>Clients: Gateway hosts at each office</li>
+                                        <li>Tests: Inter-office connectivity monitoring</li>
+                                    </ul>
+                                    <p><strong>Benefits:</strong> VPN performance tracking, network bottleneck identification, service availability monitoring.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cloud me-2"></i>
+                                        Cloud Service Performance
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Scenario:</strong> Development team monitoring microservices across multiple cloud regions.</p>
+                                    <p><strong>Setup:</strong></p>
+                                    <ul class="small">
+                                        <li>Server: Primary cloud region</li>
+                                        <li>Clients: Each cloud region with services</li>
+                                        <li>Tests: Cross-region service performance</li>
+                                    </ul>
+                                    <p><strong>Benefits:</strong> Service latency optimization, regional performance comparison, database connectivity monitoring.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-wifi me-2"></i>
+                                        ISP Performance Analysis
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Scenario:</strong> Network administrator comparing ISP performance for load balancing decisions.</p>
+                                    <p><strong>Setup:</strong></p>
+                                    <ul class="small">
+                                        <li>Server: Neutral location (cloud/colocation)</li>
+                                        <li>Clients: Hosts behind different ISP connections</li>
+                                        <li>Tests: Performance comparison to common destinations</li>
+                                    </ul>
+                                    <p><strong>Benefits:</strong> ISP performance comparison, load balancing optimization, connectivity issue detection.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- First Test Tutorial -->
+    <div class="row mb-4" id="first-test">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-play-circle me-2"></i>
+                        Creating Your First Test
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h6>Step-by-Step Process</h6>
+                            <ol>
+                                <li><strong>Start the Server:</strong> Run <code>python main.py</code> and access the dashboard</li>
+                                <li><strong>Connect Clients:</strong> Deploy clients from different locations using the client command</li>
+                                <li><strong>Verify Connections:</strong> Check the Clients page to see online clients</li>
+                                <li><strong>Create Test:</strong> Go to Tests page and click "Create Test"</li>
+                                <li><strong>Configure Test:</strong> Set destination, duration, and select participating clients</li>
+                                <li><strong>Monitor Progress:</strong> Watch real-time progress and results</li>
+                                <li><strong>Analyze Results:</strong> Click the chart icon to view detailed performance data</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="alert alert-primary">
+                                <h6><i class="fas fa-rocket me-2"></i>Quick Start</h6>
+                                <p class="small mb-2">Want to test immediately? Try these destinations:</p>
+                                <ul class="small mb-0">
+                                    <li><code>google.com</code> - Global performance</li>
+                                    <li><code>8.8.8.8</code> - DNS performance</li>
+                                    <li><code>cloudflare.com</code> - CDN performance</li>
+                                    <li><code>github.com</code> - Developer services</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Troubleshooting -->
+    <div class="row mb-4" id="troubleshooting">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-wrench me-2"></i>
+                        Common Issues & Solutions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="troubleshootingAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#client-connection">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Client Won't Connect to Server
+                                </button>
+                            </h2>
+                            <div id="client-connection" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Diagnostic Steps:</h6>
+                                            <pre class="bg-dark text-light p-2 rounded"><code># Test server accessibility
+curl http://server-ip:5000/api/dashboard/stats
+
+# Check network connectivity  
+ping server-ip
+
+# Verify firewall rules
+sudo ufw status</code></pre>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Common Solutions:</h6>
+                                            <ul class="small">
+                                                <li>Verify server is running and accessible</li>
+                                                <li>Check firewall rules on server</li>
+                                                <li>Ensure port 5000 is not blocked</li>
+                                                <li>Confirm correct server URL in client command</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#no-test-data">
+                                    <i class="fas fa-chart-line text-info me-2"></i>
+                                    No Test Data Appearing
+                                </button>
+                            </h2>
+                            <div id="no-test-data" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Check These Items:</h6>
+                                            <ul class="small">
+                                                <li>Clients show green "Online" status</li>
+                                                <li>Tests are assigned to online clients</li>
+                                                <li>Destination is reachable from client networks</li>
+                                                <li>Client has permissions for ping/traceroute</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Manual Test:</h6>
+                                            <pre class="bg-dark text-light p-2 rounded"><code># Test destination manually
+ping -c 4 google.com
+
+# Check client logs
+python client.py --server http://server:5000 --verbose</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#performance-issues">
+                                    <i class="fas fa-tachometer-alt text-danger me-2"></i>
+                                    Server Performance Issues
+                                </button>
+                            </h2>
+                            <div id="performance-issues" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Performance Optimization:</h6>
+                                            <ul class="small">
+                                                <li>Reduce test frequency (increase interval)</li>
+                                                <li>Limit concurrent tests</li>
+                                                <li>Monitor server resource usage</li>
+                                                <li>Consider database optimization</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>Monitor Resources:</h6>
+                                            <pre class="bg-dark text-light p-2 rounded"><code># Check server resources
+top -p $(pgrep -f "python.*main.py")
+
+# Monitor database size
+psql $DATABASE_URL -c "SELECT pg_size_pretty(pg_database_size('streamswarm'));"</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Resources -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-book me-2"></i>
+                        Additional Resources
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-file-alt me-2"></i>Documentation</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="/static/docs/USAGE.md" class="text-decoration-none">Complete Usage Guide</a></li>
+                                <li><a href="/static/docs/README.md" class="text-decoration-none">Installation Instructions</a></li>
+                                <li><a href="#api-reference" class="text-decoration-none">API Reference</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-code me-2"></i>Configuration</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="#environment-variables" class="text-decoration-none">Environment Variables</a></li>
+                                <li><a href="#production-deployment" class="text-decoration-none">Production Deployment</a></li>
+                                <li><a href="#security-considerations" class="text-decoration-none">Security Considerations</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6><i class="fas fa-question-circle me-2"></i>Support</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="#troubleshooting" class="text-decoration-none">Troubleshooting Guide</a></li>
+                                <li><a href="#best-practices" class="text-decoration-none">Best Practices</a></li>
+                                <li><a href="#community-examples" class="text-decoration-none">Community Examples</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success mt-3">
+                        <h6><i class="fas fa-hands-helping me-2"></i>Need Help?</h6>
+                        <p class="mb-0">This tutorial covers the most common scenarios. For advanced use cases or specific questions, refer to the complete documentation or check the troubleshooting section.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Smooth scrolling for internal links
+document.addEventListener('DOMContentLoaded', function() {
+    const links = document.querySelectorAll('a[href^="#"]');
+    
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Highlight current section in navigation
+    const sections = document.querySelectorAll('div[id]');
+    const navLinks = document.querySelectorAll('a[href^="#"]');
+    
+    function highlightNavigation() {
+        let current = '';
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            
+            if (window.pageYOffset >= (sectionTop - 200)) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('fw-bold', 'text-primary');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('fw-bold', 'text-primary');
+            }
+        });
+    }
+    
+    window.addEventListener('scroll', highlightNavigation);
+    highlightNavigation(); // Initial call
+});
+</script>
+{% endblock %}

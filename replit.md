@@ -93,6 +93,8 @@ The deployment supports both single-instance development and horizontally scaled
   - Test management with stop/delete functionality
   - Real-time test progress tracking with automatic completion
   - Comprehensive usage documentation and deployment guide
+  - In-depth instructional tutorial page with real-world use cases
+  - Interactive web-based tutorial with step-by-step guides
 
 ## User Preferences
 

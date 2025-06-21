@@ -46,6 +46,11 @@ def test_results(test_id):
     
     return render_template('test_results.html', test=test, results=results, clients=clients)
 
+@app.route('/tutorial')
+def tutorial():
+    """Tutorial and documentation view"""
+    return render_template('tutorial.html')
+
 # API Routes
 
 @app.route('/api/client/register', methods=['POST'])
