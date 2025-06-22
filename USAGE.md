@@ -98,11 +98,30 @@ Open your web browser and navigate to the server URL. You'll see three main sect
 - **Ping Latency**: Round-trip time to destination in milliseconds
 - **Packet Loss**: Percentage of packets that failed to reach destination
 - **Traceroute Hops**: Number of network hops to reach destination
+- **DNS Resolution Time**: Time to resolve hostnames to IP addresses
+- **TCP Connect Time**: Time to establish TCP connections
+- **SSL Handshake Time**: Time to complete SSL/TLS handshakes
+- **Jitter**: Network timing variability measurement
+
+### Bandwidth Performance
+- **Upload Speed**: Internet upload bandwidth in Mbps (using speedtest-cli)
+- **Download Speed**: Internet download bandwidth in Mbps (using speedtest-cli)
+- **HTTP Bandwidth**: Direct throughput testing to specific destinations
+- **TCP Throughput**: Custom socket-based bandwidth measurement
 
 ### System Metrics
 - **CPU Usage**: Current processor utilization percentage
-- **Memory Usage**: RAM utilization percentage
+- **Memory Usage**: RAM utilization percentage  
 - **Disk Usage**: Storage utilization percentage
+- **Load Averages**: 1, 5, and 15-minute system load averages
+- **Network Interface Stats**: Bytes/packets sent/received, errors, drops
+- **Process Monitoring**: Active processes, TCP connections, file descriptors
+
+### Quality of Service
+- **DSCP Values**: Differentiated Services Code Point markings
+- **CoS Values**: Class of Service markings (802.1Q)
+- **Traffic Classification**: Automatic traffic type detection
+- **QoS Policy Compliance**: Validation against expected policies
 
 ## Troubleshooting
 
@@ -117,12 +136,16 @@ Open your web browser and navigate to the server URL. You'll see three main sect
 2. Check that tests are assigned to online clients
 3. Verify destination is reachable from client networks
 4. Review client logs for error messages
+5. Check bandwidth testing requirements (speedtest-cli installed)
+6. Verify network permissions for QoS monitoring (may require root)
 
 ### Performance Issues
 1. Reduce test frequency (increase interval)
 2. Limit number of concurrent tests
 3. Monitor server resource usage
 4. Consider database optimization for large datasets
+5. Disable bandwidth testing for high-frequency tests
+6. Use HTTP bandwidth testing instead of speedtest-cli for faster results
 
 ## Advanced Configuration
 
@@ -143,6 +166,11 @@ export DATABASE_URL=postgresql://user:pass@localhost/streamswarm
 export DEFAULT_TEST_DURATION=300
 export DEFAULT_TEST_INTERVAL=5
 export CLIENT_HEARTBEAT_INTERVAL=30
+
+# Bandwidth Testing Configuration
+export SPEEDTEST_ENABLED=true
+export HTTP_BANDWIDTH_TEST_SIZE=10485760  # 10MB default
+export TCP_BANDWIDTH_TIMEOUT=30
 
 # Network Testing
 export PING_COUNT=4

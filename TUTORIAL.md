@@ -30,6 +30,10 @@ For network testing functionality, install these system utilities:
 # Ubuntu/Debian
 sudo apt install iputils-ping traceroute
 
+# Additional system requirements for full functionality
+sudo apt install libpcap-dev tcpdump  # For QoS monitoring
+```
+
 # CentOS/RHEL/Fedora  
 sudo yum install iputils traceroute
 ```
@@ -425,7 +429,7 @@ python client.py --server http://monitoring.cloud.com:5000 --name "ATT-Connectio
 # On monitoring server (192.168.1.100)
 git clone [your-streamswarm-repo]
 cd streamswarm
-pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary
+pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary speedtest-cli reportlab matplotlib scapy
 export DATABASE_URL=postgresql://streamswarm:password@localhost/streamswarm
 python main.py
 ```
@@ -456,17 +460,24 @@ python client.py --server http://192.168.1.100:5000 --name "Branch-Office-Deskto
 1. Go to Tests page
 2. Click "Create Test"
 3. Fill in:
-   - Test Name: "Website Performance Check"
+   - Test Name: "Comprehensive Performance Check"
    - Destination: "google.com"
    - Duration: 300 seconds
    - Interval: 10 seconds
    - Select both clients
 4. Click "Create Test"
 
+**Note**: This test will measure latency, packet loss, DNS timing, bandwidth speeds, and system metrics.
+
 **Step 7: Monitor Test Progress**
 1. Watch progress bar advance in real-time
 2. Click chart icon when test completes
-3. Analyze latency differences between office locations
+3. Analyze performance differences between office locations:
+   - Network latency and packet loss
+   - Bandwidth upload/download speeds
+   - DNS resolution performance
+   - System resource utilization
+4. Export professional PDF reports with charts and recommendations
 
 ### Tutorial 2: Advanced Multi-Service Monitoring
 
