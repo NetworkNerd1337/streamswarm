@@ -455,11 +455,11 @@ def get_client_details(client_id):
     
     # Calculate uptime (time since client was created)
     if client.created_at:
-        # Ensure both datetimes are timezone-aware for comparison
+        # Ensure both datetimes are timezone-naive for comparison (database stores naive datetimes in Eastern Time)
         if client.created_at.tzinfo is None:
-            client_start_time = client.created_at.replace(tzinfo=zoneinfo.ZoneInfo('America/New_York'))
-        else:
             client_start_time = client.created_at
+        else:
+            client_start_time = client.created_at.replace(tzinfo=None)
         
         uptime_seconds = (datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None) - client_start_time).total_seconds()
         uptime_hours = int(uptime_seconds // 3600)
@@ -559,13 +559,13 @@ def get_test_progress(test_id):
         return jsonify({'progress': 100, 'status': 'completed'})
     
     if test.started_at:
-        # Ensure both datetimes are timezone-aware for comparison
+        # Ensure both datetimes are timezone-naive for comparison (database stores naive datetimes in Eastern Time)
         if test.started_at.tzinfo is None:
-            test_start_time = test.started_at.replace(tzinfo=zoneinfo.ZoneInfo('America/New_York'))
-        else:
             test_start_time = test.started_at
+        else:
+            test_start_time = test.started_at.replace(tzinfo=None)
         
-        elapsed_time = (datetime.now(zoneinfo.ZoneInfo('America/New_York')) - test_start_time).total_seconds()
+        elapsed_time = (datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None) - test_start_time).total_seconds()
         progress = min((elapsed_time / test.duration) * 100, 100)
         
         # Auto-complete if duration exceeded
