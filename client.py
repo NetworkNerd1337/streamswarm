@@ -991,6 +991,11 @@ class StreamSwarmClient:
         test_check_thread = threading.Thread(target=self._check_for_tests, daemon=True)
         test_check_thread.start()
         
+        # Confirm client is ready
+        logger.info(f"✓ Client connected and ready! Monitoring server for tests...")
+        logger.info(f"✓ Client ID: {self.client_id} | Server: {self.server_url}")
+        logger.info(f"✓ Heartbeat active | Test monitoring active")
+        
         # Keep main thread alive
         try:
             while self.running:
