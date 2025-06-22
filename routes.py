@@ -241,7 +241,13 @@ def submit_test_results():
             cdn_performance_score=data.get('cdn_performance_score'),
             multipath_detected=data.get('multipath_detected'),
             application_response_time=data.get('application_response_time'),
-            database_query_time=data.get('database_query_time')
+            database_query_time=data.get('database_query_time'),
+            # Infrastructure Monitoring Metrics
+            power_consumption_watts=data.get('power_consumption_watts'),
+            fan_speeds_rpm=data.get('fan_speeds_rpm'),
+            smart_drive_health=data.get('smart_drive_health'),
+            memory_error_rate=data.get('memory_error_rate'),
+            network_interface_errors=data.get('network_interface_errors')
         )
         
         db.session.add(result)

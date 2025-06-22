@@ -179,6 +179,13 @@ class TestResult(db.Model):
     application_response_time = db.Column(db.Float)  # End-to-end transaction timing (ms)
     database_query_time = db.Column(db.Float)  # Backend database performance if detectable (ms)
     
+    # Infrastructure Monitoring Metrics
+    power_consumption_watts = db.Column(db.Float)  # Energy usage in watts (if accessible)
+    fan_speeds_rpm = db.Column(Text)  # JSON string of fan speeds by device
+    smart_drive_health = db.Column(Text)  # JSON string of SMART health data
+    memory_error_rate = db.Column(db.Float)  # ECC memory error rate (errors per hour)
+    network_interface_errors = db.Column(Text)  # JSON string of physical layer error rates
+    
     def to_dict(self):
         return {
             'id': self.id,

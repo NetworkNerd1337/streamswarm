@@ -85,6 +85,18 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Infrastructure monitoring capabilities implementation
+  - Added power consumption monitoring with multi-platform support (Linux, macOS, Windows)
+  - Implemented fan speed monitoring using lm-sensors and hwmon interfaces
+  - Added SMART drive health checking with temperature and error rate monitoring
+  - Implemented ECC memory error rate detection through EDAC and system logs
+  - Added comprehensive network interface error monitoring for physical layer issues
+  - Enhanced database schema with 5 new infrastructure monitoring metrics
+  - Updated metrics dashboard with dedicated infrastructure health card
+  - Enhanced PDF reports with infrastructure health analysis table
+  - Added graceful fallbacks for unsupported hardware or insufficient permissions
+  - Implemented cross-platform compatibility with appropriate "Not Available" handling
+
 - June 22, 2025: Application-layer metrics and performance profiling implementation
   - Added HTTP response code analysis tracking 2xx, 3xx, 4xx, 5xx responses over time
   - Implemented content download time measurement for full page/resource timing

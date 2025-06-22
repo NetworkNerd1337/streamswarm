@@ -281,6 +281,68 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Infrastructure Monitoring -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100" data-bs-theme="dark">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-server me-2"></i>
+                                    Infrastructure Health
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="metric-value">
+                                            {% if latest_result.power_consumption_watts %}
+                                                {{ "%.1f"|format(latest_result.power_consumption_watts) }}W
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="metric-label">Power Usage</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.memory_error_rate or 0) }}</div>
+                                        <div class="metric-label">Memory Errors</div>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-2">
+                                    <div class="col-6">
+                                        <div class="metric-value">
+                                            {% if latest_result.smart_drive_health %}
+                                                {% set smart_data = latest_result.smart_drive_health | from_json %}
+                                                {% if smart_data %}
+                                                    <span class="badge bg-success">Healthy</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-secondary">N/A</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="metric-label">Drive Health</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-value">
+                                            {% if latest_result.fan_speeds_rpm %}
+                                                {% set fan_data = latest_result.fan_speeds_rpm | from_json %}
+                                                {% if fan_data %}
+                                                    {{ fan_data.values() | list | length }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="metric-label">Active Fans</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
