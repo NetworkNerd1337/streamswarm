@@ -2,6 +2,7 @@ from flask import render_template, request, jsonify, redirect, url_for, flash, s
 from app import app, db
 from models import Client, Test, TestResult, TestClient
 from datetime import datetime, timezone, timedelta
+import zoneinfo
 import json
 import logging
 import os
@@ -72,7 +73,7 @@ def register_client():
         # Update existing client
         client.ip_address = data['ip_address']
         client.status = 'online'
-        client.last_seen = datetime.now(timezone.utc)
+        client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York'))
         if 'system_info' in data:
             client.system_info = json.dumps(data['system_info'])
     else:
@@ -97,7 +98,7 @@ def register_client():
 def client_heartbeat(client_id):
     """Update client last seen timestamp"""
     client = Client.query.get_or_404(client_id)
-    client.last_seen = datetime.now(timezone.utc)
+    client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York'))
     client.status = 'online'
     db.session.commit()
     
@@ -114,7 +115,7 @@ def get_client_tests(client_id):
     ).all()
     
     # Check if any tests should be started
-    now = datetime.now(timezone.utc)
+    now = datetime.now(zoneinfo.ZoneInfo('America/New_York'))
     ready_tests = []
     
     for test in assigned_tests:
@@ -147,7 +148,7 @@ def submit_test_results():
         result = TestResult(
             test_id=data['test_id'],
             client_id=data['client_id'],
-            timestamp=datetime.fromisoformat(data.get('timestamp', datetime.now(timezone.utc).isoformat()).replace('Z', '+00:00')),
+            timestamp=datetime.fromisoformat(data.get('timestamp', datetime.now(zoneinfo.ZoneInfo('America/New_York')).isoformat())),
             cpu_percent=data.get('cpu_percent'),
             memory_percent=data.get('memory_percent'),
             memory_used=data.get('memory_used'),
@@ -255,14 +256,14 @@ def submit_test_results():
         if test and test.started_at:
             # Ensure both datetimes are timezone-aware for comparison
             if test.started_at.tzinfo is None:
-                test_start_time = test.started_at.replace(tzinfo=timezone.utc)
+                test_start_time = test.started_at.replace(tzinfo=zoneinfo.ZoneInfo('America/New_York'))
             else:
                 test_start_time = test.started_at
             
-            elapsed_time = (datetime.now(timezone.utc) - test_start_time).total_seconds()
+            elapsed_time = (datetime.now(zoneinfo.ZoneInfo('America/New_York')) - test_start_time).total_seconds()
             if elapsed_time >= test.duration:
                 test.status = 'completed'
-                test.completed_at = datetime.now(timezone.utc)
+                test.completed_at = datetime.now(zoneinfo.ZoneInfo('America/New_York'))
                 
                 # Mark test client as completed
                 test_client = TestClient.query.filter_by(test_id=test.id, client_id=result.client_id).first()

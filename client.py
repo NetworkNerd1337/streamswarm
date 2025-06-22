@@ -16,6 +16,7 @@ import socket
 import struct
 import fcntl
 from datetime import datetime, timezone
+import zoneinfo
 import psutil
 import requests
 from urllib.parse import urljoin, urlparse
@@ -428,7 +429,7 @@ class StreamSwarmClient:
                 result_data = {
                     'client_id': self.client_id,
                     'test_id': test_id,
-                    'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+                    'timestamp': datetime.now(zoneinfo.ZoneInfo('America/New_York')).isoformat(),
                     **system_metrics,
                     'ping_latency': ping_result.get('latency'),
                     'ping_packet_loss': ping_result.get('packet_loss'),
