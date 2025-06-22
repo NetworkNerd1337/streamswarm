@@ -373,6 +373,7 @@ class StreamSwarmClient:
                 traceroute_result = self._traceroute_test(destination)
                 advanced_network = self._advanced_network_test(destination)
                 qos_metrics = self._qos_test(destination)
+                bandwidth_metrics = self._bandwidth_test(destination)
                 
                 # Prepare test result data
                 result_data = {
@@ -386,7 +387,8 @@ class StreamSwarmClient:
                     'traceroute_hops': traceroute_result.get('hops'),
                     'traceroute_data': traceroute_result.get('data', []),
                     **advanced_network,
-                    **qos_metrics
+                    **qos_metrics,
+                    **bandwidth_metrics
                 }
                 
                 # Submit results to server
@@ -566,6 +568,200 @@ class StreamSwarmClient:
             logger.error(f"QoS test failed: {e}")
         
         return qos_metrics
+    
+    def _bandwidth_test(self, destination):
+        """Perform bandwidth testing using multiple methods"""
+        metrics = {
+            'bandwidth_upload': None,
+            'bandwidth_download': None
+        }
+        
+        try:
+            # Method 1: HTTP-based bandwidth test to specific destination
+            if destination and not destination.startswith('127.') and destination != 'localhost':
+                http_metrics = self._http_bandwidth_test(destination)
+                if http_metrics['bandwidth_download']:
+                    metrics.update(http_metrics)
+                    return metrics
+            
+            # Method 2: Speedtest-cli for general internet bandwidth
+            speedtest_metrics = self._speedtest_bandwidth_test()
+            if speedtest_metrics['bandwidth_download']:
+                metrics.update(speedtest_metrics)
+                return metrics
+                
+            # Method 3: Custom TCP bandwidth test
+            tcp_metrics = self._tcp_bandwidth_test(destination)
+            if tcp_metrics['bandwidth_download']:
+                metrics.update(tcp_metrics)
+        
+        except Exception as e:
+            logger.warning(f"All bandwidth test methods failed: {e}")
+        
+        return metrics
+    
+    def _http_bandwidth_test(self, destination):
+        """HTTP-based bandwidth test to specific destination"""
+        import time
+        import requests
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        
+        metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
+        
+        try:
+            # Configure session with retries
+            session = requests.Session()
+            retry_strategy = Retry(
+                total=2,
+                status_forcelist=[429, 500, 502, 503, 504],
+                backoff_factor=1
+            )
+            adapter = HTTPAdapter(max_retries=retry_strategy)
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
+            
+            # Test URLs to try
+            test_urls = [
+                f"http://{destination}",
+                f"https://{destination}",
+                "http://httpbin.org/bytes/1048576",  # 1MB download
+                "https://httpbin.org/bytes/1048576"
+            ]
+            
+            # Download test
+            for url in test_urls:
+                try:
+                    start_time = time.time()
+                    response = session.get(url, timeout=30, stream=True)
+                    
+                    if response.status_code == 200:
+                        total_bytes = 0
+                        for chunk in response.iter_content(chunk_size=8192):
+                            total_bytes += len(chunk)
+                            # Stop after reasonable amount for testing
+                            if total_bytes > 10 * 1024 * 1024:  # 10MB max
+                                break
+                        
+                        elapsed_time = time.time() - start_time
+                        if elapsed_time > 0 and total_bytes > 0:
+                            # Convert to Mbps
+                            bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
+                            metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
+                            break
+                        
+                except Exception as e:
+                    logger.debug(f"HTTP test failed for {url}: {e}")
+                    continue
+            
+            # Upload test (simplified - send data to httpbin.org/post)
+            try:
+                test_data = b'0' * 1048576  # 1MB of data
+                start_time = time.time()
+                response = session.post("https://httpbin.org/post", 
+                                      data=test_data, 
+                                      timeout=30)
+                
+                if response.status_code == 200:
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time > 0:
+                        bandwidth_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
+                        metrics['bandwidth_upload'] = round(bandwidth_mbps, 2)
+                        
+            except Exception as e:
+                logger.debug(f"HTTP upload test failed: {e}")
+        
+        except Exception as e:
+            logger.warning(f"HTTP bandwidth test failed: {e}")
+        
+        return metrics
+    
+    def _speedtest_bandwidth_test(self):
+        """Use speedtest-cli for bandwidth measurement"""
+        metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
+        
+        try:
+            import speedtest
+            
+            # Initialize speedtest
+            st = speedtest.Speedtest()
+            
+            # Get best server
+            st.get_best_server()
+            
+            # Download test
+            download_speed = st.download()
+            metrics['bandwidth_download'] = round(download_speed / 1000000, 2)  # Convert to Mbps
+            
+            # Upload test
+            upload_speed = st.upload()
+            metrics['bandwidth_upload'] = round(upload_speed / 1000000, 2)  # Convert to Mbps
+            
+            logger.info(f"Speedtest results: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
+            
+        except ImportError:
+            logger.warning("speedtest-cli not available")
+        except Exception as e:
+            logger.warning(f"Speedtest failed: {e}")
+        
+        return metrics
+    
+    def _tcp_bandwidth_test(self, destination):
+        """Simple TCP bandwidth test"""
+        metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
+        
+        try:
+            import socket
+            import time
+            
+            # Try to connect to destination on common HTTP port
+            if not destination or destination.startswith('127.') or destination == 'localhost':
+                return metrics
+            
+            # Test download by receiving data
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
+                
+                # Try HTTP port
+                sock.connect((destination, 80))
+                
+                # Send HTTP request
+                request = f"GET / HTTP/1.1\r\nHost: {destination}\r\nConnection: close\r\n\r\n"
+                sock.send(request.encode())
+                
+                # Measure download
+                start_time = time.time()
+                total_bytes = 0
+                
+                while True:
+                    try:
+                        data = sock.recv(8192)
+                        if not data:
+                            break
+                        total_bytes += len(data)
+                        
+                        # Stop after reasonable amount
+                        if total_bytes > 1048576:  # 1MB
+                            break
+                            
+                    except socket.timeout:
+                        break
+                
+                elapsed_time = time.time() - start_time
+                sock.close()
+                
+                if elapsed_time > 0 and total_bytes > 0:
+                    bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
+                    metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
+                
+            except Exception as e:
+                logger.debug(f"TCP bandwidth test failed: {e}")
+        
+        except Exception as e:
+            logger.warning(f"TCP bandwidth test failed: {e}")
+        
+        return metrics
     
     def _classify_dscp(self, dscp_value):
         """Classify traffic based on DSCP value"""
