@@ -115,15 +115,22 @@ function showToast(message, type = 'info') {
     toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-atomic', 'true');
     
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" 
-                    data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    `;
+    const toastBody = document.createElement('div');
+    toastBody.className = 'toast-body';
+    toastBody.textContent = message; // Safe text assignment
+    
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn-close btn-close-white me-2 m-auto';
+    closeButton.setAttribute('data-bs-dismiss', 'toast');
+    closeButton.setAttribute('aria-label', 'Close');
+    
+    const flexDiv = document.createElement('div');
+    flexDiv.className = 'd-flex';
+    flexDiv.appendChild(toastBody);
+    flexDiv.appendChild(closeButton);
+    
+    toast.appendChild(flexDiv);
     
     toastContainer.appendChild(toast);
     
