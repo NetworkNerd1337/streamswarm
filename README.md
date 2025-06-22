@@ -62,40 +62,180 @@ See [USAGE.md](USAGE.md) for detailed instructions.
 
 ## Installation
 
-### Server Requirements
-- Python 3.7+
-- PostgreSQL (recommended) or SQLite
-- 1GB RAM minimum, 2GB+ recommended
-- Network access for client connections
+### System Requirements
 
-### Client Requirements
-- Python 3.7+
+#### Server Requirements
+- Python 3.8+ (3.9+ recommended)
+- PostgreSQL (recommended) or SQLite
+- 2GB RAM minimum, 4GB+ recommended
+- Network access for client connections
+- Administrative privileges for system monitoring
+
+#### Client Requirements
+- Python 3.8+ (3.9+ recommended)
 - Network utilities (ping, traceroute)
 - Outbound network access to server
+- Administrative privileges for advanced metrics
 
-### Setup Instructions
+### Python Installation
 
-1. **Clone or download the application files**
+#### Linux (Ubuntu/Debian)
+```bash
+# Update package list
+sudo apt update
 
-2. **Install Python dependencies:**
-   ```bash
-   pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary
-   ```
+# Install Python 3.9+ and pip
+sudo apt install python3.9 python3.9-pip python3.9-venv python3.9-dev
 
-3. **Configure database (optional):**
-   ```bash
-   export DATABASE_URL=postgresql://user:pass@localhost/streamswarm
-   ```
+# Install system dependencies for advanced monitoring
+sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool
+sudo apt install libpcap-dev tcpdump build-essential
 
-4. **Start the server:**
-   ```bash
-   python main.py
-   ```
+# Create symbolic links (optional)
+sudo ln -sf /usr/bin/python3.9 /usr/bin/python
+sudo ln -sf /usr/bin/pip3.9 /usr/bin/pip
+```
 
-5. **Deploy clients on monitoring hosts:**
-   ```bash
-   python client.py --server http://server-ip:5000
-   ```
+#### Linux (CentOS/RHEL/Fedora)
+```bash
+# Install Python 3.9+ and development tools
+sudo dnf install python3.9 python3.9-pip python3.9-devel gcc
+
+# Install system dependencies
+sudo dnf install iputils traceroute lm_sensors smartmontools ethtool
+sudo dnf install libpcap-devel tcpdump
+
+# For older versions, use yum instead of dnf
+```
+
+#### Windows
+```powershell
+# Option 1: Download from python.org
+# Visit https://www.python.org/downloads/windows/
+# Download Python 3.9+ installer and run with "Add to PATH" checked
+
+# Option 2: Using Chocolatey (if installed)
+choco install python
+
+# Option 3: Using winget (Windows 10/11)
+winget install Python.Python.3.11
+
+# Verify installation
+python --version
+pip --version
+```
+
+#### macOS
+```bash
+# Option 1: Using Homebrew (recommended)
+brew install python@3.9
+
+# Option 2: Download from python.org
+# Visit https://www.python.org/downloads/mac-osx/
+
+# Install system dependencies
+brew install libpcap
+
+# Verify installation
+python3 --version
+pip3 --version
+```
+
+### Application Setup
+
+#### 1. Clone or Download Application Files
+```bash
+# If using git
+git clone <repository-url>
+cd streamswarm
+
+# Or download and extract the files
+```
+
+#### 2. Create Virtual Environment (Recommended)
+```bash
+# Linux/macOS
+python3 -m venv streamswarm-env
+source streamswarm-env/bin/activate
+
+# Windows
+python -m venv streamswarm-env
+streamswarm-env\Scripts\activate
+```
+
+#### 3. Install Python Dependencies
+```bash
+# All dependencies in one command
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0
+
+# Or install from requirements file (if available)
+pip install -r requirements.txt
+```
+
+#### 4. Install System Dependencies
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump
+
+# CentOS/RHEL/Fedora
+sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump
+```
+
+**Windows:**
+```powershell
+# Most functionality works without additional tools
+# For advanced features, consider installing:
+# - Wireshark (for packet analysis)
+# - Windows Subsystem for Linux (WSL) for Unix tools
+```
+
+#### 5. Configure Database (Optional)
+```bash
+# For PostgreSQL (recommended for production)
+export DATABASE_URL=postgresql://user:password@localhost/streamswarm
+
+# Windows PowerShell
+$env:DATABASE_URL="postgresql://user:password@localhost/streamswarm"
+```
+
+#### 6. Start the Server
+```bash
+# Development mode
+python main.py
+
+# Production mode with Gunicorn (Linux/macOS)
+gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
+
+# Windows production (use waitress)
+pip install waitress
+waitress-serve --host=0.0.0.0 --port=5000 main:app
+```
+
+#### 7. Deploy Clients on Monitoring Hosts
+```bash
+# On each client machine
+python client.py --server http://server-ip:5000 --name "Client-Name"
+```
+
+### Verification
+
+After installation, verify everything works:
+
+1. **Server verification:** Access `http://localhost:5000` in your browser
+2. **Client verification:** Check client appears in the dashboard
+3. **Create a test:** Use the web interface to schedule a monitoring test
+4. **View results:** Confirm data collection and visualization works
+
+### Troubleshooting
+
+**Common Issues:**
+
+- **Permission errors:** Run with `sudo` on Linux/macOS or as Administrator on Windows
+- **Port conflicts:** Change port in configuration or stop conflicting services
+- **Module import errors:** Ensure all dependencies are installed in the correct Python environment
+- **Network connectivity:** Verify firewall settings allow connections on port 5000
 
 ## Configuration
 

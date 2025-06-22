@@ -64,60 +64,285 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-download me-2"></i>
-                        System Dependencies & Installation
+                        Complete Installation Guide
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-lg-6 mb-4">
-                            <h6 class="text-primary">
+                    <!-- Python Installation by Platform -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
                                 <i class="fab fa-python me-2"></i>
-                                Python Requirements
+                                Python Installation by Platform
                             </h6>
-                            <p class="text-muted mb-3">StreamSwarm requires Python 3.8+ and several packages:</p>
-                            <div class="bg-dark p-3 rounded mb-3">
-                                <code class="text-light">
-# Core dependencies<br>
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0<br>
-pip install psycopg2-binary>=2.9.0 sqlalchemy>=2.0.0<br>
-pip install psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0<br>
-pip install werkzeug>=2.3.0 email-validator>=2.0.0<br><br>
-# Advanced network analysis (for QoS monitoring)<br>
-pip install scapy>=2.5.0<br><br>
-# PDF report generation<br>
-pip install reportlab>=4.4.0 matplotlib>=3.10.0<br><br>
-# Or install all at once:<br>
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0
-                                </code>
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Note:</strong> See <code>DEPENDENCIES.md</code> for complete package information and alternative installation methods.
-                            </div>
-                            <div class="alert alert-info">
-                                <strong>Dependencies explained:</strong> <code>scapy</code> enables QoS monitoring with DSCP/CoS detection (may require root privileges). <code>reportlab</code> and <code>matplotlib</code> enable professional PDF report generation with performance charts and executive summaries.
-                            </div>
-                            <div class="alert alert-warning">
-                                <strong>Network utilities required:</strong> The client needs <code>ping</code> and <code>traceroute</code> system commands for network testing. Install with: <code>sudo apt install iputils-ping traceroute</code>
-                                <br><br>
-                                <strong>Bandwidth testing capabilities:</strong> StreamSwarm includes comprehensive bandwidth measurement using multiple methods:
-                                <ul class="small mt-2">
-                                    <li><strong>speedtest-cli:</strong> Internet speed testing for upload/download throughput</li>
-                                    <li><strong>HTTP-based testing:</strong> Direct bandwidth measurement to specific destinations</li>
-                                    <li><strong>TCP fallback:</strong> Custom socket-based throughput testing</li>
-                                </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-linux me-2"></i>
+                                        Linux (Ubuntu/Debian)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-2 rounded mb-2">
+                                        <code class="text-light small">
+# Update packages<br>
+sudo apt update<br><br>
+# Install Python 3.9+<br>
+sudo apt install python3.9 python3.9-pip python3.9-venv python3.9-dev<br><br>
+# System dependencies<br>
+sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump build-essential<br><br>
+# Verify installation<br>
+python3 --version<br>
+pip3 --version
+                                        </code>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="col-lg-6 mb-4">
-                            <h6 class="text-success">
-                                <i class="fas fa-server me-2"></i>
-                                System Packages
+                        <div class="col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-windows me-2"></i>
+                                        Windows
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>Method 1: Official Installer</strong>
+                                        <ol class="small">
+                                            <li>Visit <a href="https://www.python.org/downloads/windows/" target="_blank" class="text-decoration-none">python.org</a></li>
+                                            <li>Download Python 3.9+ (64-bit)</li>
+                                            <li>Run installer with "Add to PATH" checked</li>
+                                        </ol>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Method 2: Package Managers</strong>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+# Chocolatey<br>
+choco install python<br><br>
+# Winget<br>
+winget install Python.Python.3.11
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Verify:</strong>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">python --version<br>pip --version</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-apple me-2"></i>
+                                        macOS
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>Homebrew (Recommended):</strong>
+                                        <div class="bg-dark p-2 rounded mb-2">
+                                            <code class="text-light small">
+# Install Homebrew<br>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"<br><br>
+# Install Python<br>
+brew install python@3.9<br><br>
+# System dependencies<br>
+brew install libpcap
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Official Installer:</strong>
+                                        <p class="small">Visit <a href="https://www.python.org/downloads/mac-osx/" target="_blank" class="text-decoration-none">python.org</a> and download Python 3.9+ installer</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Virtual Environment Setup -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-lightbulb me-2"></i>Virtual Environment Setup (Recommended)</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Linux/macOS:</strong>
+                                        <div class="bg-dark p-2 rounded mt-2">
+                                            <code class="text-light small">python3 -m venv streamswarm-env<br>source streamswarm-env/bin/activate</code>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Windows:</strong>
+                                        <div class="bg-dark p-2 rounded mt-2">
+                                            <code class="text-light small">python -m venv streamswarm-env<br>streamswarm-env\Scripts\activate</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Python Dependencies -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-box me-2"></i>
+                                Python Package Installation
                             </h6>
-                            <p class="text-muted mb-3">Additional system packages may be required:</p>
-                            
-                            <h6 class="small text-info">Ubuntu/Debian:</h6>
-                            <div class="bg-dark p-3 rounded mb-3">
-                                <code class="text-light">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-6">
+                            <h6>All Dependencies (Single Command)</h6>
+                            <div class="bg-dark p-3 rounded">
+                                <code class="text-light small">pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0</code>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <h6>Step-by-Step Installation</h6>
+                            <div class="bg-dark p-3 rounded">
+                                <code class="text-light small">
+# Core application<br>
+pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary werkzeug email-validator<br><br>
+# Advanced features<br>
+pip install scapy speedtest-cli<br><br>
+# Report generation<br>
+pip install reportlab matplotlib
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Dependencies by Platform -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-tools me-2"></i>
+                                System Dependencies by Platform
+                            </h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">Linux System Tools</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-2 rounded">
+                                        <code class="text-light small">
+# Ubuntu/Debian<br>
+sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump<br><br>
+# CentOS/RHEL/Fedora<br>
+sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump<br><br>
+# Initialize sensors<br>
+sudo sensors-detect --auto
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Windows Setup</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small">Most functionality works without additional tools.</p>
+                                    <p class="small"><strong>Optional enhancements:</strong></p>
+                                    <ul class="small">
+                                        <li>Wireshark for packet analysis</li>
+                                        <li>WSL for Unix tools</li>
+                                        <li>Run as Administrator for system metrics</li>
+                                    </ul>
+                                    <div class="bg-dark p-2 rounded">
+                                        <code class="text-light small"># Optional: WSL<br>wsl --install</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0">macOS Tools</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-2 rounded mb-2">
+                                        <code class="text-light small">
+# Packet capture<br>
+brew install libpcap<br><br>
+# Optional tools<br>
+brew install nmap traceroute
+                                        </code>
+                                    </div>
+                                    <p class="small"><strong>Note:</strong> Some features may require admin privileges</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Installation Verification -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-check-circle me-2"></i>Installation Verification</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="small mb-2"><strong>Create test script (test_deps.py):</strong></p>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+try:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;import flask, psutil, requests<br>
+&nbsp;&nbsp;&nbsp;&nbsp;import scapy, speedtest, reportlab, matplotlib<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print("✅ All dependencies installed!")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"✅ CPU: {psutil.cpu_percent()}%")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"✅ Memory: {psutil.virtual_memory().percent}%")<br>
+except ImportError as e:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print(f"❌ Missing: {e}")
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="small mb-2"><strong>Run verification:</strong></p>
+                                        <div class="bg-dark p-2 rounded mb-2">
+                                            <code class="text-light small">python test_deps.py</code>
+                                        </div>
+                                        <p class="small mb-2"><strong>Troubleshooting:</strong></p>
+                                        <ul class="small">
+                                            <li>Use virtual environments to avoid conflicts</li>
+                                            <li>Run with admin privileges for system monitoring</li>
+                                            <li>Check firewall settings for port 5000</li>
+                                            <li>Ensure "Add to PATH" was selected during Python installation</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 sudo apt update<br>
 sudo apt install python3-pip python3-dev<br>
 sudo apt install libpcap-dev tcpdump<br>
@@ -300,13 +525,18 @@ psql "$DATABASE_URL" -c "SELECT version();"
                     <div class="row">
                         <div class="col-lg-6">
                             <h6>Basic Development Setup</h6>
-                            <pre class="bg-dark text-light p-3 rounded"><code># Install dependencies
-pip install flask flask-sqlalchemy psutil requests gunicorn speedtest-cli psycopg2-binary
+                            <pre class="bg-dark text-light p-3 rounded"><code># 1. Create virtual environment
+python3 -m venv streamswarm-env
+source streamswarm-env/bin/activate  # Linux/macOS
+# streamswarm-env\Scripts\activate   # Windows
 
-# Start server
+# 2. Install dependencies (see installation guide above)
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 psycopg2-binary>=2.9.0
+
+# 3. Start server
 python main.py
 
-# Access dashboard
+# 4. Access dashboard
 # Open http://localhost:5000</code></pre>
                         </div>
                         
@@ -317,8 +547,12 @@ export DATABASE_URL=postgresql://user:pass@host/db
 export SERVER_HOST=0.0.0.0
 export DEBUG=False
 
-# Start with Gunicorn
-gunicorn --bind 0.0.0.0:5000 --workers 4 main:app</code></pre>
+# Linux/macOS production
+gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
+
+# Windows production
+pip install waitress
+waitress-serve --host=0.0.0.0 --port=5000 main:app</code></pre>
                         </div>
                     </div>
                     

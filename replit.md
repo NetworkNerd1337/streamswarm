@@ -85,6 +85,14 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Updated comprehensive installation documentation for Linux and Windows
+  - Enhanced README.md with detailed Python installation guides for Ubuntu/Debian, CentOS/RHEL/Fedora, Windows, and macOS
+  - Updated DEPENDENCIES.md with platform-specific installation instructions and troubleshooting
+  - Enhanced TUTORIAL.md with step-by-step Python setup, virtual environment creation, and dependency verification
+  - Updated web tutorial page with interactive installation guide covering all platforms
+  - Added installation verification scripts and common troubleshooting solutions
+  - Included virtual environment setup instructions and best practices for all operating systems
+
 - June 22, 2025: Verified complete database schema with all 65+ enhanced metrics
   - Confirmed PostgreSQL database includes all network, QoS, application, performance, and infrastructure metrics
   - Database schema automatically creates complete table structure on application startup

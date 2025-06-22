@@ -2,36 +2,214 @@
 
 This comprehensive tutorial walks you through real-world scenarios for using StreamSwarm's distributed network monitoring system. You'll learn how to set up both server and client components, configure the database, install dependencies, and understand when and how to use each component.
 
-## System Requirements
+## System Requirements and Installation
 
-### Python Dependencies
-StreamSwarm requires Python 3.8+ and the following packages:
+### Python Installation Guide
 
+#### Linux Installation (Ubuntu/Debian)
+```bash
+# Update system packages
+sudo apt update
+
+# Install Python 3.9+ and essential tools
+sudo apt install python3.9 python3.9-pip python3.9-venv python3.9-dev
+sudo apt install build-essential libffi-dev libssl-dev
+
+# Install network monitoring system dependencies
+sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool
+sudo apt install libpcap-dev tcpdump
+
+# Create convenient symbolic links (optional)
+sudo ln -sf /usr/bin/python3.9 /usr/bin/python
+sudo ln -sf /usr/bin/pip3.9 /usr/bin/pip
+
+# Verify installation
+python --version  # Should show Python 3.9+
+pip --version
+```
+
+#### Linux Installation (CentOS/RHEL/Fedora)
+```bash
+# Install Python and development tools
+sudo dnf install python3.9 python3.9-pip python3.9-devel gcc
+sudo dnf install openssl-devel libffi-devel
+
+# Install system monitoring dependencies
+sudo dnf install iputils traceroute lm_sensors smartmontools ethtool
+sudo dnf install libpcap-devel tcpdump
+
+# For older systems, replace 'dnf' with 'yum'
+```
+
+#### Windows Installation
+```powershell
+# Method 1: Official Python Installer (Recommended)
+# 1. Visit https://www.python.org/downloads/windows/
+# 2. Download Python 3.9+ (64-bit recommended)
+# 3. Run installer with these settings:
+#    ✅ Add Python to PATH
+#    ✅ Install for all users
+#    ✅ Include pip
+
+# Method 2: Using Package Managers
+# Chocolatey:
+choco install python
+
+# Winget (Windows 10/11):
+winget install Python.Python.3.11
+
+# Verify installation
+python --version
+pip --version
+```
+
+#### macOS Installation
+```bash
+# Method 1: Homebrew (Recommended)
+# Install Homebrew first if needed:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Python
+brew install python@3.9
+
+# Install system dependencies
+brew install libpcap
+
+# Method 2: Official Installer
+# Visit https://www.python.org/downloads/mac-osx/
+# Download and run Python 3.9+ installer
+
+# Verify installation
+python3 --version
+pip3 --version
+```
+
+### StreamSwarm Dependencies
+
+#### Create Virtual Environment (Recommended)
+```bash
+# Linux/macOS
+python3 -m venv streamswarm-env
+source streamswarm-env/bin/activate
+
+# Windows
+python -m venv streamswarm-env
+streamswarm-env\Scripts\activate
+```
+
+#### Install Python Packages
 ```bash
 # Core application dependencies
 pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0
 pip install psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0
 pip install gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0
 
-# Advanced network analysis (for QoS monitoring)
+# Advanced network analysis and QoS monitoring
 pip install scapy>=2.5.0
 
-# PDF report generation
+# Bandwidth testing capabilities
+pip install speedtest-cli>=2.1.3
+
+# Professional report generation and visualization
 pip install reportlab>=4.4.0 matplotlib>=3.10.0
 
-# Or install all dependencies in one command
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 reportlab>=4.4.0 matplotlib>=3.10.0
+# Single command installation (all dependencies):
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0
+```
 
-## System Dependencies
+### System Dependencies by Platform
 
-For network testing functionality, install these system utilities:
-
+#### Linux System Tools
 ```bash
 # Ubuntu/Debian
-sudo apt install iputils-ping traceroute
+sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump
 
-# Additional system requirements for full functionality
-sudo apt install libpcap-dev tcpdump  # For QoS monitoring
+# CentOS/RHEL/Fedora  
+sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump
+
+# Initialize hardware sensors
+sudo sensors-detect --auto
+```
+
+#### Windows System Setup
+```powershell
+# Most functionality works without additional tools
+# For enhanced features (optional):
+
+# Install Wireshark for advanced packet analysis
+# Download from: https://www.wireshark.org/download.html
+
+# Enable Windows Subsystem for Linux (optional)
+wsl --install
+
+# Note: Run PowerShell as Administrator for system monitoring features
+```
+
+#### macOS System Tools
+```bash
+# Install packet capture library
+brew install libpcap
+
+# Optional network tools
+brew install nmap traceroute
+
+# Note: Some monitoring features require admin privileges
+```
+
+### Installation Verification
+
+#### Test Dependencies
+```python
+# Create test script: test_dependencies.py
+try:
+    import flask
+    import psutil
+    import requests
+    import scapy
+    import speedtest
+    import reportlab
+    import matplotlib
+    print("✅ All dependencies installed successfully!")
+    
+    # Test system access
+    print(f"✅ CPU usage: {psutil.cpu_percent()}%")
+    print(f"✅ Memory usage: {psutil.virtual_memory().percent}%")
+    
+except ImportError as e:
+    print(f"❌ Missing dependency: {e}")
+```
+
+#### Run Test
+```bash
+python test_dependencies.py
+```
+
+### Common Installation Issues
+
+#### Permission Errors
+```bash
+# Linux: Use virtual environment or user install
+python3 -m pip install --user <package>
+
+# Or create virtual environment (recommended)
+python3 -m venv env && source env/bin/activate && pip install <package>
+```
+
+#### Windows Issues
+```cmd
+# Long path support (run as Administrator)
+reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1
+
+# If pip not found, reinstall Python with "Add to PATH" option
+```
+
+#### Network Monitoring Permissions
+```bash
+# Linux: Some features require elevated privileges
+sudo python client.py --server http://server:5000
+
+# Windows: Run Command Prompt as Administrator
+# macOS: Use sudo for system-level monitoring
 ```
 
 # CentOS/RHEL/Fedora  
