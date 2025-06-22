@@ -222,6 +222,319 @@
             </div>
         </div>
     </div>
+    
+    <!-- Comprehensive Metrics Analysis -->
+    {% if test_results %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Comprehensive Metrics Analysis (65+ Metrics)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h6>Network Performance</h6>
+                                    {% set avg_latency = test_results | map(attribute='ping_latency') | select('number') | list %}
+                                    <p class="mb-1">Latency: {{ "%.1f"|format(avg_latency | average) if avg_latency else 'N/A' }}ms</p>
+                                    {% set avg_bandwidth = test_results | map(attribute='bandwidth_download') | select('number') | list %}
+                                    <p class="mb-0">Bandwidth: {{ "%.1f"|format(avg_bandwidth | average) if avg_bandwidth else 'N/A' }} Mbps</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h6>System Resources</h6>
+                                    {% set avg_cpu = test_results | map(attribute='cpu_percent') | select('number') | list %}
+                                    <p class="mb-1">CPU: {{ "%.1f"|format(avg_cpu | average) if avg_cpu else 'N/A' }}%</p>
+                                    {% set avg_memory = test_results | map(attribute='memory_percent') | select('number') | list %}
+                                    <p class="mb-0">Memory: {{ "%.1f"|format(avg_memory | average) if avg_memory else 'N/A' }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body text-center">
+                                    <h6>Quality of Service</h6>
+                                    {% set dscp_vals = test_results | map(attribute='dscp_value') | select('number') | list %}
+                                    <p class="mb-1">DSCP: {{ dscp_vals | first if dscp_vals else 'N/A' }}</p>
+                                    {% set ecn_capable = test_results | selectattr('ecn_capable', 'equalto', true) | list %}
+                                    <p class="mb-0">ECN: {{ 'Yes' if ecn_capable else 'No' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h6>Infrastructure</h6>
+                                    {% set power_vals = test_results | map(attribute='power_consumption_watts') | select('number') | list %}
+                                    <p class="mb-1">Power: {{ "%.1f"|format(power_vals | average) if power_vals else 'N/A' }}W</p>
+                                    {% set smart_health = test_results | selectattr('smart_drive_health') | list %}
+                                    <p class="mb-0">Drives: {{ 'Healthy' if smart_health else 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Metrics Tables -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="accordion" id="metricsAccordion">
+                                <!-- Network Metrics -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#networkMetrics">
+                                            <i class="fas fa-network-wired me-2"></i>Network Performance Metrics
+                                        </button>
+                                    </h2>
+                                    <div id="networkMetrics" class="accordion-collapse collapse show" data-bs-parent="#metricsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr><th>Metric</th><th>Average</th><th>Status</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Ping Latency (ms)</td>
+                                                            {% set avg_latency = test_results | map(attribute='ping_latency') | select('number') | list %}
+                                                            <td>{{ "%.2f"|format(avg_latency | average) if avg_latency else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_latency and (avg_latency | average) < 50 %}
+                                                                    <span class="badge bg-success">Excellent</span>
+                                                                {% elif avg_latency and (avg_latency | average) < 150 %}
+                                                                    <span class="badge bg-warning">Good</span>
+                                                                {% elif avg_latency %}
+                                                                    <span class="badge bg-danger">Poor</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>DNS Resolution (ms)</td>
+                                                            {% set avg_dns = test_results | map(attribute='dns_resolution_time') | select('number') | list %}
+                                                            <td>{{ "%.2f"|format(avg_dns | average) if avg_dns else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_dns and (avg_dns | average) < 50 %}
+                                                                    <span class="badge bg-success">Excellent</span>
+                                                                {% elif avg_dns %}
+                                                                    <span class="badge bg-warning">Good</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Bandwidth Download (Mbps)</td>
+                                                            {% set avg_down = test_results | map(attribute='bandwidth_download') | select('number') | list %}
+                                                            <td>{{ "%.2f"|format(avg_down | average) if avg_down else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_down and (avg_down | average) > 50 %}
+                                                                    <span class="badge bg-success">Excellent</span>
+                                                                {% elif avg_down and (avg_down | average) > 10 %}
+                                                                    <span class="badge bg-warning">Good</span>
+                                                                {% elif avg_down %}
+                                                                    <span class="badge bg-danger">Poor</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>MTU Size</td>
+                                                            {% set avg_mtu = test_results | map(attribute='mtu_size') | select('number') | list %}
+                                                            <td>{{ avg_mtu | average | round(0) | int if avg_mtu else 'N/A' }} bytes</td>
+                                                            <td><span class="badge bg-info">Info</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>TCP Retransmission Rate (%)</td>
+                                                            {% set avg_retrans = test_results | map(attribute='tcp_retransmission_rate') | select('number') | list %}
+                                                            <td>{{ "%.3f"|format(avg_retrans | average) if avg_retrans else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_retrans and (avg_retrans | average) < 1 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_retrans %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- System Resources -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#systemMetrics">
+                                            <i class="fas fa-server me-2"></i>System Resource Metrics
+                                        </button>
+                                    </h2>
+                                    <div id="systemMetrics" class="accordion-collapse collapse" data-bs-parent="#metricsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr><th>Metric</th><th>Average</th><th>Status</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>CPU Usage (%)</td>
+                                                            {% set avg_cpu = test_results | map(attribute='cpu_percent') | select('number') | list %}
+                                                            <td>{{ "%.1f"|format(avg_cpu | average) if avg_cpu else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_cpu and (avg_cpu | average) < 70 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_cpu and (avg_cpu | average) < 90 %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% elif avg_cpu %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Memory Usage (%)</td>
+                                                            {% set avg_memory = test_results | map(attribute='memory_percent') | select('number') | list %}
+                                                            <td>{{ "%.1f"|format(avg_memory | average) if avg_memory else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_memory and (avg_memory | average) < 80 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_memory and (avg_memory | average) < 95 %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% elif avg_memory %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>CPU Load (1min)</td>
+                                                            {% set avg_load = test_results | map(attribute='cpu_load_1min') | select('number') | list %}
+                                                            <td>{{ "%.2f"|format(avg_load | average) if avg_load else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_load and (avg_load | average) < 1 %}
+                                                                    <span class="badge bg-success">Low</span>
+                                                                {% elif avg_load and (avg_load | average) < 2 %}
+                                                                    <span class="badge bg-warning">Moderate</span>
+                                                                {% elif avg_load %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Process Count</td>
+                                                            {% set proc_count = test_results | map(attribute='process_count') | select('number') | list %}
+                                                            <td>{{ proc_count | average | round(0) | int if proc_count else 'N/A' }}</td>
+                                                            <td><span class="badge bg-info">Info</span></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Application & Infrastructure -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#appMetrics">
+                                            <i class="fas fa-globe me-2"></i>Application & Infrastructure Metrics
+                                        </button>
+                                    </h2>
+                                    <div id="appMetrics" class="accordion-collapse collapse" data-bs-parent="#metricsAccordion">
+                                        <div class="accordion-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Content Download Time (ms)</td>
+                                                            {% set content_time = test_results | map(attribute='content_download_time') | select('number') | list %}
+                                                            <td>{{ "%.2f"|format(content_time | average) if content_time else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if content_time and (content_time | average) < 1000 %}
+                                                                    <span class="badge bg-success">Fast</span>
+                                                                {% elif content_time %}
+                                                                    <span class="badge bg-warning">Slow</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Compression Ratio (%)</td>
+                                                            {% set compress_ratio = test_results | map(attribute='compression_ratio') | select('number') | list %}
+                                                            <td>{{ "%.1f"|format(compress_ratio | average) if compress_ratio else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if compress_ratio and (compress_ratio | average) > 30 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif compress_ratio %}
+                                                                    <span class="badge bg-warning">Low</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Power Consumption (W)</td>
+                                                            {% set power_watts = test_results | map(attribute='power_consumption_watts') | select('number') | list %}
+                                                            <td>{{ "%.1f"|format(power_watts | average) if power_watts else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if power_watts and (power_watts | average) < 150 %}
+                                                                    <span class="badge bg-success">Normal</span>
+                                                                {% elif power_watts %}
+                                                                    <span class="badge bg-warning">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Memory Error Rate (/hr)</td>
+                                                            {% set mem_errors = test_results | map(attribute='memory_error_rate') | select('number') | list %}
+                                                            <td>{{ "%.3f"|format(mem_errors | average) if mem_errors else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if mem_errors and (mem_errors | average) < 0.1 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif mem_errors %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
