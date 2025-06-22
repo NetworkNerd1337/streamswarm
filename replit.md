@@ -85,12 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 22, 2025: Implemented client notification for test termination
-  - Added test status checking mechanism for clients during test execution
-  - Clients now periodically check if their assigned tests have been stopped on server
-  - Graceful termination when tests are stopped prematurely from web interface
+- June 22, 2025: Fixed datetime timezone compatibility issues and client notification
+  - Resolved "can't subtract offset-naive and offset-aware datetimes" errors throughout application
+  - Fixed timezone handling in test progress calculations and result submissions
+  - Added comprehensive timezone-aware datetime comparisons in all functions
+  - Implemented client notification for test termination with status checking
   - Added new API endpoint /api/test/{id}/status for real-time test status queries
-  - Prevents clients from continuing tests that have been manually stopped
+  - Clients now gracefully terminate when tests are stopped from web interface
 
 - June 22, 2025: Fixed client URL parsing for network tests
   - Added proper URL parsing to extract hostnames from full URLs in ping, traceroute, and advanced network tests

@@ -147,7 +147,7 @@ def submit_test_results():
         result = TestResult(
             test_id=data['test_id'],
             client_id=data['client_id'],
-            timestamp=datetime.fromisoformat(data.get('timestamp', datetime.now(timezone.utc).isoformat())),
+            timestamp=datetime.fromisoformat(data.get('timestamp', datetime.now(timezone.utc).isoformat()).replace('Z', '+00:00')),
             cpu_percent=data.get('cpu_percent'),
             memory_percent=data.get('memory_percent'),
             memory_used=data.get('memory_used'),
