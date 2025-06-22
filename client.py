@@ -12,10 +12,30 @@ import argparse
 import threading
 import subprocess
 import platform
+import socket
+import struct
+import fcntl
 from datetime import datetime
 import psutil
 import requests
 from urllib.parse import urljoin
+
+# Try to import speedtest and scapy, fall back gracefully if not available
+try:
+    import speedtest
+    SPEEDTEST_AVAILABLE = True
+except ImportError:
+    SPEEDTEST_AVAILABLE = False
+    print("Warning: speedtest-cli not available. Bandwidth testing will be limited.")
+
+try:
+    from scapy.all import *
+    from scapy.layers.inet import IP, TCP, UDP, ICMP
+    from scapy.layers.l2 import Ether
+    SCAPY_AVAILABLE = True
+except ImportError:
+    SCAPY_AVAILABLE = False
+    print("Warning: scapy not available. Advanced QoS monitoring will be limited.")
 
 # Configure logging
 logging.basicConfig(
