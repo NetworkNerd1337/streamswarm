@@ -46,10 +46,10 @@ pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-bina
 - **gunicorn**: Production WSGI server
 - **werkzeug**: WSGI utilities
 - **email-validator**: Email validation utilities
-- **scapy**: Advanced packet analysis for QoS monitoring
-- **speedtest-cli**: Internet bandwidth testing and speed measurement
-- **reportlab**: Professional PDF document generation
-- **matplotlib**: Chart and graph generation for reports
+- **scapy**: Advanced packet analysis for QoS monitoring, DSCP/CoS detection, and traffic classification
+- **speedtest-cli**: Internet bandwidth testing and speed measurement with multi-method approach
+- **reportlab**: Professional PDF document generation with executive-level reporting
+- **matplotlib**: Chart and graph generation for performance trend analysis
 
 ## Optional: Create requirements.txt
 

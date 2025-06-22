@@ -85,6 +85,15 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Updated comprehensive documentation and tutorials for 65+ metrics system
+  - Enhanced tutorial page with comprehensive monitoring capabilities overview
+  - Updated system requirements to reflect advanced monitoring dependencies
+  - Added installation instructions for hardware monitoring tools (lm-sensors, smartctl, ethtool)
+  - Updated static documentation (DEPENDENCIES.md, README.md, TUTORIAL.md, USAGE.md) with complete feature coverage
+  - Enhanced feature descriptions to include all monitoring categories: network, QoS, application, performance, infrastructure
+  - Added system dependency installation instructions for Linux distributions
+  - Updated troubleshooting and configuration sections for advanced monitoring
+
 - June 22, 2025: Integrated comprehensive metrics into test results pages
   - Moved all 65+ enhanced metrics from standalone dashboard into individual test results pages
   - Added comprehensive metrics summary cards showing network, application, QoS, and infrastructure data

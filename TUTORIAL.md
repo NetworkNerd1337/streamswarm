@@ -429,7 +429,8 @@ python client.py --server http://monitoring.cloud.com:5000 --name "ATT-Connectio
 # On monitoring server (192.168.1.100)
 git clone [your-streamswarm-repo]
 cd streamswarm
-pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary speedtest-cli reportlab matplotlib scapy
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 psycopg2-binary>=2.9.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 scapy>=2.5.0 email-validator>=2.0.0 werkzeug>=2.3.0
+sudo apt install lm-sensors smartmontools ethtool libpcap-dev tcpdump
 export DATABASE_URL=postgresql://streamswarm:password@localhost/streamswarm
 python main.py
 ```
@@ -467,17 +468,18 @@ python client.py --server http://192.168.1.100:5000 --name "Branch-Office-Deskto
    - Select both clients
 4. Click "Create Test"
 
-**Note**: This test will measure latency, packet loss, DNS timing, bandwidth speeds, and system metrics.
+**Note**: This test will measure 65+ metrics including network performance, QoS analysis, application-layer timing, infrastructure health, and system resources.
 
 **Step 7: Monitor Test Progress**
 1. Watch progress bar advance in real-time
 2. Click chart icon when test completes
-3. Analyze performance differences between office locations:
-   - Network latency and packet loss
-   - Bandwidth upload/download speeds
-   - DNS resolution performance
-   - System resource utilization
-4. Export professional PDF reports with charts and recommendations
+3. Analyze comprehensive performance differences between office locations:
+   - Network performance: latency, bandwidth, MTU, TCP analysis
+   - QoS metrics: DSCP classification, traffic policing, ECN capability
+   - Application layer: content timing, compression, CDN performance
+   - Infrastructure health: power usage, drive health, memory errors
+   - System resources: CPU, memory, disk, network interface statistics
+4. Export professional PDF reports with charts, analysis tables, and actionable recommendations
 
 ### Tutorial 2: Advanced Multi-Service Monitoring
 

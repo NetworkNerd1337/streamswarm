@@ -122,6 +122,37 @@ Open your web browser and navigate to the server URL. You'll see three main sect
 - **CoS Values**: Class of Service markings (802.1Q)
 - **Traffic Classification**: Automatic traffic type detection
 - **QoS Policy Compliance**: Validation against expected policies
+- **Per-DSCP Latency**: Latency measurements by traffic class
+- **Traffic Policing Detection**: Rate limiting and shaping identification
+- **ECN Analysis**: Explicit Congestion Notification capability testing
+- **Queue Depth Estimation**: Network buffer analysis
+
+### Advanced Network Analysis
+- **MTU Discovery**: Path MTU detection with fragmentation analysis
+- **TCP Window Analysis**: Window scaling and congestion control monitoring
+- **Retransmission Analysis**: Packet loss and recovery pattern detection
+- **Connection Analysis**: Out-of-order packets and duplicate ACK tracking
+- **Flow Control Monitoring**: TCP/UDP flow control event detection
+
+### Application Layer Performance
+- **HTTP Response Analysis**: Status code tracking (2xx, 3xx, 4xx, 5xx)
+- **Content Performance**: Download timing and compression analysis
+- **Connection Optimization**: Keep-alive and reuse effectiveness
+- **Certificate Analysis**: SSL/TLS validation timing
+- **CDN Performance**: Content delivery network effectiveness scoring
+
+### Performance Profiling
+- **Cache Analysis**: DNS and HTTP cache hit ratios
+- **Application Timing**: End-to-end response time measurement
+- **Database Performance**: Query time estimation for web applications
+- **Multipath Detection**: MPTCP and ECMP path diversity analysis
+
+### Infrastructure Health Monitoring
+- **Power Management**: Energy consumption tracking where accessible
+- **Cooling Systems**: Fan speed and thermal monitoring
+- **Storage Health**: SMART drive health with temperature tracking
+- **Memory Integrity**: ECC error detection and reporting
+- **Network Hardware**: Physical layer error rates and statistics
 
 ## Troubleshooting
 
@@ -138,6 +169,8 @@ Open your web browser and navigate to the server URL. You'll see three main sect
 4. Review client logs for error messages
 5. Check bandwidth testing requirements (speedtest-cli installed)
 6. Verify network permissions for QoS monitoring (may require root)
+7. Ensure system monitoring tools are installed (lm-sensors, smartctl, ethtool)
+8. Check hardware access permissions for infrastructure monitoring
 
 ### Performance Issues
 1. Reduce test frequency (increase interval)
@@ -146,6 +179,8 @@ Open your web browser and navigate to the server URL. You'll see three main sect
 4. Consider database optimization for large datasets
 5. Disable bandwidth testing for high-frequency tests
 6. Use HTTP bandwidth testing instead of speedtest-cli for faster results
+7. Limit infrastructure monitoring on systems without hardware access
+8. Consider client permissions for comprehensive metric collection
 
 ## Advanced Configuration
 
