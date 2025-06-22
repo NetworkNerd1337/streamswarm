@@ -18,7 +18,7 @@ import fcntl
 from datetime import datetime
 import psutil
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 # Try to import speedtest and scapy, fall back gracefully if not available
 try:
@@ -281,10 +281,23 @@ class StreamSwarmClient:
     def _ping_test(self, destination, count=4):
         """Perform ping test with jitter calculation"""
         try:
-            if platform.system().lower() == 'windows':
-                cmd = ['ping', '-n', str(count), destination]
+            # Extract hostname from URL if full URL is provided
+            parsed_url = urlparse(destination)
+            if parsed_url.netloc:
+                hostname = parsed_url.netloc
+            elif parsed_url.scheme and not parsed_url.netloc:
+                # Handle case where URL parsing fails, extract manually
+                if destination.startswith(('http://', 'https://')):
+                    hostname = destination.split('://')[1].split('/')[0]
+                else:
+                    hostname = destination.split('/')[0]
             else:
-                cmd = ['ping', '-c', str(count), destination]
+                hostname = destination
+            
+            if platform.system().lower() == 'windows':
+                cmd = ['ping', '-n', str(count), hostname]
+            else:
+                cmd = ['ping', '-c', str(count), hostname]
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             
@@ -342,10 +355,23 @@ class StreamSwarmClient:
     def _traceroute_test(self, destination):
         """Perform traceroute test"""
         try:
-            if platform.system().lower() == 'windows':
-                cmd = ['tracert', destination]
+            # Extract hostname from URL if full URL is provided
+            parsed_url = urlparse(destination)
+            if parsed_url.netloc:
+                hostname = parsed_url.netloc
+            elif parsed_url.scheme and not parsed_url.netloc:
+                # Handle case where URL parsing fails, extract manually
+                if destination.startswith(('http://', 'https://')):
+                    hostname = destination.split('://')[1].split('/')[0]
+                else:
+                    hostname = destination.split('/')[0]
             else:
-                cmd = ['traceroute', destination]
+                hostname = destination
+            
+            if platform.system().lower() == 'windows':
+                cmd = ['tracert', hostname]
+            else:
+                cmd = ['traceroute', hostname]
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
             
@@ -399,7 +425,7 @@ class StreamSwarmClient:
                 result_data = {
                     'client_id': self.client_id,
                     'test_id': test_id,
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now(datetime.UTC).isoformat(),
                     **system_metrics,
                     'ping_latency': ping_result.get('latency'),
                     'ping_packet_loss': ping_result.get('packet_loss'),
@@ -440,13 +466,26 @@ class StreamSwarmClient:
         metrics = {}
         
         try:
+            # Extract hostname from URL if full URL is provided
+            parsed_url = urlparse(destination)
+            if parsed_url.netloc:
+                hostname = parsed_url.netloc
+            elif parsed_url.scheme and not parsed_url.netloc:
+                # Handle case where URL parsing fails, extract manually
+                if destination.startswith(('http://', 'https://')):
+                    hostname = destination.split('://')[1].split('/')[0]
+                else:
+                    hostname = destination.split('/')[0]
+            else:
+                hostname = destination
+            
             # DNS resolution timing
             import socket
             import time as time_module
             
             start_time = time_module.time()
             try:
-                socket.gethostbyname(destination)
+                socket.gethostbyname(hostname)
                 dns_time = (time_module.time() - start_time) * 1000  # Convert to milliseconds
                 metrics['dns_resolution_time'] = dns_time
             except:
@@ -464,7 +503,7 @@ class StreamSwarmClient:
                 
                 for port in ports_to_try:
                     try:
-                        result = sock.connect_ex((destination, port))
+                        result = sock.connect_ex((hostname, port))
                         if result == 0:
                             tcp_time = (time_module.time() - start_time) * 1000
                             break
@@ -487,8 +526,8 @@ class StreamSwarmClient:
                 context = ssl.create_default_context()
                 start_time = time_module.time()
                 
-                with socket.create_connection((destination, 443), timeout=10) as sock:
-                    with context.wrap_socket(sock, server_hostname=destination) as ssock:
+                with socket.create_connection((hostname, 443), timeout=10) as sock:
+                    with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                         ssl_time = (time_module.time() - start_time) * 1000
                         metrics['ssl_handshake_time'] = ssl_time
             except:
@@ -500,8 +539,14 @@ class StreamSwarmClient:
                 import urllib.error
                 
                 start_time = time_module.time()
+                # Use the original destination if it's a full URL, otherwise construct one
+                if destination.startswith(('http://', 'https://')):
+                    test_url = destination
+                else:
+                    test_url = f'http://{hostname}'
+                
                 try:
-                    response = urllib.request.urlopen(f'http://{destination}', timeout=10)
+                    response = urllib.request.urlopen(test_url, timeout=10)
                     ttfb = (time_module.time() - start_time) * 1000
                     metrics['ttfb'] = ttfb
                     response.close()
@@ -510,14 +555,17 @@ class StreamSwarmClient:
                     ttfb = (time_module.time() - start_time) * 1000
                     metrics['ttfb'] = ttfb
                 except:
-                    # Try HTTPS
-                    try:
-                        start_time = time_module.time()
-                        response = urllib.request.urlopen(f'https://{destination}', timeout=10)
-                        ttfb = (time_module.time() - start_time) * 1000
-                        metrics['ttfb'] = ttfb
-                        response.close()
-                    except:
+                    # Try HTTPS if HTTP failed and we don't have a full URL
+                    if not destination.startswith(('http://', 'https://')):
+                        try:
+                            start_time = time_module.time()
+                            response = urllib.request.urlopen(f'https://{hostname}', timeout=10)
+                            ttfb = (time_module.time() - start_time) * 1000
+                            metrics['ttfb'] = ttfb
+                            response.close()
+                        except:
+                            metrics['ttfb'] = None
+                    else:
                         metrics['ttfb'] = None
             except:
                 metrics['ttfb'] = None
