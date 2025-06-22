@@ -254,16 +254,16 @@ def submit_test_results():
         # Check if test should be marked as completed
         test = Test.query.get(result.test_id)
         if test and test.started_at:
-            # Ensure both datetimes are timezone-aware for comparison
+            # Ensure both datetimes are timezone-naive for comparison (database stores naive datetimes in Eastern Time)
             if test.started_at.tzinfo is None:
-                test_start_time = test.started_at.replace(tzinfo=zoneinfo.ZoneInfo('America/New_York'))
-            else:
                 test_start_time = test.started_at
+            else:
+                test_start_time = test.started_at.replace(tzinfo=None)
             
             elapsed_time = (datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None) - test_start_time).total_seconds()
             if elapsed_time >= test.duration:
                 test.status = 'completed'
-                test.completed_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).replace(tzinfo=None)
+                test.completed_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
                 
                 # Mark test client as completed
                 test_client = TestClient.query.filter_by(test_id=test.id, client_id=result.client_id).first()
