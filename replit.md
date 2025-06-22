@@ -85,6 +85,14 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Implemented client deletion functionality
+  - Added delete button for offline clients in client management interface
+  - Implemented safe client removal that preserves all historical test data
+  - Added confirmation dialog explaining data preservation policy
+  - Only offline clients can be deleted to prevent data loss during active testing
+  - TestResult and TestClient records remain intact for reporting and analysis
+  - Enhanced client management with proper data integrity safeguards
+
 - June 22, 2025: Fixed critical test results page functionality
   - Resolved JavaScript chart initialization errors preventing data visualization
   - Fixed metric dropdown functionality to properly switch between performance metrics
