@@ -184,6 +184,32 @@ except ImportError as e:
 python test_dependencies.py
 ```
 
+### Download StreamSwarm Application
+
+#### Get StreamSwarm from GitHub
+```bash
+# Method 1: Clone with Git (Recommended)
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
+
+# Method 2: Download ZIP file
+# 1. Visit https://github.com/NetworkNerd1337/Swarm
+# 2. Click green "Code" button
+# 3. Select "Download ZIP"
+# 4. Extract to your desired location
+# 5. Navigate to the extracted folder
+```
+
+#### Verify Download
+```bash
+# Check that you have the required files
+ls -la
+# You should see: main.py, client.py, app.py, models.py, etc.
+
+# Verify you're in the correct directory
+pwd  # Should end with /Swarm or similar
+```
+
 ### Common Installation Issues
 
 #### Permission Errors

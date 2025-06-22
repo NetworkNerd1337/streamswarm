@@ -93,7 +93,7 @@
 # Update packages<br>
 sudo apt update<br><br>
 # Install Python 3.9+<br>
-sudo apt install python3.9 python3.9-pip python3.9-venv python3.9-dev<br><br>
+sudo apt install python3 python3-pip python3-venv python3-dev<br><br>
 # System dependencies<br>
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump build-essential<br><br>
 # Verify installation<br>
@@ -296,6 +296,47 @@ brew install nmap traceroute
                                         </code>
                                     </div>
                                     <p class="small"><strong>Note:</strong> Some features may require admin privileges</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Download StreamSwarm Application -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-primary">
+                                <h6><i class="fab fa-github me-2"></i>Download StreamSwarm Application</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="small mb-2"><strong>Method 1: Git Clone (Recommended)</strong></p>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+git clone https://github.com/NetworkNerd1337/Swarm.git<br>
+cd Swarm
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="small mb-2"><strong>Method 2: Download ZIP</strong></p>
+                                        <ol class="small">
+                                            <li>Visit <a href="https://github.com/NetworkNerd1337/Swarm" target="_blank" class="text-decoration-none">GitHub Repository</a></li>
+                                            <li>Click green "Code" button</li>
+                                            <li>Select "Download ZIP"</li>
+                                            <li>Extract to desired location</li>
+                                            <li>Navigate to extracted folder</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <p class="small mb-1"><strong>Verify Download:</strong></p>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+ls -la  # Should show: main.py, client.py, app.py, models.py, etc.<br>
+pwd     # Should end with /Swarm
+                                            </code>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -525,32 +566,44 @@ psql "$DATABASE_URL" -c "SELECT version();"
                     <div class="row">
                         <div class="col-lg-6">
                             <h6>Basic Development Setup</h6>
-                            <pre class="bg-dark text-light p-3 rounded"><code># 1. Create virtual environment
+                            <pre class="bg-dark text-light p-3 rounded"><code># 1. Download StreamSwarm
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
+
+# 2. Create virtual environment
 python3 -m venv streamswarm-env
 source streamswarm-env/bin/activate  # Linux/macOS
 # streamswarm-env\Scripts\activate   # Windows
 
-# 2. Install dependencies (see installation guide above)
+# 3. Install dependencies (see installation guide above)
 pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 psycopg2-binary>=2.9.0
 
-# 3. Start server
+# 4. Start server
 python main.py
 
-# 4. Access dashboard
+# 5. Access dashboard
 # Open http://localhost:5000</code></pre>
                         </div>
                         
                         <div class="col-lg-6">
                             <h6>Production Configuration</h6>
-                            <pre class="bg-dark text-light p-3 rounded"><code># Set environment variables
+                            <pre class="bg-dark text-light p-3 rounded"><code># 1. Download and setup (same as development)
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
+
+# 2. Set environment variables
 export DATABASE_URL=postgresql://user:pass@host/db
 export SERVER_HOST=0.0.0.0
 export DEBUG=False
 
-# Linux/macOS production
+# 3. Install production dependencies
+pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary
+
+# 4. Start production server
+# Linux/macOS:
 gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
 
-# Windows production
+# Windows:
 pip install waitress
 waitress-serve --host=0.0.0.0 --port=5000 main:app</code></pre>
                         </div>

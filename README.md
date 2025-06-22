@@ -21,25 +21,31 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Quick Start
 
-1. **Install Dependencies**:
+1. **Download StreamSwarm:**
+   ```bash
+   git clone https://github.com/NetworkNerd1337/Swarm.git
+   cd Swarm
+   ```
+
+2. **Install Dependencies:**
    ```bash
    pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary speedtest-cli reportlab matplotlib scapy email-validator werkzeug
    sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump
    ```
 
-2. **Start the server:**
+3. **Start the server:**
    ```bash
    python main.py
    ```
 
-3. **Connect clients:**
+4. **Connect clients:**
    ```bash
    python client.py --server http://your-server-ip:5000
    ```
 
-3. **Access dashboard:** Open `http://localhost:5000` in your browser
+5. **Access dashboard:** Open `http://localhost:5000` in your browser
 
-4. **Create tests:** Use the web interface to schedule network monitoring tests
+6. **Create tests:** Use the web interface to schedule network monitoring tests
 
 See [USAGE.md](USAGE.md) for detailed instructions.
 
@@ -143,13 +149,15 @@ pip3 --version
 
 ### Application Setup
 
-#### 1. Clone or Download Application Files
+#### 1. Download StreamSwarm Application
 ```bash
-# If using git
-git clone <repository-url>
-cd streamswarm
+# Clone from GitHub repository
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
 
-# Or download and extract the files
+# Or download as ZIP file
+# Visit https://github.com/NetworkNerd1337/Swarm
+# Click "Code" → "Download ZIP" → Extract to desired location
 ```
 
 #### 2. Create Virtual Environment (Recommended)

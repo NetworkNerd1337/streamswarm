@@ -85,6 +85,15 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Integrated GitHub repository into installation documentation
+  - Updated all installation guides to include downloading from https://github.com/NetworkNerd1337/Swarm
+  - Enhanced README.md quick start with git clone instructions
+  - Updated DEPENDENCIES.md with GitHub download verification steps
+  - Enhanced TUTORIAL.md with detailed GitHub download methods (git clone and ZIP download)
+  - Updated web tutorial page with interactive GitHub download section
+  - Added file verification steps to ensure complete download
+  - Integrated repository download into both development and production setup workflows
+
 - June 22, 2025: Updated comprehensive installation documentation for Linux and Windows
   - Enhanced README.md with detailed Python installation guides for Ubuntu/Debian, CentOS/RHEL/Fedora, Windows, and macOS
   - Updated DEPENDENCIES.md with platform-specific installation instructions and troubleshooting

@@ -221,6 +221,27 @@ brew install nmap traceroute
 # Note: Some features may require admin privileges
 ```
 
+## Download StreamSwarm Application
+
+### From GitHub Repository
+
+```bash
+# Clone the repository
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
+
+# Or download ZIP file from GitHub
+# Visit: https://github.com/NetworkNerd1337/Swarm
+# Click "Code" → "Download ZIP" → Extract files
+```
+
+### Verify Download
+```bash
+# Check that you have the main application files
+ls -la
+# Should show: main.py, client.py, app.py, models.py, routes.py, etc.
+```
+
 ## Virtual Environment Setup (Recommended)
 
 ### Linux/macOS
