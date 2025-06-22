@@ -491,7 +491,7 @@ def stop_test(test_id):
         return jsonify({'error': 'Test is not running'}), 400
     
     test.status = 'completed'
-    test.completed_at = datetime.utcnow()
+    test.completed_at = datetime.now(timezone.utc)
     
     # Update all test clients to completed status
     TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})

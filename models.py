@@ -10,7 +10,7 @@ class Client(db.Model):
     status = db.Column(db.String(20), default='offline')  # online, offline, testing
     last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     system_info = db.Column(Text)  # JSON string for system information
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
     test_results = db.relationship('TestResult', backref='client', lazy=True)
@@ -35,7 +35,7 @@ class Test(db.Model):
     duration = db.Column(db.Integer, default=300)  # Test duration in seconds
     interval = db.Column(db.Integer, default=5)  # Measurement interval in seconds
     status = db.Column(db.String(20), default='pending')  # pending, running, completed, failed
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     started_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
     
