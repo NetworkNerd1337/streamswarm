@@ -299,6 +299,8 @@ def get_test_data(test_id):
             'network_bytes_recv': {},
             'disk_read_iops': {},
             'disk_write_iops': {},
+            'bandwidth_upload': {},
+            'bandwidth_download': {},
             'dscp_value': {},
             'cos_value': {},
             'qos_policy_compliant': {}

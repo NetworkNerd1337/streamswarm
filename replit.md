@@ -85,6 +85,16 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Comprehensive bandwidth testing implementation
+  - Added multi-method bandwidth testing with HTTP, speedtest-cli, and TCP approaches
+  - Implemented real bandwidth measurement replacing mock data with actual throughput testing
+  - Added speedtest-cli dependency for accurate internet speed testing
+  - Enhanced PDF reports to include bandwidth performance metrics and status indicators
+  - Updated test results visualization to display upload/download speeds
+  - Added bandwidth metrics to enhanced metrics dashboard with dedicated performance cards
+  - Implemented fallback testing methods for reliability across different network environments
+  - Real-time bandwidth data collection and historical tracking for performance analysis
+
 - June 22, 2025: Implemented client deletion functionality
   - Added delete button for offline clients in client management interface
   - Implemented safe client removal that preserves all historical test data
