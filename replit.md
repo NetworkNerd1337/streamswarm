@@ -95,6 +95,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Database schema automatically migrated with new metric columns
   - Professional logo integration across all pages in navigation and headers
   - Enhanced visual design with consistent logo placement and improved page layouts
+  - Created comprehensive Enhanced Metrics Dashboard with categorized metric overview
+  - Updated test results page with dropdown selector for all 40+ available metrics
+  - Fixed dark mode compatibility for metric cards with proper contrast and readability
 
 - June 21, 2025: Complete implementation of StreamSwarm network monitoring system
   - PostgreSQL database integration with all tables created
