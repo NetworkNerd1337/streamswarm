@@ -1,9 +1,11 @@
-from flask import render_template, request, jsonify, redirect, url_for, flash
+from flask import render_template, request, jsonify, redirect, url_for, flash, send_file
 from app import app, db
 from models import Client, Test, TestResult, TestClient
 from datetime import datetime, timedelta
 import json
 import logging
+import os
+from pdf_generator import generate_test_report_pdf
 
 @app.route('/')
 def dashboard():
