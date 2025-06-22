@@ -98,6 +98,13 @@ pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-bina
                             </div>
                             <div class="alert alert-warning">
                                 <strong>Network utilities required:</strong> The client needs <code>ping</code> and <code>traceroute</code> system commands for network testing. Install with: <code>sudo apt install iputils-ping traceroute</code>
+                                <br><br>
+                                <strong>Bandwidth testing capabilities:</strong> StreamSwarm includes comprehensive bandwidth measurement using multiple methods:
+                                <ul class="small mt-2">
+                                    <li><strong>speedtest-cli:</strong> Internet speed testing for upload/download throughput</li>
+                                    <li><strong>HTTP-based testing:</strong> Direct bandwidth measurement to specific destinations</li>
+                                    <li><strong>TCP fallback:</strong> Custom socket-based throughput testing</li>
+                                </ul>
                             </div>
                         </div>
                         
@@ -294,7 +301,7 @@ psql "$DATABASE_URL" -c "SELECT version();"
                         <div class="col-lg-6">
                             <h6>Basic Development Setup</h6>
                             <pre class="bg-dark text-light p-3 rounded"><code># Install dependencies
-pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary
+pip install flask flask-sqlalchemy psutil requests gunicorn speedtest-cli psycopg2-binary
 
 # Start server
 python main.py
