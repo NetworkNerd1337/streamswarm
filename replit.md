@@ -85,6 +85,12 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Updated client connection examples throughout tutorial for Replit deployment
+  - Fixed Client Deployment Strategies card to show HTTPS connection format
+  - Updated example commands to use Replit domain instead of port 5000
+  - Added distinction between Replit deployment and self-hosted server examples
+  - Updated clients page placeholder text with correct connection string
+
 - June 22, 2025: Fixed missing deleteClient function in client management interface
   - Added deleteClient JavaScript function that was removed during XSS security fixes
   - Implemented proper confirmation dialog and API request handling

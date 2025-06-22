@@ -775,11 +775,11 @@ cd Swarm
 # 2. Install minimal dependencies
 pip install psutil requests
 
-# 3. Connect to server
-python client.py --server http://192.168.1.100:5000
+# 3. Connect to Replit server (HTTPS)
+python client.py --server https://your-repl-domain.replit.app --name "Client-01"
 
-# 4. With custom name
-python client.py --server http://monitoring.company.com:5000 --name "Web-Server-01"</code></pre>
+# 4. Connect to self-hosted server
+python client.py --server http://192.168.1.100:5000 --name "Local-Client"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">
@@ -789,11 +789,11 @@ git clone https://github.com/NetworkNerd1337/Swarm.git
 cd Swarm
 pip install psutil requests
 
-# New York Office
-python client.py --server http://monitoring.company.com:5000 --name "NYC-Office"
+# New York Office (Replit deployment)
+python client.py --server https://your-repl-domain.replit.app --name "NYC-Office"
 
-# London Office
-python client.py --server http://monitoring.company.com:5000 --name "London-Office"</code></pre>
+# London Office (self-hosted)
+python client.py --server https://monitoring.company.com --name "London-Office"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">
