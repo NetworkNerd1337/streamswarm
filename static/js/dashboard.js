@@ -67,12 +67,21 @@ function showLoading(elementId) {
 function showError(elementId, message) {
     const element = document.getElementById(elementId);
     if (element) {
-        element.innerHTML = `
-            <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                ${message}
-            </div>
-        `;
+        // Create elements safely to prevent XSS
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.setAttribute('role', 'alert');
+        
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-exclamation-triangle me-2';
+        
+        const textNode = document.createTextNode(message);
+        
+        alertDiv.appendChild(icon);
+        alertDiv.appendChild(textNode);
+        
+        element.innerHTML = '';
+        element.appendChild(alertDiv);
     }
 }
 
