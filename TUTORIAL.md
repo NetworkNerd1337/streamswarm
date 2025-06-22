@@ -16,8 +16,8 @@ pip install gunicorn werkzeug email-validator
 # Advanced network analysis (for QoS monitoring)
 pip install scapy
 
-# Or install all dependencies at once
-pip install -r requirements.txt
+# Or install all dependencies in one command
+pip install flask flask-sqlalchemy psycopg2-binary sqlalchemy psutil requests gunicorn werkzeug email-validator scapy
 ```
 
 ### System Packages
