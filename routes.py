@@ -583,3 +583,40 @@ def export_test_pdf(test_id):
     except Exception as e:
         logging.error(f"PDF generation failed for test {test_id}: {str(e)}")
         return jsonify({'error': f'Failed to generate PDF report: {str(e)}'}), 500
+
+@app.route('/api/client/<int:client_id>', methods=['DELETE'])
+def delete_client(client_id):
+    """Delete a client (only if offline) while preserving historical data"""
+    try:
+        client = Client.query.get_or_404(client_id)
+        
+        # Security check: only allow deletion of offline clients
+        if client.status == 'online':
+            return jsonify({'error': 'Cannot delete online client. Client must be offline first.'}), 400
+        
+        # Check if client has test data
+        result_count = TestResult.query.filter_by(client_id=client_id).count()
+        test_client_count = TestClient.query.filter_by(client_id=client_id).count()
+        
+        # Store client info for logging
+        client_hostname = client.hostname
+        
+        # Remove client from the database
+        # Note: TestResult and TestClient records are preserved for historical data
+        db.session.delete(client)
+        db.session.commit()
+        
+        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted. Preserved {result_count} test results and {test_client_count} test assignments.")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Client "{client_hostname}" deleted successfully',
+            'preserved_data': {
+                'test_results': result_count,
+                'test_assignments': test_client_count
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error deleting client {client_id}: {str(e)}")
+        return jsonify({'error': 'Failed to delete client'}), 500
