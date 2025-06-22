@@ -231,31 +231,61 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTestData();
 });
 
-function loadTestData() {
-    fetch(`/api/test/{{ test.id }}/data`)
-        .then(response => response.json())
-        .then(data => {
-            testData = data;
-            initializeCharts();
-            updateSummaryStats();
-            updateClientSummary();
-        })
-        .catch(error => {
-            console.error('Error loading test data:', error);
-        });
+async function loadTestData() {
+    try {
+        console.log('Loading test data from: /api/test/{{ test.id }}/data');
+        const response = await fetch(`/api/test/{{ test.id }}/data`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        testData = await response.json();
+        console.log('Test data loaded successfully:', testData);
+        
+        // Check if we have valid data
+        if (!testData || !testData.clients || Object.keys(testData.clients).length === 0) {
+            console.log('No client data available');
+            document.getElementById('avg-latency').textContent = '--';
+            document.getElementById('avg-packet-loss').textContent = '--';
+            return;
+        }
+        
+        // Initialize charts and update stats
+        initializeCharts();
+        updateSummaryStats();
+        updateClientSummary();
+        
+    } catch (error) {
+        console.error('Error loading test data:', error);
+        document.getElementById('avg-latency').textContent = '--';
+        document.getElementById('avg-packet-loss').textContent = '--';
+    }
 }
 
 function initializeCharts() {
+    console.log('Initializing charts with data:', testData);
+    
+    if (!testData || !testData.clients || !testData.metrics) {
+        console.error('Cannot initialize charts: missing data structure');
+        return;
+    }
+    
     // Network Chart
     const networkCtx = document.getElementById('networkChart').getContext('2d');
     
+    const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
     const datasets = Object.keys(testData.clients).map((clientId, index) => {
-        const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
         const color = colors[index % colors.length];
+        const metricData = testData.metrics[currentMetric] && testData.metrics[currentMetric][clientId] 
+            ? testData.metrics[currentMetric][clientId] 
+            : [];
+        
+        console.log(`Client ${clientId} (${testData.clients[clientId]}) ${currentMetric} data:`, metricData.length, 'points');
         
         return {
             label: testData.clients[clientId],
-            data: testData.metrics[currentMetric][clientId] || [],
+            data: metricData,
             borderColor: color,
             backgroundColor: color + '20',
             fill: false,
