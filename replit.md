@@ -85,6 +85,12 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Updated deployment configuration section to be platform-agnostic
+  - Changed "Replit Deployment Configuration" to "External vs Self-Hosted Server Configuration"
+  - Focused on the key difference: external deployments don't need port specification
+  - Provided examples for both cloud deployments and self-hosted servers
+  - Made documentation more generic while maintaining practical guidance
+
 - June 22, 2025: Fixed JavaScript syntax error in client delete functionality by using data attributes
   - Replaced inline onclick handlers with data attributes to avoid JSON escaping issues
   - Added event listeners in DOMContentLoaded to handle delete button clicks

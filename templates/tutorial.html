@@ -735,17 +735,25 @@ tail -f /var/log/streamswarm.log
                     <div class="row">
                         <div class="col-12">
                             <div class="alert alert-warning">
-                                <h6><i class="fas fa-cloud me-2"></i>Replit Deployment Configuration</h6>
-                                <p class="small mb-2"><strong>For clients connecting to Replit-deployed servers:</strong></p>
+                                <h6><i class="fas fa-cloud me-2"></i>External vs Self-Hosted Server Configuration</h6>
+                                <p class="small mb-2"><strong>External hosted servers (cloud deployments):</strong></p>
                                 <div class="bg-dark p-3 rounded mb-2">
                                     <code class="text-light">
-# Use HTTPS and the Replit domain (not port 5000)<br>
-python client.py --server https://your-repl-name.replit.app --name "Client-01"<br><br>
-# Your current Replit URL:<br>
+# Use HTTPS without port specification<br>
+python client.py --server https://your-domain.example.com --name "Client-01"<br><br>
+# Current deployment URL:<br>
 # https://1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev
                                     </code>
                                 </div>
-                                <p class="small mb-0"><strong>Note:</strong> Replit maps external port 80/443 to internal port 5000. External clients should connect via HTTPS, not HTTP port 5000.</p>
+                                <p class="small mb-2"><strong>Self-hosted servers (local/internal networks):</strong></p>
+                                <div class="bg-dark p-3 rounded mb-2">
+                                    <code class="text-light">
+# Specify port explicitly for self-hosted servers<br>
+python client.py --server http://192.168.1.100:5000 --name "Client-01"<br>
+python client.py --server https://internal-server.company.com:5000 --name "Client-01"
+                                    </code>
+                                </div>
+                                <p class="small mb-0"><strong>Note:</strong> Cloud deployments typically handle port mapping automatically, while self-hosted servers require explicit port specification.</p>
                             </div>
                         </div>
                     </div>
