@@ -226,6 +226,7 @@
 let testData = {};
 let networkChart, cpuChart, memoryChart, diskChart;
 let currentMetric = 'ping_latency';
+let currentMetric = 'ping_latency';
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTestData();
@@ -432,25 +433,31 @@ function showMetric(metric) {
     // Update dropdown label
     document.getElementById('current-metric-label').textContent = getMetricTitle(metric).replace(' Over Time', '');
     
-    // Update chart
-    const datasets = Object.keys(testData.clients).map((clientId, index) => {
-        const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
-        const color = colors[index % colors.length];
+    // Only update chart if it exists and testData is available
+    if (networkChart && testData && testData.clients && testData.metrics) {
+        const datasets = Object.keys(testData.clients).map((clientId, index) => {
+            const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
+            const color = colors[index % colors.length];
+            
+            return {
+                label: testData.clients[clientId],
+                data: testData.metrics[metric] && testData.metrics[metric][clientId] ? testData.metrics[metric][clientId] : [],
+                borderColor: color,
+                backgroundColor: color + '20',
+                fill: false,
+                tension: 0.1
+            };
+        });
         
-        return {
-            label: testData.clients[clientId],
-            data: testData.metrics[metric][clientId] || [],
-            borderColor: color,
-            backgroundColor: color + '20',
-            fill: false,
-            tension: 0.1
-        };
-    });
-    
-    networkChart.data.datasets = datasets;
+        networkChart.data.datasets = datasets;
     networkChart.options.plugins.title.text = getMetricTitle(metric);
     networkChart.options.scales.y.title.text = getMetricUnit(metric);
-    networkChart.update();
+        networkChart.update();
+        
+        // Update Y-axis label
+        networkChart.options.scales.y.title.text = getMetricUnit(metric);
+        networkChart.update('none');
+    }
 }
 
 function getMetricTitle(metric) {
@@ -510,6 +517,12 @@ function getMetricUnit(metric) {
 }
 
 function updateSummaryStats() {
+    if (!testData || !testData.clients || !testData.metrics) {
+        document.getElementById('avg-latency').textContent = '--';
+        document.getElementById('avg-packet-loss').textContent = '--';
+        return;
+    }
+    
     // Calculate average latency and packet loss
     let totalLatency = 0;
     let totalPacketLoss = 0;
@@ -517,18 +530,18 @@ function updateSummaryStats() {
     let packetLossCount = 0;
     
     Object.keys(testData.clients).forEach(clientId => {
-        const latencyData = testData.metrics.ping_latency[clientId] || [];
-        const packetLossData = testData.metrics.ping_packet_loss[clientId] || [];
+        const latencyData = (testData.metrics.ping_latency && testData.metrics.ping_latency[clientId]) || [];
+        const packetLossData = (testData.metrics.ping_packet_loss && testData.metrics.ping_packet_loss[clientId]) || [];
         
         latencyData.forEach(point => {
-            if (point.y !== null) {
+            if (point && point.y !== null && point.y !== undefined) {
                 totalLatency += point.y;
                 latencyCount++;
             }
         });
         
         packetLossData.forEach(point => {
-            if (point.y !== null) {
+            if (point && point.y !== null && point.y !== undefined) {
                 totalPacketLoss += point.y;
                 packetLossCount++;
             }
