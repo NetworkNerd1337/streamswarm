@@ -731,29 +731,6 @@ tail -f /var/log/streamswarm.log
                             </div>
                         </div>
                     </div>
-
-# 2. Set environment variables
-export DATABASE_URL=postgresql://user:pass@host/db
-export SERVER_HOST=0.0.0.0
-export DEBUG=False
-
-# 3. Install production dependencies
-pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary
-
-# 4. Start production server
-# Linux/macOS:
-gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
-
-# Windows:
-pip install waitress
-waitress-serve --host=0.0.0.0 --port=5000 main:app</code></pre>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-success mt-3">
-                        <h6><i class="fas fa-lightbulb me-2"></i>Pro Tip</h6>
-                        <p class="mb-0">For production use, deploy the server on a reliable host with good network connectivity to all client locations. Consider using a cloud instance or dedicated server.</p>
-                    </div>
                 </div>
             </div>
         </div>
