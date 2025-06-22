@@ -21,6 +21,18 @@ pip install reportlab>=4.4.0 matplotlib>=3.10.0
 
 # Or install all dependencies in one command
 pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 reportlab>=4.4.0 matplotlib>=3.10.0
+
+## System Dependencies
+
+For network testing functionality, install these system utilities:
+
+```bash
+# Ubuntu/Debian
+sudo apt install iputils-ping traceroute
+
+# CentOS/RHEL/Fedora  
+sudo yum install iputils traceroute
+```
 ```
 
 **Note:** See `DEPENDENCIES.md` for complete package information including a properly formatted requirements.txt template.
