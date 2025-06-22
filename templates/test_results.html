@@ -556,18 +556,25 @@ async function loadTestData() {
             console.log('No client data available');
             document.getElementById('avg-latency').textContent = '--';
             document.getElementById('avg-packet-loss').textContent = '--';
+            document.getElementById('data-points').textContent = '0';
             return;
         }
         
-        // Initialize charts and update stats
-        initializeCharts();
-        updateSummaryStats();
-        updateClientSummary();
+        try {
+            // Initialize charts and update stats
+            initializeCharts();
+            updateSummaryStats();
+            updateClientSummary();
+            console.log('All components initialized successfully');
+        } catch (error) {
+            console.error('Error during component initialization:', error);
+        }
         
     } catch (error) {
         console.error('Error loading test data:', error);
         document.getElementById('avg-latency').textContent = '--';
         document.getElementById('avg-packet-loss').textContent = '--';
+        document.getElementById('data-points').textContent = '0';
     }
 }
 
@@ -578,6 +585,8 @@ function initializeCharts() {
         console.error('Cannot initialize charts: missing data structure');
         return;
     }
+    
+    try {
     
     // Network Chart
     const networkCtx = document.getElementById('networkChart').getContext('2d');
@@ -592,12 +601,14 @@ function initializeCharts() {
         const validPoints = metricData.filter(p => p && p.y !== null && p.y !== undefined && !isNaN(p.y));
         console.log(`Client ${clientId} (${testData.clients[clientId]}) ${currentMetric}: ${validPoints.length}/${metricData.length} valid points`);
         
+        const processedData = metricData.filter(point => point && point.x && point.y !== null).map(point => ({
+            x: new Date(point.x),
+            y: point.y
+        }));
+        
         return {
             label: testData.clients[clientId],
-            data: metricData.map(point => ({
-                x: new Date(point.x),
-                y: point.y
-            })),
+            data: processedData,
             borderColor: color,
             backgroundColor: color + '20',
             fill: false,
@@ -662,17 +673,22 @@ function initializeResourceCharts() {
     
     // CPU Chart
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-    const cpuDatasets = Object.keys(testData.clients).map((clientId, index) => ({
-        label: testData.clients[clientId],
-        data: ((testData.metrics.cpu && testData.metrics.cpu[clientId]) || []).map(point => ({
+    const cpuDatasets = Object.keys(testData.clients).map((clientId, index) => {
+        const rawData = (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [];
+        const processedData = rawData.filter(point => point && point.x && point.y !== null).map(point => ({
             x: new Date(point.x),
             y: point.y
-        })),
-        borderColor: colors[index % colors.length],
-        backgroundColor: colors[index % colors.length] + '20',
-        fill: false,
-        tension: 0.1
-    }));
+        }));
+        
+        return {
+            label: testData.clients[clientId],
+            data: processedData,
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '20',
+            fill: false,
+            tension: 0.1
+        };
+    });
 
     cpuChart = new Chart(cpuCtx, {
         type: 'line',
@@ -701,17 +717,22 @@ function initializeResourceCharts() {
 
     // Memory Chart
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
-    const memoryDatasets = Object.keys(testData.clients).map((clientId, index) => ({
-        label: testData.clients[clientId],
-        data: ((testData.metrics.memory && testData.metrics.memory[clientId]) || []).map(point => ({
+    const memoryDatasets = Object.keys(testData.clients).map((clientId, index) => {
+        const rawData = (testData.metrics.memory && testData.metrics.memory[clientId]) || [];
+        const processedData = rawData.filter(point => point && point.x && point.y !== null).map(point => ({
             x: new Date(point.x),
             y: point.y
-        })),
-        borderColor: colors[index % colors.length],
-        backgroundColor: colors[index % colors.length] + '20',
-        fill: false,
-        tension: 0.1
-    }));
+        }));
+        
+        return {
+            label: testData.clients[clientId],
+            data: processedData,
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '20',
+            fill: false,
+            tension: 0.1
+        };
+    });
 
     memoryChart = new Chart(memoryCtx, {
         type: 'line',
@@ -740,17 +761,22 @@ function initializeResourceCharts() {
 
     // Disk Chart
     const diskCtx = document.getElementById('diskChart').getContext('2d');
-    const diskDatasets = Object.keys(testData.clients).map((clientId, index) => ({
-        label: testData.clients[clientId],
-        data: ((testData.metrics.disk && testData.metrics.disk[clientId]) || []).map(point => ({
+    const diskDatasets = Object.keys(testData.clients).map((clientId, index) => {
+        const rawData = (testData.metrics.disk && testData.metrics.disk[clientId]) || [];
+        const processedData = rawData.filter(point => point && point.x && point.y !== null).map(point => ({
             x: new Date(point.x),
             y: point.y
-        })),
-        borderColor: colors[index % colors.length],
-        backgroundColor: colors[index % colors.length] + '20',
-        fill: false,
-        tension: 0.1
-    }));
+        }));
+        
+        return {
+            label: testData.clients[clientId],
+            data: processedData,
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '20',
+            fill: false,
+            tension: 0.1
+        };
+    });
 
     diskChart = new Chart(diskCtx, {
         type: 'line',
@@ -864,9 +890,13 @@ function getMetricUnit(metric) {
 }
 
 function updateSummaryStats() {
+    console.log('Updating summary stats with data:', testData);
+    
     if (!testData || !testData.clients || !testData.metrics) {
+        console.log('Missing data structure for summary stats');
         document.getElementById('avg-latency').textContent = '--';
         document.getElementById('avg-packet-loss').textContent = '--';
+        document.getElementById('data-points').textContent = '0';
         return;
     }
     
@@ -877,11 +907,15 @@ function updateSummaryStats() {
     let packetLossCount = 0;
     let totalCpu = 0;
     let cpuCount = 0;
+    let totalDataPoints = 0;
     
     Object.keys(testData.clients).forEach(clientId => {
         const latencyData = (testData.metrics.ping_latency && testData.metrics.ping_latency[clientId]) || [];
         const packetLossData = (testData.metrics.ping_packet_loss && testData.metrics.ping_packet_loss[clientId]) || [];
         const cpuData = (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [];
+        
+        // Count total data points from any metric
+        totalDataPoints += Math.max(latencyData.length, cpuData.length, packetLossData.length);
         
         latencyData.forEach(point => {
             if (point && point.y !== null && point.y !== undefined && !isNaN(point.y)) {
@@ -906,14 +940,16 @@ function updateSummaryStats() {
     });
     
     // Update displays with actual data or appropriate messages
-    const avgLatency = latencyCount > 0 ? (totalLatency / latencyCount).toFixed(1) : 'N/A';
-    const avgPacketLoss = packetLossCount > 0 ? (totalPacketLoss / packetLossCount).toFixed(1) : 'N/A';
-    const avgCpu = cpuCount > 0 ? (totalCpu / cpuCount).toFixed(1) : 'N/A';
+    const avgLatency = latencyCount > 0 ? (totalLatency / latencyCount).toFixed(1) : '--';
+    const avgPacketLoss = packetLossCount > 0 ? (totalPacketLoss / packetLossCount).toFixed(1) : '--';
+    const avgCpu = cpuCount > 0 ? (totalCpu / cpuCount).toFixed(1) : '--';
     
-    document.getElementById('avg-latency').textContent = avgLatency + (avgLatency !== 'N/A' ? ' ms' : '');
-    document.getElementById('avg-packet-loss').textContent = avgPacketLoss + (avgPacketLoss !== 'N/A' ? '%' : '');
+    // Update summary cards
+    document.getElementById('data-points').textContent = totalDataPoints;
+    document.getElementById('avg-latency').textContent = avgLatency + (avgLatency !== '--' ? ' ms' : '');
+    document.getElementById('avg-packet-loss').textContent = avgPacketLoss + (avgPacketLoss !== '--' ? '%' : '');
     
-    console.log(`Stats calculated: ${latencyCount} latency points, ${cpuCount} CPU points, ${packetLossCount} packet loss points`);
+    console.log(`Stats calculated: ${latencyCount} latency points, ${cpuCount} CPU points, ${packetLossCount} packet loss points, ${totalDataPoints} total data points`);
 }
 
 function updateClientSummary() {
