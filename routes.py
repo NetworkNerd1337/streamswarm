@@ -72,7 +72,7 @@ def register_client():
         # Update existing client
         client.ip_address = data['ip_address']
         client.status = 'online'
-        client.last_seen = datetime.utcnow()
+        client.last_seen = datetime.now(timezone.utc)
         if 'system_info' in data:
             client.system_info = json.dumps(data['system_info'])
     else:
@@ -97,7 +97,7 @@ def register_client():
 def client_heartbeat(client_id):
     """Update client last seen timestamp"""
     client = Client.query.get_or_404(client_id)
-    client.last_seen = datetime.utcnow()
+    client.last_seen = datetime.now(timezone.utc)
     client.status = 'online'
     db.session.commit()
     
@@ -114,7 +114,7 @@ def get_client_tests(client_id):
     ).all()
     
     # Check if any tests should be started
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     ready_tests = []
     
     for test in assigned_tests:
@@ -147,7 +147,7 @@ def submit_test_results():
         result = TestResult(
             test_id=data['test_id'],
             client_id=data['client_id'],
-            timestamp=datetime.fromisoformat(data.get('timestamp', datetime.utcnow().isoformat())),
+            timestamp=datetime.fromisoformat(data.get('timestamp', datetime.now(timezone.utc).isoformat())),
             cpu_percent=data.get('cpu_percent'),
             memory_percent=data.get('memory_percent'),
             memory_used=data.get('memory_used'),
@@ -253,10 +253,10 @@ def submit_test_results():
         # Check if test should be marked as completed
         test = Test.query.get(result.test_id)
         if test and test.started_at:
-            elapsed_time = (datetime.utcnow() - test.started_at).total_seconds()
+            elapsed_time = (datetime.now(timezone.utc) - test.started_at).total_seconds()
             if elapsed_time >= test.duration:
                 test.status = 'completed'
-                test.completed_at = datetime.utcnow()
+                test.completed_at = datetime.now(timezone.utc)
                 
                 # Mark test client as completed
                 test_client = TestClient.query.filter_by(test_id=test.id, client_id=result.client_id).first()
@@ -448,7 +448,7 @@ def get_client_details(client_id):
     
     # Calculate uptime (time since client was created)
     if client.created_at:
-        uptime_seconds = (datetime.utcnow() - client.created_at).total_seconds()
+        uptime_seconds = (datetime.now(timezone.utc) - client.created_at).total_seconds()
         uptime_hours = int(uptime_seconds // 3600)
         uptime_minutes = int((uptime_seconds % 3600) // 60)
         uptime = f"{uptime_hours}h {uptime_minutes}m"
@@ -535,13 +535,13 @@ def get_test_progress(test_id):
         return jsonify({'progress': 100, 'status': 'completed'})
     
     if test.started_at:
-        elapsed_time = (datetime.utcnow() - test.started_at).total_seconds()
+        elapsed_time = (datetime.now(timezone.utc) - test.started_at).total_seconds()
         progress = min((elapsed_time / test.duration) * 100, 100)
         
         # Auto-complete if duration exceeded
         if progress >= 100 and test.status == 'running':
             test.status = 'completed'
-            test.completed_at = datetime.utcnow()
+            test.completed_at = datetime.now(timezone.utc)
             TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})
             db.session.commit()
             
@@ -558,7 +558,7 @@ def get_test_progress(test_id):
 def get_dashboard_stats():
     """Get dashboard statistics"""
     # Mark clients as offline if they haven't been seen in 5 minutes
-    offline_threshold = datetime.utcnow() - timedelta(minutes=5)
+    offline_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
     Client.query.filter(Client.last_seen < offline_threshold).update({'status': 'offline'})
     db.session.commit()
     
