@@ -1,5 +1,7 @@
 # StreamSwarm Dependencies
 
+This document lists all required dependencies for StreamSwarm's comprehensive distributed network monitoring system with 65+ performance metrics.
+
 ## Python Package Requirements
 
 Copy and paste the following commands to install all required dependencies:
@@ -16,13 +18,13 @@ pip install gunicorn>=21.0.0
 pip install werkzeug>=2.3.0
 pip install email-validator>=2.0.0
 
-# Advanced network analysis (for QoS monitoring)
+# Advanced network analysis and QoS monitoring
 pip install scapy>=2.5.0
 
 # Bandwidth testing capabilities
 pip install speedtest-cli>=2.1.3
 
-# PDF report generation
+# Professional report generation and visualization
 pip install reportlab>=4.4.0
 pip install matplotlib>=3.10.0
 ```

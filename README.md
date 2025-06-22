@@ -4,26 +4,35 @@ A Python-based client-server network monitoring system with web dashboard for di
 
 ## Overview
 
-StreamSwarm enables distributed network monitoring by deploying lightweight clients across multiple hosts to measure network performance, system resources, and connectivity to specified destinations. All data is collected and analyzed through a centralized web dashboard.
+StreamSwarm is a comprehensive Python-based distributed network monitoring system that collects 65+ performance metrics including network testing, bandwidth measurement, QoS analysis, application-layer monitoring, performance profiling, and infrastructure health across multiple client hosts. The system features a centralized web dashboard for managing clients, scheduling tests, and visualizing comprehensive performance data with professional PDF reporting.
 
 ## Features
 
-- **Distributed Client Architecture**: Deploy clients on multiple hosts for comprehensive network monitoring
-- **Real-time System Monitoring**: CPU, memory, and disk usage tracking
-- **Network Performance Testing**: Ping, traceroute, and latency measurements
-- **Web Dashboard**: Interactive charts and graphs for data visualization
-- **Test Scheduling**: Create and schedule tests for multiple clients simultaneously
-- **Multi-client Support**: Manage and monitor multiple clients from a single interface
-- **SQLite Database**: Reliable data storage with easy backup and migration
+- **Network Performance Monitoring**: Comprehensive latency, packet loss, jitter, bandwidth, and connectivity testing
+- **Advanced Network Analysis**: MTU discovery, TCP window scaling, congestion control, retransmission analysis
+- **Quality of Service**: DSCP/CoS detection, per-class latency, traffic policing, ECN analysis
+- **Application Layer Monitoring**: HTTP response analysis, content timing, compression, certificate validation
+- **Performance Profiling**: DNS/HTTP cache effectiveness, CDN performance, application response timing
+- **Infrastructure Health**: Power consumption, fan speeds, SMART drive health, memory error detection
+- **System Resource Tracking**: CPU, memory, disk, and network interface monitoring (65+ total metrics)
+- **Multi-Client Architecture**: Distributed testing from multiple network locations with auto-assignment
+- **Professional Reporting**: Executive PDF reports with charts, analysis, and recommendations
+- **Real-Time Visualization**: Web-based interface with comprehensive charts and test scheduling
 
 ## Quick Start
 
-1. **Start the server:**
+1. **Install Dependencies**:
+   ```bash
+   pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary speedtest-cli reportlab matplotlib scapy email-validator werkzeug
+   sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump
+   ```
+
+2. **Start the server:**
    ```bash
    python main.py
    ```
 
-2. **Connect clients:**
+3. **Connect clients:**
    ```bash
    python client.py --server http://your-server-ip:5000
    ```
