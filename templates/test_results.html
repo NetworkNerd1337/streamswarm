@@ -73,13 +73,38 @@
                             <i class="fas fa-chart-line me-2"></i>
                             Network Latency Over Time
                         </h5>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-secondary active" onclick="showMetric('ping_latency')">
-                                Latency
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <span id="current-metric-label">Network Latency</span>
                             </button>
-                            <button class="btn btn-outline-secondary" onclick="showMetric('ping_packet_loss')">
-                                Packet Loss
-                            </button>
+                            <ul class="dropdown-menu">
+                                <li><h6 class="dropdown-header">Network Performance</h6></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('ping_latency')">Network Latency</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('ping_packet_loss')">Packet Loss</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('jitter')">Network Jitter</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('dns_resolution_time')">DNS Resolution Time</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('tcp_connect_time')">TCP Connect Time</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('ssl_handshake_time')">SSL Handshake Time</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('ttfb')">Time to First Byte</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">System Performance</h6></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_load_1min')">CPU Load (1min)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_load_5min')">CPU Load (5min)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_load_15min')">CPU Load (15min)</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_freq_current')">CPU Frequency</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Network Interface</h6></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_bytes_sent')">Bytes Sent</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_bytes_recv')">Bytes Received</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_errors_in')">Network Errors In</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_errors_out')">Network Errors Out</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Storage Performance</h6></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('disk_read_iops')">Disk Read IOPS</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('disk_write_iops')">Disk Write IOPS</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('disk_read_bytes_sec')">Disk Read Throughput</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('disk_write_bytes_sec')">Disk Write Throughput</a></li>
+                            </ul>
                         </div>
                     </div>
                 </div>
