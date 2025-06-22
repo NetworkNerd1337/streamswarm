@@ -79,15 +79,18 @@
                             <div class="bg-dark p-3 rounded mb-3">
                                 <code class="text-light">
 # Core dependencies<br>
-pip install flask flask-sqlalchemy<br>
-pip install psycopg2-binary sqlalchemy<br>
-pip install psutil requests gunicorn<br>
-pip install werkzeug email-validator<br><br>
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0<br>
+pip install psycopg2-binary>=2.9.0 sqlalchemy>=2.0.0<br>
+pip install psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0<br>
+pip install werkzeug>=2.3.0 email-validator>=2.0.0<br><br>
 # Advanced network analysis (for QoS monitoring)<br>
-pip install scapy<br><br>
-# Install all dependencies at once<br>
-pip install flask flask-sqlalchemy psycopg2-binary sqlalchemy psutil requests gunicorn werkzeug email-validator scapy
+pip install scapy>=2.5.0<br><br>
+# Or install all at once:<br>
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0
                                 </code>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong>Note:</strong> See <code>DEPENDENCIES.md</code> for complete package information and alternative installation methods.
                             </div>
                             <div class="alert alert-info">
                                 <strong>Note:</strong> The <code>scapy</code> package enables advanced QoS monitoring with DSCP/CoS detection. Some features may require root/administrator privileges.

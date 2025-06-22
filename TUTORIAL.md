@@ -9,16 +9,18 @@ StreamSwarm requires Python 3.8+ and the following packages:
 
 ```bash
 # Core application dependencies
-pip install flask flask-sqlalchemy sqlalchemy
-pip install psycopg2-binary psutil requests
-pip install gunicorn werkzeug email-validator
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0
+pip install psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0
+pip install gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0
 
 # Advanced network analysis (for QoS monitoring)
-pip install scapy
+pip install scapy>=2.5.0
 
 # Or install all dependencies in one command
-pip install flask flask-sqlalchemy psycopg2-binary sqlalchemy psutil requests gunicorn werkzeug email-validator scapy
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0
 ```
+
+**Note:** See `DEPENDENCIES.md` for complete package information including a properly formatted requirements.txt template.
 
 ### System Packages
 Additional system packages may be required:
