@@ -295,6 +295,16 @@ document.addEventListener('DOMContentLoaded', function() {
     popoverTriggerList.map(function (popoverTriggerEl) {
         return new bootstrap.Popover(popoverTriggerEl);
     });
+    
+    // Initialize delete client buttons
+    const deleteButtons = document.querySelectorAll('.delete-client-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const clientId = this.getAttribute('data-client-id');
+            const clientHostname = this.getAttribute('data-client-hostname');
+            deleteClient(clientId, clientHostname);
+        });
+    });
 });
 
 // Handle page visibility changes to pause/resume auto-refresh

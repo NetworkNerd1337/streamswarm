@@ -85,10 +85,11 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 22, 2025: Fixed JavaScript syntax error in client delete functionality
-  - Changed template from manual string escaping to proper JSON encoding
-  - Using tojson filter with safe to prevent XSS while fixing syntax errors
-  - Fixed "Unexpected token '}'" error in browser console when deleting clients
+- June 22, 2025: Fixed JavaScript syntax error in client delete functionality by using data attributes
+  - Replaced inline onclick handlers with data attributes to avoid JSON escaping issues
+  - Added event listeners in DOMContentLoaded to handle delete button clicks
+  - Eliminated "Unexpected token '}'" error caused by unescaped quotes in onclick attributes
+  - More secure approach using data attributes instead of inline JavaScript
 
 - June 22, 2025: Updated client connection examples throughout tutorial for Replit deployment
   - Fixed Client Deployment Strategies card to show HTTPS connection format
