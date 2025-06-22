@@ -85,6 +85,12 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Fixed missing deleteClient function in client management interface
+  - Added deleteClient JavaScript function that was removed during XSS security fixes
+  - Implemented proper confirmation dialog and API request handling
+  - Fixed delete button functionality for offline clients on clients page
+  - Added viewClientDetails and assignToTest function stubs for completeness
+
 - June 22, 2025: Fixed client URL parsing for network tests
   - Added proper URL parsing to extract hostnames from full URLs in ping, traceroute, and advanced network tests
   - Fixed DNS resolution issues when test destinations include full URLs with protocols and paths

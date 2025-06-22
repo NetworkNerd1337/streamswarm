@@ -248,6 +248,40 @@ function createDoughnutChart(ctx, data, title) {
     });
 }
 
+// Client management functions
+function deleteClient(clientId, clientHostname) {
+    if (confirm(`Are you sure you want to delete client "${clientHostname}"?\n\nThis will remove the client from the system but preserve all historical test data for reporting purposes.`)) {
+        apiRequest(`/api/clients/${clientId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                showToast(`Client "${clientHostname}" deleted successfully`, 'success');
+                location.reload(); // Refresh the page to update the client list
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to delete client');
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting client:', error);
+            showToast('Failed to delete client: ' + error.message, 'error');
+        });
+    }
+}
+
+function viewClientDetails(clientId) {
+    // This function might be defined elsewhere or needs to be implemented
+    console.log('View client details for ID:', clientId);
+    // Add implementation if needed
+}
+
+function assignToTest(clientId) {
+    // Redirect to tests page with client pre-selected
+    window.location.href = `/tests?client=${clientId}`;
+}
+
 // Initialize tooltips and popovers
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Bootstrap tooltips
