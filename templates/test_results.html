@@ -56,7 +56,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Avg Latency</h5>
-                    <h2 class="text-warning" id="avg-latency">--</h2>
+                    <h2 class="text-warning" id="avg-latency">Loading...</h2>
                 </div>
             </div>
         </div>
@@ -64,7 +64,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Packet Loss</h5>
-                    <h2 class="text-danger" id="avg-packet-loss">--</h2>
+                    <h2 class="text-danger" id="avg-packet-loss">Loading...</h2>
                 </div>
             </div>
         </div>
@@ -82,7 +82,7 @@
                         </h5>
                         <div class="dropdown">
                             <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <span id="current-metric-label">Network Latency</span>
+                                <span id="current-metric-label">CPU Usage</span>
                             </button>
                             <ul class="dropdown-menu">
                                 <li><h6 class="dropdown-header">Network Performance</h6></li>
@@ -225,7 +225,7 @@
 <script>
 let testData = {};
 let networkChart, cpuChart, memoryChart, diskChart;
-let currentMetric = 'ping_latency';
+let currentMetric = 'cpu';
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTestData();
@@ -281,7 +281,8 @@ function initializeCharts() {
             ? testData.metrics[currentMetric][clientId] 
             : [];
         
-        console.log(`Client ${clientId} (${testData.clients[clientId]}) ${currentMetric} data:`, metricData.length, 'points');
+        const validPoints = metricData.filter(p => p && p.y !== null && p.y !== undefined && !isNaN(p.y));
+        console.log(`Client ${clientId} (${testData.clients[clientId]}) ${currentMetric}: ${validPoints.length}/${metricData.length} valid points`);
         
         return {
             label: testData.clients[clientId],
@@ -558,31 +559,45 @@ function updateSummaryStats() {
     let totalPacketLoss = 0;
     let latencyCount = 0;
     let packetLossCount = 0;
+    let totalCpu = 0;
+    let cpuCount = 0;
     
     Object.keys(testData.clients).forEach(clientId => {
         const latencyData = (testData.metrics.ping_latency && testData.metrics.ping_latency[clientId]) || [];
         const packetLossData = (testData.metrics.ping_packet_loss && testData.metrics.ping_packet_loss[clientId]) || [];
+        const cpuData = (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [];
         
         latencyData.forEach(point => {
-            if (point && point.y !== null && point.y !== undefined) {
+            if (point && point.y !== null && point.y !== undefined && !isNaN(point.y)) {
                 totalLatency += point.y;
                 latencyCount++;
             }
         });
         
         packetLossData.forEach(point => {
-            if (point && point.y !== null && point.y !== undefined) {
+            if (point && point.y !== null && point.y !== undefined && !isNaN(point.y)) {
                 totalPacketLoss += point.y;
                 packetLossCount++;
             }
         });
+        
+        cpuData.forEach(point => {
+            if (point && point.y !== null && point.y !== undefined && !isNaN(point.y)) {
+                totalCpu += point.y;
+                cpuCount++;
+            }
+        });
     });
     
-    const avgLatency = latencyCount > 0 ? (totalLatency / latencyCount).toFixed(1) : '--';
-    const avgPacketLoss = packetLossCount > 0 ? (totalPacketLoss / packetLossCount).toFixed(1) : '--';
+    // Update displays with actual data or appropriate messages
+    const avgLatency = latencyCount > 0 ? (totalLatency / latencyCount).toFixed(1) : 'N/A';
+    const avgPacketLoss = packetLossCount > 0 ? (totalPacketLoss / packetLossCount).toFixed(1) : 'N/A';
+    const avgCpu = cpuCount > 0 ? (totalCpu / cpuCount).toFixed(1) : 'N/A';
     
-    document.getElementById('avg-latency').textContent = avgLatency + (avgLatency !== '--' ? ' ms' : '');
-    document.getElementById('avg-packet-loss').textContent = avgPacketLoss + (avgPacketLoss !== '--' ? '%' : '');
+    document.getElementById('avg-latency').textContent = avgLatency + (avgLatency !== 'N/A' ? ' ms' : '');
+    document.getElementById('avg-packet-loss').textContent = avgPacketLoss + (avgPacketLoss !== 'N/A' ? '%' : '');
+    
+    console.log(`Stats calculated: ${latencyCount} latency points, ${cpuCount} CPU points, ${packetLossCount} packet loss points`);
 }
 
 function updateClientSummary() {

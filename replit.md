@@ -85,6 +85,14 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Fixed critical test results page functionality
+  - Resolved JavaScript chart initialization errors preventing data visualization
+  - Fixed metric dropdown functionality to properly switch between performance metrics
+  - Enhanced error handling for missing or null data values in test results
+  - Changed default chart metric from ping_latency to CPU usage for better data availability
+  - Added comprehensive logging for debugging chart and data loading issues
+  - Test results page now properly displays performance charts for CPU, memory, and system metrics
+
 - June 22, 2025: Professional PDF report generation feature implementation
   - Created comprehensive PDF report generator with executive-level formatting using ReportLab
   - Added performance charts with matplotlib integration for latency trends and client comparisons
