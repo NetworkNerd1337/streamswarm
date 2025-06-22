@@ -82,7 +82,7 @@
                         </h5>
                         <div class="dropdown">
                             <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <span id="current-metric-label">CPU Usage</span>
+                                <span id="current-metric-label">Network Latency</span>
                             </button>
                             <ul class="dropdown-menu">
                                 <li><h6 class="dropdown-header">Network Performance</h6></li>
@@ -533,7 +533,7 @@
 <script>
 let testData = {};
 let networkChart, cpuChart, memoryChart, diskChart;
-let currentMetric = 'cpu';
+let currentMetric = 'ping_latency';
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTestData();
@@ -624,7 +624,6 @@ function initializeCharts() {
                 x: {
                     type: 'time',
                     time: {
-                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
                         displayFormats: {
                             minute: 'HH:mm',
                             hour: 'HH:mm'
