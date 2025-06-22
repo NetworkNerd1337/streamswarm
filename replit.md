@@ -85,6 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Verified complete database schema with all 65+ enhanced metrics
+  - Confirmed PostgreSQL database includes all network, QoS, application, performance, and infrastructure metrics
+  - Database schema automatically creates complete table structure on application startup
+  - All 65+ metrics properly defined in TestResult model and reflected in live database
+  - Schema includes advanced network performance, QoS analysis, application profiling, and infrastructure monitoring
+  - Database initialization working correctly for new deployments with full feature set
+
 - June 22, 2025: Enhanced test results pages and PDF export with comprehensive 65+ metrics display
   - Added detailed metrics analysis sections to test results pages showing all network, QoS, system, application, and infrastructure metrics
   - Enhanced PDF report generation to capture all 65+ metrics with categorized tables and comprehensive analysis
