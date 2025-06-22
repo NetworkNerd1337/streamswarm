@@ -7,11 +7,16 @@
     <!-- Header -->
     <div class="row mb-4">
         <div class="col">
-            <h1 class="h2 mb-3">
-                <i class="fas fa-flask me-2"></i>
-                Network Tests
-            </h1>
-            <p class="text-muted">Create, schedule, and manage network monitoring tests</p>
+            <div class="d-flex align-items-center mb-3">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StreamSwarm" height="48" class="me-3">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-flask me-2"></i>
+                        Network Tests
+                    </h1>
+                    <p class="text-muted mb-0">Create, schedule, and manage network monitoring tests</p>
+                </div>
+            </div>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTestModal">

@@ -85,6 +85,17 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Major metrics enhancement and logo integration
+  - Added 35+ new performance metrics including DNS resolution time, TCP connect time, SSL handshake time, TTFB, jitter analysis
+  - Enhanced CPU monitoring with load averages, frequency, temperature, context switches
+  - Detailed memory analysis with available/cached/buffered/shared memory tracking
+  - Storage performance metrics including IOPS, throughput, and disk temperature
+  - Network interface statistics with bytes/packets sent/received, errors, and drops
+  - Process and system activity monitoring (process count, TCP connections, file descriptors)
+  - Database schema automatically migrated with new metric columns
+  - Professional logo integration across all pages in navigation and headers
+  - Enhanced visual design with consistent logo placement and improved page layouts
+
 - June 21, 2025: Complete implementation of StreamSwarm network monitoring system
   - PostgreSQL database integration with all tables created
   - Full client-server architecture with real network testing capabilities
