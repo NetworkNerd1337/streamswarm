@@ -207,6 +207,80 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Application-Layer Metrics -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100" data-bs-theme="dark">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-globe me-2"></i>
+                                    Application-Layer
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.content_download_time or 0) }}ms</div>
+                                        <div class="metric-label">Content Download</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.compression_ratio or 0) }}%</div>
+                                        <div class="metric-label">Compression Ratio</div>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-2">
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.connection_reuse_ratio or 0) }}%</div>
+                                        <div class="metric-label">Connection Reuse</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.certificate_validation_time or 0) }}ms</div>
+                                        <div class="metric-label">Cert Validation</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Profiling -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100" data-bs-theme="dark">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Performance Profiling
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.dns_cache_hit_ratio or 0) }}%</div>
+                                        <div class="metric-label">DNS Cache</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.cdn_performance_score or 0) }}/100</div>
+                                        <div class="metric-label">CDN Performance</div>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-2">
+                                    <div class="col-6">
+                                        <div class="metric-value">{{ "%.1f"|format(latest_result.application_response_time or 0) }}ms</div>
+                                        <div class="metric-label">App Response</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-value">
+                                            {% if latest_result.multipath_detected %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="metric-label">Multipath</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -85,6 +85,22 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Application-layer metrics and performance profiling implementation
+  - Added HTTP response code analysis tracking 2xx, 3xx, 4xx, 5xx responses over time
+  - Implemented content download time measurement for full page/resource timing
+  - Added connection reuse analysis for HTTP keep-alive effectiveness
+  - Implemented compression ratio analysis for gzip/deflate effectiveness
+  - Added SSL/TLS certificate validation timing measurement
+  - Implemented DNS cache hit ratio measurement for cache effectiveness
+  - Added HTTP cache effectiveness analysis with cache header detection
+  - Implemented CDN performance scoring with header analysis and timing
+  - Added multipath routing detection using multiple traceroute analysis
+  - Implemented application response time measurement across multiple endpoints
+  - Added database query time estimation through response analysis heuristics
+  - Enhanced database schema with 11 new application and performance metrics
+  - Updated metrics dashboard with dedicated cards for application-layer and performance profiling
+  - Enhanced PDF reports with application performance and cache analysis tables
+
 - June 22, 2025: Enhanced network performance and QoS testing capabilities
   - Implemented MTU Discovery with path MTU detection using ping with DF flag
   - Added TCP Window Scaling analysis and congestion window monitoring

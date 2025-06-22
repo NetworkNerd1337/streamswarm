@@ -228,7 +228,20 @@ def submit_test_results():
             queue_depth=data.get('queue_depth'),
             ecn_capable=data.get('ecn_capable'),
             ecn_congestion_experienced=data.get('ecn_congestion_experienced'),
-            flow_control_events=data.get('flow_control_events')
+            flow_control_events=data.get('flow_control_events'),
+            # Application-Layer Metrics
+            http_response_codes=data.get('http_response_codes'),
+            content_download_time=data.get('content_download_time'),
+            connection_reuse_ratio=data.get('connection_reuse_ratio'),
+            compression_ratio=data.get('compression_ratio'),
+            certificate_validation_time=data.get('certificate_validation_time'),
+            # Performance Profiling Metrics
+            dns_cache_hit_ratio=data.get('dns_cache_hit_ratio'),
+            http_cache_hit_ratio=data.get('http_cache_hit_ratio'),
+            cdn_performance_score=data.get('cdn_performance_score'),
+            multipath_detected=data.get('multipath_detected'),
+            application_response_time=data.get('application_response_time'),
+            database_query_time=data.get('database_query_time')
         )
         
         db.session.add(result)

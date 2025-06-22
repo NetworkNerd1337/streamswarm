@@ -164,6 +164,21 @@ class TestResult(db.Model):
     ecn_congestion_experienced = db.Column(db.Boolean)  # ECN congestion signaling
     flow_control_events = db.Column(db.Integer)  # TCP/UDP flow control events
     
+    # Application-Layer Metrics
+    http_response_codes = db.Column(Text)  # JSON string of response code counts (2xx, 3xx, 4xx, 5xx)
+    content_download_time = db.Column(db.Float)  # Time to download full page/resource (ms)
+    connection_reuse_ratio = db.Column(db.Float)  # HTTP keep-alive effectiveness (percentage)
+    compression_ratio = db.Column(db.Float)  # gzip/deflate compression effectiveness
+    certificate_validation_time = db.Column(db.Float)  # SSL/TLS certificate chain validation time (ms)
+    
+    # Performance Profiling Metrics
+    dns_cache_hit_ratio = db.Column(db.Float)  # DNS cache effectiveness (percentage)
+    http_cache_hit_ratio = db.Column(db.Float)  # HTTP cache effectiveness (percentage)
+    cdn_performance_score = db.Column(db.Float)  # CDN performance rating (0-100)
+    multipath_detected = db.Column(db.Boolean)  # MPTCP or ECMP path diversity detected
+    application_response_time = db.Column(db.Float)  # End-to-end transaction timing (ms)
+    database_query_time = db.Column(db.Float)  # Backend database performance if detectable (ms)
+    
     def to_dict(self):
         return {
             'id': self.id,
