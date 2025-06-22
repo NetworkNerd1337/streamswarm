@@ -85,13 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 22, 2025: Fixed datetime timezone compatibility issues and client notification
-  - Resolved "can't subtract offset-naive and offset-aware datetimes" errors throughout application
-  - Fixed timezone handling in test progress calculations and result submissions
-  - Added comprehensive timezone-aware datetime comparisons in all functions
+- June 22, 2025: Updated application to use Eastern Time (America/New_York) timezone
+  - Changed all datetime operations from UTC to Eastern Time as requested
+  - Updated client timestamps, server processing, and database defaults to use America/New_York timezone
+  - Resolved timezone compatibility issues throughout application with proper zoneinfo implementation
+  - Fixed "can't subtract offset-naive and offset-aware datetimes" errors
   - Implemented client notification for test termination with status checking
-  - Added new API endpoint /api/test/{id}/status for real-time test status queries
-  - Clients now gracefully terminate when tests are stopped from web interface
+  - Added API endpoint /api/test/{id}/status for real-time test status queries
 
 - June 22, 2025: Fixed client URL parsing for network tests
   - Added proper URL parsing to extract hostnames from full URLs in ping, traceroute, and advanced network tests

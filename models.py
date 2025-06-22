@@ -9,7 +9,7 @@ class Client(db.Model):
     hostname = db.Column(db.String(255), nullable=False)
     ip_address = db.Column(db.String(45), nullable=False)
     status = db.Column(db.String(20), default='offline')  # online, offline, testing
-    last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    last_seen = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')))
     system_info = db.Column(Text)  # JSON string for system information
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
@@ -71,7 +71,7 @@ class TestResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable=False)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')))
     
     # System metrics
     cpu_percent = db.Column(db.Float)

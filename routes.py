@@ -457,11 +457,11 @@ def get_client_details(client_id):
     if client.created_at:
         # Ensure both datetimes are timezone-aware for comparison
         if client.created_at.tzinfo is None:
-            client_start_time = client.created_at.replace(tzinfo=timezone.utc)
+            client_start_time = client.created_at.replace(tzinfo=zoneinfo.ZoneInfo('America/New_York'))
         else:
             client_start_time = client.created_at
         
-        uptime_seconds = (datetime.now(timezone.utc) - client_start_time).total_seconds()
+        uptime_seconds = (datetime.now(zoneinfo.ZoneInfo('America/New_York')) - client_start_time).total_seconds()
         uptime_hours = int(uptime_seconds // 3600)
         uptime_minutes = int((uptime_seconds % 3600) // 60)
         uptime = f"{uptime_hours}h {uptime_minutes}m"
@@ -561,17 +561,17 @@ def get_test_progress(test_id):
     if test.started_at:
         # Ensure both datetimes are timezone-aware for comparison
         if test.started_at.tzinfo is None:
-            test_start_time = test.started_at.replace(tzinfo=timezone.utc)
+            test_start_time = test.started_at.replace(tzinfo=zoneinfo.ZoneInfo('America/New_York'))
         else:
             test_start_time = test.started_at
         
-        elapsed_time = (datetime.now(timezone.utc) - test_start_time).total_seconds()
+        elapsed_time = (datetime.now(zoneinfo.ZoneInfo('America/New_York')) - test_start_time).total_seconds()
         progress = min((elapsed_time / test.duration) * 100, 100)
         
         # Auto-complete if duration exceeded
         if progress >= 100 and test.status == 'running':
             test.status = 'completed'
-            test.completed_at = datetime.now(timezone.utc)
+            test.completed_at = datetime.now(zoneinfo.ZoneInfo('America/New_York'))
             TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})
             db.session.commit()
             
@@ -588,7 +588,7 @@ def get_test_progress(test_id):
 def get_dashboard_stats():
     """Get dashboard statistics"""
     # Mark clients as offline if they haven't been seen in 5 minutes
-    offline_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
+    offline_threshold = datetime.now(zoneinfo.ZoneInfo('America/New_York')) - timedelta(minutes=5)
     Client.query.filter(Client.last_seen < offline_threshold).update({'status': 'offline'})
     db.session.commit()
     
