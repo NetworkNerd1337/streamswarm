@@ -115,7 +115,7 @@
                                             </button>
                                             {% endif %}
                                             {% if client.status == 'offline' %}
-                                            <button class="btn btn-outline-danger" onclick="deleteClient({{ client.id }}, {{ client.hostname | tojson }})">
+                                            <button class="btn btn-outline-danger" onclick="deleteClient({{ client.id }}, {{ client.hostname | tojson | safe }})">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                             {% endif %}

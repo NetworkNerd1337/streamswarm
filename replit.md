@@ -85,6 +85,11 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Fixed JavaScript syntax error in client delete functionality
+  - Changed template from manual string escaping to proper JSON encoding
+  - Using tojson filter with safe to prevent XSS while fixing syntax errors
+  - Fixed "Unexpected token '}'" error in browser console when deleting clients
+
 - June 22, 2025: Updated client connection examples throughout tutorial for Replit deployment
   - Fixed Client Deployment Strategies card to show HTTPS connection format
   - Updated example commands to use Replit domain instead of port 5000
