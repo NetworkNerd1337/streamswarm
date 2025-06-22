@@ -92,6 +92,7 @@ The deployment supports both single-instance development and horizontally scaled
   - Fixed "can't subtract offset-naive and offset-aware datetimes" errors
   - Implemented client notification for test termination with status checking
   - Added API endpoint /api/test/{id}/status for real-time test status queries
+  - Enhanced client startup messaging with clear connection confirmation and status indicators
 
 - June 22, 2025: Fixed client URL parsing for network tests
   - Added proper URL parsing to extract hostnames from full URLs in ping, traceroute, and advanced network tests
