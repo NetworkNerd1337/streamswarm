@@ -15,7 +15,7 @@ import platform
 import socket
 import struct
 import fcntl
-from datetime import datetime
+from datetime import datetime, timezone
 import psutil
 import requests
 from urllib.parse import urljoin, urlparse
@@ -282,17 +282,16 @@ class StreamSwarmClient:
         """Perform ping test with jitter calculation"""
         try:
             # Extract hostname from URL if full URL is provided
-            parsed_url = urlparse(destination)
-            if parsed_url.netloc:
+            if destination.startswith(('http://', 'https://')):
+                # Parse full URL to extract hostname
+                parsed_url = urlparse(destination)
                 hostname = parsed_url.netloc
-            elif parsed_url.scheme and not parsed_url.netloc:
-                # Handle case where URL parsing fails, extract manually
-                if destination.startswith(('http://', 'https://')):
+                if not hostname:
+                    # Fallback manual parsing
                     hostname = destination.split('://')[1].split('/')[0]
-                else:
-                    hostname = destination.split('/')[0]
             else:
-                hostname = destination
+                # Direct hostname or IP
+                hostname = destination.split('/')[0]
             
             if platform.system().lower() == 'windows':
                 cmd = ['ping', '-n', str(count), hostname]
@@ -356,17 +355,16 @@ class StreamSwarmClient:
         """Perform traceroute test"""
         try:
             # Extract hostname from URL if full URL is provided
-            parsed_url = urlparse(destination)
-            if parsed_url.netloc:
+            if destination.startswith(('http://', 'https://')):
+                # Parse full URL to extract hostname
+                parsed_url = urlparse(destination)
                 hostname = parsed_url.netloc
-            elif parsed_url.scheme and not parsed_url.netloc:
-                # Handle case where URL parsing fails, extract manually
-                if destination.startswith(('http://', 'https://')):
+                if not hostname:
+                    # Fallback manual parsing
                     hostname = destination.split('://')[1].split('/')[0]
-                else:
-                    hostname = destination.split('/')[0]
             else:
-                hostname = destination
+                # Direct hostname or IP
+                hostname = destination.split('/')[0]
             
             if platform.system().lower() == 'windows':
                 cmd = ['tracert', hostname]
@@ -425,7 +423,7 @@ class StreamSwarmClient:
                 result_data = {
                     'client_id': self.client_id,
                     'test_id': test_id,
-                    'timestamp': datetime.now(datetime.UTC).isoformat(),
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
                     **system_metrics,
                     'ping_latency': ping_result.get('latency'),
                     'ping_packet_loss': ping_result.get('packet_loss'),
@@ -467,17 +465,16 @@ class StreamSwarmClient:
         
         try:
             # Extract hostname from URL if full URL is provided
-            parsed_url = urlparse(destination)
-            if parsed_url.netloc:
+            if destination.startswith(('http://', 'https://')):
+                # Parse full URL to extract hostname
+                parsed_url = urlparse(destination)
                 hostname = parsed_url.netloc
-            elif parsed_url.scheme and not parsed_url.netloc:
-                # Handle case where URL parsing fails, extract manually
-                if destination.startswith(('http://', 'https://')):
+                if not hostname:
+                    # Fallback manual parsing
                     hostname = destination.split('://')[1].split('/')[0]
-                else:
-                    hostname = destination.split('/')[0]
             else:
-                hostname = destination
+                # Direct hostname or IP
+                hostname = destination.split('/')[0]
             
             # DNS resolution timing
             import socket

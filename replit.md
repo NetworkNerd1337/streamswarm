@@ -112,7 +112,7 @@ The deployment supports both single-instance development and horizontally scaled
 - June 22, 2025: Fixed client URL parsing for network tests
   - Added proper URL parsing to extract hostnames from full URLs in ping, traceroute, and advanced network tests
   - Fixed DNS resolution issues when test destinations include full URLs with protocols and paths
-  - Updated deprecated datetime.utcnow() to datetime.now(datetime.UTC) for future compatibility
+  - Updated deprecated datetime.utcnow() to datetime.now(timezone.utc) for Python 3.9+ compatibility
   - Client now correctly handles test targets like "https://vimeo.com/226053498" by extracting "vimeo.com" for network commands
 
 - June 22, 2025: Fixed Replit deployment client connectivity configuration
