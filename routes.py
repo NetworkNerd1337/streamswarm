@@ -51,6 +51,11 @@ def tutorial():
     """Tutorial and documentation view"""
     return render_template('tutorial.html')
 
+@app.route('/metrics')
+def metrics_dashboard():
+    """Enhanced metrics dashboard view"""
+    return render_template('metrics_dashboard.html')
+
 # API Routes
 
 @app.route('/api/client/register', methods=['POST'])

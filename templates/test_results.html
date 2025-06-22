@@ -392,11 +392,8 @@ function initializeResourceCharts() {
 function showMetric(metric) {
     currentMetric = metric;
     
-    // Update button states
-    document.querySelectorAll('.btn-group .btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
+    // Update dropdown label
+    document.getElementById('current-metric-label').textContent = getMetricTitle(metric).replace(' Over Time', '');
     
     // Update chart
     const datasets = Object.keys(testData.clients).map((clientId, index) => {
@@ -422,17 +419,51 @@ function showMetric(metric) {
 function getMetricTitle(metric) {
     const titles = {
         'ping_latency': 'Network Latency Over Time',
-        'ping_packet_loss': 'Packet Loss Over Time'
+        'ping_packet_loss': 'Packet Loss Over Time',
+        'jitter': 'Network Jitter Over Time',
+        'dns_resolution_time': 'DNS Resolution Time Over Time',
+        'tcp_connect_time': 'TCP Connection Time Over Time',
+        'ssl_handshake_time': 'SSL Handshake Time Over Time',
+        'ttfb': 'Time to First Byte Over Time',
+        'cpu_load_1min': 'CPU Load Average (1 minute) Over Time',
+        'cpu_load_5min': 'CPU Load Average (5 minutes) Over Time',
+        'cpu_load_15min': 'CPU Load Average (15 minutes) Over Time',
+        'cpu_freq_current': 'CPU Frequency Over Time',
+        'network_bytes_sent': 'Network Bytes Sent Over Time',
+        'network_bytes_recv': 'Network Bytes Received Over Time',
+        'network_errors_in': 'Network Errors (Incoming) Over Time',
+        'network_errors_out': 'Network Errors (Outgoing) Over Time',
+        'disk_read_iops': 'Disk Read IOPS Over Time',
+        'disk_write_iops': 'Disk Write IOPS Over Time',
+        'disk_read_bytes_sec': 'Disk Read Throughput Over Time',
+        'disk_write_bytes_sec': 'Disk Write Throughput Over Time'
     };
-    return titles[metric] || metric;
+    return titles[metric] || metric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function getMetricUnit(metric) {
     const units = {
         'ping_latency': 'Latency (ms)',
-        'ping_packet_loss': 'Packet Loss (%)'
+        'ping_packet_loss': 'Packet Loss (%)',
+        'jitter': 'Jitter (ms)',
+        'dns_resolution_time': 'DNS Time (ms)',
+        'tcp_connect_time': 'Connect Time (ms)',
+        'ssl_handshake_time': 'SSL Time (ms)',
+        'ttfb': 'TTFB (ms)',
+        'cpu_load_1min': 'Load Average',
+        'cpu_load_5min': 'Load Average',
+        'cpu_load_15min': 'Load Average',
+        'cpu_freq_current': 'Frequency (MHz)',
+        'network_bytes_sent': 'Bytes',
+        'network_bytes_recv': 'Bytes',
+        'network_errors_in': 'Error Count',
+        'network_errors_out': 'Error Count',
+        'disk_read_iops': 'Operations/sec',
+        'disk_write_iops': 'Operations/sec',
+        'disk_read_bytes_sec': 'Bytes/sec',
+        'disk_write_bytes_sec': 'Bytes/sec'
     };
-    return units[metric] || metric;
+    return units[metric] || 'Value';
 }
 
 function updateSummaryStats() {
