@@ -482,6 +482,17 @@ def get_client_details(client_id):
         'test_history': test_history
     })
 
+@app.route('/api/test/<int:test_id>/status', methods=['GET'])
+def get_test_status(test_id):
+    """Get current test status"""
+    test = Test.query.get_or_404(test_id)
+    return jsonify({
+        'id': test.id,
+        'status': test.status,
+        'started_at': test.started_at.isoformat() if test.started_at else None,
+        'completed_at': test.completed_at.isoformat() if test.completed_at else None
+    })
+
 @app.route('/api/test/<int:test_id>/stop', methods=['POST'])
 def stop_test(test_id):
     """Stop a running test"""

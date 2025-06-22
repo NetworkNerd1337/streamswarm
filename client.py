@@ -409,6 +409,11 @@ class StreamSwarmClient:
         
         while time.time() < end_time and self.running:
             try:
+                # Check if test has been stopped on server
+                if not self._check_test_status(test_id):
+                    logger.info(f"Test {test_id} was stopped on server, terminating client execution")
+                    break
+                
                 # Get system metrics
                 system_metrics = self._get_system_metrics()
                 
@@ -917,6 +922,26 @@ class StreamSwarmClient:
         except Exception as e:
             logger.error(f"Class bandwidth measurement failed: {e}")
             return {}
+    
+    def _check_test_status(self, test_id):
+        """Check if test is still running on server"""
+        try:
+            response = requests.get(
+                urljoin(self.server_url, f'/api/test/{test_id}/status'),
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                test_data = response.json()
+                return test_data.get('status') in ['running', 'pending']
+            else:
+                # If we can't check status, assume test is still running to avoid premature termination
+                return True
+                
+        except Exception as e:
+            logger.debug(f"Error checking test status: {e}")
+            # If we can't check status, assume test is still running
+            return True
     
     def _check_for_tests(self):
         """Check for new tests from server"""
