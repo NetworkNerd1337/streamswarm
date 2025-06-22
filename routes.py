@@ -253,7 +253,13 @@ def submit_test_results():
         # Check if test should be marked as completed
         test = Test.query.get(result.test_id)
         if test and test.started_at:
-            elapsed_time = (datetime.now(timezone.utc) - test.started_at).total_seconds()
+            # Ensure both datetimes are timezone-aware for comparison
+            if test.started_at.tzinfo is None:
+                test_start_time = test.started_at.replace(tzinfo=timezone.utc)
+            else:
+                test_start_time = test.started_at
+            
+            elapsed_time = (datetime.now(timezone.utc) - test_start_time).total_seconds()
             if elapsed_time >= test.duration:
                 test.status = 'completed'
                 test.completed_at = datetime.now(timezone.utc)
@@ -448,7 +454,13 @@ def get_client_details(client_id):
     
     # Calculate uptime (time since client was created)
     if client.created_at:
-        uptime_seconds = (datetime.now(timezone.utc) - client.created_at).total_seconds()
+        # Ensure both datetimes are timezone-aware for comparison
+        if client.created_at.tzinfo is None:
+            client_start_time = client.created_at.replace(tzinfo=timezone.utc)
+        else:
+            client_start_time = client.created_at
+        
+        uptime_seconds = (datetime.now(timezone.utc) - client_start_time).total_seconds()
         uptime_hours = int(uptime_seconds // 3600)
         uptime_minutes = int((uptime_seconds % 3600) // 60)
         uptime = f"{uptime_hours}h {uptime_minutes}m"
@@ -546,7 +558,13 @@ def get_test_progress(test_id):
         return jsonify({'progress': 100, 'status': 'completed'})
     
     if test.started_at:
-        elapsed_time = (datetime.now(timezone.utc) - test.started_at).total_seconds()
+        # Ensure both datetimes are timezone-aware for comparison
+        if test.started_at.tzinfo is None:
+            test_start_time = test.started_at.replace(tzinfo=timezone.utc)
+        else:
+            test_start_time = test.started_at
+        
+        elapsed_time = (datetime.now(timezone.utc) - test_start_time).total_seconds()
         progress = min((elapsed_time / test.duration) * 100, 100)
         
         # Auto-complete if duration exceeded
