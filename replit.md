@@ -85,6 +85,14 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Clarified configuration options and environment variable relationship
+  - Enhanced Environment Configuration section to explain three configuration methods
+  - Added clear instructions for environment variables, .env files, and config.py modification
+  - Explained configuration priority order: environment variables > .env file > config.py defaults
+  - Added platform-specific instructions for Windows PowerShell and Linux/macOS
+  - Clarified relationship between OS environment variables and application configuration
+  - Added warnings about security best practices for each configuration method
+
 - June 22, 2025: Enhanced database configuration documentation with SESSION_SECRET explanation
   - Updated tutorial page Environment Configuration section with detailed SESSION_SECRET requirements
   - Added comprehensive explanation of SESSION_SECRET purpose for web security and session encryption
