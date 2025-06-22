@@ -632,16 +632,28 @@ waitress-serve --host=0.0.0.0 --port=5000 main:app</code></pre>
                     <div class="row">
                         <div class="col-lg-4 mb-3">
                             <h6 class="text-primary">Single Client</h6>
-                            <pre class="bg-dark text-light p-2 rounded"><code># Basic connection
+                            <pre class="bg-dark text-light p-2 rounded"><code># 1. Download StreamSwarm
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
+
+# 2. Install minimal dependencies
+pip install psutil requests
+
+# 3. Connect to server
 python client.py --server http://192.168.1.100:5000
 
-# With custom name
+# 4. With custom name
 python client.py --server http://monitoring.company.com:5000 --name "Web-Server-01"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">
                             <h6 class="text-info">Multi-Location</h6>
-                            <pre class="bg-dark text-light p-2 rounded"><code># New York Office
+                            <pre class="bg-dark text-light p-2 rounded"><code># Deploy to each location:
+git clone https://github.com/NetworkNerd1337/Swarm.git
+cd Swarm
+pip install psutil requests
+
+# New York Office
 python client.py --server http://monitoring.company.com:5000 --name "NYC-Office"
 
 # London Office
