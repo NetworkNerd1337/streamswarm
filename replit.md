@@ -85,6 +85,16 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Test scheduling and client auto-assignment implementation
+  - Added complete test scheduling system with background job processing
+  - Implemented scheduled test execution with proper status management
+  - Added manual start/stop controls for scheduled tests
+  - Enhanced client auto-assignment with URL parameter support and automatic modal opening
+  - Pre-fills test creation form when client is pre-selected
+  - Background scheduler thread checks for pending tests every 30 seconds
+  - Improved test status display with scheduled/waiting indicators
+  - Added timezone handling for scheduled test times
+
 - June 22, 2025: Comprehensive bandwidth testing implementation
   - Added multi-method bandwidth testing with HTTP, speedtest-cli, and TCP approaches
   - Implemented real bandwidth measurement replacing mock data with actual throughput testing
