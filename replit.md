@@ -85,6 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Enhanced database configuration documentation with SESSION_SECRET explanation
+  - Updated tutorial page Environment Configuration section with detailed SESSION_SECRET requirements
+  - Added comprehensive explanation of SESSION_SECRET purpose for web security and session encryption
+  - Included specific requirements: 32+ characters, random composition, uniqueness per deployment
+  - Added generation instructions using openssl command and security best practices
+  - Enhanced security warnings about credential protection and version control safety
+
 - June 22, 2025: Integrated GitHub repository into installation documentation
   - Updated all installation guides to include downloading from https://github.com/NetworkNerd1337/Swarm
   - Enhanced README.md quick start with git clone instructions

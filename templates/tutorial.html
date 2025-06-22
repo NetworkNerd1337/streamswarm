@@ -438,12 +438,14 @@ GRANT ALL PRIVILEGES ON DATABASE streamswarm TO streamswarm_user;<br>
                                 <i class="fas fa-cog me-2"></i>
                                 Environment Configuration
                             </h6>
-                            <p class="text-muted mb-3">Configure the database connection:</p>
+                            <p class="text-muted mb-3">Configure the database connection and application security:</p>
                             
-                            <h6 class="small text-info">Set Environment Variables:</h6>
+                            <h6 class="small text-info">Required Environment Variables:</h6>
                             <div class="bg-dark p-3 rounded mb-3">
                                 <code class="text-light">
-export DATABASE_URL="postgresql://streamswarm_user:your_password@localhost:5432/streamswarm"<br>
+# Database connection string<br>
+export DATABASE_URL="postgresql://streamswarm_user:your_password@localhost:5432/streamswarm"<br><br>
+# Session encryption key (required for web security)<br>
 export SESSION_SECRET="your-secret-key-here"<br><br>
 # Or create a .env file:<br>
 echo "DATABASE_URL=postgresql://streamswarm_user:your_password@localhost:5432/streamswarm" > .env<br>
@@ -451,8 +453,21 @@ echo "SESSION_SECRET=your-secret-key-here" >> .env
                                 </code>
                             </div>
                             
+                            <div class="alert alert-info mb-3">
+                                <h6><i class="fas fa-key me-2"></i>About SESSION_SECRET</h6>
+                                <p class="small mb-2"><strong>Purpose:</strong> Encrypts user sessions and cookies for web security</p>
+                                <p class="small mb-2"><strong>Requirements:</strong></p>
+                                <ul class="small mb-2">
+                                    <li>Minimum 32 characters long</li>
+                                    <li>Random mix of letters, numbers, and symbols</li>
+                                    <li>Unique for each deployment</li>
+                                    <li>Never shared or committed to version control</li>
+                                </ul>
+                                <p class="small mb-0"><strong>Generate one:</strong> <code>openssl rand -hex 32</code> or use online generator</p>
+                            </div>
+                            
                             <div class="alert alert-warning">
-                                <strong>Security Note:</strong> Use a strong, unique password and session secret in production. Never commit credentials to version control.
+                                <strong>Security Note:</strong> Use a strong, unique password and session secret in production. Never commit credentials to version control. The SESSION_SECRET protects user sessions from tampering and hijacking.
                             </div>
                             
                             <h6 class="small text-info">Test Database Connection:</h6>
