@@ -226,7 +226,6 @@
 let testData = {};
 let networkChart, cpuChart, memoryChart, diskChart;
 let currentMetric = 'ping_latency';
-let currentMetric = 'ping_latency';
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTestData();
@@ -453,10 +452,6 @@ function showMetric(metric) {
     networkChart.options.plugins.title.text = getMetricTitle(metric);
     networkChart.options.scales.y.title.text = getMetricUnit(metric);
         networkChart.update();
-        
-        // Update Y-axis label
-        networkChart.options.scales.y.title.text = getMetricUnit(metric);
-        networkChart.update('none');
     }
 }
 
@@ -556,11 +551,15 @@ function updateSummaryStats() {
 }
 
 function updateClientSummary() {
+    if (!testData || !testData.clients || !testData.metrics) {
+        return;
+    }
+    
     Object.keys(testData.clients).forEach(clientId => {
-        const latencyData = testData.metrics.ping_latency[clientId] || [];
-        const packetLossData = testData.metrics.ping_packet_loss[clientId] || [];
-        const cpuData = testData.metrics.cpu[clientId] || [];
-        const memoryData = testData.metrics.memory[clientId] || [];
+        const latencyData = (testData.metrics.ping_latency && testData.metrics.ping_latency[clientId]) || [];
+        const packetLossData = (testData.metrics.ping_packet_loss && testData.metrics.ping_packet_loss[clientId]) || [];
+        const cpuData = (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [];
+        const memoryData = (testData.metrics.memory && testData.metrics.memory[clientId]) || [];
         const diskData = testData.metrics.disk[clientId] || [];
         
         // Calculate averages
