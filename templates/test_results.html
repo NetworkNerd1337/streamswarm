@@ -76,7 +76,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
+                        <h5 class="card-title mb-0" id="chart-title">
                             <i class="fas fa-chart-line me-2"></i>
                             Network Latency Over Time
                         </h5>
@@ -809,8 +809,9 @@ function initializeResourceCharts() {
 function showMetric(metric) {
     currentMetric = metric;
     
-    // Update dropdown label
+    // Update dropdown label and chart title
     document.getElementById('current-metric-label').textContent = getMetricTitle(metric).replace(' Over Time', '');
+    document.getElementById('chart-title').innerHTML = '<i class="fas fa-chart-line me-2"></i>' + getMetricTitle(metric);
     
     // Only update chart if it exists and testData is available
     if (networkChart && testData && testData.clients && testData.metrics) {
