@@ -213,7 +213,22 @@ def submit_test_results():
             cos_value=data.get('cos_value'),
             traffic_class=data.get('traffic_class'),
             qos_policy_compliant=data.get('qos_policy_compliant'),
-            bandwidth_per_class=json.dumps(data.get('bandwidth_per_class', {}))
+            bandwidth_per_class=json.dumps(data.get('bandwidth_per_class', {})),
+            # Advanced Network-Level Metrics
+            mtu_size=data.get('mtu_size'),
+            tcp_window_size=data.get('tcp_window_size'),
+            tcp_window_scaling=data.get('tcp_window_scaling'),
+            tcp_congestion_window=data.get('tcp_congestion_window'),
+            tcp_retransmission_rate=data.get('tcp_retransmission_rate'),
+            tcp_out_of_order_packets=data.get('tcp_out_of_order_packets'),
+            tcp_duplicate_acks=data.get('tcp_duplicate_acks'),
+            # Advanced QoS Metrics
+            per_dscp_latency=data.get('per_dscp_latency'),
+            traffic_policing_detected=data.get('traffic_policing_detected'),
+            queue_depth=data.get('queue_depth'),
+            ecn_capable=data.get('ecn_capable'),
+            ecn_congestion_experienced=data.get('ecn_congestion_experienced'),
+            flow_control_events=data.get('flow_control_events')
         )
         
         db.session.add(result)

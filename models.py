@@ -147,6 +147,23 @@ class TestResult(db.Model):
     qos_policy_compliant = db.Column(db.Boolean)  # Whether QoS marking is correct
     bandwidth_per_class = db.Column(Text)  # JSON string of per-class bandwidth usage
     
+    # Advanced Network-Level Metrics
+    mtu_size = db.Column(db.Integer)  # Maximum Transmission Unit discovered
+    tcp_window_size = db.Column(db.Integer)  # TCP window size in bytes
+    tcp_window_scaling = db.Column(db.Boolean)  # TCP window scaling enabled
+    tcp_congestion_window = db.Column(db.Integer)  # TCP congestion window size
+    tcp_retransmission_rate = db.Column(db.Float)  # Percentage of retransmitted packets
+    tcp_out_of_order_packets = db.Column(db.Integer)  # Count of out-of-order packets
+    tcp_duplicate_acks = db.Column(db.Integer)  # Count of duplicate ACKs
+    
+    # Advanced QoS Metrics
+    per_dscp_latency = db.Column(Text)  # JSON string of latency per DSCP class
+    traffic_policing_detected = db.Column(db.Boolean)  # Rate limiting/shaping detected
+    queue_depth = db.Column(db.Integer)  # Network buffer/queue depth
+    ecn_capable = db.Column(db.Boolean)  # ECN (Explicit Congestion Notification) support
+    ecn_congestion_experienced = db.Column(db.Boolean)  # ECN congestion signaling
+    flow_control_events = db.Column(db.Integer)  # TCP/UDP flow control events
+    
     def to_dict(self):
         return {
             'id': self.id,

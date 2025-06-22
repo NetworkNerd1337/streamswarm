@@ -85,6 +85,19 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Enhanced network performance and QoS testing capabilities
+  - Implemented MTU Discovery with path MTU detection using ping with DF flag
+  - Added TCP Window Scaling analysis and congestion window monitoring
+  - Implemented TCP retransmission rate, out-of-order packets, and duplicate ACK detection
+  - Added per-DSCP latency measurements for different traffic classes
+  - Implemented traffic policing detection through burst testing
+  - Added ECN (Explicit Congestion Notification) capability testing
+  - Implemented queue depth estimation using latency increase patterns
+  - Added flow control event monitoring for TCP connections
+  - Enhanced database schema with 12 new advanced network and QoS metrics
+  - Updated metrics dashboard with dedicated cards for network-level and advanced QoS metrics
+  - Added new metrics to test results visualization dropdown
+
 - June 22, 2025: Test scheduling and client auto-assignment implementation
   - Added complete test scheduling system with background job processing
   - Implemented scheduled test execution with proper status management
