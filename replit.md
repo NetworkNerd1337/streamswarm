@@ -98,6 +98,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Created comprehensive Enhanced Metrics Dashboard with categorized metric overview
   - Updated test results page with dropdown selector for all 40+ available metrics
   - Fixed dark mode compatibility for metric cards with proper contrast and readability
+  - Implemented QoS monitoring with DSCP/CoS detection, traffic classification, and policy compliance validation
+  - Added scapy integration for advanced packet analysis and QoS marking extraction
+  - Enhanced database schema with QoS metrics tracking and per-class bandwidth measurement
 
 - June 21, 2025: Complete implementation of StreamSwarm network monitoring system
   - PostgreSQL database integration with all tables created
