@@ -121,6 +121,12 @@
                                                class="btn btn-outline-info">
                                                 <i class="fas fa-chart-line"></i>
                                             </a>
+                                            {% if test.status in ['completed', 'failed'] %}
+                                            <a href="/api/test/{{ test.id }}/export/pdf" 
+                                               class="btn btn-outline-success" target="_blank">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                            {% endif %}
                                             {% if test.status in ['pending', 'running'] %}
                                             <button class="btn btn-outline-warning" onclick="stopTest({{ test.id }})">
                                                 <i class="fas fa-stop"></i>

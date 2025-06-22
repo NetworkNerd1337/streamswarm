@@ -20,10 +20,17 @@
             </div>
         </div>
         <div class="col-auto">
-            <a href="{{ url_for('tests') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>
-                Back to Tests
-            </a>
+            <div class="btn-group" role="group">
+                {% if test.status in ['completed', 'failed'] %}
+                    <button class="btn btn-success" onclick="exportPDF({{ test.id }})">
+                        <i class="fas fa-file-pdf me-1"></i> Export PDF Report
+                    </button>
+                {% endif %}
+                <a href="{{ url_for('tests') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Tests
+                </a>
+            </div>
         </div>
     </div>
 
@@ -579,5 +586,28 @@ function calculateAverage(dataPoints) {
 {% if test.status == 'running' %}
 setInterval(loadTestData, 30000);
 {% endif %}
+
+function exportPDF(testId) {
+    // Show loading state
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating PDF...';
+    btn.disabled = true;
+    
+    // Create a temporary link to download the PDF
+    const link = document.createElement('a');
+    link.href = `/api/test/${testId}/export/pdf`;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Restore button after a delay
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showToast('PDF report download started', 'success');
+    }, 2000);
+}
 </script>
 {% endblock %}

@@ -85,6 +85,15 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Professional PDF report generation feature implementation
+  - Created comprehensive PDF report generator with executive-level formatting using ReportLab
+  - Added performance charts with matplotlib integration for latency trends and client comparisons
+  - Implemented detailed metrics analysis with color-coded performance indicators
+  - Added QoS analysis section for DSCP/CoS monitoring when data is available
+  - Generated automated recommendations based on performance thresholds
+  - Integrated export functionality into test results and test management pages
+  - Professional report layout with company logo, charts, tables, and executive summary
+
 - June 22, 2025: Tutorial page improvements and dependency documentation
   - Fixed broken and irrelevant links in tutorial footer section
   - Updated footer links to point to actual application pages and tutorial sections

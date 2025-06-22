@@ -555,3 +555,31 @@ def get_dashboard_stats():
         'active_tests': active_tests,
         'recent_activity': recent_activity
     })
+
+@app.route('/api/test/<int:test_id>/export/pdf')
+def export_test_pdf(test_id):
+    """Export test results as executive PDF report"""
+    try:
+        test = Test.query.get_or_404(test_id)
+        
+        # Generate PDF report
+        pdf_filename = f"test_{test_id}_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        pdf_path = os.path.join('static', 'reports', pdf_filename)
+        
+        # Ensure reports directory exists
+        os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+        
+        # Generate the PDF
+        generated_path = generate_test_report_pdf(test_id, pdf_path)
+        
+        # Send the file for download
+        return send_file(
+            generated_path,
+            as_attachment=True,
+            download_name=f"{test.name.replace(' ', '_')}_Performance_Report.pdf",
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        logging.error(f"PDF generation failed for test {test_id}: {str(e)}")
+        return jsonify({'error': f'Failed to generate PDF report: {str(e)}'}), 500

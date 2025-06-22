@@ -18,6 +18,10 @@ pip install email-validator>=2.0.0
 
 # Advanced network analysis (for QoS monitoring)
 pip install scapy>=2.5.0
+
+# PDF report generation
+pip install reportlab>=4.4.0
+pip install matplotlib>=3.10.0
 ```
 
 ## Single Command Installation
@@ -25,7 +29,7 @@ pip install scapy>=2.5.0
 Install all dependencies at once:
 
 ```bash
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 reportlab>=4.4.0 matplotlib>=3.10.0
 ```
 
 ## Package Descriptions
@@ -40,6 +44,8 @@ pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-bina
 - **werkzeug**: WSGI utilities
 - **email-validator**: Email validation utilities
 - **scapy**: Advanced packet analysis for QoS monitoring
+- **reportlab**: Professional PDF document generation
+- **matplotlib**: Chart and graph generation for reports
 
 ## Optional: Create requirements.txt
 
@@ -56,6 +62,8 @@ gunicorn>=21.0.0
 werkzeug>=2.3.0
 email-validator>=2.0.0
 scapy>=2.5.0
+reportlab>=4.4.0
+matplotlib>=3.10.0
 ```
 
 Then install with:
