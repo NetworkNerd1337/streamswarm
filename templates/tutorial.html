@@ -592,32 +592,145 @@ psql "$DATABASE_URL" -c "SELECT version();"
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-lg-6">
-                            <h6>Basic Development Setup</h6>
-                            <pre class="bg-dark text-light p-3 rounded"><code># 1. Download StreamSwarm
-git clone https://github.com/NetworkNerd1337/Swarm.git
-cd Swarm
-
-# 2. Create virtual environment
-python3 -m venv streamswarm-env
-source streamswarm-env/bin/activate  # Linux/macOS
-# streamswarm-env\Scripts\activate   # Windows
-
-# 3. Install dependencies (see installation guide above)
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 psycopg2-binary>=2.9.0
-
-# 4. Start server
-python main.py
-
-# 5. Access dashboard
-# Open http://localhost:5000</code></pre>
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-success">
+                                <i class="fas fa-play me-2"></i>
+                                Starting the Server
+                            </h6>
+                            <p class="text-muted small mb-3">Multiple ways to run StreamSwarm server:</p>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-info">Development Mode:</h6>
+                                <div class="bg-dark p-3 rounded">
+                                    <code class="text-light">
+# Simple start (uses SQLite by default)<br>
+python main.py<br><br>
+# With environment variables<br>
+export SESSION_SECRET="$(openssl rand -hex 32)"<br>
+python main.py<br><br>
+# Access at: http://localhost:5000
+                                    </code>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-info">Production Mode:</h6>
+                                <div class="bg-dark p-3 rounded">
+                                    <code class="text-light">
+# With Gunicorn (recommended)<br>
+gunicorn --bind 0.0.0.0:5000 --workers 4 main:app<br><br>
+# With reloading for development<br>
+gunicorn --bind 0.0.0.0:5000 --reload main:app
+                                    </code>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="col-lg-6">
-                            <h6>Production Configuration</h6>
-                            <pre class="bg-dark text-light p-3 rounded"><code># 1. Download and setup (same as development)
-git clone https://github.com/NetworkNerd1337/Swarm.git
-cd Swarm
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-primary">
+                                <i class="fas fa-cogs me-2"></i>
+                                Service Configuration
+                            </h6>
+                            <p class="text-muted small mb-3">Run StreamSwarm as a system service:</p>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-info">Systemd Service (Linux):</h6>
+                                <div class="bg-dark p-3 rounded">
+                                    <code class="text-light small">
+# Create /etc/systemd/system/streamswarm.service<br>
+[Unit]<br>
+Description=StreamSwarm Network Monitor<br>
+After=network.target<br><br>
+[Service]<br>
+Type=exec<br>
+User=streamswarm<br>
+WorkingDirectory=/opt/streamswarm<br>
+Environment=DATABASE_URL=postgresql://...<br>
+Environment=SESSION_SECRET=your-secret-here<br>
+ExecStart=/opt/streamswarm/venv/bin/gunicorn --bind 0.0.0.0:5000 main:app<br>
+Restart=always<br><br>
+[Install]<br>
+WantedBy=multi-user.target
+                                    </code>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-info">Service Commands:</h6>
+                                <div class="bg-dark p-3 rounded">
+                                    <code class="text-light">
+# Enable and start service<br>
+sudo systemctl enable streamswarm<br>
+sudo systemctl start streamswarm<br><br>
+# Check status<br>
+sudo systemctl status streamswarm<br><br>
+# View logs<br>
+sudo journalctl -u streamswarm -f
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-warning">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Security Configuration
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-info">Firewall Setup:</h6>
+                                <div class="bg-dark p-3 rounded">
+                                    <code class="text-light">
+# UFW (Ubuntu/Debian)<br>
+sudo ufw allow 5000/tcp<br>
+sudo ufw enable<br><br>
+# Firewalld (CentOS/RHEL)<br>
+sudo firewall-cmd --permanent --add-port=5000/tcp<br>
+sudo firewall-cmd --reload
+                                    </code>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-warning small">
+                                <strong>Production Security:</strong><br>
+                                • Use a reverse proxy (nginx/Apache)<br>
+                                • Enable HTTPS with SSL certificates<br>
+                                • Use strong SESSION_SECRET<br>
+                                • Restrict database access
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-info">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Monitoring & Maintenance
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-info">Health Checks:</h6>
+                                <div class="bg-dark p-3 rounded">
+                                    <code class="text-light">
+# Check server status<br>
+curl http://localhost:5000/api/dashboard/stats<br><br>
+# Check database connection<br>
+psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM client;"<br><br>
+# Monitor logs<br>
+tail -f /var/log/streamswarm.log
+                                    </code>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info small">
+                                <strong>Backup Strategy:</strong><br>
+                                • Regular PostgreSQL dumps<br>
+                                • Configuration file backups<br>
+                                • Log rotation setup<br>
+                                • Monitor disk space usage
+                            </div>
+                        </div>
+                    </div>
 
 # 2. Set environment variables
 export DATABASE_URL=postgresql://user:pass@host/db

@@ -85,6 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Refactored Server Setup Guide to focus on running and service configuration
+  - Removed duplicate installation content from Server Setup Guide
+  - Enhanced with specific focus on starting server, systemd service setup, and production deployment
+  - Added security configuration, firewall setup, and monitoring sections
+  - Separated server operation concerns from installation process
+  - Improved clarity between Complete Installation Guide and Server Setup Guide purposes
+
 - June 22, 2025: Clarified configuration options and environment variable relationship
   - Enhanced Environment Configuration section to explain three configuration methods
   - Added clear instructions for environment variables, .env files, and config.py modification
