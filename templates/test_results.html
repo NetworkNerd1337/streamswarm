@@ -594,7 +594,10 @@ function initializeCharts() {
         
         return {
             label: testData.clients[clientId],
-            data: metricData,
+            data: metricData.map(point => ({
+                x: new Date(point.x),
+                y: point.y
+            })),
             borderColor: color,
             backgroundColor: color + '20',
             fill: false,
@@ -661,7 +664,10 @@ function initializeResourceCharts() {
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
     const cpuDatasets = Object.keys(testData.clients).map((clientId, index) => ({
         label: testData.clients[clientId],
-        data: (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [],
+        data: ((testData.metrics.cpu && testData.metrics.cpu[clientId]) || []).map(point => ({
+            x: new Date(point.x),
+            y: point.y
+        })),
         borderColor: colors[index % colors.length],
         backgroundColor: colors[index % colors.length] + '20',
         fill: false,
@@ -681,7 +687,6 @@ function initializeResourceCharts() {
                 x: {
                     type: 'time',
                     time: {
-                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
                         displayFormats: { minute: 'HH:mm' }
                     }
                 },
@@ -698,7 +703,10 @@ function initializeResourceCharts() {
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
     const memoryDatasets = Object.keys(testData.clients).map((clientId, index) => ({
         label: testData.clients[clientId],
-        data: (testData.metrics.memory && testData.metrics.memory[clientId]) || [],
+        data: ((testData.metrics.memory && testData.metrics.memory[clientId]) || []).map(point => ({
+            x: new Date(point.x),
+            y: point.y
+        })),
         borderColor: colors[index % colors.length],
         backgroundColor: colors[index % colors.length] + '20',
         fill: false,
@@ -718,7 +726,6 @@ function initializeResourceCharts() {
                 x: {
                     type: 'time',
                     time: {
-                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
                         displayFormats: { minute: 'HH:mm' }
                     }
                 },
@@ -735,7 +742,10 @@ function initializeResourceCharts() {
     const diskCtx = document.getElementById('diskChart').getContext('2d');
     const diskDatasets = Object.keys(testData.clients).map((clientId, index) => ({
         label: testData.clients[clientId],
-        data: (testData.metrics.disk && testData.metrics.disk[clientId]) || [],
+        data: ((testData.metrics.disk && testData.metrics.disk[clientId]) || []).map(point => ({
+            x: new Date(point.x),
+            y: point.y
+        })),
         borderColor: colors[index % colors.length],
         backgroundColor: colors[index % colors.length] + '20',
         fill: false,
@@ -755,7 +765,6 @@ function initializeResourceCharts() {
                 x: {
                     type: 'time',
                     time: {
-                        parser: 'YYYY-MM-DDTHH:mm:ss.SSSSSS',
                         displayFormats: { minute: 'HH:mm' }
                     }
                 },
