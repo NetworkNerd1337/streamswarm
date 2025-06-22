@@ -48,7 +48,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Data Points</h5>
-                    <h2 class="text-success">{{ results | length }}</h2>
+                    <h2 class="text-success" id="data-points">{{ results | length }}</h2>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Avg Latency</h5>
-                    <h2 class="text-warning" id="avg-latency">Loading...</h2>
+                    <h2 class="text-warning" id="avg-latency">--</h2>
                 </div>
             </div>
         </div>
@@ -64,7 +64,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Packet Loss</h5>
-                    <h2 class="text-danger" id="avg-packet-loss">Loading...</h2>
+                    <h2 class="text-danger" id="avg-packet-loss">--</h2>
                 </div>
             </div>
         </div>
@@ -303,18 +303,9 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Ping Latency (ms)</td>
-                                                            {% set avg_latency = test_results | map(attribute='ping_latency') | select('number') | list %}
-                                                            <td>{{ "%.2f"|format(avg_latency | average) if avg_latency else 'N/A' }}</td>
-                                                            <td>
-                                                                {% if avg_latency and (avg_latency | average) < 50 %}
-                                                                    <span class="badge bg-success">Excellent</span>
-                                                                {% elif avg_latency and (avg_latency | average) < 150 %}
-                                                                    <span class="badge bg-warning">Good</span>
-                                                                {% elif avg_latency %}
-                                                                    <span class="badge bg-danger">Poor</span>
-                                                                {% else %}
-                                                                    <span class="badge bg-secondary">N/A</span>
-                                                                {% endif %}
+                                                            <td id="metrics-avg-latency">--</td>
+                                                            <td id="metrics-latency-status">
+                                                                <span class="badge bg-secondary">Loading...</span>
                                                             </td>
                                                         </tr>
                                                         <tr>
