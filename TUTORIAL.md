@@ -1,6 +1,92 @@
 # StreamSwarm Tutorial: Complete Guide with Use Cases
 
-This comprehensive tutorial walks you through real-world scenarios for using StreamSwarm's distributed network monitoring system. You'll learn how to set up both server and client components and understand when and how to use each.
+This comprehensive tutorial walks you through real-world scenarios for using StreamSwarm's distributed network monitoring system. You'll learn how to set up both server and client components, configure the database, install dependencies, and understand when and how to use each component.
+
+## System Requirements
+
+### Python Dependencies
+StreamSwarm requires Python 3.8+ and the following packages:
+
+```bash
+# Core application dependencies
+pip install flask flask-sqlalchemy sqlalchemy
+pip install psycopg2-binary psutil requests
+pip install gunicorn werkzeug email-validator
+
+# Advanced network analysis (for QoS monitoring)
+pip install scapy
+
+# Or install all dependencies at once
+pip install -r requirements.txt
+```
+
+### System Packages
+Additional system packages may be required:
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install python3-pip python3-dev
+sudo apt install libpcap-dev tcpdump  # For QoS monitoring
+sudo apt install postgresql postgresql-contrib
+```
+
+**CentOS/RHEL:**
+```bash
+sudo yum install python3-pip python3-devel
+sudo yum install libpcap-devel tcpdump
+sudo yum install postgresql-server postgresql-contrib
+```
+
+## Database Setup
+
+StreamSwarm uses PostgreSQL for data storage. Here's how to set it up:
+
+### 1. Install and Configure PostgreSQL
+
+```bash
+# Ubuntu/Debian
+sudo apt install postgresql postgresql-contrib
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+
+# CentOS/RHEL
+sudo yum install postgresql-server postgresql-contrib
+sudo postgresql-setup initdb
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+```
+
+### 2. Create Database and User
+
+```bash
+sudo -u postgres psql
+
+CREATE DATABASE streamswarm;
+CREATE USER streamswarm_user WITH PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE streamswarm TO streamswarm_user;
+\q
+```
+
+### 3. Configure Environment Variables
+
+```bash
+# Set database connection
+export DATABASE_URL="postgresql://streamswarm_user:your_secure_password@localhost:5432/streamswarm"
+export SESSION_SECRET="your-random-session-secret"
+
+# Or create a .env file
+echo "DATABASE_URL=postgresql://streamswarm_user:your_secure_password@localhost:5432/streamswarm" > .env
+echo "SESSION_SECRET=your-random-session-secret" >> .env
+```
+
+### 4. Test Database Connection
+
+```bash
+psql "$DATABASE_URL" -c "SELECT version();"
+```
+
+**Note:** StreamSwarm automatically creates all necessary database tables (clients, tests, test_results with 45+ metric columns) when the server starts for the first time.
 
 ## Table of Contents
 1. [Understanding the Architecture](#understanding-the-architecture)

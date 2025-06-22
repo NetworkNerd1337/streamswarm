@@ -35,6 +35,8 @@
                         <div class="col-md-6">
                             <h6>Getting Started</h6>
                             <ul class="list-unstyled">
+                                <li><a href="#dependencies" class="text-decoration-none">System Dependencies</a></li>
+                                <li><a href="#database-setup" class="text-decoration-none">Database Setup</a></li>
                                 <li><a href="#architecture" class="text-decoration-none">Understanding the Architecture</a></li>
                                 <li><a href="#server-setup" class="text-decoration-none">Server Setup Guide</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Client Deployment</a></li>
@@ -49,6 +51,165 @@
                                 <li><a href="#automation" class="text-decoration-none">Automation & Alerts</a></li>
                                 <li><a href="#troubleshooting" class="text-decoration-none">Troubleshooting</a></li>
                             </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Dependencies -->
+    <div class="row mb-4" id="dependencies">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-download me-2"></i>
+                        System Dependencies & Installation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-primary">
+                                <i class="fab fa-python me-2"></i>
+                                Python Requirements
+                            </h6>
+                            <p class="text-muted mb-3">StreamSwarm requires Python 3.8+ and several packages:</p>
+                            <div class="bg-dark p-3 rounded mb-3">
+                                <code class="text-light">
+# Core dependencies<br>
+pip install flask flask-sqlalchemy<br>
+pip install psycopg2-binary sqlalchemy<br>
+pip install psutil requests gunicorn<br>
+pip install werkzeug email-validator<br><br>
+# Advanced network analysis<br>
+pip install scapy<br><br>
+# Or install all at once:<br>
+pip install -r requirements.txt
+                                </code>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong>Note:</strong> The <code>scapy</code> package enables advanced QoS monitoring with DSCP/CoS detection. Some features may require root/administrator privileges.
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-success">
+                                <i class="fas fa-server me-2"></i>
+                                System Packages
+                            </h6>
+                            <p class="text-muted mb-3">Additional system packages may be required:</p>
+                            
+                            <h6 class="small text-info">Ubuntu/Debian:</h6>
+                            <div class="bg-dark p-3 rounded mb-3">
+                                <code class="text-light">
+sudo apt update<br>
+sudo apt install python3-pip python3-dev<br>
+sudo apt install libpcap-dev tcpdump<br>
+sudo apt install postgresql-client
+                                </code>
+                            </div>
+                            
+                            <h6 class="small text-info">CentOS/RHEL:</h6>
+                            <div class="bg-dark p-3 rounded mb-2">
+                                <code class="text-light">
+sudo yum install python3-pip python3-devel<br>
+sudo yum install libpcap-devel tcpdump<br>
+sudo yum install postgresql
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Database Setup -->
+    <div class="row mb-4" id="database-setup">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Database Setup & Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-primary">
+                                <i class="fas fa-elephant me-2"></i>
+                                PostgreSQL Setup
+                            </h6>
+                            <p class="text-muted mb-3">StreamSwarm uses PostgreSQL for data storage. Here's how to set it up:</p>
+                            
+                            <h6 class="small text-info">Install PostgreSQL:</h6>
+                            <div class="bg-dark p-3 rounded mb-3">
+                                <code class="text-light">
+# Ubuntu/Debian<br>
+sudo apt install postgresql postgresql-contrib<br><br>
+# CentOS/RHEL<br>
+sudo yum install postgresql-server postgresql-contrib<br>
+sudo postgresql-setup initdb<br>
+sudo systemctl enable postgresql<br>
+sudo systemctl start postgresql
+                                </code>
+                            </div>
+                            
+                            <h6 class="small text-info">Create Database:</h6>
+                            <div class="bg-dark p-3 rounded mb-3">
+                                <code class="text-light">
+sudo -u postgres psql<br><br>
+CREATE DATABASE streamswarm;<br>
+CREATE USER streamswarm_user WITH PASSWORD 'your_password';<br>
+GRANT ALL PRIVILEGES ON DATABASE streamswarm TO streamswarm_user;<br>
+\q
+                                </code>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-success">
+                                <i class="fas fa-cog me-2"></i>
+                                Environment Configuration
+                            </h6>
+                            <p class="text-muted mb-3">Configure the database connection:</p>
+                            
+                            <h6 class="small text-info">Set Environment Variables:</h6>
+                            <div class="bg-dark p-3 rounded mb-3">
+                                <code class="text-light">
+export DATABASE_URL="postgresql://streamswarm_user:your_password@localhost:5432/streamswarm"<br>
+export SESSION_SECRET="your-secret-key-here"<br><br>
+# Or create a .env file:<br>
+echo "DATABASE_URL=postgresql://streamswarm_user:your_password@localhost:5432/streamswarm" > .env<br>
+echo "SESSION_SECRET=your-secret-key-here" >> .env
+                                </code>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <strong>Security Note:</strong> Use a strong, unique password and session secret in production. Never commit credentials to version control.
+                            </div>
+                            
+                            <h6 class="small text-info">Test Database Connection:</h6>
+                            <div class="bg-dark p-3 rounded mb-2">
+                                <code class="text-light">
+psql "$DATABASE_URL" -c "SELECT version();"
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Automatic Schema Creation
+                                </h6>
+                                <p class="mb-0">StreamSwarm automatically creates all necessary database tables when the server starts for the first time. The schema includes tables for clients, tests, test results, and all 45+ performance metrics including the new QoS monitoring fields.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
