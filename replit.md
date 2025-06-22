@@ -85,6 +85,14 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Integrated comprehensive metrics into test results pages
+  - Moved all 65+ enhanced metrics from standalone dashboard into individual test results pages
+  - Added comprehensive metrics summary cards showing network, application, QoS, and infrastructure data
+  - Enhanced test results dropdown with organized metric categories (Network, System, QoS, etc.)
+  - Removed standalone Enhanced Metrics navigation item - all metrics now contextual to specific tests
+  - Updated test results page header to reflect comprehensive monitoring capabilities
+  - Improved user experience by showing all advanced metrics alongside basic test data
+
 - June 22, 2025: Infrastructure monitoring capabilities implementation
   - Added power consumption monitoring with multi-platform support (Linux, macOS, Windows)
   - Implemented fan speed monitoring using lm-sensors and hwmon interfaces

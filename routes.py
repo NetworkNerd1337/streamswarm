@@ -53,12 +53,7 @@ def tutorial():
     """Tutorial and documentation view"""
     return render_template('tutorial.html')
 
-@app.route('/metrics')
-def metrics_dashboard():
-    """Enhanced metrics dashboard view"""
-    # Get latest test result for display
-    latest_result = TestResult.query.order_by(TestResult.timestamp.desc()).first()
-    return render_template('metrics_dashboard.html', latest_result=latest_result)
+# Removed standalone metrics dashboard - all metrics now integrated into test results pages
 
 # API Routes
 
