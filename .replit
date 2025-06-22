@@ -2,7 +2,7 @@ modules = ["python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["openssl", "postgresql"]
+packages = ["imagemagickBig", "openssl", "postgresql", "sox", "tcpdump", "wireshark"]
 
 [deployment]
 deploymentTarget = "autoscale"

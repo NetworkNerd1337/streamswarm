@@ -205,7 +205,13 @@ def submit_test_results():
             open_files=data.get('open_files'),
             # Temperature metrics
             cpu_temperature=data.get('cpu_temperature'),
-            disk_temperature=data.get('disk_temperature')
+            disk_temperature=data.get('disk_temperature'),
+            # QoS metrics
+            dscp_value=data.get('dscp_value'),
+            cos_value=data.get('cos_value'),
+            traffic_class=data.get('traffic_class'),
+            qos_policy_compliant=data.get('qos_policy_compliant'),
+            bandwidth_per_class=json.dumps(data.get('bandwidth_per_class', {}))
         )
         
         db.session.add(result)
@@ -290,7 +296,10 @@ def get_test_data(test_id):
             'network_bytes_sent': {},
             'network_bytes_recv': {},
             'disk_read_iops': {},
-            'disk_write_iops': {}
+            'disk_write_iops': {},
+            'dscp_value': {},
+            'cos_value': {},
+            'qos_policy_compliant': {}
         }
     }
     
@@ -378,6 +387,18 @@ def get_test_data(test_id):
         data['metrics']['disk_write_iops'][client_id].append({
             'x': timestamp,
             'y': result.disk_write_iops
+        })
+        data['metrics']['dscp_value'][client_id].append({
+            'x': timestamp,
+            'y': result.dscp_value
+        })
+        data['metrics']['cos_value'][client_id].append({
+            'x': timestamp,
+            'y': result.cos_value
+        })
+        data['metrics']['qos_policy_compliant'][client_id].append({
+            'x': timestamp,
+            'y': 1 if result.qos_policy_compliant else 0 if result.qos_policy_compliant is False else None
         })
     
     return jsonify(data)

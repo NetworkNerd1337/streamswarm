@@ -461,7 +461,10 @@ function getMetricTitle(metric) {
         'disk_read_iops': 'Disk Read IOPS Over Time',
         'disk_write_iops': 'Disk Write IOPS Over Time',
         'disk_read_bytes_sec': 'Disk Read Throughput Over Time',
-        'disk_write_bytes_sec': 'Disk Write Throughput Over Time'
+        'disk_write_bytes_sec': 'Disk Write Throughput Over Time',
+        'dscp_value': 'DSCP Values Over Time',
+        'cos_value': 'CoS Values Over Time',
+        'qos_policy_compliant': 'QoS Policy Compliance Over Time'
     };
     return titles[metric] || metric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
@@ -486,7 +489,10 @@ function getMetricUnit(metric) {
         'disk_read_iops': 'Operations/sec',
         'disk_write_iops': 'Operations/sec',
         'disk_read_bytes_sec': 'Bytes/sec',
-        'disk_write_bytes_sec': 'Bytes/sec'
+        'disk_write_bytes_sec': 'Bytes/sec',
+        'dscp_value': 'DSCP Code',
+        'cos_value': 'CoS Value',
+        'qos_policy_compliant': 'Compliance (0/1)'
     };
     return units[metric] || 'Value';
 }

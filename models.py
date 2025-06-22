@@ -140,6 +140,13 @@ class TestResult(db.Model):
     cpu_temperature = db.Column(db.Float)  # CPU temperature in Celsius
     disk_temperature = db.Column(db.Float)  # disk temperature in Celsius
     
+    # QoS metrics
+    dscp_value = db.Column(db.Integer)  # DSCP value from IP header
+    cos_value = db.Column(db.Integer)  # CoS value from Ethernet frame
+    traffic_class = db.Column(db.String(50))  # Classified traffic type
+    qos_policy_compliant = db.Column(db.Boolean)  # Whether QoS marking is correct
+    bandwidth_per_class = db.Column(Text)  # JSON string of per-class bandwidth usage
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -202,5 +209,11 @@ class TestResult(db.Model):
             'open_files': self.open_files,
             # Temperature metrics
             'cpu_temperature': self.cpu_temperature,
-            'disk_temperature': self.disk_temperature
+            'disk_temperature': self.disk_temperature,
+            # QoS metrics
+            'dscp_value': self.dscp_value,
+            'cos_value': self.cos_value,
+            'traffic_class': self.traffic_class,
+            'qos_policy_compliant': self.qos_policy_compliant,
+            'bandwidth_per_class': json.loads(self.bandwidth_per_class) if self.bandwidth_per_class else {}
         }

@@ -372,6 +372,7 @@ class StreamSwarmClient:
                 ping_result = self._ping_test(destination)
                 traceroute_result = self._traceroute_test(destination)
                 advanced_network = self._advanced_network_test(destination)
+                qos_metrics = self._qos_test(destination)
                 
                 # Prepare test result data
                 result_data = {
@@ -384,7 +385,8 @@ class StreamSwarmClient:
                     'jitter': ping_result.get('jitter'),
                     'traceroute_hops': traceroute_result.get('hops'),
                     'traceroute_data': traceroute_result.get('data', []),
-                    **advanced_network
+                    **advanced_network,
+                    **qos_metrics
                 }
                 
                 # Submit results to server
