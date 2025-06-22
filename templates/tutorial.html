@@ -731,6 +731,24 @@ tail -f /var/log/streamswarm.log
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-cloud me-2"></i>Replit Deployment Configuration</h6>
+                                <p class="small mb-2"><strong>For clients connecting to Replit-deployed servers:</strong></p>
+                                <div class="bg-dark p-3 rounded mb-2">
+                                    <code class="text-light">
+# Use HTTPS and the Replit domain (not port 5000)<br>
+python client.py --server https://your-repl-name.replit.app --name "Client-01"<br><br>
+# Your current Replit URL:<br>
+# https://1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev
+                                    </code>
+                                </div>
+                                <p class="small mb-0"><strong>Note:</strong> Replit maps external port 80/443 to internal port 5000. External clients should connect via HTTPS, not HTTP port 5000.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

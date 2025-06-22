@@ -85,6 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Fixed Replit deployment client connectivity configuration
+  - Identified that Replit maps external port 80/443 to internal port 5000
+  - Created client connection guide for Replit-deployed servers
+  - Added Replit-specific configuration section to tutorial
+  - Provided correct HTTPS connection strings for external clients
+  - Server accessible at: https://1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev
+
 - June 22, 2025: Refactored Server Setup Guide to focus on running and service configuration
   - Removed duplicate installation content from Server Setup Guide
   - Enhanced with specific focus on starting server, systemd service setup, and production deployment
