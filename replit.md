@@ -85,6 +85,15 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Tutorial page improvements and dependency documentation
+  - Fixed broken and irrelevant links in tutorial footer section
+  - Updated footer links to point to actual application pages and tutorial sections
+  - Replaced non-existent API reference with working metrics dashboard link
+  - Consolidated installation documentation to prevent confusion
+  - Created comprehensive DEPENDENCIES.md with proper pip install commands and version constraints
+  - Enhanced installation instructions with version requirements for all dependencies
+  - Removed duplicate "Complete Usage Guide" and streamlined navigation to existing content
+
 - June 22, 2025: Major metrics enhancement and logo integration
   - Added 35+ new performance metrics including DNS resolution time, TCP connect time, SSL handshake time, TTFB, jitter analysis
   - Enhanced CPU monitoring with load averages, frequency, temperature, context switches
