@@ -312,13 +312,18 @@ function initializeCharts() {
 }
 
 function initializeResourceCharts() {
+    if (!testData || !testData.clients || !testData.metrics) {
+        console.log('No data available for resource chart initialization');
+        return;
+    }
+    
     const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
     
     // CPU Chart
     const cpuCtx = document.getElementById('cpuChart').getContext('2d');
     const cpuDatasets = Object.keys(testData.clients).map((clientId, index) => ({
         label: testData.clients[clientId],
-        data: testData.metrics.cpu[clientId] || [],
+        data: (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [],
         borderColor: colors[index % colors.length],
         backgroundColor: colors[index % colors.length] + '20',
         fill: false,
@@ -355,7 +360,7 @@ function initializeResourceCharts() {
     const memoryCtx = document.getElementById('memoryChart').getContext('2d');
     const memoryDatasets = Object.keys(testData.clients).map((clientId, index) => ({
         label: testData.clients[clientId],
-        data: testData.metrics.memory[clientId] || [],
+        data: (testData.metrics.memory && testData.metrics.memory[clientId]) || [],
         borderColor: colors[index % colors.length],
         backgroundColor: colors[index % colors.length] + '20',
         fill: false,
@@ -392,7 +397,7 @@ function initializeResourceCharts() {
     const diskCtx = document.getElementById('diskChart').getContext('2d');
     const diskDatasets = Object.keys(testData.clients).map((clientId, index) => ({
         label: testData.clients[clientId],
-        data: testData.metrics.disk[clientId] || [],
+        data: (testData.metrics.disk && testData.metrics.disk[clientId]) || [],
         borderColor: colors[index % colors.length],
         backgroundColor: colors[index % colors.length] + '20',
         fill: false,
@@ -560,7 +565,7 @@ function updateClientSummary() {
         const packetLossData = (testData.metrics.ping_packet_loss && testData.metrics.ping_packet_loss[clientId]) || [];
         const cpuData = (testData.metrics.cpu && testData.metrics.cpu[clientId]) || [];
         const memoryData = (testData.metrics.memory && testData.metrics.memory[clientId]) || [];
-        const diskData = testData.metrics.disk[clientId] || [];
+        const diskData = (testData.metrics.disk && testData.metrics.disk[clientId]) || [];
         
         // Calculate averages
         const avgLatency = calculateAverage(latencyData);
