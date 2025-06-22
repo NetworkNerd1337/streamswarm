@@ -177,56 +177,188 @@ class StreamSwarmPDFReport:
         return table
     
     def _generate_metrics_table(self):
-        """Generate key metrics summary table"""
-        # Calculate aggregated metrics
-        latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
-        packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
-        dns_times = [r.dns_resolution_time for r in self.results if r.dns_resolution_time is not None]
-        tcp_times = [r.tcp_connect_time for r in self.results if r.tcp_connect_time is not None]
+        """Generate comprehensive metrics summary tables"""
+        if not self.results:
+            return []
         
-        data = [
-            ['Metric', 'Average', 'Minimum', 'Maximum', 'Status'],
-            ['Network Latency (ms)', 
-             f"{sum(latencies)/max(1,len(latencies)):.1f}" if latencies else 'N/A',
-             f"{min(latencies):.1f}" if latencies else 'N/A',
-             f"{max(latencies):.1f}" if latencies else 'N/A',
-             'Excellent' if latencies and sum(latencies)/len(latencies) < 50 else 'Good' if latencies and sum(latencies)/len(latencies) < 100 else 'Poor'
-            ],
-            ['Packet Loss (%)',
-             f"{sum(packet_losses)/max(1,len(packet_losses)):.2f}" if packet_losses else 'N/A',
-             f"{min(packet_losses):.2f}" if packet_losses else 'N/A',
-             f"{max(packet_losses):.2f}" if packet_losses else 'N/A',
-             'Excellent' if packet_losses and sum(packet_losses)/len(packet_losses) < 1 else 'Good' if packet_losses and sum(packet_losses)/len(packet_losses) < 3 else 'Poor'
-            ],
-            ['DNS Resolution (ms)',
-             f"{sum(dns_times)/max(1,len(dns_times)):.1f}" if dns_times else 'N/A',
-             f"{min(dns_times):.1f}" if dns_times else 'N/A',
-             f"{max(dns_times):.1f}" if dns_times else 'N/A',
-             'Excellent' if dns_times and sum(dns_times)/len(dns_times) < 20 else 'Good' if dns_times and sum(dns_times)/len(dns_times) < 50 else 'Poor'
-            ],
-            ['TCP Connect (ms)',
-             f"{sum(tcp_times)/max(1,len(tcp_times)):.1f}" if tcp_times else 'N/A',
-             f"{min(tcp_times):.1f}" if tcp_times else 'N/A',
-             f"{max(tcp_times):.1f}" if tcp_times else 'N/A',
-             'Excellent' if tcp_times and sum(tcp_times)/len(tcp_times) < 100 else 'Good' if tcp_times and sum(tcp_times)/len(tcp_times) < 200 else 'Poor'
-            ]
+        # Helper function to safely calculate averages
+        def safe_avg(values):
+            filtered = [v for v in values if v is not None and v != 0]
+            return sum(filtered) / len(filtered) if filtered else None
+        
+        tables = []
+        
+        # Network Performance Metrics Table
+        network_data = [
+            ['Network Performance Metrics', 'Average', 'Min', 'Max', 'Status'],
         ]
         
-        table = Table(data, colWidths=[2*inch, 1*inch, 1*inch, 1*inch, 1*inch])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            # Color code status column
-            ('TEXTCOLOR', (4, 1), (4, -1), colors.green),  # Will be overridden by actual status colors
-        ]))
+        latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
+        if latencies:
+            avg_lat = safe_avg(latencies)
+            status = 'Excellent' if avg_lat < 50 else 'Good' if avg_lat < 100 else 'Poor'
+            network_data.append(['Ping Latency (ms)', f'{avg_lat:.1f}', f'{min(latencies):.1f}', f'{max(latencies):.1f}', status])
         
-        return table
+        packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
+        if packet_losses:
+            avg_loss = safe_avg(packet_losses)
+            status = 'Excellent' if avg_loss < 1 else 'Good' if avg_loss < 3 else 'Poor'
+            network_data.append(['Packet Loss (%)', f'{avg_loss:.2f}', f'{min(packet_losses):.2f}', f'{max(packet_losses):.2f}', status])
+        
+        jitters = [r.jitter for r in self.results if r.jitter is not None]
+        if jitters:
+            avg_jitter = safe_avg(jitters)
+            status = 'Excellent' if avg_jitter < 10 else 'Good' if avg_jitter < 30 else 'Poor'
+            network_data.append(['Network Jitter (ms)', f'{avg_jitter:.2f}', f'{min(jitters):.2f}', f'{max(jitters):.2f}', status])
+        
+        dns_times = [r.dns_resolution_time for r in self.results if r.dns_resolution_time is not None]
+        if dns_times:
+            avg_dns = safe_avg(dns_times)
+            status = 'Excellent' if avg_dns < 20 else 'Good' if avg_dns < 50 else 'Poor'
+            network_data.append(['DNS Resolution (ms)', f'{avg_dns:.1f}', f'{min(dns_times):.1f}', f'{max(dns_times):.1f}', status])
+        
+        bandwidths_down = [r.bandwidth_download for r in self.results if r.bandwidth_download is not None]
+        if bandwidths_down:
+            avg_down = safe_avg(bandwidths_down)
+            status = 'Excellent' if avg_down > 100 else 'Good' if avg_down > 25 else 'Poor'
+            network_data.append(['Download Speed (Mbps)', f'{avg_down:.1f}', f'{min(bandwidths_down):.1f}', f'{max(bandwidths_down):.1f}', status])
+        
+        if len(network_data) > 1:
+            network_table = Table(network_data, colWidths=[2*inch, 1*inch, 0.8*inch, 0.8*inch, 1*inch])
+            network_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c3e50')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            tables.extend([network_table, Spacer(1, 8)])
+        
+        # System Resources Table
+        system_data = [
+            ['System Resource Metrics', 'Average', 'Min', 'Max', 'Status'],
+        ]
+        
+        cpu_percents = [r.cpu_percent for r in self.results if r.cpu_percent is not None]
+        if cpu_percents:
+            avg_cpu = safe_avg(cpu_percents)
+            status = 'Excellent' if avg_cpu < 50 else 'Good' if avg_cpu < 80 else 'Poor'
+            system_data.append(['CPU Usage (%)', f'{avg_cpu:.1f}', f'{min(cpu_percents):.1f}', f'{max(cpu_percents):.1f}', status])
+        
+        memory_percents = [r.memory_percent for r in self.results if r.memory_percent is not None]
+        if memory_percents:
+            avg_mem = safe_avg(memory_percents)
+            status = 'Excellent' if avg_mem < 60 else 'Good' if avg_mem < 80 else 'Poor'
+            system_data.append(['Memory Usage (%)', f'{avg_mem:.1f}', f'{min(memory_percents):.1f}', f'{max(memory_percents):.1f}', status])
+        
+        disk_percents = [r.disk_percent for r in self.results if r.disk_percent is not None]
+        if disk_percents:
+            avg_disk = safe_avg(disk_percents)
+            status = 'Excellent' if avg_disk < 70 else 'Good' if avg_disk < 85 else 'Poor'
+            system_data.append(['Disk Usage (%)', f'{avg_disk:.1f}', f'{min(disk_percents):.1f}', f'{max(disk_percents):.1f}', status])
+        
+        load_1mins = [r.cpu_load_1min for r in self.results if r.cpu_load_1min is not None]
+        if load_1mins:
+            avg_load = safe_avg(load_1mins)
+            status = 'Excellent' if avg_load < 1 else 'Good' if avg_load < 2 else 'Poor'
+            system_data.append(['CPU Load (1min)', f'{avg_load:.2f}', f'{min(load_1mins):.2f}', f'{max(load_1mins):.2f}', status])
+        
+        if len(system_data) > 1:
+            system_table = Table(system_data, colWidths=[2*inch, 1*inch, 0.8*inch, 0.8*inch, 1*inch])
+            system_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#27ae60')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            tables.extend([system_table, Spacer(1, 8)])
+        
+        # Advanced Network & QoS Table
+        advanced_data = [
+            ['Advanced Network & QoS', 'Value', 'Analysis', '', ''],
+        ]
+        
+        mtu_sizes = [r.mtu_size for r in self.results if r.mtu_size is not None]
+        if mtu_sizes:
+            avg_mtu = safe_avg(mtu_sizes)
+            advanced_data.append(['MTU Size (bytes)', f'{avg_mtu:.0f}', 'Standard', '', ''])
+        
+        retrans_rates = [r.tcp_retransmission_rate for r in self.results if r.tcp_retransmission_rate is not None]
+        if retrans_rates:
+            avg_retrans = safe_avg(retrans_rates)
+            status = 'Excellent' if avg_retrans < 0.5 else 'Good' if avg_retrans < 2 else 'Poor'
+            advanced_data.append(['TCP Retrans Rate (%)', f'{avg_retrans:.3f}', status, '', ''])
+        
+        ecn_capable = any(r.ecn_capable for r in self.results if r.ecn_capable)
+        advanced_data.append(['ECN Support', 'Yes' if ecn_capable else 'No', 'Info', '', ''])
+        
+        policing_detected = any(r.traffic_policing_detected for r in self.results if r.traffic_policing_detected)
+        advanced_data.append(['Traffic Policing', 'Detected' if policing_detected else 'None', 'Info', '', ''])
+        
+        if len(advanced_data) > 1:
+            advanced_table = Table(advanced_data, colWidths=[2*inch, 1*inch, 1*inch, 0.8*inch, 0.8*inch])
+            advanced_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f39c12')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            tables.extend([advanced_table, Spacer(1, 8)])
+        
+        # Application Layer & Infrastructure Table
+        app_data = [
+            ['Application & Infrastructure', 'Value', 'Performance', '', ''],
+        ]
+        
+        content_times = [r.content_download_time for r in self.results if r.content_download_time is not None]
+        if content_times:
+            avg_content = safe_avg(content_times)
+            status = 'Excellent' if avg_content < 1000 else 'Good' if avg_content < 3000 else 'Poor'
+            app_data.append(['Content Download (ms)', f'{avg_content:.0f}', status, '', ''])
+        
+        compression_ratios = [r.compression_ratio for r in self.results if r.compression_ratio is not None]
+        if compression_ratios:
+            avg_compression = safe_avg(compression_ratios)
+            status = 'Excellent' if avg_compression > 60 else 'Good' if avg_compression > 30 else 'Poor'
+            app_data.append(['Compression Ratio (%)', f'{avg_compression:.1f}', status, '', ''])
+        
+        power_consumption = [r.power_consumption_watts for r in self.results if r.power_consumption_watts is not None]
+        if power_consumption:
+            avg_power = safe_avg(power_consumption)
+            app_data.append(['Power Consumption (W)', f'{avg_power:.1f}', 'Normal', '', ''])
+        
+        memory_errors = [r.memory_error_rate for r in self.results if r.memory_error_rate is not None]
+        if memory_errors:
+            avg_errors = safe_avg(memory_errors)
+            status = 'Excellent' if avg_errors < 0.1 else 'Good' if avg_errors < 1 else 'Monitor'
+            app_data.append(['Memory Errors (/hr)', f'{avg_errors:.3f}', status, '', ''])
+        
+        if len(app_data) > 1:
+            app_table = Table(app_data, colWidths=[2*inch, 1*inch, 1*inch, 0.8*inch, 0.8*inch])
+            app_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3498db')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('FONTSIZE', (0, 1), (-1, -1), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            tables.extend([app_table, Spacer(1, 8)])
+        
+        return tables
     
     def _generate_performance_charts(self):
         """Generate performance charts as images"""
@@ -402,40 +534,135 @@ class StreamSwarmPDFReport:
         return dscp_map.get(dscp_value, f"Unknown ({dscp_value})")
     
     def _generate_recommendations(self):
-        """Generate actionable recommendations"""
-        # Analyze results to provide recommendations
-        latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
-        packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
+        """Generate comprehensive actionable recommendations based on all 65+ metrics"""
+        if not self.results:
+            return ""
+        
+        def safe_avg(values):
+            filtered = [v for v in values if v is not None and v != 0]
+            return sum(filtered) / len(filtered) if filtered else None
         
         recommendations = []
         
+        # Network Performance Analysis
+        latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
         if latencies:
-            avg_latency = sum(latencies) / len(latencies)
-            if avg_latency > 100:
-                recommendations.append("High network latency detected. Consider optimizing network routing or upgrading connection quality.")
+            avg_latency = safe_avg(latencies)
+            if avg_latency > 150:
+                recommendations.append("CRITICAL: High network latency >150ms detected. Implement CDN, optimize routing, or consider edge computing solutions.")
+            elif avg_latency > 100:
+                recommendations.append("HIGH: Elevated latency 100-150ms. Monitor consistency and investigate network path optimization.")
         
+        packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         if packet_losses:
-            avg_packet_loss = sum(packet_losses) / len(packet_losses)
-            if avg_packet_loss > 3:
-                recommendations.append("Significant packet loss observed. Investigate network infrastructure for capacity or reliability issues.")
+            avg_loss = safe_avg(packet_losses)
+            if avg_loss > 5:
+                recommendations.append("CRITICAL: Packet loss >5% severely impacts performance. Immediate network infrastructure review required.")
+            elif avg_loss > 1:
+                recommendations.append("MEDIUM: Packet loss 1-5% detected. Monitor during peak usage and review QoS policies.")
         
+        jitters = [r.jitter for r in self.results if r.jitter is not None]
+        if jitters:
+            avg_jitter = safe_avg(jitters)
+            if avg_jitter > 30:
+                recommendations.append("HIGH: High jitter >30ms impacts real-time applications. Investigate QoS policies and network stability.")
+        
+        # System Resource Analysis
+        cpu_percents = [r.cpu_percent for r in self.results if r.cpu_percent is not None]
+        if cpu_percents:
+            avg_cpu = safe_avg(cpu_percents)
+            if avg_cpu > 90:
+                recommendations.append("CRITICAL: CPU >90% utilization. Immediate scaling or workload optimization required.")
+            elif avg_cpu > 80:
+                recommendations.append("HIGH: CPU 80-90% usage. Plan capacity expansion and optimize resource-intensive processes.")
+        
+        memory_percents = [r.memory_percent for r in self.results if r.memory_percent is not None]
+        if memory_percents:
+            avg_memory = safe_avg(memory_percents)
+            if avg_memory > 95:
+                recommendations.append("CRITICAL: Memory >95% usage. Immediate memory optimization or hardware upgrade required.")
+            elif avg_memory > 85:
+                recommendations.append("HIGH: Memory 85-95% usage. Monitor for memory leaks and plan capacity increases.")
+        
+        # Advanced Network Analysis
+        retrans_rates = [r.tcp_retransmission_rate for r in self.results if r.tcp_retransmission_rate is not None]
+        if retrans_rates:
+            avg_retrans = safe_avg(retrans_rates)
+            if avg_retrans > 2:
+                recommendations.append("MEDIUM: TCP retransmission rate >2%. Investigate network congestion and buffer sizing.")
+        
+        # QoS Analysis
+        ecn_capable = any(r.ecn_capable for r in self.results if r.ecn_capable)
+        if not ecn_capable:
+            recommendations.append("INFO: ECN not detected. Consider enabling ECN for improved congestion handling.")
+        
+        policing_detected = any(r.traffic_policing_detected for r in self.results if r.traffic_policing_detected)
+        if policing_detected:
+            recommendations.append("INFO: Traffic policing detected. Verify QoS policies align with application requirements.")
+        
+        # Application Layer Analysis
+        content_times = [r.content_download_time for r in self.results if r.content_download_time is not None]
+        if content_times:
+            avg_content = safe_avg(content_times)
+            if avg_content > 5000:  # 5 seconds
+                recommendations.append("MEDIUM: Slow content download >5s. Optimize content delivery, enable compression, or implement CDN.")
+        
+        compression_ratios = [r.compression_ratio for r in self.results if r.compression_ratio is not None]
+        if compression_ratios:
+            avg_compression = safe_avg(compression_ratios)
+            if avg_compression < 20:
+                recommendations.append("LOW: Low compression ratio <20%. Enable gzip/deflate compression to improve transfer efficiency.")
+        
+        # Infrastructure Health Analysis
+        memory_errors = [r.memory_error_rate for r in self.results if r.memory_error_rate is not None]
+        if memory_errors:
+            avg_errors = safe_avg(memory_errors)
+            if avg_errors > 1:
+                recommendations.append("HIGH: Memory errors detected >1/hr. Investigate RAM health and consider ECC memory.")
+        
+        power_consumption = [r.power_consumption_watts for r in self.results if r.power_consumption_watts is not None]
+        if power_consumption:
+            avg_power = safe_avg(power_consumption)
+            if avg_power > 200:
+                recommendations.append("INFO: High power consumption >200W. Consider energy optimization for cost reduction.")
+        
+        # Bandwidth Analysis
+        bandwidths_down = [r.bandwidth_download for r in self.results if r.bandwidth_download is not None]
+        if bandwidths_down:
+            avg_down = safe_avg(bandwidths_down)
+            if avg_down < 10:
+                recommendations.append("MEDIUM: Low download bandwidth <10 Mbps. Consider bandwidth upgrade for improved user experience.")
+        
+        # Client Performance Comparison
         if len(self.clients) > 1:
-            # Compare client performance
-            client_latencies = {}
+            client_performance = {}
             for client in self.clients:
-                client_results = [r for r in self.results if r.client_id == client.id and r.ping_latency]
+                client_results = [r for r in self.results if r.client_id == client.id]
                 if client_results:
-                    client_latencies[client.hostname] = sum(r.ping_latency for r in client_results) / len(client_results)
+                    client_latencies = [r.ping_latency for r in client_results if r.ping_latency is not None]
+                    if client_latencies:
+                        client_performance[client.hostname] = safe_avg(client_latencies)
             
-            if len(client_latencies) > 1:
-                best_client = min(client_latencies.items(), key=lambda x: x[1])
-                worst_client = max(client_latencies.items(), key=lambda x: x[1])
+            if len(client_performance) > 1:
+                best_client = min(client_performance.items(), key=lambda x: x[1])
+                worst_client = max(client_performance.items(), key=lambda x: x[1])
                 
                 if worst_client[1] > best_client[1] * 1.5:
-                    recommendations.append(f"Performance disparity detected: {worst_client[0]} shows significantly higher latency than {best_client[0]}. Consider investigating network path optimization.")
+                    recommendations.append(f"MEDIUM: Performance disparity detected. {worst_client[0]} shows significantly higher latency than {best_client[0]}. Investigate network path optimization.")
         
+        # General recommendations if performance is good
         if not recommendations:
-            recommendations.append("Network performance appears to be within acceptable parameters. Continue regular monitoring to maintain service quality.")
+            recommendations.extend([
+                "EXCELLENT: All metrics within optimal ranges. System performing well.",
+                "Continue regular monitoring to maintain performance baselines.",
+                "Consider implementing automated alerting for proactive issue detection."
+            ])
+        else:
+            recommendations.extend([
+                "Implement continuous monitoring for early issue detection.",
+                "Schedule regular performance reviews to track improvements.",
+                "Consider capacity planning based on growth projections."
+            ])
         
         return "<br/>".join(f"• {rec}" for rec in recommendations)
 

@@ -85,6 +85,15 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Enhanced test results pages and PDF export with comprehensive 65+ metrics display
+  - Added detailed metrics analysis sections to test results pages showing all network, QoS, system, application, and infrastructure metrics
+  - Enhanced PDF report generation to capture all 65+ metrics with categorized tables and comprehensive analysis
+  - Added infrastructure health analysis with power consumption, memory errors, drive health monitoring
+  - Implemented application layer performance analysis with content timing, compression, CDN performance
+  - Enhanced recommendations system to analyze all metric categories and provide prioritized action items
+  - Comprehensive test results now display network performance, advanced QoS, system resources, and infrastructure health
+  - PDF exports include detailed metric tables, performance assessments, and actionable recommendations
+
 - June 22, 2025: Updated comprehensive documentation and tutorials for 65+ metrics system
   - Enhanced tutorial page with comprehensive monitoring capabilities overview
   - Updated system requirements to reflect advanced monitoring dependencies
