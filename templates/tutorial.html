@@ -741,8 +741,6 @@ tail -f /var/log/streamswarm.log
                                     <code class="text-light">
 # Use HTTPS without port specification<br>
 python client.py --server https://your-domain.example.com --name "Client-01"<br><br>
-# Current deployment URL:<br>
-# https://1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev
                                     </code>
                                 </div>
                                 <p class="small mb-2"><strong>Self-hosted servers (local/internal networks):</strong></p>
@@ -783,8 +781,8 @@ cd Swarm
 # 2. Install minimal dependencies
 pip install psutil requests
 
-# 3. Connect to Replit server (HTTPS)
-python client.py --server https://your-repl-domain.replit.app --name "Client-01"
+# 3. Connect to application server (HTTPS)
+python client.py --server https://your-domain.com --name "Client-01"
 
 # 4. Connect to self-hosted server
 python client.py --server http://192.168.1.100:5000 --name "Local-Client"</code></pre>
@@ -797,11 +795,11 @@ git clone https://github.com/NetworkNerd1337/Swarm.git
 cd Swarm
 pip install psutil requests
 
-# New York Office (Replit deployment)
-python client.py --server https://your-repl-domain.replit.app --name "NYC-Office"
+# New York Office (external deployment)
+python client.py --server https://your-domain.com --name "NYC-Office"
 
 # London Office (self-hosted)
-python client.py --server https://monitoring.company.com --name "London-Office"</code></pre>
+python client.py --server https://localhost:5000 --name "London-Office"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">
