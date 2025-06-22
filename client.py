@@ -429,7 +429,7 @@ class StreamSwarmClient:
                 result_data = {
                     'client_id': self.client_id,
                     'test_id': test_id,
-                    'timestamp': datetime.now(zoneinfo.ZoneInfo('America/New_York')).isoformat(),
+                    'timestamp': datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat(),
                     **system_metrics,
                     'ping_latency': ping_result.get('latency'),
                     'ping_packet_loss': ping_result.get('packet_loss'),
