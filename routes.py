@@ -56,7 +56,9 @@ def tutorial():
 @app.route('/metrics')
 def metrics_dashboard():
     """Enhanced metrics dashboard view"""
-    return render_template('metrics_dashboard.html')
+    # Get latest test result for display
+    latest_result = TestResult.query.order_by(TestResult.timestamp.desc()).first()
+    return render_template('metrics_dashboard.html', latest_result=latest_result)
 
 # API Routes
 
