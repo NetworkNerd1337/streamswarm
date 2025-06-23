@@ -443,6 +443,10 @@ def get_test_data(test_id):
             'x': timestamp,
             'y': 1 if result.qos_policy_compliant else 0 if result.qos_policy_compliant is False else None
         })
+        data['metrics']['traceroute_data'][client_id].append({
+            'x': timestamp,
+            'y': result.traceroute_data
+        })
     
     return jsonify(data)
 

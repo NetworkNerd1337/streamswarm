@@ -1202,6 +1202,17 @@ function showDataPointDetails(clientId, dataIndex) {
     
 
     
+    // Debug: Check traceroute data availability
+    console.log('Checking traceroute data for client', clientId, 'at index', dataIndex);
+    console.log('testData.metrics.traceroute_data exists:', !!testData.metrics.traceroute_data);
+    if (testData.metrics.traceroute_data) {
+        console.log('traceroute_data has client', clientId, ':', !!testData.metrics.traceroute_data[clientId]);
+        if (testData.metrics.traceroute_data[clientId]) {
+            console.log('Client has', testData.metrics.traceroute_data[clientId].length, 'traceroute entries');
+            console.log('Entry at index', dataIndex, ':', testData.metrics.traceroute_data[clientId][dataIndex]);
+        }
+    }
+    
     // Populate traceroute table and analyze network hops if available
     if (testData.metrics.traceroute_data && testData.metrics.traceroute_data[clientId] && 
         testData.metrics.traceroute_data[clientId][dataIndex]) {
