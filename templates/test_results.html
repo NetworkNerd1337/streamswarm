@@ -707,7 +707,15 @@ function initializeCharts() {
                         display: true,
                         text: getMetricUnit(currentMetric)
                     },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value, index, values) {
+                            if (currentMetric === 'bandwidth_upload' || currentMetric === 'bandwidth_download') {
+                                return value.toFixed(1) + ' Mbps';
+                            }
+                            return value;
+                        }
+                    }
                 }
             }
         }
@@ -942,7 +950,9 @@ function getMetricUnit(metric) {
         'disk_write_bytes_sec': 'Bytes/sec',
         'dscp_value': 'DSCP Code',
         'cos_value': 'CoS Value',
-        'qos_policy_compliant': 'Compliance (0/1)'
+        'qos_policy_compliant': 'Compliance (0/1)',
+        'bandwidth_upload': 'Upload Speed (Mbps)',
+        'bandwidth_download': 'Download Speed (Mbps)'
     };
     return units[metric] || 'Value';
 }
