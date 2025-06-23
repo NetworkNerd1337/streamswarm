@@ -210,11 +210,17 @@
                                     {% for client in clients %}
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" 
-                                               id="client{{ client.id }}" value="{{ client.id }}">
-                                        <label class="form-check-label" for="client{{ client.id }}">
+                                               id="client{{ client.id }}" value="{{ client.id }}"
+                                               {% if not client.is_available %}disabled{% endif %}>
+                                        <label class="form-check-label" for="client{{ client.id }}"
+                                               {% if not client.is_available %}style="opacity: 0.6;"{% endif %}>
                                             <strong>{{ client.hostname }}</strong>
                                             <small class="text-muted">({{ client.ip_address }})</small>
-                                            <span class="badge bg-success ms-2">{{ client.status }}</span>
+                                            {% if client.is_available %}
+                                                <span class="badge bg-success ms-2">Available</span>
+                                            {% else %}
+                                                <span class="badge bg-warning ms-2">Busy</span>
+                                            {% endif %}
                                         </label>
                                     </div>
                                     {% endfor %}

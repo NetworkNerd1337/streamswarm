@@ -31,6 +31,16 @@ def dashboard():
 def clients():
     """Client management view"""
     clients = Client.query.order_by(Client.last_seen.desc()).all()
+    
+    # Mark clients as busy if they're assigned to running tests
+    for client in clients:
+        busy_tests = db.session.query(Test).join(TestClient).filter(
+            TestClient.client_id == client.id,
+            Test.status.in_(['running', 'pending'])
+        ).all()
+        client.is_busy = len(busy_tests) > 0
+        client.active_tests = [test.name for test in busy_tests]
+    
     return render_template('clients.html', clients=clients)
 
 @app.route('/tests')

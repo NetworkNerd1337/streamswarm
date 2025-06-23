@@ -85,7 +85,7 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, and missing metrics functionality
+- June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, and implemented client eligibility checking
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
   - Enhanced bandwidth testing with reduced timeouts (15s) and improved error handling
   - Added proper bandwidth data collection with 512KB upload tests and 1MB download tests
@@ -110,6 +110,10 @@ The deployment supports both single-instance development and horizontally scaled
   - Added 15 missing metrics to test results dropdown and API responses: CPU cores/temperature, process count, TCP connections, network packets/drops, memory details, swap usage, traceroute hops
   - Expanded dropdown from 24 to 39 available metrics for comprehensive system analysis
   - Fixed API endpoint to include all collected metrics in test data responses
+  - Implemented client eligibility checking to prevent overlapping test assignments
+  - Added busy/available status indicators in client and test management interfaces
+  - Enhanced test creation with conflict detection and user feedback for busy clients
+  - Modified client assignment logic to reject tests when clients are already running other tests
   - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
   - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
   - Increased minimum test duration requirements to ensure reliable speed measurements
