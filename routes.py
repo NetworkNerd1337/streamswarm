@@ -341,6 +341,8 @@ def get_test_data(test_id):
             'network_drops_out': {},
             'disk_read_iops': {},
             'disk_write_iops': {},
+            'disk_read_bytes_sec': {},
+            'disk_write_bytes_sec': {},
             'bandwidth_upload': {},
             'bandwidth_download': {},
             'dscp_value': {},
@@ -450,6 +452,14 @@ def get_test_data(test_id):
         data['metrics']['disk_write_iops'][client_id].append({
             'x': timestamp,
             'y': result.disk_write_iops
+        })
+        data['metrics']['disk_read_bytes_sec'][client_id].append({
+            'x': timestamp,
+            'y': result.disk_read_bytes_sec
+        })
+        data['metrics']['disk_write_bytes_sec'][client_id].append({
+            'x': timestamp,
+            'y': result.disk_write_bytes_sec
         })
         data['metrics']['dscp_value'][client_id].append({
             'x': timestamp,
