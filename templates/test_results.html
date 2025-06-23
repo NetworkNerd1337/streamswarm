@@ -1101,11 +1101,14 @@ function showDataPointDetails(clientId, dataIndex) {
                     </div>
                     <div class="modal-body">
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <strong>Client:</strong> ${clientName} (ID: ${clientId})
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <strong>Timestamp:</strong> ${new Date(timestamp).toLocaleString()}
+                            </div>
+                            <div class="col-md-4" id="currentHopInfo">
+                                <strong>Current Network Hop:</strong> <span id="hopNumber">Analyzing...</span>
                             </div>
                         </div>
                         
@@ -1130,7 +1133,11 @@ function showDataPointDetails(clientId, dataIndex) {
                         
                         <div class="row" id="tracerouteSection" style="display: none;">
                             <div class="col-12">
-                                <h6>Network Path (Traceroute):</h6>
+                                <h6>Network Path Analysis:</h6>
+                                <div class="alert alert-info mb-3" id="hopAnalysis" style="display: none;">
+                                    <i class="fas fa-route me-2"></i>
+                                    <span id="hopAnalysisText"></span>
+                                </div>
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -1139,6 +1146,7 @@ function showDataPointDetails(clientId, dataIndex) {
                                                 <th>IP/Host</th>
                                                 <th>RTT (ms)</th>
                                                 <th>Status</th>
+                                                <th>Analysis</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tracerouteTable">
@@ -1192,7 +1200,7 @@ function showDataPointDetails(clientId, dataIndex) {
         }
     });
     
-    // Populate traceroute table if available
+    // Populate traceroute table and analyze network hops if available
     if (testData.metrics.traceroute_data && testData.metrics.traceroute_data[clientId] && 
         testData.metrics.traceroute_data[clientId][dataIndex]) {
         const tracerouteData = testData.metrics.traceroute_data[clientId][dataIndex];
@@ -1203,17 +1211,49 @@ function showDataPointDetails(clientId, dataIndex) {
                     document.getElementById('tracerouteSection').style.display = 'block';
                     const tracerouteTable = document.getElementById('tracerouteTable');
                     
+                    // Analyze current performance metrics to identify problem hop
+                    const currentLatency = testData.metrics.ping_latency && testData.metrics.ping_latency[clientId] && 
+                                         testData.metrics.ping_latency[clientId][dataIndex] ? 
+                                         testData.metrics.ping_latency[clientId][dataIndex].y : null;
+                    
+                    const currentJitter = testData.metrics.jitter && testData.metrics.jitter[clientId] && 
+                                        testData.metrics.jitter[clientId][dataIndex] ? 
+                                        testData.metrics.jitter[clientId][dataIndex].y : null;
+                    
+                    let problemHop = analyzeProblemHop(traceData.hops, currentLatency, currentJitter);
+                    
+                    // Update current hop info
+                    const hopNumberElement = document.getElementById('hopNumber');
+                    if (problemHop.hopIndex !== -1) {
+                        hopNumberElement.innerHTML = `<span class="badge bg-${problemHop.severity}">${problemHop.hopIndex + 1}</span> ${problemHop.description}`;
+                        
+                        // Show analysis alert
+                        document.getElementById('hopAnalysis').style.display = 'block';
+                        document.getElementById('hopAnalysisText').textContent = problemHop.analysis;
+                    } else {
+                        hopNumberElement.textContent = 'All hops performing normally';
+                    }
+                    
                     traceData.hops.forEach((hop, index) => {
                         const row = document.createElement('tr');
                         const rtt = hop.rtt || 'Timeout';
                         const status = hop.rtt ? (hop.rtt > 100 ? 'warning' : 'success') : 'danger';
                         const statusText = hop.rtt ? (hop.rtt > 100 ? 'Slow' : 'Good') : 'Timeout';
                         
+                        // Add special highlighting for problem hop
+                        const isProbleHop = index === problemHop.hopIndex;
+                        const rowClass = isProbleHop ? 'table-warning' : '';
+                        
+                        // Analyze this specific hop
+                        let hopAnalysis = analyzeIndividualHop(hop, index, traceData.hops);
+                        
+                        row.className = rowClass;
                         row.innerHTML = `
-                            <td>${index + 1}</td>
+                            <td>${index + 1}${isProbleHop ? ' <i class="fas fa-exclamation-triangle text-warning"></i>' : ''}</td>
                             <td>${hop.ip || hop.host || 'Unknown'}</td>
                             <td>${rtt}</td>
                             <td><span class="badge bg-${status}">${statusText}</span></td>
+                            <td><small class="text-muted">${hopAnalysis}</small></td>
                         `;
                         tracerouteTable.appendChild(row);
                     });
@@ -1222,6 +1262,9 @@ function showDataPointDetails(clientId, dataIndex) {
                 console.error('Error parsing traceroute data:', e);
             }
         }
+    } else {
+        // No traceroute data available, but still show basic hop analysis
+        document.getElementById('hopNumber').textContent = 'Traceroute data not available';
     }
     
     // Show modal
@@ -1279,6 +1322,81 @@ function getMetricStatus(metric, value) {
     return { color: 'secondary', text: 'Info' };
 }
 
+function analyzeProblemHop(hops, currentLatency, currentJitter) {
+    let result = { hopIndex: -1, severity: 'success', description: 'All hops normal', analysis: '' };
+    
+    if (!hops || hops.length === 0) return result;
+    
+    // Look for significant RTT increases between consecutive hops
+    let maxRttIncrease = 0;
+    let problemHopIndex = -1;
+    let previousRtt = 0;
+    
+    hops.forEach((hop, index) => {
+        if (hop.rtt && hop.rtt > 0) {
+            if (index > 0 && previousRtt > 0) {
+                const increase = hop.rtt - previousRtt;
+                if (increase > maxRttIncrease && increase > 50) { // Significant increase threshold
+                    maxRttIncrease = increase;
+                    problemHopIndex = index;
+                }
+            }
+            previousRtt = hop.rtt;
+        }
+    });
+    
+    // Check for timeouts or very high latency
+    hops.forEach((hop, index) => {
+        if (!hop.rtt || hop.rtt > 500) {
+            if (problemHopIndex === -1 || maxRttIncrease < 200) {
+                problemHopIndex = index;
+                maxRttIncrease = hop.rtt || 1000;
+            }
+        }
+    });
+    
+    if (problemHopIndex !== -1) {
+        const problemHop = hops[problemHopIndex];
+        result.hopIndex = problemHopIndex;
+        
+        if (!problemHop.rtt) {
+            result.severity = 'danger';
+            result.description = `${problemHop.ip || problemHop.host || 'Unknown'} (Timeout)`;
+            result.analysis = `Hop ${problemHopIndex + 1} is experiencing timeouts, which may indicate packet loss or filtering.`;
+        } else if (problemHop.rtt > 500) {
+            result.severity = 'danger';
+            result.description = `${problemHop.ip || problemHop.host || 'Unknown'} (${problemHop.rtt}ms)`;
+            result.analysis = `Hop ${problemHopIndex + 1} has very high latency (${problemHop.rtt}ms), indicating a bottleneck.`;
+        } else if (maxRttIncrease > 100) {
+            result.severity = 'warning';
+            result.description = `${problemHop.ip || problemHop.host || 'Unknown'} (+${maxRttIncrease.toFixed(1)}ms)`;
+            result.analysis = `Hop ${problemHopIndex + 1} shows a significant latency increase of ${maxRttIncrease.toFixed(1)}ms from the previous hop.`;
+        }
+    }
+    
+    return result;
+}
+
+function analyzeIndividualHop(hop, index, allHops) {
+    if (!hop.rtt) return 'Timeout or filtered';
+    
+    if (hop.rtt > 500) return 'Very high latency';
+    if (hop.rtt > 200) return 'High latency';
+    
+    // Check if this hop has a significant increase from previous
+    if (index > 0 && allHops[index - 1] && allHops[index - 1].rtt) {
+        const increase = hop.rtt - allHops[index - 1].rtt;
+        if (increase > 100) return `+${increase.toFixed(1)}ms increase`;
+        if (increase > 50) return `+${increase.toFixed(1)}ms rise`;
+    }
+    
+    // Classify by RTT range
+    if (hop.rtt < 10) return 'Excellent';
+    if (hop.rtt < 50) return 'Good';
+    if (hop.rtt < 100) return 'Acceptable';
+    return 'Slow';
+}
+
 function exportDataPoint(clientId, dataIndex) {
     // Create detailed export data
     const clientName = testData.clients[clientId];
@@ -1287,7 +1405,8 @@ function exportDataPoint(clientId, dataIndex) {
     let exportData = {
         client: { id: clientId, name: clientName },
         timestamp: timestamp,
-        metrics: {}
+        metrics: {},
+        networkPath: null
     };
     
     // Collect all available metrics for this data point
@@ -1296,6 +1415,16 @@ function exportDataPoint(clientId, dataIndex) {
             exportData.metrics[metric] = testData.metrics[metric][clientId][dataIndex].y;
         }
     });
+    
+    // Include traceroute data if available
+    if (testData.metrics.traceroute_data && testData.metrics.traceroute_data[clientId] && 
+        testData.metrics.traceroute_data[clientId][dataIndex]) {
+        try {
+            exportData.networkPath = JSON.parse(testData.metrics.traceroute_data[clientId][dataIndex].y);
+        } catch (e) {
+            exportData.networkPath = { error: 'Failed to parse traceroute data' };
+        }
+    }
     
     // Download as JSON file
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
