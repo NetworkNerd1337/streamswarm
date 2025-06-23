@@ -335,6 +335,10 @@ def get_test_data(test_id):
             'cpu_load_15min': {},
             'network_bytes_sent': {},
             'network_bytes_recv': {},
+            'network_errors_in': {},
+            'network_errors_out': {},
+            'network_drops_in': {},
+            'network_drops_out': {},
             'disk_read_iops': {},
             'disk_write_iops': {},
             'bandwidth_upload': {},
@@ -422,6 +426,22 @@ def get_test_data(test_id):
         data['metrics']['network_bytes_recv'][client_id].append({
             'x': timestamp,
             'y': result.network_bytes_recv
+        })
+        data['metrics']['network_errors_in'][client_id].append({
+            'x': timestamp,
+            'y': result.network_errors_in
+        })
+        data['metrics']['network_errors_out'][client_id].append({
+            'x': timestamp,
+            'y': result.network_errors_out
+        })
+        data['metrics']['network_drops_in'][client_id].append({
+            'x': timestamp,
+            'y': result.network_drops_in
+        })
+        data['metrics']['network_drops_out'][client_id].append({
+            'x': timestamp,
+            'y': result.network_drops_out
         })
         data['metrics']['disk_read_iops'][client_id].append({
             'x': timestamp,
