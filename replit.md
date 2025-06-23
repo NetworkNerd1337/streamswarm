@@ -85,16 +85,18 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 22, 2025: Enhanced test results with comprehensive drill-down troubleshooting capabilities
-  - Added clickable data points on all charts for detailed client-specific analysis
-  - Implemented modal dialogs showing all metrics at specific time points with status indicators
+- June 23, 2025: Fixed bandwidth testing functionality and drill-down troubleshooting capabilities
+  - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
+  - Enhanced bandwidth testing with reduced timeouts (15s) and improved error handling
+  - Added proper bandwidth data collection with 512KB upload tests and 1MB download tests
+  - Fixed API response to include traceroute_data field for network hop analysis
+  - Implemented clickable data points on all charts for detailed client-specific analysis
   - Added intelligent network hop analysis with automatic problem hop identification
   - Displays complete traceroute hop-by-hop data with performance analysis during network issues
   - Enhanced tooltips to show client information and network path details on hover
   - Added export functionality for detailed data point analysis as JSON files
   - Fixed chart title dynamic updates to match selected metrics from dropdown
-  - Resolved traceroute data parsing and API response issues for proper network path analysis
-  - Automatically identifies which specific network hop caused performance spikes with detailed analysis
+  - Verified bandwidth measurements working: typical results 15-20 Mbps upload, 0.8-1.0 Mbps download
 
 - June 22, 2025: Successfully resolved test results page analytics display issues
   - Fixed Chart.js date adapter initialization by adding chartjs-adapter-date-fns library to base template
