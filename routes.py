@@ -662,6 +662,52 @@ def get_dashboard_stats():
         'recent_activity': recent_activity
     })
 
+@app.route('/api/dashboard/metrics', methods=['GET'])
+def get_dashboard_metrics():
+    """Get aggregated dashboard metrics for charts"""
+    from sqlalchemy import func
+    
+    # Get recent results from last 24 hours
+    cutoff_time = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None) - timedelta(hours=24)
+    recent_results = TestResult.query.filter(TestResult.timestamp >= cutoff_time).all()
+    
+    if not recent_results:
+        return jsonify({
+            'latency_data': [],
+            'avg_cpu': 0,
+            'avg_memory': 0,
+            'avg_disk': 0,
+            'metrics_count': 0
+        })
+    
+    # Calculate aggregated metrics
+    latencies = [r.ping_latency for r in recent_results if r.ping_latency is not None]
+    cpu_values = [r.cpu_percent for r in recent_results if r.cpu_percent is not None]
+    memory_values = [r.memory_percent for r in recent_results if r.memory_percent is not None]
+    disk_values = [r.disk_percent for r in recent_results if r.disk_percent is not None]
+    
+    # Prepare latency time series data (last 50 points)
+    latency_data = []
+    for result in recent_results[-50:]:
+        if result.ping_latency is not None:
+            latency_data.append({
+                'x': result.timestamp.isoformat(),
+                'y': result.ping_latency
+            })
+    
+    # Calculate averages
+    avg_cpu = sum(cpu_values) / len(cpu_values) if cpu_values else 0
+    avg_memory = sum(memory_values) / len(memory_values) if memory_values else 0
+    avg_disk = sum(disk_values) / len(disk_values) if disk_values else 0
+    
+    return jsonify({
+        'latency_data': latency_data,
+        'avg_cpu': round(avg_cpu, 1),
+        'avg_memory': round(avg_memory, 1),
+        'avg_disk': round(avg_disk, 1),
+        'metrics_count': len(recent_results)
+    })
+
 @app.route('/api/test/<int:test_id>/export/pdf')
 def export_test_pdf(test_id):
     """Export test results as executive PDF report"""

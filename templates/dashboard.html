@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update stats every 30 seconds
     setInterval(updateDashboardStats, 30000);
+    setInterval(updateDashboardMetrics, 30000);
 });
 
 function initializeDashboard() {
@@ -170,6 +171,7 @@ function initializeDashboard() {
     
     // Load initial data
     updateDashboardStats();
+    updateDashboardMetrics();
 }
 
 function updateDashboardStats() {
@@ -185,6 +187,46 @@ function updateDashboardStats() {
         })
         .catch(error => {
             console.error('Error updating dashboard stats:', error);
+        });
+}
+
+function updateDashboardMetrics() {
+    fetch('/api/dashboard/metrics')
+        .then(response => response.json())
+        .then(data => {
+            // Update latency chart
+            if (latencyChart && data.latency_data) {
+                latencyChart.data.datasets[0].data = data.latency_data;
+                latencyChart.update('none');
+            }
+            
+            // Update resource charts
+            if (cpuChart) {
+                const cpuUsed = data.avg_cpu;
+                const cpuFree = Math.max(0, 100 - cpuUsed);
+                cpuChart.data.datasets[0].data = [cpuUsed, cpuFree];
+                cpuChart.options.plugins.title.text = `Average CPU Usage (${cpuUsed}%)`;
+                cpuChart.update('none');
+            }
+            
+            if (memoryChart) {
+                const memUsed = data.avg_memory;
+                const memFree = Math.max(0, 100 - memUsed);
+                memoryChart.data.datasets[0].data = [memUsed, memFree];
+                memoryChart.options.plugins.title.text = `Average Memory Usage (${memUsed}%)`;
+                memoryChart.update('none');
+            }
+            
+            if (diskChart) {
+                const diskUsed = data.avg_disk;
+                const diskFree = Math.max(0, 100 - diskUsed);
+                diskChart.data.datasets[0].data = [diskUsed, diskFree];
+                diskChart.options.plugins.title.text = `Average Disk Usage (${diskUsed}%)`;
+                diskChart.update('none');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating dashboard metrics:', error);
         });
 }
 
