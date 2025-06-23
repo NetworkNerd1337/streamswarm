@@ -621,9 +621,21 @@ class StreamSwarmClient:
                         
                         # Try to extract CoS from Ethernet frame if available
                         if Ether in response:
-                            # CoS is in the 802.1Q VLAN tag (3 bits)
-                            # This is simplified - actual implementation would need VLAN parsing
-                            qos_metrics['cos_value'] = 0  # Placeholder for CoS detection
+                            try:
+                                # Check for 802.1Q VLAN tag (CoS is in priority field)
+                                if response.haslayer('Dot1Q'):
+                                    # Extract 3-bit priority field from 802.1Q header
+                                    cos_value = (response['Dot1Q'].prio) & 0x7
+                                    qos_metrics['cos_value'] = cos_value
+                                else:
+                                    # No VLAN tag - derive CoS from DSCP using standard mapping
+                                    qos_metrics['cos_value'] = self._dscp_to_cos_mapping(dscp_value)
+                            except Exception:
+                                # Fallback to DSCP-to-CoS mapping
+                                qos_metrics['cos_value'] = self._dscp_to_cos_mapping(dscp_value)
+                        else:
+                            # No Ethernet layer - use DSCP-to-CoS mapping
+                            qos_metrics['cos_value'] = self._dscp_to_cos_mapping(dscp_value)
                             
                 except Exception as e:
                     logger.debug(f"Scapy packet analysis failed: {e}")
@@ -862,6 +874,45 @@ class StreamSwarmClient:
         # For now, return False since we're doing network monitoring
         return False
     
+    def _dscp_to_cos_mapping(self, dscp_value):
+        """Map DSCP values to CoS values using standard RFC mappings"""
+        # Standard DSCP to CoS mapping based on RFC 4594
+        dscp_to_cos_map = {
+            # Best Effort
+            0: 0,    # BE -> CoS 0
+            
+            # Assured Forwarding Classes
+            10: 1,   # AF11 -> CoS 1 
+            12: 1,   # AF12 -> CoS 1
+            14: 1,   # AF13 -> CoS 1
+            18: 2,   # AF21 -> CoS 2
+            20: 2,   # AF22 -> CoS 2 
+            22: 2,   # AF23 -> CoS 2
+            26: 3,   # AF31 -> CoS 3
+            28: 3,   # AF32 -> CoS 3
+            30: 3,   # AF33 -> CoS 3
+            34: 4,   # AF41 -> CoS 4
+            36: 4,   # AF42 -> CoS 4
+            38: 4,   # AF43 -> CoS 4
+            
+            # Class Selector 
+            8: 1,    # CS1 -> CoS 1
+            16: 2,   # CS2 -> CoS 2
+            24: 3,   # CS3 -> CoS 3
+            32: 4,   # CS4 -> CoS 4
+            40: 5,   # CS5 -> CoS 5
+            48: 6,   # CS6 -> CoS 6
+            56: 7,   # CS7 -> CoS 7
+            
+            # Expedited Forwarding
+            46: 5,   # EF -> CoS 5
+            
+            # Voice Admit
+            44: 5,   # Voice-Admit -> CoS 5
+        }
+        
+        return dscp_to_cos_map.get(dscp_value, 0)  # Default to CoS 0 (best effort)
+    
     def _validate_qos_policy(self, dscp_value):
         """Validate if DSCP marking complies with expected QoS policy"""
         # Enhanced validation based on traffic type and network context
@@ -925,6 +976,7 @@ class StreamSwarmClient:
                 qos_metrics['dscp_value'] = dscp
                 qos_metrics['traffic_class'] = self._classify_dscp(dscp)
                 qos_metrics['qos_policy_compliant'] = self._validate_qos_policy(dscp)
+                qos_metrics['cos_value'] = self._dscp_to_cos_mapping(dscp)
             
             sock.close()
             
