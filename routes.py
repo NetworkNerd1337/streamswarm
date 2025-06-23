@@ -447,6 +447,14 @@ def get_test_data(test_id):
             'x': timestamp,
             'y': result.traceroute_data
         })
+        data['metrics']['bandwidth_upload'][client_id].append({
+            'x': timestamp,
+            'y': result.bandwidth_upload
+        })
+        data['metrics']['bandwidth_download'][client_id].append({
+            'x': timestamp,
+            'y': result.bandwidth_download
+        })
     
     return jsonify(data)
 
