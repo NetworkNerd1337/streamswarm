@@ -199,27 +199,54 @@ class StreamSwarmClient:
                     # Store current values for rate calculation
                     if not hasattr(self, '_prev_disk_io'):
                         self._prev_disk_io = {'time': time.time(), 'read_bytes': disk_io.read_bytes, 'write_bytes': disk_io.write_bytes, 'read_count': disk_io.read_count, 'write_count': disk_io.write_count}
+                        # Set initial values to 0 for first measurement
                         metrics.update({
-                            'disk_read_iops': 0,
-                            'disk_write_iops': 0,
-                            'disk_read_bytes_sec': 0,
-                            'disk_write_bytes_sec': 0
+                            'disk_read_iops': 0.0,
+                            'disk_write_iops': 0.0,
+                            'disk_read_bytes_sec': 0.0,
+                            'disk_write_bytes_sec': 0.0
                         })
                     else:
                         time_diff = time.time() - self._prev_disk_io['time']
                         if time_diff > 0:
-                            metrics['disk_read_iops'] = (disk_io.read_count - self._prev_disk_io['read_count']) / time_diff
-                            metrics['disk_write_iops'] = (disk_io.write_count - self._prev_disk_io['write_count']) / time_diff
-                            metrics['disk_read_bytes_sec'] = (disk_io.read_bytes - self._prev_disk_io['read_bytes']) / time_diff
-                            metrics['disk_write_bytes_sec'] = (disk_io.write_bytes - self._prev_disk_io['write_bytes']) / time_diff
+                            # Calculate rates and ensure non-negative values
+                            read_iops = max(0, (disk_io.read_count - self._prev_disk_io['read_count']) / time_diff)
+                            write_iops = max(0, (disk_io.write_count - self._prev_disk_io['write_count']) / time_diff)
+                            read_bps = max(0, (disk_io.read_bytes - self._prev_disk_io['read_bytes']) / time_diff)
+                            write_bps = max(0, (disk_io.write_bytes - self._prev_disk_io['write_bytes']) / time_diff)
+                            
+                            metrics.update({
+                                'disk_read_iops': round(read_iops, 2),
+                                'disk_write_iops': round(write_iops, 2),
+                                'disk_read_bytes_sec': round(read_bps, 2),
+                                'disk_write_bytes_sec': round(write_bps, 2)
+                            })
+                        else:
+                            # Time difference too small, use previous values or 0
+                            metrics.update({
+                                'disk_read_iops': 0.0,
+                                'disk_write_iops': 0.0,
+                                'disk_read_bytes_sec': 0.0,
+                                'disk_write_bytes_sec': 0.0
+                            })
                         
                         self._prev_disk_io = {'time': time.time(), 'read_bytes': disk_io.read_bytes, 'write_bytes': disk_io.write_bytes, 'read_count': disk_io.read_count, 'write_count': disk_io.write_count}
-            except:
+                else:
+                    # No disk I/O counters available - set to 0 instead of None
+                    metrics.update({
+                        'disk_read_iops': 0.0,
+                        'disk_write_iops': 0.0,
+                        'disk_read_bytes_sec': 0.0,
+                        'disk_write_bytes_sec': 0.0
+                    })
+            except Exception as e:
+                logger.debug(f"Disk I/O metrics collection failed: {e}")
+                # Set to 0 instead of None to ensure data is collected
                 metrics.update({
-                    'disk_read_iops': None,
-                    'disk_write_iops': None,
-                    'disk_read_bytes_sec': None,
-                    'disk_write_bytes_sec': None
+                    'disk_read_iops': 0.0,
+                    'disk_write_iops': 0.0,
+                    'disk_read_bytes_sec': 0.0,
+                    'disk_write_bytes_sec': 0.0
                 })
             
             # Network interface metrics
