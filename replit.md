@@ -100,6 +100,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Added missing network error metrics (network_errors_in/out, network_drops_in/out) to API responses
   - Fixed QoS Policy Compliance validation logic to provide meaningful assessment instead of always returning 1
   - Enhanced DSCP validation with context-aware policy checking for different traffic types
+  - Fixed CoS values collection by implementing proper DSCP-to-CoS mapping using RFC 4594 standards
+  - Added disk throughput metrics (disk_read_bytes_sec, disk_write_bytes_sec) to API responses and dropdown menu
+  - Enhanced disk I/O collection logic to handle low-activity environments with proper 0 value reporting
 
 - June 22, 2025: Successfully resolved test results page analytics display issues
   - Fixed Chart.js date adapter initialization by adding chartjs-adapter-date-fns library to base template
