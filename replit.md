@@ -107,6 +107,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Fixed CoS values collection by implementing proper DSCP-to-CoS mapping using RFC 4594 standards
   - Added disk throughput metrics (disk_read_bytes_sec, disk_write_bytes_sec) to API responses and dropdown menu
   - Enhanced disk I/O collection logic to handle low-activity environments with proper 0 value reporting
+  - Added 15 missing metrics to test results dropdown and API responses: CPU cores/temperature, process count, TCP connections, network packets/drops, memory details, swap usage, traceroute hops
+  - Expanded dropdown from 24 to 39 available metrics for comprehensive system analysis
+  - Fixed API endpoint to include all collected metrics in test data responses
   - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
   - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
   - Increased minimum test duration requirements to ensure reliable speed measurements
