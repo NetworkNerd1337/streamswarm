@@ -1206,8 +1206,21 @@ function showDataPointDetails(clientId, dataIndex) {
         const tracerouteData = testData.metrics.traceroute_data[clientId][dataIndex];
         if (tracerouteData.y) {
             try {
-                const traceData = JSON.parse(tracerouteData.y);
-                if (traceData && traceData.hops) {
+                // Parse the traceroute data - it's stored as an array of strings
+                const rawTraceData = JSON.parse(tracerouteData.y);
+                
+                // Convert the array of strings to hop objects
+                const hops = [];
+                if (Array.isArray(rawTraceData)) {
+                    rawTraceData.forEach((hopLine, index) => {
+                        const hop = parseTracerouteHop(hopLine, index);
+                        if (hop) {
+                            hops.push(hop);
+                        }
+                    });
+                }
+                
+                if (hops.length > 0) {
                     document.getElementById('tracerouteSection').style.display = 'block';
                     const tracerouteTable = document.getElementById('tracerouteTable');
                     
@@ -1220,7 +1233,7 @@ function showDataPointDetails(clientId, dataIndex) {
                                         testData.metrics.jitter[clientId][dataIndex] ? 
                                         testData.metrics.jitter[clientId][dataIndex].y : null;
                     
-                    let problemHop = analyzeProblemHop(traceData.hops, currentLatency, currentJitter);
+                    let problemHop = analyzeProblemHop(hops, currentLatency, currentJitter);
                     
                     // Update current hop info
                     const hopNumberElement = document.getElementById('hopNumber');
@@ -1234,7 +1247,7 @@ function showDataPointDetails(clientId, dataIndex) {
                         hopNumberElement.textContent = 'All hops performing normally';
                     }
                     
-                    traceData.hops.forEach((hop, index) => {
+                    hops.forEach((hop, index) => {
                         const row = document.createElement('tr');
                         const rtt = hop.rtt || 'Timeout';
                         const status = hop.rtt ? (hop.rtt > 100 ? 'warning' : 'success') : 'danger';
@@ -1245,12 +1258,12 @@ function showDataPointDetails(clientId, dataIndex) {
                         const rowClass = isProbleHop ? 'table-warning' : '';
                         
                         // Analyze this specific hop
-                        let hopAnalysis = analyzeIndividualHop(hop, index, traceData.hops);
+                        let hopAnalysis = analyzeIndividualHop(hop, index, hops);
                         
                         row.className = rowClass;
                         row.innerHTML = `
-                            <td>${index + 1}${isProbleHop ? ' <i class="fas fa-exclamation-triangle text-warning"></i>' : ''}</td>
-                            <td>${hop.ip || hop.host || 'Unknown'}</td>
+                            <td>${hop.hopNumber}${isProbleHop ? ' <i class="fas fa-exclamation-triangle text-warning"></i>' : ''}</td>
+                            <td>${hop.host || hop.ip || 'Unknown'}</td>
                             <td>${rtt}</td>
                             <td><span class="badge bg-${status}">${statusText}</span></td>
                             <td><small class="text-muted">${hopAnalysis}</small></td>
@@ -1320,6 +1333,42 @@ function getMetricStatus(metric, value) {
         return { color: 'danger', text: 'Slow' };
     }
     return { color: 'secondary', text: 'Info' };
+}
+
+function parseTracerouteHop(hopLine, index) {
+    // Parse traceroute hop line like: "1  _gateway (172.16.10.253)  3.744 ms  3.836 ms  3.804 ms"
+    if (!hopLine || hopLine.trim() === '' || hopLine.includes('* * *')) {
+        return { hopNumber: index + 1, ip: null, host: null, rtt: null };
+    }
+    
+    try {
+        // Extract IP address - look for patterns like (192.168.1.1)
+        const ipMatch = hopLine.match(/\(([^)]+)\)/);
+        const ip = ipMatch ? ipMatch[1] : null;
+        
+        // Extract hostname - text before the IP address
+        let host = null;
+        if (ipMatch) {
+            const beforeIp = hopLine.split('(')[0].trim();
+            const parts = beforeIp.split(/\s+/);
+            if (parts.length > 1) {
+                host = parts[parts.length - 1];
+            }
+        }
+        
+        // Extract RTT - look for the first "X.XXX ms" pattern
+        const rttMatch = hopLine.match(/(\d+\.?\d*)\s*ms/);
+        const rtt = rttMatch ? parseFloat(rttMatch[1]) : null;
+        
+        return {
+            hopNumber: index + 1,
+            ip: ip,
+            host: host || ip || 'Unknown',
+            rtt: rtt
+        };
+    } catch (e) {
+        return { hopNumber: index + 1, ip: null, host: 'Parse Error', rtt: null };
+    }
 }
 
 function analyzeProblemHop(hops, currentLatency, currentJitter) {
@@ -1420,7 +1469,17 @@ function exportDataPoint(clientId, dataIndex) {
     if (testData.metrics.traceroute_data && testData.metrics.traceroute_data[clientId] && 
         testData.metrics.traceroute_data[clientId][dataIndex]) {
         try {
-            exportData.networkPath = JSON.parse(testData.metrics.traceroute_data[clientId][dataIndex].y);
+            const rawTraceData = JSON.parse(testData.metrics.traceroute_data[clientId][dataIndex].y);
+            const hops = [];
+            if (Array.isArray(rawTraceData)) {
+                rawTraceData.forEach((hopLine, index) => {
+                    const hop = parseTracerouteHop(hopLine, index);
+                    if (hop) {
+                        hops.push(hop);
+                    }
+                });
+            }
+            exportData.networkPath = { hops: hops, raw: rawTraceData };
         } catch (e) {
             exportData.networkPath = { error: 'Failed to parse traceroute data' };
         }
