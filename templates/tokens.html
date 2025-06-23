@@ -301,11 +301,14 @@ function showLoading(elementId) {
 }
 
 async function loadTokens() {
+    console.log('Loading tokens...');
     try {
         showLoading('tokensTableContainer');
         
         const response = await apiRequest('/api/tokens');
+        console.log('API response:', response);
         allTokens = response.tokens || [];
+        console.log('Loaded tokens:', allTokens.length);
         
         updateTokenStats();
         renderTokensTable();
@@ -332,7 +335,13 @@ function updateTokenStats() {
 }
 
 function renderTokensTable() {
+    console.log('Rendering tokens table, count:', allTokens.length);
     const container = document.getElementById('tokensTableContainer');
+    
+    if (!container) {
+        console.error('tokensTableContainer not found');
+        return;
+    }
     
     if (allTokens.length === 0) {
         container.innerHTML = `
