@@ -85,8 +85,10 @@ function showError(elementId, message) {
     }
 }
 
-// Auto-refresh functionality
-let autoRefreshInterval;
+// Auto-refresh functionality (only declare if not already declared)
+if (typeof autoRefreshInterval === 'undefined') {
+    let autoRefreshInterval;
+}
 
 function startAutoRefresh(callback, interval = 30000) {
     if (autoRefreshInterval) {

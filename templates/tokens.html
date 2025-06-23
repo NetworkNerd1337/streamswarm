@@ -207,8 +207,13 @@
 
 {% block scripts %}
 <script>
-let allTokens = [];
-let autoRefreshInterval;
+// Tokens page variables
+if (typeof allTokens === 'undefined') {
+    var allTokens = [];
+}
+if (typeof autoRefreshInterval === 'undefined') {
+    var autoRefreshInterval;
+}
 
 // Utility functions
 function formatBytes(bytes) {
