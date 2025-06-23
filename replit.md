@@ -85,7 +85,7 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 23, 2025: Fixed bandwidth testing functionality and drill-down troubleshooting capabilities
+- June 23, 2025: Fixed bandwidth testing methodology and dashboard overview cards functionality
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
   - Enhanced bandwidth testing with reduced timeouts (15s) and improved error handling
   - Added proper bandwidth data collection with 512KB upload tests and 1MB download tests
@@ -96,13 +96,19 @@ The deployment supports both single-instance development and horizontally scaled
   - Enhanced tooltips to show client information and network path details on hover
   - Added export functionality for detailed data point analysis as JSON files
   - Fixed chart title dynamic updates to match selected metrics from dropdown
-  - Verified bandwidth measurements working: typical results 15-20 Mbps upload, 0.8-1.0 Mbps download
+  - Fixed dashboard Network Latency Overview and System Resources Overview cards to display real data from monitoring network
+  - Added /api/dashboard/metrics endpoint providing aggregated system performance data from last 24 hours
+  - Dashboard charts now show actual network latency trends and average CPU/memory/disk usage across all clients
+  - Corrected bandwidth testing methodology where small upload payloads caused artificially inflated upload speeds
   - Added missing network error metrics (network_errors_in/out, network_drops_in/out) to API responses
   - Fixed QoS Policy Compliance validation logic to provide meaningful assessment instead of always returning 1
   - Enhanced DSCP validation with context-aware policy checking for different traffic types
   - Fixed CoS values collection by implementing proper DSCP-to-CoS mapping using RFC 4594 standards
   - Added disk throughput metrics (disk_read_bytes_sec, disk_write_bytes_sec) to API responses and dropdown menu
   - Enhanced disk I/O collection logic to handle low-activity environments with proper 0 value reporting
+  - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
+  - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
+  - Increased minimum test duration requirements to ensure reliable speed measurements
 
 - June 22, 2025: Successfully resolved test results page analytics display issues
   - Fixed Chart.js date adapter initialization by adding chartjs-adapter-date-fns library to base template

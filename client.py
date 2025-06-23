@@ -722,7 +722,7 @@ class StreamSwarmClient:
             
             # Download test - use httpbin.org for consistent results
             try:
-                test_size = 1048576  # 1MB
+                test_size = 2097152  # 2MB for more accurate download measurement
                 start_time = time.time()
                 response = session.get(f"https://httpbin.org/bytes/{test_size}", 
                                      timeout=15, stream=True)
@@ -736,7 +736,7 @@ class StreamSwarmClient:
                             break
                     
                     elapsed_time = time.time() - start_time
-                    if elapsed_time > 0.1 and total_bytes > 0:  # Minimum 0.1s for accuracy
+                    if elapsed_time > 0.5 and total_bytes > 0:  # Minimum 0.5s for download accuracy
                         # Convert to Mbps
                         bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
                         metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
@@ -745,9 +745,9 @@ class StreamSwarmClient:
             except Exception as e:
                 logger.debug(f"HTTP download test failed: {e}")
             
-            # Upload test - use smaller payload for speed
+            # Upload test - use larger payload for more accurate measurement
             try:
-                test_data = b'0' * 524288  # 512KB for faster upload test
+                test_data = b'0' * 1048576  # 1MB upload test for better accuracy
                 start_time = time.time()
                 response = session.post("https://httpbin.org/post", 
                                       data=test_data, 
@@ -755,7 +755,7 @@ class StreamSwarmClient:
                 
                 if response.status_code == 200:
                     elapsed_time = time.time() - start_time
-                    if elapsed_time > 0.1:  # Minimum 0.1s for accuracy
+                    if elapsed_time > 0.5:  # Minimum 0.5s for upload accuracy
                         bandwidth_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
                         metrics['bandwidth_upload'] = round(bandwidth_mbps, 2)
                         logger.debug(f"Upload: {len(test_data)} bytes in {elapsed_time:.2f}s = {bandwidth_mbps:.2f} Mbps")
