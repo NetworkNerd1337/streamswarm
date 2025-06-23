@@ -85,7 +85,7 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 23, 2025: Fixed bandwidth testing methodology and dashboard overview cards functionality
+- June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, and missing metrics functionality
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
   - Enhanced bandwidth testing with reduced timeouts (15s) and improved error handling
   - Added proper bandwidth data collection with 512KB upload tests and 1MB download tests
