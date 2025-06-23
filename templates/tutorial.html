@@ -747,8 +747,8 @@ python client.py --server https://your-domain.example.com --name "Client-01"<br>
                                 <div class="bg-dark p-3 rounded mb-2">
                                     <code class="text-light">
 # Specify port explicitly for self-hosted servers<br>
-python client.py --server http://192.168.1.100:5000 --name "Client-01"<br>
-python client.py --server https://internal-server.company.com:5000 --name "Client-01"
+python client.py --server http://192.168.1.100:5000 --token YOUR_TOKEN --name "Client-01"<br>
+python client.py --server https://internal-server.company.com:5000 --token YOUR_TOKEN --name "Client-01"
                                     </code>
                                 </div>
                                 <p class="small mb-0"><strong>Note:</strong> Cloud deployments typically handle port mapping automatically, while self-hosted servers require explicit port specification.</p>
@@ -785,10 +785,10 @@ pip install psutil requests
 # (or create one in web interface)
 
 # 4. Connect with authentication
-python client.py https://your-server.com YOUR_API_TOKEN
+python client.py --server https://your-server.com --token YOUR_API_TOKEN
 
 # 5. Connect with custom name
-python client.py https://your-server.com YOUR_API_TOKEN --name "Production-01"</code></pre>
+python client.py --server https://your-server.com --token YOUR_API_TOKEN --name "Production-01"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">
@@ -799,10 +799,10 @@ cd Swarm
 pip install psutil requests
 
 # New York Office (external deployment)
-python client.py --server https://your-domain.com --name "NYC-Office"
+python client.py --server https://your-domain.com --token NYC_API_TOKEN --name "NYC-Office"
 
 # London Office (self-hosted)
-python client.py --server https://localhost:5000 --name "London-Office"</code></pre>
+python client.py --server https://localhost:5000 --token LONDON_API_TOKEN --name "London-Office"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">
