@@ -341,7 +341,8 @@ def get_test_data(test_id):
             'bandwidth_download': {},
             'dscp_value': {},
             'cos_value': {},
-            'qos_policy_compliant': {}
+            'qos_policy_compliant': {},
+            'traceroute_data': {}
         }
     }
     
