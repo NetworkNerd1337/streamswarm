@@ -99,12 +99,20 @@
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_load_5min')">CPU Load (5min)</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_load_15min')">CPU Load (15min)</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_freq_current')">CPU Frequency</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_cores')">CPU Cores</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('cpu_temperature')">CPU Temperature</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('process_count')">Process Count</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('tcp_connections')">TCP Connections</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">Network Interface</h6></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('network_bytes_sent')">Bytes Sent</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('network_bytes_recv')">Bytes Received</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_packets_sent')">Packets Sent</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_packets_recv')">Packets Received</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('network_errors_in')">Network Errors In</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('network_errors_out')">Network Errors Out</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_drops_in')">Network Drops In</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('network_drops_out')">Network Drops Out</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">Storage Performance</h6></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('disk_read_iops')">Disk Read IOPS</a></li>
@@ -120,6 +128,15 @@
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('dscp_value')">DSCP Values</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('cos_value')">CoS Values</a></li>
                                 <li><a class="dropdown-item" href="#" onclick="showMetric('qos_policy_compliant')">QoS Policy Compliance</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Memory Details</h6></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('memory_available')">Memory Available</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('memory_cached')">Memory Cached</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('memory_buffers')">Memory Buffers</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('swap_percent')">Swap Usage</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Advanced Network</h6></li>
+                                <li><a class="dropdown-item" href="#" onclick="showMetric('traceroute_hops')">Traceroute Hops</a></li>
                             </ul>
                         </div>
                     </div>
@@ -916,6 +933,19 @@ function getMetricTitle(metric) {
         'network_bytes_recv': 'Network Bytes Received Over Time',
         'network_errors_in': 'Network Errors (Incoming) Over Time',
         'network_errors_out': 'Network Errors (Outgoing) Over Time',
+        'network_packets_sent': 'Network Packets Sent Over Time',
+        'network_packets_recv': 'Network Packets Received Over Time',
+        'network_drops_in': 'Network Drops (Incoming) Over Time',
+        'network_drops_out': 'Network Drops (Outgoing) Over Time',
+        'cpu_cores': 'CPU Core Count Over Time',
+        'cpu_temperature': 'CPU Temperature Over Time',
+        'process_count': 'Process Count Over Time',
+        'tcp_connections': 'TCP Connections Over Time',
+        'memory_available': 'Available Memory Over Time',
+        'memory_cached': 'Cached Memory Over Time',
+        'memory_buffers': 'Memory Buffers Over Time',
+        'swap_percent': 'Swap Usage Over Time',
+        'traceroute_hops': 'Traceroute Hop Count Over Time',
         'disk_read_iops': 'Disk Read IOPS Over Time',
         'disk_write_iops': 'Disk Write IOPS Over Time',
         'disk_read_bytes_sec': 'Disk Read Throughput Over Time',
@@ -944,6 +974,19 @@ function getMetricUnit(metric) {
         'network_bytes_recv': 'Bytes',
         'network_errors_in': 'Error Count',
         'network_errors_out': 'Error Count',
+        'network_packets_sent': 'Packets',
+        'network_packets_recv': 'Packets',
+        'network_drops_in': 'Drop Count',
+        'network_drops_out': 'Drop Count',
+        'cpu_cores': 'Core Count',
+        'cpu_temperature': '°C',
+        'process_count': 'Processes',
+        'tcp_connections': 'Connections',
+        'memory_available': 'Bytes',
+        'memory_cached': 'Bytes',
+        'memory_buffers': 'Bytes',
+        'swap_percent': 'Percent (%)',
+        'traceroute_hops': 'Hop Count',
         'disk_read_iops': 'Operations/sec',
         'disk_write_iops': 'Operations/sec',
         'disk_read_bytes_sec': 'Bytes/sec',
