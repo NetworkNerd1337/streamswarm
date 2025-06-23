@@ -286,12 +286,22 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTokens();
 });
 
+function showLoading(elementId) {
+    document.getElementById(elementId).innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+}
+
 async function loadTokens() {
     try {
         showLoading('tokensTableContainer');
         
         const response = await apiRequest('/api/tokens');
-        allTokens = response.tokens;
+        allTokens = response.tokens || [];
         
         updateTokenStats();
         renderTokensTable();
@@ -299,7 +309,7 @@ async function loadTokens() {
     } catch (error) {
         console.error('Error loading tokens:', error);
         document.getElementById('tokensTableContainer').innerHTML = 
-            '<div class="alert alert-danger">Failed to load tokens</div>';
+            '<div class="alert alert-danger">Failed to load tokens: ' + error.message + '</div>';
     }
 }
 
@@ -441,8 +451,11 @@ document.getElementById('createTokenForm').addEventListener('submit', async func
             // Show token details immediately
             viewTokenDetails(response.token);
             
+            // Show token details immediately
+            viewTokenDetails(response.token);
+            
             // Reload tokens
-            loadTokens();
+            await loadTokens();
             
             showToast('Token created successfully!', 'success');
         } else {
@@ -610,7 +623,7 @@ async function deleteToken(tokenId) {
         });
         
         if (response.status === 'success') {
-            loadTokens();
+            await loadTokens();
             showToast('Token deleted successfully!', 'success');
         } else {
             showToast(response.error || 'Failed to delete token', 'error');
@@ -623,6 +636,20 @@ async function deleteToken(tokenId) {
 
 function refreshTokens() {
     loadTokens();
+}
+
+function startAutoRefresh(callback, interval = 30000) {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    autoRefreshInterval = setInterval(callback, interval);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
 }
 
 function toggleTokenVisibility() {
