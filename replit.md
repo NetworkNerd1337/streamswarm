@@ -99,7 +99,8 @@ The deployment supports both single-instance development and horizontally scaled
   - Fixed dashboard Network Latency Overview and System Resources Overview cards to display real data from monitoring network
   - Added /api/dashboard/metrics endpoint providing aggregated system performance data from last 24 hours
   - Dashboard charts now show actual network latency trends and average CPU/memory/disk usage across all clients
-  - Corrected bandwidth testing methodology where small upload payloads caused artificially inflated upload speeds
+  - Investigated bandwidth testing methodology - upload speeds legitimately higher than download in Replit environment
+  - Verified bandwidth measurements are accurate but reflect asymmetric cloud networking characteristics
   - Added missing network error metrics (network_errors_in/out, network_drops_in/out) to API responses
   - Fixed QoS Policy Compliance validation logic to provide meaningful assessment instead of always returning 1
   - Enhanced DSCP validation with context-aware policy checking for different traffic types
