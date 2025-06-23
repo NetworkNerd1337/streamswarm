@@ -648,20 +648,19 @@ class StreamSwarmClient:
         }
         
         try:
-            # Method 1: HTTP-based bandwidth test to specific destination
-            if destination and not destination.startswith('127.') and destination != 'localhost':
-                http_metrics = self._http_bandwidth_test(destination)
-                if http_metrics['bandwidth_download']:
-                    metrics.update(http_metrics)
-                    return metrics
+            # Method 1: Fast HTTP-based bandwidth test using httpbin.org
+            http_metrics = self._http_bandwidth_test(destination)
+            if http_metrics['bandwidth_download'] and http_metrics['bandwidth_upload']:
+                metrics.update(http_metrics)
+                return metrics
             
-            # Method 2: Speedtest-cli for general internet bandwidth
+            # Method 2: Lightweight speedtest (with timeout)
             speedtest_metrics = self._speedtest_bandwidth_test()
             if speedtest_metrics['bandwidth_download']:
                 metrics.update(speedtest_metrics)
                 return metrics
                 
-            # Method 3: Custom TCP bandwidth test
+            # Method 3: Fallback TCP bandwidth test
             tcp_metrics = self._tcp_bandwidth_test(destination)
             if tcp_metrics['bandwidth_download']:
                 metrics.update(tcp_metrics)
@@ -672,72 +671,55 @@ class StreamSwarmClient:
         return metrics
     
     def _http_bandwidth_test(self, destination):
-        """HTTP-based bandwidth test to specific destination"""
+        """HTTP-based bandwidth test using httpbin.org for reliability"""
         import time
         import requests
-        from requests.adapters import HTTPAdapter
-        from urllib3.util.retry import Retry
         
         metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
         
         try:
-            # Configure session with retries
             session = requests.Session()
-            retry_strategy = Retry(
-                total=2,
-                status_forcelist=[429, 500, 502, 503, 504],
-                backoff_factor=1
-            )
-            adapter = HTTPAdapter(max_retries=retry_strategy)
-            session.mount("http://", adapter)
-            session.mount("https://", adapter)
+            session.timeout = 15  # Shorter timeout
             
-            # Test URLs to try
-            test_urls = [
-                f"http://{destination}",
-                f"https://{destination}",
-                "http://httpbin.org/bytes/1048576",  # 1MB download
-                "https://httpbin.org/bytes/1048576"
-            ]
-            
-            # Download test
-            for url in test_urls:
-                try:
-                    start_time = time.time()
-                    response = session.get(url, timeout=30, stream=True)
-                    
-                    if response.status_code == 200:
-                        total_bytes = 0
-                        for chunk in response.iter_content(chunk_size=8192):
-                            total_bytes += len(chunk)
-                            # Stop after reasonable amount for testing
-                            if total_bytes > 10 * 1024 * 1024:  # 10MB max
-                                break
-                        
-                        elapsed_time = time.time() - start_time
-                        if elapsed_time > 0 and total_bytes > 0:
-                            # Convert to Mbps
-                            bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
-                            metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
-                            break
-                        
-                except Exception as e:
-                    logger.debug(f"HTTP test failed for {url}: {e}")
-                    continue
-            
-            # Upload test (simplified - send data to httpbin.org/post)
+            # Download test - use httpbin.org for consistent results
             try:
-                test_data = b'0' * 1048576  # 1MB of data
+                test_size = 1048576  # 1MB
+                start_time = time.time()
+                response = session.get(f"https://httpbin.org/bytes/{test_size}", 
+                                     timeout=15, stream=True)
+                
+                if response.status_code == 200:
+                    total_bytes = 0
+                    for chunk in response.iter_content(chunk_size=8192):
+                        total_bytes += len(chunk)
+                        # Stop if we got our expected amount
+                        if total_bytes >= test_size:
+                            break
+                    
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time > 0.1 and total_bytes > 0:  # Minimum 0.1s for accuracy
+                        # Convert to Mbps
+                        bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
+                        metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
+                        logger.debug(f"Download: {total_bytes} bytes in {elapsed_time:.2f}s = {bandwidth_mbps:.2f} Mbps")
+                        
+            except Exception as e:
+                logger.debug(f"HTTP download test failed: {e}")
+            
+            # Upload test - use smaller payload for speed
+            try:
+                test_data = b'0' * 524288  # 512KB for faster upload test
                 start_time = time.time()
                 response = session.post("https://httpbin.org/post", 
                                       data=test_data, 
-                                      timeout=30)
+                                      timeout=15)
                 
                 if response.status_code == 200:
                     elapsed_time = time.time() - start_time
-                    if elapsed_time > 0:
+                    if elapsed_time > 0.1:  # Minimum 0.1s for accuracy
                         bandwidth_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
                         metrics['bandwidth_upload'] = round(bandwidth_mbps, 2)
+                        logger.debug(f"Upload: {len(test_data)} bytes in {elapsed_time:.2f}s = {bandwidth_mbps:.2f} Mbps")
                         
             except Exception as e:
                 logger.debug(f"HTTP upload test failed: {e}")
@@ -748,32 +730,44 @@ class StreamSwarmClient:
         return metrics
     
     def _speedtest_bandwidth_test(self):
-        """Use speedtest-cli for bandwidth measurement"""
+        """Use speedtest-cli for bandwidth measurement with timeout"""
         metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
         
         try:
             import speedtest
+            import signal
             
-            # Initialize speedtest
-            st = speedtest.Speedtest()
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Speedtest timed out")
             
-            # Get best server
-            st.get_best_server()
+            # Set 30 second timeout for speedtest
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(30)
             
-            # Download test
-            download_speed = st.download()
-            metrics['bandwidth_download'] = round(download_speed / 1000000, 2)  # Convert to Mbps
-            
-            # Upload test
-            upload_speed = st.upload()
-            metrics['bandwidth_upload'] = round(upload_speed / 1000000, 2)  # Convert to Mbps
-            
-            logger.info(f"Speedtest results: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
+            try:
+                # Initialize speedtest with faster settings
+                st = speedtest.Speedtest()
+                st.get_best_server()
+                
+                # Download test only (upload is slower)
+                download_speed = st.download()
+                metrics['bandwidth_download'] = round(download_speed / 1000000, 2)
+                
+                # Quick upload test
+                upload_speed = st.upload()
+                metrics['bandwidth_upload'] = round(upload_speed / 1000000, 2)
+                
+                logger.info(f"Speedtest: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
+                
+            finally:
+                signal.alarm(0)  # Cancel timeout
             
         except ImportError:
-            logger.warning("speedtest-cli not available")
+            logger.debug("speedtest-cli not available")
+        except TimeoutError:
+            logger.debug("Speedtest timed out")
         except Exception as e:
-            logger.warning(f"Speedtest failed: {e}")
+            logger.debug(f"Speedtest failed: {e}")
         
         return metrics
     
