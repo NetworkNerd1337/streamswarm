@@ -121,6 +121,10 @@ The deployment supports both single-instance development and horizontally scaled
   - Created token lifecycle management: generation, regeneration, revocation, and usage tracking
   - Updated client code to include API token in all server requests with proper error handling
   - Added token status indicators and last-used tracking for administrative monitoring
+  - Updated comprehensive documentation (README.md, DEPENDENCIES.md, USAGE.md, TUTORIAL.md) for API token authentication
+  - Enhanced tutorial page with secure client deployment instructions and token management guidance
+  - Added authentication troubleshooting sections and security best practices documentation
+  - Updated client connection examples throughout documentation to include required API token parameter
   - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
   - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
   - Increased minimum test duration requirements to ensure reliable speed measurements
