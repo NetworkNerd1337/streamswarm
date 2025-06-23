@@ -856,15 +856,46 @@ class StreamSwarmClient:
         }
         return dscp_classes.get(dscp_value, f'unknown_{dscp_value}')
     
+    def _is_multimedia_test(self):
+        """Check if current test involves multimedia traffic"""
+        # This could be enhanced to detect actual multimedia content
+        # For now, return False since we're doing network monitoring
+        return False
+    
     def _validate_qos_policy(self, dscp_value):
         """Validate if DSCP marking complies with expected QoS policy"""
-        # Simple validation - in production this would check against configured policies
-        if dscp_value in [0, 46, 34, 26, 18, 10]:  # Common valid DSCP values
-            return True
-        elif dscp_value > 56:  # Invalid DSCP range
+        # Enhanced validation based on traffic type and network context
+        
+        # Check for invalid DSCP range
+        if dscp_value > 63:  # DSCP uses 6 bits (0-63)
             return False
-        else:
-            return None  # Unknown/unconfigured
+        
+        # Define expected DSCP values for web traffic monitoring
+        expected_for_web_traffic = [0, 10, 18, 26, 34]  # BE, AF11, AF21, AF31, AF41
+        voice_video_dscp = [46, 40, 32]  # EF, CS5, CS4
+        control_dscp = [48, 56]  # CS6, CS7
+        
+        # For network monitoring traffic, certain DSCP values may be unexpected
+        if dscp_value in voice_video_dscp and not self._is_multimedia_test():
+            return False  # Voice/video marking on non-multimedia traffic
+        
+        if dscp_value in control_dscp:
+            return False  # Network control markings inappropriate for monitoring traffic
+        
+        # Check for consistent marking policy
+        if dscp_value in expected_for_web_traffic:
+            return True
+        
+        # Check for less common but valid DSCP values
+        if dscp_value in [12, 14, 20, 22, 28, 30, 36, 38, 44]:  # Other AF classes
+            return True
+            
+        # Class Selector values (CS1-CS7) have specific use cases
+        if dscp_value in [8, 16, 24]:  # CS1, CS2, CS3
+            return True
+            
+        # Unknown or potentially misconfigured
+        return False
     
     def _socket_qos_test(self, destination):
         """Fallback QoS test using socket options"""
@@ -888,12 +919,12 @@ class StreamSwarmClient:
                 sock.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, tos)
                 qos_metrics['dscp_value'] = dscp
                 qos_metrics['traffic_class'] = self._classify_dscp(dscp)
-                qos_metrics['qos_policy_compliant'] = True
+                qos_metrics['qos_policy_compliant'] = self._validate_qos_policy(dscp)
             elif platform.system().lower() == 'windows':
                 # Windows: Set QoS using WSAIoctl (simplified)
                 qos_metrics['dscp_value'] = dscp
                 qos_metrics['traffic_class'] = self._classify_dscp(dscp)
-                qos_metrics['qos_policy_compliant'] = True
+                qos_metrics['qos_policy_compliant'] = self._validate_qos_policy(dscp)
             
             sock.close()
             

@@ -97,6 +97,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Added export functionality for detailed data point analysis as JSON files
   - Fixed chart title dynamic updates to match selected metrics from dropdown
   - Verified bandwidth measurements working: typical results 15-20 Mbps upload, 0.8-1.0 Mbps download
+  - Added missing network error metrics (network_errors_in/out, network_drops_in/out) to API responses
+  - Fixed QoS Policy Compliance validation logic to provide meaningful assessment instead of always returning 1
+  - Enhanced DSCP validation with context-aware policy checking for different traffic types
 
 - June 22, 2025: Successfully resolved test results page analytics display issues
   - Fixed Chart.js date adapter initialization by adding chartjs-adapter-date-fns library to base template
