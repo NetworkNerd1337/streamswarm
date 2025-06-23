@@ -85,6 +85,15 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 22, 2025: Enhanced test results with comprehensive drill-down troubleshooting capabilities
+  - Added clickable data points on all charts for detailed client-specific analysis
+  - Implemented modal dialogs showing all metrics at specific time points with status indicators
+  - Added traceroute hop-by-hop data display for network path analysis during performance issues
+  - Enhanced tooltips to show client information and network path details on hover
+  - Added export functionality for detailed data point analysis as JSON files
+  - Fixed chart title dynamic updates to match selected metrics from dropdown
+  - Resolved card formatting issues to maintain proper chart container dimensions
+
 - June 22, 2025: Successfully resolved test results page analytics display issues
   - Fixed Chart.js date adapter initialization by adding chartjs-adapter-date-fns library to base template
   - Corrected JavaScript syntax errors in chart initialization functions
