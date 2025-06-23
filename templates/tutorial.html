@@ -773,19 +773,22 @@ python client.py --server https://internal-server.company.com:5000 --name "Clien
                 <div class="card-body">
                     <div class="row">
                         <div class="col-lg-4 mb-3">
-                            <h6 class="text-primary">Single Client</h6>
+                            <h6 class="text-primary">Single Client Setup</h6>
                             <pre class="bg-dark text-light p-2 rounded"><code># 1. Download StreamSwarm
 git clone https://github.com/NetworkNerd1337/Swarm.git
 cd Swarm
 
-# 2. Install minimal dependencies
+# 2. Install client dependencies
 pip install psutil requests
 
-# 3. Connect to application server (HTTPS)
-python client.py --server https://your-domain.com --name "Client-01"
+# 3. Get API token from administrator
+# (or create one in web interface)
 
-# 4. Connect to self-hosted server
-python client.py --server http://192.168.1.100:5000 --name "Local-Client"</code></pre>
+# 4. Connect with authentication
+python client.py https://your-server.com YOUR_API_TOKEN
+
+# 5. Connect with custom name
+python client.py https://your-server.com YOUR_API_TOKEN --name "Production-01"</code></pre>
                         </div>
                         
                         <div class="col-lg-4 mb-3">

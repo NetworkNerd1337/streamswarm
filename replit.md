@@ -125,6 +125,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Enhanced tutorial page with secure client deployment instructions and token management guidance
   - Added authentication troubleshooting sections and security best practices documentation
   - Updated client connection examples throughout documentation to include required API token parameter
+  - Fixed tutorial client deployment sections to properly show API token authentication requirements
+  - Added comprehensive authentication troubleshooting and secure deployment guidance to tutorial page
+  - Enhanced client command examples with proper token authentication format and security warnings
   - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
   - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
   - Increased minimum test duration requirements to ensure reliable speed measurements
