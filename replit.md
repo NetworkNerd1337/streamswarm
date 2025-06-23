@@ -85,7 +85,7 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, and implemented client eligibility checking
+- June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, implemented client eligibility checking, and added API token authentication
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
   - Enhanced bandwidth testing with reduced timeouts (15s) and improved error handling
   - Added proper bandwidth data collection with 512KB upload tests and 1MB download tests
@@ -114,6 +114,13 @@ The deployment supports both single-instance development and horizontally scaled
   - Added busy/available status indicators in client and test management interfaces
   - Enhanced test creation with conflict detection and user feedback for busy clients
   - Modified client assignment logic to reject tests when clients are already running other tests
+  - Implemented pre-shared API token authentication system for secure client-server communication
+  - Added comprehensive token management interface with CRUD operations in web GUI
+  - Enhanced client registration to require valid API tokens with automatic token consumption
+  - Added authentication middleware for all client API endpoints with Bearer token validation
+  - Created token lifecycle management: generation, regeneration, revocation, and usage tracking
+  - Updated client code to include API token in all server requests with proper error handling
+  - Added token status indicators and last-used tracking for administrative monitoring
   - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
   - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
   - Increased minimum test duration requirements to ensure reliable speed measurements

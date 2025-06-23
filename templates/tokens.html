@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+
+{% block title %}API Tokens - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center mb-3">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StreamSwarm" height="48" class="me-3">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-key me-2"></i>
+                        API Token Management
+                    </h1>
+                    <p class="text-muted mb-0">Create and manage API tokens for client authentication</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Available</h5>
+                    <h2 class="card-text" id="availableCount">-</h2>
+                    <small class="text-muted">Ready for use</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Consumed</h5>
+                    <h2 class="card-text" id="consumedCount">-</h2>
+                    <small class="text-muted">In use by clients</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Revoked</h5>
+                    <h2 class="card-text" id="revokedCount">-</h2>
+                    <small class="text-muted">Disabled tokens</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-info">Total</h5>
+                    <h2 class="card-text" id="totalCount">-</h2>
+                    <small class="text-muted">All tokens</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tokens Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            API Tokens
+                        </h5>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="refreshTokens()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createTokenModal">
+                                <i class="fas fa-plus me-1"></i>
+                                Create Token
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="tokensTableContainer">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Token Modal -->
+<div class="modal fade" id="createTokenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New API Token</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createTokenForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="tokenName" class="form-label">Token Name *</label>
+                        <input type="text" class="form-control" id="tokenName" required 
+                               placeholder="e.g., Production Server 1">
+                        <div class="form-text">A descriptive name to identify this token</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tokenDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="tokenDescription" rows="3" 
+                                  placeholder="Optional description for this token"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Create Token
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Token Modal -->
+<div class="modal fade" id="editTokenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit API Token</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editTokenForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editTokenId">
+                    <div class="mb-3">
+                        <label for="editTokenName" class="form-label">Token Name *</label>
+                        <input type="text" class="form-control" id="editTokenName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTokenDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editTokenDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTokenStatus" class="form-label">Status</label>
+                        <select class="form-control" id="editTokenStatus">
+                            <option value="available">Available</option>
+                            <option value="revoked">Revoked</option>
+                        </select>
+                        <div class="form-text">Consumed tokens cannot be changed back to available</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Token Modal -->
+<div class="modal fade" id="viewTokenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Token Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Token Value</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="viewTokenValue" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="toggleTokenVisibility()">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="form-text text-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Keep this token secure! It cannot be retrieved once this window is closed.
+                    </div>
+                </div>
+                <div id="tokenDetailsContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+let allTokens = [];
+
+// Load tokens on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTokens();
+});
+
+async function loadTokens() {
+    try {
+        showLoading('tokensTableContainer');
+        
+        const response = await apiRequest('/api/tokens');
+        allTokens = response.tokens;
+        
+        updateTokenStats();
+        renderTokensTable();
+        
+    } catch (error) {
+        console.error('Error loading tokens:', error);
+        document.getElementById('tokensTableContainer').innerHTML = 
+            '<div class="alert alert-danger">Failed to load tokens</div>';
+    }
+}
+
+function updateTokenStats() {
+    const stats = {
+        available: allTokens.filter(t => t.status === 'available').length,
+        consumed: allTokens.filter(t => t.status === 'consumed').length,
+        revoked: allTokens.filter(t => t.status === 'revoked').length,
+        total: allTokens.length
+    };
+    
+    document.getElementById('availableCount').textContent = stats.available;
+    document.getElementById('consumedCount').textContent = stats.consumed;
+    document.getElementById('revokedCount').textContent = stats.revoked;
+    document.getElementById('totalCount').textContent = stats.total;
+}
+
+function renderTokensTable() {
+    const container = document.getElementById('tokensTableContainer');
+    
+    if (allTokens.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-key fa-3x text-muted mb-3"></i>
+                <h5>No API Tokens</h5>
+                <p class="text-muted">Create your first API token to enable client authentication</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTokenModal">
+                    <i class="fas fa-plus me-1"></i>
+                    Create Token
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const tableHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Created</th>
+                        <th>Last Used</th>
+                        <th>Client</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${allTokens.map(token => `
+                        <tr>
+                            <td>
+                                ${getStatusBadge(token.status)}
+                            </td>
+                            <td>
+                                <strong>${token.name}</strong>
+                            </td>
+                            <td>
+                                <small class="text-muted">${token.description || 'No description'}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    ${formatTimeAgo(token.created_at)}
+                                </small>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    ${token.last_used ? formatTimeAgo(token.last_used) : 'Never'}
+                                </small>
+                            </td>
+                            <td>
+                                ${token.client_id ? `<small class="text-info">Client ${token.client_id}</small>` : '-'}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info" onclick="viewToken(${token.id})" 
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    ${token.status !== 'consumed' ? `
+                                        <button class="btn btn-outline-primary" onclick="editToken(${token.id})" 
+                                                title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="regenerateToken(${token.id})" 
+                                                title="Regenerate">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    ` : ''}
+                                    <button class="btn btn-outline-danger" onclick="deleteToken(${token.id})" 
+                                            title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    container.innerHTML = tableHTML;
+}
+
+function getStatusBadge(status) {
+    const badges = {
+        'available': '<span class="badge bg-success"><i class="fas fa-circle me-1"></i>Available</span>',
+        'consumed': '<span class="badge bg-warning"><i class="fas fa-circle me-1"></i>Consumed</span>',
+        'revoked': '<span class="badge bg-danger"><i class="fas fa-circle me-1"></i>Revoked</span>'
+    };
+    return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+}
+
+// Create token form handler
+document.getElementById('createTokenForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const tokenData = {
+        name: document.getElementById('tokenName').value,
+        description: document.getElementById('tokenDescription').value
+    };
+    
+    try {
+        const response = await apiRequest('/api/tokens', {
+            method: 'POST',
+            body: JSON.stringify(tokenData)
+        });
+        
+        if (response.status === 'success') {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createTokenModal'));
+            modal.hide();
+            
+            // Reset form
+            document.getElementById('createTokenForm').reset();
+            
+            // Show token details immediately
+            viewTokenDetails(response.token);
+            
+            // Reload tokens
+            loadTokens();
+            
+            showToast('Token created successfully!', 'success');
+        } else {
+            showToast(response.error || 'Failed to create token', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to create token', 'error');
+    }
+});
+
+// Edit token form handler
+document.getElementById('editTokenForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const tokenId = document.getElementById('editTokenId').value;
+    const tokenData = {
+        name: document.getElementById('editTokenName').value,
+        description: document.getElementById('editTokenDescription').value,
+        status: document.getElementById('editTokenStatus').value
+    };
+    
+    try {
+        const response = await apiRequest(`/api/tokens/${tokenId}`, {
+            method: 'PUT',
+            body: JSON.stringify(tokenData)
+        });
+        
+        if (response.status === 'success') {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editTokenModal'));
+            modal.hide();
+            
+            // Reload tokens
+            loadTokens();
+            
+            showToast('Token updated successfully!', 'success');
+        } else {
+            showToast(response.error || 'Failed to update token', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to update token', 'error');
+    }
+});
+
+function viewToken(tokenId) {
+    const token = allTokens.find(t => t.id === tokenId);
+    if (!token) return;
+    
+    viewTokenDetails(token);
+}
+
+function viewTokenDetails(token) {
+    document.getElementById('viewTokenValue').value = token.token;
+    
+    const detailsHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <strong>Name:</strong><br>
+                <span class="text-muted">${token.name}</span>
+            </div>
+            <div class="col-md-6">
+                <strong>Status:</strong><br>
+                ${getStatusBadge(token.status)}
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <strong>Created:</strong><br>
+                <span class="text-muted">${formatTimeAgo(token.created_at)}</span>
+            </div>
+            <div class="col-md-6">
+                <strong>Last Used:</strong><br>
+                <span class="text-muted">${token.last_used ? formatTimeAgo(token.last_used) : 'Never'}</span>
+            </div>
+        </div>
+        ${token.description ? `
+            <hr>
+            <strong>Description:</strong><br>
+            <span class="text-muted">${token.description}</span>
+        ` : ''}
+        ${token.client_id ? `
+            <hr>
+            <strong>Used by:</strong><br>
+            <span class="text-info">Client ${token.client_id}</span>
+        ` : ''}
+    `;
+    
+    document.getElementById('tokenDetailsContent').innerHTML = detailsHTML;
+    
+    const modal = new bootstrap.Modal(document.getElementById('viewTokenModal'));
+    modal.show();
+}
+
+function editToken(tokenId) {
+    const token = allTokens.find(t => t.id === tokenId);
+    if (!token) return;
+    
+    document.getElementById('editTokenId').value = token.id;
+    document.getElementById('editTokenName').value = token.name;
+    document.getElementById('editTokenDescription').value = token.description || '';
+    document.getElementById('editTokenStatus').value = token.status;
+    
+    // Disable status change for consumed tokens
+    const statusSelect = document.getElementById('editTokenStatus');
+    if (token.status === 'consumed') {
+        statusSelect.innerHTML = '<option value="consumed">Consumed (Cannot be changed)</option>';
+        statusSelect.disabled = true;
+    } else {
+        statusSelect.innerHTML = `
+            <option value="available">Available</option>
+            <option value="revoked">Revoked</option>
+        `;
+        statusSelect.disabled = false;
+        statusSelect.value = token.status;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('editTokenModal'));
+    modal.show();
+}
+
+async function regenerateToken(tokenId) {
+    const token = allTokens.find(t => t.id === tokenId);
+    if (!token) return;
+    
+    if (!confirm(`Are you sure you want to regenerate the token "${token.name}"? The old token will be invalidated immediately.`)) {
+        return;
+    }
+    
+    try {
+        const response = await apiRequest(`/api/tokens/${tokenId}/regenerate`, {
+            method: 'POST'
+        });
+        
+        if (response.status === 'success') {
+            // Show the new token immediately
+            viewTokenDetails(response.token);
+            
+            // Reload tokens
+            loadTokens();
+            
+            showToast('Token regenerated successfully!', 'success');
+        } else {
+            showToast(response.error || 'Failed to regenerate token', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to regenerate token', 'error');
+    }
+}
+
+async function deleteToken(tokenId) {
+    const token = allTokens.find(t => t.id === tokenId);
+    if (!token) return;
+    
+    if (!confirm(`Are you sure you want to delete the token "${token.name}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await apiRequest(`/api/tokens/${tokenId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.status === 'success') {
+            loadTokens();
+            showToast('Token deleted successfully!', 'success');
+        } else {
+            showToast(response.error || 'Failed to delete token', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to delete token', 'error');
+    }
+}
+
+function refreshTokens() {
+    loadTokens();
+}
+
+function toggleTokenVisibility() {
+    const input = document.getElementById('viewTokenValue');
+    const icon = document.getElementById('toggleIcon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function copyToken() {
+    const input = document.getElementById('viewTokenValue');
+    input.select();
+    document.execCommand('copy');
+    showToast('Token copied to clipboard!', 'success');
+}
+</script>
+{% endblock %}

@@ -64,6 +64,12 @@ def tutorial():
     """Tutorial and documentation view"""
     return render_template('tutorial.html')
 
+@app.route('/tokens')
+def tokens():
+    """API Token management view"""
+    tokens = ApiToken.query.order_by(ApiToken.created_at.desc()).all()
+    return render_template('tokens.html', tokens=tokens)
+
 # Removed standalone metrics dashboard - all metrics now integrated into test results pages
 
 # API Routes
@@ -105,6 +111,7 @@ def register_client():
     })
 
 @app.route('/api/client/<int:client_id>/heartbeat', methods=['POST'])
+@require_api_token
 def client_heartbeat(client_id):
     """Update client last seen timestamp"""
     client = Client.query.get_or_404(client_id)
@@ -115,6 +122,7 @@ def client_heartbeat(client_id):
     return jsonify({'status': 'ok'})
 
 @app.route('/api/client/<int:client_id>/tests', methods=['GET'])
+@require_api_token
 def get_client_tests(client_id):
     """Get pending tests for a client"""
     # Find tests assigned to this client that are ready to run
