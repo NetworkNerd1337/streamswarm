@@ -850,3 +850,134 @@ def delete_client(client_id):
     except Exception as e:
         logging.error(f"Error deleting client {client_id}: {str(e)}")
         return jsonify({'error': 'Failed to delete client'}), 500
+
+# API Token Management Endpoints
+@app.route('/api/tokens', methods=['GET'])
+def get_tokens():
+    """Get all API tokens with optional filtering"""
+    status_filter = request.args.get('status')
+    
+    query = ApiToken.query
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    
+    tokens = query.order_by(ApiToken.created_at.desc()).all()
+    
+    return jsonify({
+        'tokens': [token.to_dict() for token in tokens],
+        'total': len(tokens)
+    })
+
+@app.route('/api/tokens', methods=['POST'])
+def create_token():
+    """Create a new API token"""
+    data = request.get_json()
+    
+    if not data or 'name' not in data:
+        return jsonify({'error': 'Token name is required'}), 400
+    
+    # Check for duplicate names
+    existing = ApiToken.query.filter_by(name=data['name']).first()
+    if existing:
+        return jsonify({'error': 'Token name already exists'}), 400
+    
+    try:
+        token = ApiToken(
+            name=data['name'],
+            description=data.get('description', '')
+        )
+        
+        db.session.add(token)
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Token created successfully',
+            'token': token.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error creating token: {str(e)}")
+        return jsonify({'error': 'Failed to create token'}), 500
+
+@app.route('/api/tokens/<int:token_id>', methods=['PUT'])
+def update_token(token_id):
+    """Update an API token"""
+    token = ApiToken.query.get_or_404(token_id)
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    try:
+        if 'name' in data:
+            # Check for duplicate names (excluding current token)
+            existing = ApiToken.query.filter(
+                ApiToken.name == data['name'],
+                ApiToken.id != token_id
+            ).first()
+            if existing:
+                return jsonify({'error': 'Token name already exists'}), 400
+            token.name = data['name']
+        
+        if 'description' in data:
+            token.description = data['description']
+        
+        if 'status' in data and data['status'] in ['available', 'consumed', 'revoked']:
+            token.status = data['status']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Token updated successfully',
+            'token': token.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating token: {str(e)}")
+        return jsonify({'error': 'Failed to update token'}), 500
+
+@app.route('/api/tokens/<int:token_id>', methods=['DELETE'])
+def delete_token(token_id):
+    """Delete an API token"""
+    token = ApiToken.query.get_or_404(token_id)
+    
+    try:
+        db.session.delete(token)
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Token deleted successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error deleting token: {str(e)}")
+        return jsonify({'error': 'Failed to delete token'}), 500
+
+@app.route('/api/tokens/<int:token_id>/regenerate', methods=['POST'])
+def regenerate_token(token_id):
+    """Regenerate an API token"""
+    token = ApiToken.query.get_or_404(token_id)
+    
+    if token.status == 'consumed':
+        return jsonify({'error': 'Cannot regenerate consumed token'}), 400
+    
+    try:
+        token.token = ApiToken.generate_token()
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Token regenerated successfully',
+            'token': token.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error regenerating token: {str(e)}")
+        return jsonify({'error': 'Failed to regenerate token'}), 500
