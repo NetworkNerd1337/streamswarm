@@ -1,12 +1,46 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, send_file
+from functools import wraps
 from app import app, db
-from models import Client, Test, TestResult, TestClient
+from models import Client, Test, TestResult, TestClient, ApiToken
 from datetime import datetime, timezone, timedelta
 import zoneinfo
 import json
 import logging
 import os
+import threading
+import time
 from pdf_generator import generate_test_report_pdf
+
+# Authentication decorator for API endpoints
+def require_api_token(f):
+    """Decorator to require valid API token for client endpoints"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Skip authentication for registration endpoint
+        if request.endpoint == 'register_client':
+            return f(*args, **kwargs)
+        
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Missing or invalid authorization header'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Validate token
+        api_token = ApiToken.query.filter_by(token=token, status='consumed').first()
+        if not api_token:
+            return jsonify({'error': 'Invalid or inactive API token'}), 401
+        
+        # Update last used timestamp
+        api_token.update_last_used()
+        db.session.commit()
+        
+        # Add token info to request for use in endpoint
+        request.api_token = api_token
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/')
 def dashboard():
@@ -76,36 +110,50 @@ def tokens():
 
 @app.route('/api/client/register', methods=['POST'])
 def register_client():
-    """Register a new client or update existing client info"""
+    """Register a new client using an available API token"""
     data = request.get_json()
     
-    if not data or 'hostname' not in data or 'ip_address' not in data:
-        return jsonify({'error': 'Missing required fields'}), 400
+    hostname = data.get('hostname')
+    ip_address = data.get('ip_address')
+    token = data.get('token')
+    
+    if not hostname or not ip_address or not token:
+        return jsonify({'error': 'Missing hostname, ip_address, or token'}), 400
+    
+    # Validate and consume token
+    api_token = ApiToken.query.filter_by(token=token, status='available').first()
+    if not api_token:
+        return jsonify({'error': 'Invalid or already used token'}), 401
     
     # Check if client already exists
-    client = Client.query.filter_by(hostname=data['hostname']).first()
+    existing_client = Client.query.filter_by(hostname=hostname, ip_address=ip_address).first()
     
-    if client:
+    if existing_client:
         # Update existing client
-        client.ip_address = data['ip_address']
-        client.status = 'online'
-        client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
-        if 'system_info' in data:
-            client.system_info = json.dumps(data['system_info'])
+        existing_client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        existing_client.status = 'online'
+        existing_client.system_info = json.dumps(data.get('system_info', {}))
+        client = existing_client
     else:
         # Create new client
         client = Client(
-            hostname=data['hostname'],
-            ip_address=data['ip_address'],
+            hostname=hostname,
+            ip_address=ip_address,
             status='online',
+            last_seen=datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None),
             system_info=json.dumps(data.get('system_info', {}))
         )
         db.session.add(client)
+        db.session.flush()  # Get client ID
+    
+    # Consume the token
+    api_token.consume(client.id)
     
     db.session.commit()
     
     return jsonify({
         'client_id': client.id,
+        'token': token,  # Return token for client to use in future requests
         'status': 'registered',
         'message': 'Client registered successfully'
     })
@@ -155,6 +203,7 @@ def get_client_tests(client_id):
     return jsonify({'tests': ready_tests})
 
 @app.route('/api/test/results', methods=['POST'])
+@require_api_token
 def submit_test_results():
     """Submit test results from client"""
     data = request.get_json()

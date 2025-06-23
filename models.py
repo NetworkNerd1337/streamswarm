@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 import zoneinfo
 from sqlalchemy import Text, JSON
 import json
+import secrets
+import string
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,6 +68,51 @@ class TestClient(db.Model):
     status = db.Column(db.String(20), default='assigned')  # assigned, running, completed, failed
     
     __table_args__ = (db.UniqueConstraint('test_id', 'client_id'),)
+
+class ApiToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(64), unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)  # Human-readable name for the token
+    description = db.Column(Text)  # Optional description
+    status = db.Column(db.String(20), default='available')  # available, consumed, revoked
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)  # Which client consumed it
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    consumed_at = db.Column(db.DateTime, nullable=True)  # When token was consumed
+    last_used = db.Column(db.DateTime, nullable=True)  # Last API request with this token
+    
+    def __init__(self, name, description=None):
+        self.name = name
+        self.description = description
+        self.token = self.generate_token()
+    
+    @staticmethod
+    def generate_token():
+        """Generate a secure random token"""
+        alphabet = string.ascii_letters + string.digits
+        return ''.join(secrets.choice(alphabet) for _ in range(32))
+    
+    def consume(self, client_id):
+        """Mark token as consumed by a client"""
+        self.status = 'consumed'
+        self.client_id = client_id
+        self.consumed_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+    
+    def update_last_used(self):
+        """Update last used timestamp"""
+        self.last_used = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'token': self.token,
+            'name': self.name,
+            'description': self.description,
+            'status': self.status,
+            'client_id': self.client_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'consumed_at': self.consumed_at.isoformat() if self.consumed_at else None,
+            'last_used': self.last_used.isoformat() if self.last_used else None
+        }
 
 class TestResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
