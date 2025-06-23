@@ -971,6 +971,7 @@ class StreamSwarmClient:
                 qos_metrics['dscp_value'] = dscp
                 qos_metrics['traffic_class'] = self._classify_dscp(dscp)
                 qos_metrics['qos_policy_compliant'] = self._validate_qos_policy(dscp)
+                qos_metrics['cos_value'] = self._dscp_to_cos_mapping(dscp)
             elif platform.system().lower() == 'windows':
                 # Windows: Set QoS using WSAIoctl (simplified)
                 qos_metrics['dscp_value'] = dscp
