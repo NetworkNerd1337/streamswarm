@@ -1203,6 +1203,198 @@ class StreamSwarmClient:
             
             time.sleep(10)  # Check every 10 seconds
     
+    def _get_network_interface_info(self):
+        """Get detailed network interface information"""
+        interface_info = {
+            'primary_interface': None,
+            'interface_type': 'unknown',
+            'connection_speed': None,
+            'duplex_mode': None,
+            'is_wireless': False,
+            'wireless_info': {},
+            'all_interfaces': []
+        }
+        
+        try:
+            # Get network interface statistics and addresses
+            net_if_stats = psutil.net_if_stats()
+            net_if_addrs = psutil.net_if_addrs()
+            
+            # Find the primary active interface (the one with default route)
+            primary_interface = None
+            
+            # Try to determine primary interface by checking which has a default gateway
+            try:
+                import subprocess
+                if platform.system().lower() == 'linux':
+                    result = subprocess.run(['ip', 'route', 'show', 'default'], 
+                                          capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0 and result.stdout:
+                        # Parse default route: "default via 192.168.1.1 dev eth0"
+                        for line in result.stdout.strip().split('\n'):
+                            if 'dev' in line:
+                                parts = line.split()
+                                if 'dev' in parts:
+                                    dev_idx = parts.index('dev')
+                                    if dev_idx + 1 < len(parts):
+                                        primary_interface = parts[dev_idx + 1]
+                                        break
+                elif platform.system().lower() == 'windows':
+                    result = subprocess.run(['route', 'print', '0.0.0.0'], 
+                                          capture_output=True, text=True, timeout=5)
+                    # Windows route parsing would be more complex - simplified for now
+                    
+            except Exception as e:
+                logger.debug(f"Default route detection failed: {e}")
+            
+            # If we couldn't find primary interface via routing, find first active interface with IP
+            if not primary_interface:
+                for interface_name, addresses in net_if_addrs.items():
+                    if interface_name == 'lo' or interface_name.startswith('lo'):
+                        continue  # Skip loopback
+                    
+                    # Check if interface is up and has IP address
+                    if interface_name in net_if_stats:
+                        stats = net_if_stats[interface_name]
+                        if stats.isup:
+                            for addr in addresses:
+                                if addr.family == 2:  # AF_INET (IPv4)
+                                    if not addr.address.startswith('127.'):
+                                        primary_interface = interface_name
+                                        break
+                    if primary_interface:
+                        break
+            
+            if primary_interface and primary_interface in net_if_stats:
+                stats = net_if_stats[primary_interface]
+                
+                # Determine interface type based on name patterns
+                interface_name_lower = primary_interface.lower()
+                if any(wireless_prefix in interface_name_lower for wireless_prefix in 
+                       ['wlan', 'wifi', 'wl', 'ath', 'ra', 'wlp']):
+                    interface_info['is_wireless'] = True
+                    interface_info['interface_type'] = 'wireless'
+                elif any(eth_prefix in interface_name_lower for eth_prefix in 
+                         ['eth', 'en', 'em', 'eno', 'ens', 'enp']):
+                    interface_info['interface_type'] = 'ethernet'
+                elif 'ppp' in interface_name_lower:
+                    interface_info['interface_type'] = 'ppp'
+                elif 'tun' in interface_name_lower or 'tap' in interface_name_lower:
+                    interface_info['interface_type'] = 'vpn'
+                else:
+                    interface_info['interface_type'] = 'other'
+                
+                interface_info['primary_interface'] = primary_interface
+                interface_info['connection_speed'] = stats.speed if stats.speed > 0 else None
+                interface_info['duplex_mode'] = 'full' if stats.duplex == 2 else 'half' if stats.duplex == 1 else 'unknown'
+                
+                # Get wireless-specific information if it's a wireless interface
+                if interface_info['is_wireless']:
+                    wireless_info = self._get_wireless_info(primary_interface)
+                    interface_info['wireless_info'] = wireless_info
+            
+            # Collect information about all network interfaces
+            all_interfaces = []
+            for interface_name, stats in net_if_stats.items():
+                if interface_name == 'lo' or interface_name.startswith('lo'):
+                    continue
+                
+                interface_data = {
+                    'name': interface_name,
+                    'is_up': stats.isup,
+                    'speed': stats.speed if stats.speed > 0 else None,
+                    'mtu': stats.mtu,
+                    'duplex': 'full' if stats.duplex == 2 else 'half' if stats.duplex == 1 else 'unknown'
+                }
+                
+                # Add IP addresses
+                if interface_name in net_if_addrs:
+                    addresses = []
+                    for addr in net_if_addrs[interface_name]:
+                        if addr.family == 2:  # IPv4
+                            addresses.append({'type': 'ipv4', 'address': addr.address, 'netmask': addr.netmask})
+                        elif addr.family == 10:  # IPv6
+                            addresses.append({'type': 'ipv6', 'address': addr.address, 'netmask': addr.netmask})
+                    interface_data['addresses'] = addresses
+                
+                all_interfaces.append(interface_data)
+            
+            interface_info['all_interfaces'] = all_interfaces
+            
+        except Exception as e:
+            logger.debug(f"Network interface detection error: {e}")
+        
+        return interface_info
+    
+    def _get_wireless_info(self, interface_name):
+        """Get wireless-specific information"""
+        wireless_info = {
+            'ssid': None,
+            'signal_strength': None,
+            'frequency': None,
+            'security': None
+        }
+        
+        try:
+            if platform.system().lower() == 'linux':
+                # Try to get wireless info using iwconfig or similar tools
+                import subprocess
+                
+                # Try iwconfig first
+                try:
+                    result = subprocess.run(['iwconfig', interface_name], 
+                                          capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        output = result.stdout
+                        
+                        # Parse SSID
+                        if 'ESSID:' in output:
+                            essid_line = [line for line in output.split('\n') if 'ESSID:' in line][0]
+                            if 'ESSID:"' in essid_line:
+                                ssid = essid_line.split('ESSID:"')[1].split('"')[0]
+                                if ssid and ssid != 'off/any':
+                                    wireless_info['ssid'] = ssid
+                        
+                        # Parse signal strength
+                        if 'Signal level=' in output:
+                            signal_line = [line for line in output.split('\n') if 'Signal level=' in line][0]
+                            if 'Signal level=' in signal_line:
+                                signal_part = signal_line.split('Signal level=')[1].split()[0]
+                                wireless_info['signal_strength'] = signal_part
+                        
+                        # Parse frequency
+                        if 'Frequency:' in output:
+                            freq_line = [line for line in output.split('\n') if 'Frequency:' in line][0]
+                            if 'Frequency:' in freq_line:
+                                freq_part = freq_line.split('Frequency:')[1].split()[0]
+                                wireless_info['frequency'] = freq_part
+                                
+                except subprocess.TimeoutExpired:
+                    pass
+                except FileNotFoundError:
+                    # iwconfig not available, try other methods
+                    pass
+                
+                # Try nmcli as fallback
+                if not wireless_info['ssid']:
+                    try:
+                        result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SSID', 'dev', 'wifi'], 
+                                              capture_output=True, text=True, timeout=5)
+                        if result.returncode == 0:
+                            for line in result.stdout.strip().split('\n'):
+                                if line.startswith('yes:'):
+                                    ssid = line.split(':', 1)[1]
+                                    if ssid:
+                                        wireless_info['ssid'] = ssid
+                                        break
+                    except (subprocess.TimeoutExpired, FileNotFoundError):
+                        pass
+                        
+        except Exception as e:
+            logger.debug(f"Wireless info detection failed: {e}")
+        
+        return wireless_info
+    
     def start(self):
         """Start the client"""
         logger.info("Starting StreamSwarm client...")
