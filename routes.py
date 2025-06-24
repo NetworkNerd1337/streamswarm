@@ -434,6 +434,7 @@ def get_test_data(test_id):
             'swap_percent': {},
             'process_count': {},
             'tcp_connections': {},
+            'traceroute_hops': {},
             'dscp_value': {},
             'cos_value': {},
             'qos_policy_compliant': {},
@@ -613,6 +614,10 @@ def get_test_data(test_id):
         data['metrics']['tcp_connections'][client_id].append({
             'x': timestamp,
             'y': result.tcp_connections
+        })
+        data['metrics']['traceroute_hops'][client_id].append({
+            'x': timestamp,
+            'y': result.traceroute_hops
         })
     
     return jsonify(data)
