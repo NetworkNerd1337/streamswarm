@@ -101,8 +101,9 @@ class StreamSwarmPDFReport:
         
         # Key Metrics Summary
         story.append(Paragraph("Key Performance Indicators", subtitle_style))
-        metrics_table = self._generate_metrics_table()
-        story.append(metrics_table)
+        metrics_tables = self._generate_metrics_table()
+        if metrics_tables:
+            story.extend(metrics_tables)
         story.append(Spacer(1, 20))
         
         # Performance Charts
@@ -116,14 +117,16 @@ class StreamSwarmPDFReport:
         story.append(PageBreak())
         story.append(Paragraph("Client Performance Analysis", subtitle_style))
         client_analysis = self._generate_client_analysis()
-        story.append(client_analysis)
+        if client_analysis:
+            story.extend(client_analysis)
         story.append(Spacer(1, 20))
         
         # QoS Analysis (if available)
         if any(r.dscp_value is not None for r in self.results):
             story.append(Paragraph("Quality of Service Analysis", subtitle_style))
             qos_analysis = self._generate_qos_analysis()
-            story.append(qos_analysis)
+            if qos_analysis:
+                story.extend(qos_analysis)
             story.append(Spacer(1, 20))
         
         # Recommendations
