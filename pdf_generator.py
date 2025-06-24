@@ -141,6 +141,14 @@ class StreamSwarmPDFReport:
         story.append(Paragraph(footer_text, footer_style))
         
         doc.build(story)
+        
+        # Clean up temporary chart files
+        for temp_file in getattr(self, '_temp_files', []):
+            try:
+                os.unlink(temp_file)
+            except:
+                pass
+        
         return output_path
     
     def _generate_executive_summary(self):
