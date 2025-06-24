@@ -85,7 +85,7 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 24, 2025: Fixed bandwidth chart rendering issues and improved bandwidth testing accuracy
+- June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization
   - Enhanced data filtering to properly handle null/zero bandwidth values for clean chart display
   - Fixed Chart.js configuration structure with proper closing braces
@@ -97,6 +97,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Enhanced TCP socket-based bandwidth testing as primary method for destination-specific measurements
   - Added proper URL parsing and endpoint detection for HTTP-based bandwidth tests to destinations
   - Speedtest-cli now used only as fallback when destination-specific tests fail
+  - Added detailed process monitoring with top processes ranked by CPU and memory consumption
+  - Enhanced process metrics to show process names, PIDs, and resource usage percentages
+  - Updated database schema and UI to display top 5 processes by CPU and memory usage in test results
 
 - June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, implemented client eligibility checking, and added API token authentication
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org

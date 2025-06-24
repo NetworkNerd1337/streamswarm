@@ -285,9 +285,41 @@ class StreamSwarmClient:
             try:
                 metrics['process_count'] = len(psutil.pids())
                 metrics['tcp_connections'] = len([conn for conn in psutil.net_connections() if conn.type == psutil.socket.SOCK_STREAM])
+                
+                # Get top processes by CPU usage
+                try:
+                    processes = []
+                    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+                        try:
+                            proc_info = proc.info
+                            if proc_info['cpu_percent'] is not None and proc_info['memory_percent'] is not None:
+                                processes.append({
+                                    'pid': proc_info['pid'],
+                                    'name': proc_info['name'],
+                                    'cpu_percent': round(proc_info['cpu_percent'], 2),
+                                    'memory_percent': round(proc_info['memory_percent'], 2)
+                                })
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            continue
+                    
+                    # Sort by CPU usage and get top 10
+                    top_cpu = sorted(processes, key=lambda x: x['cpu_percent'], reverse=True)[:10]
+                    metrics['top_processes_cpu'] = json.dumps(top_cpu)
+                    
+                    # Sort by memory usage and get top 10
+                    top_memory = sorted(processes, key=lambda x: x['memory_percent'], reverse=True)[:10]
+                    metrics['top_processes_memory'] = json.dumps(top_memory)
+                    
+                except Exception as e:
+                    logger.debug(f"Process details collection failed: {e}")
+                    metrics['top_processes_cpu'] = json.dumps([])
+                    metrics['top_processes_memory'] = json.dumps([])
+                
             except:
                 metrics['process_count'] = None
                 metrics['tcp_connections'] = None
+                metrics['top_processes_cpu'] = json.dumps([])
+                metrics['top_processes_memory'] = json.dumps([])
             
             # Temperature metrics (where available)
             try:

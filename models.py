@@ -181,6 +181,8 @@ class TestResult(db.Model):
     
     # Process and system metrics
     process_count = db.Column(db.Integer)  # total running processes
+    top_processes_cpu = db.Column(Text)  # JSON string of top processes by CPU usage
+    top_processes_memory = db.Column(Text)  # JSON string of top processes by memory usage
     tcp_connections = db.Column(db.Integer)  # active TCP connections
     open_files = db.Column(db.Integer)  # open file descriptors
     

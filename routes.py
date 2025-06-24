@@ -287,6 +287,8 @@ def submit_test_results():
             disk_io_util=data.get('disk_io_util'),
             # Process and system metrics
             process_count=data.get('process_count'),
+            top_processes_cpu=data.get('top_processes_cpu'),
+            top_processes_memory=data.get('top_processes_memory'),
             tcp_connections=data.get('tcp_connections'),
             open_files=data.get('open_files'),
             # Temperature metrics
