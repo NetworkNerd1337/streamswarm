@@ -95,15 +95,16 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-chart-line me-2"></i>
-                        Network Latency Overview
+                        Client Network Performance
                     </h5>
+                    <small class="text-muted">Average ping latency from all monitored clients (last 24 hours)</small>
                 </div>
                 <div class="card-body">
                     <canvas id="latencyChart" height="300"></canvas>
                     <div id="no-latency-data" class="text-center text-muted mt-3" style="display: none;">
                         <i class="fas fa-chart-line fa-2x mb-2"></i>
-                        <p>No network data available yet.<br>
-                        <small>Run a test to see latency trends here.</small></p>
+                        <p>No client network data available yet.<br>
+                        <small>Create and run a test to monitor client network performance.</small></p>
                     </div>
                 </div>
             </div>
@@ -114,14 +115,16 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-history me-2"></i>
-                        Recent Activity
+                        Latest Test Results
                     </h5>
+                    <small class="text-muted">Most recent network measurements from active clients</small>
                 </div>
                 <div class="card-body">
                     <div id="recent-activity">
-                        <div class="text-center">
-                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                            <span class="ms-2">Loading activity...</span>
+                        <div class="text-center text-muted">
+                            <i class="fas fa-database fa-2x mb-2"></i>
+                            <p>No test results yet.<br>
+                            <small>Recent client measurements will appear here when tests are running.</small></p>
                         </div>
                     </div>
                 </div>
@@ -136,27 +139,28 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-server me-2"></i>
-                        System Resources Overview
+                        Client System Resources
                     </h5>
+                    <small class="text-muted">Average CPU, memory, and disk usage across all monitored clients</small>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <canvas id="cpuChart" height="200"></canvas>
                             <div id="no-cpu-data" class="text-center text-muted" style="display: none;">
-                                <small>No CPU data</small>
+                                <small>No client CPU data available</small>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <canvas id="memoryChart" height="200"></canvas>
                             <div id="no-memory-data" class="text-center text-muted" style="display: none;">
-                                <small>No memory data</small>
+                                <small>No client memory data available</small>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <canvas id="diskChart" height="200"></canvas>
                             <div id="no-disk-data" class="text-center text-muted" style="display: none;">
-                                <small>No disk data</small>
+                                <small>No client disk data available</small>
                             </div>
                         </div>
                     </div>
