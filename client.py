@@ -1004,40 +1004,6 @@ class StreamSwarmClient:
             logger.warning(f"TCP bandwidth test to {destination} failed: {e}")
         
         return metrics
-                sock.send(request.encode())
-                
-                # Measure download
-                start_time = time.time()
-                total_bytes = 0
-                
-                while True:
-                    try:
-                        data = sock.recv(8192)
-                        if not data:
-                            break
-                        total_bytes += len(data)
-                        
-                        # Stop after reasonable amount
-                        if total_bytes > 1048576:  # 1MB
-                            break
-                            
-                    except socket.timeout:
-                        break
-                
-                elapsed_time = time.time() - start_time
-                sock.close()
-                
-                if elapsed_time > 0 and total_bytes > 0:
-                    bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
-                    metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
-                
-            except Exception as e:
-                logger.debug(f"TCP bandwidth test failed: {e}")
-        
-        except Exception as e:
-            logger.warning(f"TCP bandwidth test failed: {e}")
-        
-        return metrics
     
     def _classify_dscp(self, dscp_value):
         """Classify traffic based on DSCP value"""
