@@ -441,13 +441,17 @@ class StreamSwarmPDFReport:
         
         plt.tight_layout()
         
-        # Save to temporary file and convert to ReportLab image
+        # Save to temporary file - don't delete until PDF is built
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
         plt.savefig(temp_file.name, dpi=300, bbox_inches='tight')
         plt.close()
+        temp_file.close()
         
         image = Image(temp_file.name, width=7*inch, height=4*inch)
-        os.unlink(temp_file.name)  # Clean up temp file
+        
+        # Store temp file path for cleanup later
+        self._temp_files = getattr(self, '_temp_files', [])
+        self._temp_files.append(temp_file.name)
         
         return image
     
@@ -481,13 +485,17 @@ class StreamSwarmPDFReport:
         plt.xticks(rotation=45)
         plt.tight_layout()
         
-        # Save to temporary file and convert to ReportLab image
+        # Save to temporary file - don't delete until PDF is built
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
         plt.savefig(temp_file.name, dpi=300, bbox_inches='tight')
         plt.close()
+        temp_file.close()
         
         image = Image(temp_file.name, width=7*inch, height=4*inch)
-        os.unlink(temp_file.name)  # Clean up temp file
+        
+        # Store temp file path for cleanup later
+        self._temp_files = getattr(self, '_temp_files', [])
+        self._temp_files.append(temp_file.name)
         
         return image
     
