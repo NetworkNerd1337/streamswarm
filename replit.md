@@ -136,6 +136,8 @@ The deployment supports both single-instance development and horizontally scaled
   - Confirmed complete API token authentication system working correctly for client connections
   - Fixed tutorial command syntax to show proper --server and --token arguments instead of positional parameters
   - Updated all client connection examples throughout tutorial to use correct command line format
+  - Fixed client script registration endpoint and added missing token field to registration payload
+  - Corrected all client HTTP requests to include proper authentication headers and use correct API endpoints
   - Fixed bandwidth testing methodology where upload speeds appeared artificially high due to small test payload
   - Corrected HTTP bandwidth tests to use equivalent payload sizes (2MB download, 1MB upload) for accurate comparison
   - Increased minimum test duration requirements to ensure reliable speed measurements

@@ -92,12 +92,13 @@ class StreamSwarmClient:
             data = {
                 'hostname': self.client_name,
                 'ip_address': ip_address,
-                'system_info': self.system_info
+                'system_info': json.dumps(self.system_info),
+                'token': self.api_token
             }
             
             headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
             response = requests.post(
-                urljoin(self.server_url, '/api/register'),
+                urljoin(self.server_url, '/api/client/register'),
                 json=data,
                 headers=headers,
                 timeout=10
