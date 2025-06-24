@@ -317,7 +317,7 @@ class StreamSwarmPDFReport:
         
         mtu_sizes = [r.mtu_size for r in self.results if r.mtu_size is not None]
         if mtu_sizes:
-            avg_mtu = safe_avg(mtu_sizes)
+            avg_mtu = self._safe_avg(mtu_sizes)
             advanced_data.append(['MTU Size (bytes)', f'{avg_mtu:.0f}', 'Standard', '', ''])
         
         retrans_rates = [r.tcp_retransmission_rate for r in self.results if r.tcp_retransmission_rate is not None]
