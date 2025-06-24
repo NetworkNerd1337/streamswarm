@@ -192,7 +192,7 @@ class StreamSwarmPDFReport:
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         
-        return table
+        return [table]
     
     def _generate_metrics_table(self):
         """Generate comprehensive metrics summary tables"""
@@ -524,7 +524,7 @@ class StreamSwarmPDFReport:
             ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ]))
         
-        return table
+        return [table]
     
     def _generate_qos_analysis(self):
         """Generate QoS analysis if QoS data is available"""
