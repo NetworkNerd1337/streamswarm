@@ -49,6 +49,7 @@ class StreamSwarmClient:
     def __init__(self, server_url, client_name=None, api_token=None):
         self.server_url = server_url.rstrip('/')
         self.client_name = client_name or platform.node()
+        self.api_token = api_token
         self.client_id = None
         self.running = False
         self.heartbeat_thread = None
@@ -469,9 +470,11 @@ class StreamSwarmClient:
                 }
                 
                 # Submit results to server
+                headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
                 response = requests.post(
                     urljoin(self.server_url, '/api/test/results'),
                     json=result_data,
+                    headers=headers,
                     timeout=10
                 )
                 
@@ -1032,8 +1035,10 @@ class StreamSwarmClient:
     def _check_test_status(self, test_id):
         """Check if test is still running on server"""
         try:
+            headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
             response = requests.get(
                 urljoin(self.server_url, f'/api/test/{test_id}/status'),
+                headers=headers,
                 timeout=5
             )
             
