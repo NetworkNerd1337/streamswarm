@@ -720,162 +720,115 @@ class StreamSwarmClient:
         return qos_metrics
     
     def _bandwidth_test(self, destination):
-        """Perform bandwidth testing using multiple methods"""
+        """Perform internet speed test (similar to speedtest websites)"""
         metrics = {
             'bandwidth_upload': None,
             'bandwidth_download': None
         }
         
         try:
-            # Method 1: HTTP-based bandwidth test to the specific destination
-            http_metrics = self._http_bandwidth_test(destination)
-            if http_metrics['bandwidth_download'] or http_metrics['bandwidth_upload']:
-                metrics.update(http_metrics)
-                logger.info(f"Bandwidth to {destination}: {metrics.get('bandwidth_download', 'N/A')} Mbps down, {metrics.get('bandwidth_upload', 'N/A')} Mbps up")
-                return metrics
-                
-            # Method 2: TCP socket bandwidth test to the specific destination
-            tcp_metrics = self._tcp_bandwidth_test(destination)
-            if tcp_metrics['bandwidth_download'] or tcp_metrics['bandwidth_upload']:
-                metrics.update(tcp_metrics)
-                logger.info(f"TCP bandwidth to {destination}: {metrics.get('bandwidth_download', 'N/A')} Mbps down, {metrics.get('bandwidth_upload', 'N/A')} Mbps up")
+            # Method 1: Use speedtest-cli for accurate internet speed measurement
+            speedtest_metrics = self._speedtest_bandwidth_test()
+            if speedtest_metrics['bandwidth_download'] and speedtest_metrics['bandwidth_upload']:
+                metrics.update(speedtest_metrics)
+                logger.info(f"Internet speed: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
                 return metrics
             
-            # Method 3: Fallback to general internet speedtest (not destination-specific)
-            logger.debug(f"Destination-specific tests failed for {destination}, using general internet speedtest as fallback")
-            speedtest_metrics = self._speedtest_bandwidth_test()
-            if speedtest_metrics['bandwidth_download']:
-                metrics.update(speedtest_metrics)
-        
+            # Method 2: HTTP-based bandwidth test using reliable speed test endpoints
+            http_metrics = self._http_internet_speed_test()
+            if http_metrics['bandwidth_download'] or http_metrics['bandwidth_upload']:
+                metrics.update(http_metrics)
+                logger.info(f"HTTP speed test: {metrics.get('bandwidth_download', 'N/A')} Mbps down, {metrics.get('bandwidth_upload', 'N/A')} Mbps up")
+                return metrics
+                
         except Exception as e:
             logger.warning(f"All bandwidth test methods failed: {e}")
         
         return metrics
     
-    def _http_bandwidth_test(self, destination):
-        """HTTP-based bandwidth test to the specified destination"""
+    def _http_internet_speed_test(self):
+        """HTTP-based internet speed test using reliable speed test endpoints"""
         import time
         import requests
-        import socket
-        from urllib.parse import urlparse
+        import random
         
         metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
         
+        # Use multiple reliable speed test servers
+        speed_test_servers = [
+            "https://speed.cloudflare.com",
+            "https://www.google.com",
+            "https://fast.com",
+            "https://httpbin.org"
+        ]
+        
         try:
-            # Parse the destination to create proper test URLs
-            if destination.startswith(('http://', 'https://')):
-                parsed = urlparse(destination)
-                hostname = parsed.hostname
-                scheme = parsed.scheme
-                port = parsed.port or (443 if scheme == 'https' else 80)
-            else:
-                hostname = destination
-                # Try HTTPS first, fallback to HTTP
-                scheme = 'https'
-                port = 443
-            
-            # Create base URL for the destination
-            base_url = f"{scheme}://{hostname}"
-            if (port != 80 and scheme == 'http') or (port != 443 and scheme == 'https'):
-                base_url += f":{port}"
-            
             session = requests.Session()
-            session.timeout = 15
+            session.timeout = 20
             
-            logger.info(f"Testing bandwidth to destination: {base_url}")
-            
-            # Test if destination supports common bandwidth test endpoints
-            test_paths = [
-                "/speedtest",  # Common speedtest path
-                "/test",       # Generic test path
-                "/",           # Root path fallback
-            ]
-            
-            working_url = None
-            for path in test_paths:
-                try:
-                    test_url = f"{base_url}{path}"
-                    response = session.head(test_url, timeout=5)
-                    if response.status_code < 400:
-                        working_url = test_url
-                        logger.debug(f"Found working endpoint: {working_url}")
-                        break
-                except:
-                    continue
-            
-            if not working_url:
-                # Fallback: use the base URL
-                working_url = base_url
-            
-            # Download test - measure time to download from destination
+            # Download test - use large file from reliable server
             try:
-                # Generate a request that will return data from the destination
+                # Try Cloudflare's speed test endpoint first
+                test_size = 5242880  # 5MB download test
                 start_time = time.time()
-                response = session.get(working_url, timeout=15, stream=True)
+                
+                try:
+                    # Cloudflare speed test endpoint
+                    response = session.get(f"https://speed.cloudflare.com/__down?bytes={test_size}", 
+                                         timeout=20, stream=True)
+                except:
+                    # Fallback to httpbin
+                    response = session.get(f"https://httpbin.org/bytes/{test_size}", 
+                                         timeout=20, stream=True)
                 
                 if response.status_code == 200:
                     total_bytes = 0
-                    for chunk in response.iter_content(chunk_size=8192):
+                    for chunk in response.iter_content(chunk_size=32768):
                         total_bytes += len(chunk)
-                        # Stop after reasonable amount of data
-                        if total_bytes >= 1048576:  # 1MB max
+                        if total_bytes >= test_size:
                             break
                     
                     elapsed_time = time.time() - start_time
-                    if elapsed_time > 0.1 and total_bytes > 0:
+                    if elapsed_time > 1.0 and total_bytes > 0:  # Minimum 1s for accuracy
                         download_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
                         metrics['bandwidth_download'] = round(download_mbps, 2)
-                        logger.debug(f"Download from {hostname}: {total_bytes} bytes in {elapsed_time:.2f}s = {download_mbps:.2f} Mbps")
+                        logger.debug(f"Download speed test: {total_bytes} bytes in {elapsed_time:.2f}s = {download_mbps:.2f} Mbps")
                         
             except Exception as e:
-                logger.debug(f"HTTP download test to {hostname} failed: {e}")
+                logger.debug(f"HTTP download speed test failed: {e}")
             
-            # Upload test - measure time to upload to destination
+            # Upload test - upload to reliable endpoint
             try:
-                # Check if destination accepts POST requests
-                test_data = b'bandwidth_test_data' + b'0' * 10240  # 10KB test payload
+                test_data = b'0' * 2097152  # 2MB upload test
                 start_time = time.time()
                 
-                # Try common upload endpoints
-                upload_endpoints = ['/upload', '/post', '/submit', '/']
+                try:
+                    # Try httpbin first
+                    response = session.post("https://httpbin.org/post", 
+                                          data=test_data, timeout=20)
+                except:
+                    # Fallback to Google
+                    response = session.post("https://www.google.com/gen_204", 
+                                          data=test_data, timeout=20)
                 
-                for endpoint in upload_endpoints:
-                    try:
-                        upload_url = f"{base_url}{endpoint}"
-                        response = session.post(upload_url, data=test_data, timeout=15)
-                        
-                        # Accept various response codes as successful upload
-                        if response.status_code in [200, 201, 202, 204, 404, 405]:  # 404/405 means server received the data
-                            elapsed_time = time.time() - start_time
-                            if elapsed_time > 0.1:
-                                upload_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
-                                metrics['bandwidth_upload'] = round(upload_mbps, 2)
-                                logger.debug(f"Upload to {hostname}: {len(test_data)} bytes in {elapsed_time:.2f}s = {upload_mbps:.2f} Mbps")
-                                break
-                    except:
-                        continue
+                if response.status_code in [200, 204]:
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time > 1.0:  # Minimum 1s for accuracy
+                        upload_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
+                        metrics['bandwidth_upload'] = round(upload_mbps, 2)
+                        logger.debug(f"Upload speed test: {len(test_data)} bytes in {elapsed_time:.2f}s = {upload_mbps:.2f} Mbps")
                         
             except Exception as e:
-                logger.debug(f"HTTP upload test to {hostname} failed: {e}")
-            
-            # If HTTP tests fail, try TCP socket-based bandwidth test
-            if not metrics['bandwidth_download'] and not metrics['bandwidth_upload']:
-                logger.debug(f"HTTP tests failed, trying TCP socket test to {hostname}")
-                tcp_metrics = self._tcp_bandwidth_test(destination)
-                metrics.update(tcp_metrics)
+                logger.debug(f"HTTP upload speed test failed: {e}")
         
         except Exception as e:
-            logger.warning(f"Bandwidth test to {destination} failed: {e}")
+            logger.warning(f"HTTP internet speed test failed: {e}")
         
         return metrics
     
     def _speedtest_bandwidth_test(self):
-        """Fallback: speedtest-cli measures general internet speed (not to destination)"""
+        """Primary method: speedtest-cli measures actual internet connection speed"""
         metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
-        
-        # Note: This method measures general internet speed, not to the specific destination
-        # It's kept as a fallback when destination-specific tests fail
-        logger.debug("Using speedtest-cli as fallback (measures general internet, not destination-specific)")
         
         try:
             import speedtest
@@ -884,34 +837,38 @@ class StreamSwarmClient:
             def timeout_handler(signum, frame):
                 raise TimeoutError("Speedtest timed out")
             
-            # Set 30 second timeout for speedtest
+            # Set 45 second timeout for speedtest
             signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(30)
+            signal.alarm(45)
             
             try:
-                # Initialize speedtest with faster settings
+                logger.info("Running internet speed test...")
+                
+                # Initialize speedtest
                 st = speedtest.Speedtest()
                 st.get_best_server()
                 
-                # Download test - general internet download speed
+                # Download test - measure actual internet download speed
+                logger.debug("Testing download speed...")
                 download_speed = st.download()
                 metrics['bandwidth_download'] = round(download_speed / 1000000, 2)
                 
-                # Upload test - general internet upload speed
+                # Upload test - measure actual internet upload speed
+                logger.debug("Testing upload speed...")
                 upload_speed = st.upload()
                 metrics['bandwidth_upload'] = round(upload_speed / 1000000, 2)
                 
-                logger.info(f"General internet speedtest: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
+                logger.info(f"Internet speed test completed: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
                 
             finally:
                 signal.alarm(0)  # Cancel timeout
             
         except ImportError:
-            logger.debug("speedtest-cli not available")
+            logger.warning("speedtest-cli not available - install with: pip install speedtest-cli")
         except TimeoutError:
-            logger.debug("Speedtest timed out")
+            logger.warning("Speedtest timed out after 45 seconds")
         except Exception as e:
-            logger.debug(f"Speedtest failed: {e}")
+            logger.warning(f"Speedtest failed: {e}")
         
         return metrics
     

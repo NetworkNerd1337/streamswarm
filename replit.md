@@ -92,11 +92,11 @@ The deployment supports both single-instance development and horizontally scaled
   - Added manual refresh button to tests page instead of auto-refresh for better user control
   - Bandwidth upload and download charts now display connected lines only where actual measurements exist
   - Eliminated broken disconnected line segments in bandwidth visualizations
-  - Fixed bandwidth testing to measure connection between client and specified destination (not through external servers)
-  - Corrected bandwidth test methodology to test actual client-to-destination path instead of client-to-internet
-  - Enhanced TCP socket-based bandwidth testing as primary method for destination-specific measurements
-  - Added proper URL parsing and endpoint detection for HTTP-based bandwidth tests to destinations
-  - Speedtest-cli now used only as fallback when destination-specific tests fail
+  - Redesigned bandwidth testing to measure actual internet connection speed (like traditional speed test websites)
+  - Changed from destination-specific bandwidth testing to general internet speed measurement
+  - Enhanced speedtest-cli as primary method with improved timeout and error handling
+  - Added HTTP-based internet speed test using reliable endpoints (Cloudflare, httpbin) as fallback
+  - Now provides intuitive upload/download speeds that match user expectations from speed test sites
   - Added detailed process monitoring with top processes ranked by CPU and memory consumption
   - Enhanced process metrics to show process names, PIDs, and resource usage percentages
   - Updated database schema and UI to display top 5 processes by CPU and memory usage in test results
