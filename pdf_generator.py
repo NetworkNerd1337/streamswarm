@@ -118,7 +118,7 @@ class StreamSwarmPDFReport:
         story.append(Paragraph("Client Performance Analysis", subtitle_style))
         client_analysis = self._generate_client_analysis()
         if client_analysis:
-            story.extend(client_analysis)
+            story.append(client_analysis)
         story.append(Spacer(1, 20))
         
         # QoS Analysis (if available)
@@ -126,7 +126,7 @@ class StreamSwarmPDFReport:
             story.append(Paragraph("Quality of Service Analysis", subtitle_style))
             qos_analysis = self._generate_qos_analysis()
             if qos_analysis:
-                story.extend(qos_analysis)
+                story.append(qos_analysis)
             story.append(Spacer(1, 20))
         
         # Recommendations
@@ -531,7 +531,7 @@ class StreamSwarmPDFReport:
         qos_results = [r for r in self.results if r.dscp_value is not None]
         
         if not qos_results:
-            return [Paragraph("No QoS data available for this test.", getSampleStyleSheet()['Normal'])]
+            return Paragraph("No QoS data available for this test.", getSampleStyleSheet()['Normal'])
         
         # Analyze DSCP distribution
         dscp_counts = {}
@@ -551,7 +551,7 @@ class StreamSwarmPDFReport:
             traffic_class = self._classify_dscp(dscp)
             analysis_text += f"• DSCP {dscp} ({traffic_class}): {count} measurements ({percentage:.1f}%)<br/>"
         
-        return [Paragraph(analysis_text, getSampleStyleSheet()['Normal'])]
+        return Paragraph(analysis_text, getSampleStyleSheet()['Normal'])
     
     def _classify_dscp(self, dscp_value):
         """Classify traffic based on DSCP value"""
