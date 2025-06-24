@@ -896,20 +896,21 @@ def delete_client(client_id):
         # Store client info for logging
         client_hostname = client.hostname
         
-        # Remove client from the database
-        # Note: TestResult and TestClient records are preserved for historical data
+        if result_count > 0 or test_client_count > 0:
+            # Cannot delete client with existing test data due to foreign key constraints
+            return jsonify({
+                'error': f'Cannot delete client "{client_hostname}" because it has {result_count} test results and {test_client_count} test assignments. Historical data must be preserved.'
+            }), 400
+        
+        # Only delete clients with no test data to maintain referential integrity
         db.session.delete(client)
         db.session.commit()
         
-        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted. Preserved {result_count} test results and {test_client_count} test assignments.")
+        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted successfully. No test data was associated with this client.")
         
         return jsonify({
             'status': 'success',
-            'message': f'Client "{client_hostname}" deleted successfully',
-            'preserved_data': {
-                'test_results': result_count,
-                'test_assignments': test_client_count
-            }
+            'message': f'Client "{client_hostname}" deleted successfully'
         })
         
     except Exception as e:
