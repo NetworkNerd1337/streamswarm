@@ -32,7 +32,7 @@ class StreamSwarmPDFReport:
         self.results = TestResult.query.filter_by(test_id=test_id).order_by(TestResult.timestamp).all()
         self.clients = Client.query.join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
-    def _safe_avg(self, values):
+    def _self._safe_avg(self, values):
         """Helper function to safely calculate averages"""
         filtered = [v for v in values if v is not None and v != 0]
         return sum(filtered) / len(filtered) if filtered else None
@@ -148,8 +148,8 @@ class StreamSwarmPDFReport:
         latency_values = [r.ping_latency for r in self.results if r.ping_latency is not None]
         packet_loss_values = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         
-        avg_latency = self._safe_avg(latency_values) or 0
-        avg_packet_loss = self._safe_avg(packet_loss_values) or 0
+        avg_latency = self._self._safe_avg(latency_values) or 0
+        avg_packet_loss = self._self._safe_avg(packet_loss_values) or 0
         
         summary = f"""
         This report analyzes network performance data collected from {len(self.clients)} monitoring locations 
@@ -207,7 +207,7 @@ class StreamSwarmPDFReport:
         
         latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
         if latencies:
-            avg_lat = self._safe_avg(latencies)
+            avg_lat = self._self._safe_avg(latencies)
             min_lat, max_lat = self._safe_min_max(latencies)
             if avg_lat is not None and min_lat is not None and max_lat is not None:
                 status = 'Excellent' if avg_lat < 50 else 'Good' if avg_lat < 100 else 'Poor'
@@ -215,7 +215,7 @@ class StreamSwarmPDFReport:
         
         packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         if packet_losses:
-            avg_loss = self._safe_avg(packet_losses)
+            avg_loss = self._self._safe_avg(packet_losses)
             min_loss, max_loss = self._safe_min_max(packet_losses)
             if avg_loss is not None and min_loss is not None and max_loss is not None:
                 status = 'Excellent' if avg_loss < 1 else 'Good' if avg_loss < 3 else 'Poor'
@@ -223,7 +223,7 @@ class StreamSwarmPDFReport:
         
         jitters = [r.jitter for r in self.results if r.jitter is not None]
         if jitters:
-            avg_jitter = self._safe_avg(jitters)
+            avg_jitter = self._self._safe_avg(jitters)
             min_jitter, max_jitter = self._safe_min_max(jitters)
             if avg_jitter is not None and min_jitter is not None and max_jitter is not None:
                 status = 'Excellent' if avg_jitter < 10 else 'Good' if avg_jitter < 30 else 'Poor'
@@ -231,7 +231,7 @@ class StreamSwarmPDFReport:
         
         dns_times = [r.dns_resolution_time for r in self.results if r.dns_resolution_time is not None]
         if dns_times:
-            avg_dns = self._safe_avg(dns_times)
+            avg_dns = self._self._safe_avg(dns_times)
             min_dns, max_dns = self._safe_min_max(dns_times)
             if avg_dns is not None and min_dns is not None and max_dns is not None:
                 status = 'Excellent' if avg_dns < 20 else 'Good' if avg_dns < 50 else 'Poor'
@@ -239,7 +239,7 @@ class StreamSwarmPDFReport:
         
         bandwidths_down = [r.bandwidth_download for r in self.results if r.bandwidth_download is not None]
         if bandwidths_down:
-            avg_down = self._safe_avg(bandwidths_down)
+            avg_down = self._self._safe_avg(bandwidths_down)
             min_down, max_down = self._safe_min_max(bandwidths_down)
             if avg_down is not None and min_down is not None and max_down is not None:
                 status = 'Excellent' if avg_down > 100 else 'Good' if avg_down > 25 else 'Poor'
@@ -266,7 +266,7 @@ class StreamSwarmPDFReport:
         
         cpu_percents = [r.cpu_percent for r in self.results if r.cpu_percent is not None]
         if cpu_percents:
-            avg_cpu = self._safe_avg(cpu_percents)
+            avg_cpu = self._self._safe_avg(cpu_percents)
             min_cpu, max_cpu = self._safe_min_max(cpu_percents)
             if avg_cpu is not None and min_cpu is not None and max_cpu is not None:
                 status = 'Excellent' if avg_cpu < 50 else 'Good' if avg_cpu < 80 else 'Poor'
@@ -274,7 +274,7 @@ class StreamSwarmPDFReport:
         
         memory_percents = [r.memory_percent for r in self.results if r.memory_percent is not None]
         if memory_percents:
-            avg_mem = self._safe_avg(memory_percents)
+            avg_mem = self._self._safe_avg(memory_percents)
             min_mem, max_mem = self._safe_min_max(memory_percents)
             if avg_mem is not None and min_mem is not None and max_mem is not None:
                 status = 'Excellent' if avg_mem < 60 else 'Good' if avg_mem < 80 else 'Poor'
@@ -282,7 +282,7 @@ class StreamSwarmPDFReport:
         
         disk_percents = [r.disk_percent for r in self.results if r.disk_percent is not None]
         if disk_percents:
-            avg_disk = self._safe_avg(disk_percents)
+            avg_disk = self._self._safe_avg(disk_percents)
             min_disk, max_disk = self._safe_min_max(disk_percents)
             if avg_disk is not None and min_disk is not None and max_disk is not None:
                 status = 'Excellent' if avg_disk < 70 else 'Good' if avg_disk < 85 else 'Poor'
@@ -290,7 +290,7 @@ class StreamSwarmPDFReport:
         
         load_1mins = [r.cpu_load_1min for r in self.results if r.cpu_load_1min is not None]
         if load_1mins:
-            avg_load = self._safe_avg(load_1mins)
+            avg_load = self._self._safe_avg(load_1mins)
             min_load, max_load = self._safe_min_max(load_1mins)
             if avg_load is not None and min_load is not None and max_load is not None:
                 status = 'Excellent' if avg_load < 1 else 'Good' if avg_load < 2 else 'Poor'
@@ -317,12 +317,12 @@ class StreamSwarmPDFReport:
         
         mtu_sizes = [r.mtu_size for r in self.results if r.mtu_size is not None]
         if mtu_sizes:
-            avg_mtu = self._safe_avg(mtu_sizes)
+            avg_mtu = self._self._safe_avg(mtu_sizes)
             advanced_data.append(['MTU Size (bytes)', f'{avg_mtu:.0f}', 'Standard', '', ''])
         
         retrans_rates = [r.tcp_retransmission_rate for r in self.results if r.tcp_retransmission_rate is not None]
         if retrans_rates:
-            avg_retrans = safe_avg(retrans_rates)
+            avg_retrans = self._safe_avg(retrans_rates)
             status = 'Excellent' if avg_retrans < 0.5 else 'Good' if avg_retrans < 2 else 'Poor'
             advanced_data.append(['TCP Retrans Rate (%)', f'{avg_retrans:.3f}', status, '', ''])
         
@@ -353,24 +353,24 @@ class StreamSwarmPDFReport:
         
         content_times = [r.content_download_time for r in self.results if r.content_download_time is not None]
         if content_times:
-            avg_content = safe_avg(content_times)
+            avg_content = self._safe_avg(content_times)
             status = 'Excellent' if avg_content < 1000 else 'Good' if avg_content < 3000 else 'Poor'
             app_data.append(['Content Download (ms)', f'{avg_content:.0f}', status, '', ''])
         
         compression_ratios = [r.compression_ratio for r in self.results if r.compression_ratio is not None]
         if compression_ratios:
-            avg_compression = safe_avg(compression_ratios)
+            avg_compression = self._safe_avg(compression_ratios)
             status = 'Excellent' if avg_compression > 60 else 'Good' if avg_compression > 30 else 'Poor'
             app_data.append(['Compression Ratio (%)', f'{avg_compression:.1f}', status, '', ''])
         
         power_consumption = [r.power_consumption_watts for r in self.results if r.power_consumption_watts is not None]
         if power_consumption:
-            avg_power = safe_avg(power_consumption)
+            avg_power = self._safe_avg(power_consumption)
             app_data.append(['Power Consumption (W)', f'{avg_power:.1f}', 'Normal', '', ''])
         
         memory_errors = [r.memory_error_rate for r in self.results if r.memory_error_rate is not None]
         if memory_errors:
-            avg_errors = safe_avg(memory_errors)
+            avg_errors = self._safe_avg(memory_errors)
             status = 'Excellent' if avg_errors < 0.1 else 'Good' if avg_errors < 1 else 'Monitor'
             app_data.append(['Memory Errors (/hr)', f'{avg_errors:.3f}', status, '', ''])
         
@@ -568,7 +568,7 @@ class StreamSwarmPDFReport:
         if not self.results:
             return ""
         
-        def safe_avg(values):
+        def self._safe_avg(values):
             filtered = [v for v in values if v is not None and v != 0]
             return sum(filtered) / len(filtered) if filtered else None
         
@@ -577,48 +577,48 @@ class StreamSwarmPDFReport:
         # Network Performance Analysis
         latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
         if latencies:
-            avg_latency = safe_avg(latencies)
-            if avg_latency > 150:
+            avg_latency = self._safe_avg(latencies)
+            if avg_latency and avg_latency > 150:
                 recommendations.append("CRITICAL: High network latency >150ms detected. Implement CDN, optimize routing, or consider edge computing solutions.")
-            elif avg_latency > 100:
+            elif avg_latency and avg_latency > 100:
                 recommendations.append("HIGH: Elevated latency 100-150ms. Monitor consistency and investigate network path optimization.")
         
         packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         if packet_losses:
-            avg_loss = safe_avg(packet_losses)
-            if avg_loss > 5:
+            avg_loss = self._safe_avg(packet_losses)
+            if avg_loss and avg_loss > 5:
                 recommendations.append("CRITICAL: Packet loss >5% severely impacts performance. Immediate network infrastructure review required.")
-            elif avg_loss > 1:
+            elif avg_loss and avg_loss > 1:
                 recommendations.append("MEDIUM: Packet loss 1-5% detected. Monitor during peak usage and review QoS policies.")
         
         jitters = [r.jitter for r in self.results if r.jitter is not None]
         if jitters:
-            avg_jitter = safe_avg(jitters)
-            if avg_jitter > 30:
+            avg_jitter = self._safe_avg(jitters)
+            if avg_jitter and avg_jitter > 30:
                 recommendations.append("HIGH: High jitter >30ms impacts real-time applications. Investigate QoS policies and network stability.")
         
         # System Resource Analysis
         cpu_percents = [r.cpu_percent for r in self.results if r.cpu_percent is not None]
         if cpu_percents:
-            avg_cpu = safe_avg(cpu_percents)
-            if avg_cpu > 90:
+            avg_cpu = self._safe_avg(cpu_percents)
+            if avg_cpu and avg_cpu > 90:
                 recommendations.append("CRITICAL: CPU >90% utilization. Immediate scaling or workload optimization required.")
-            elif avg_cpu > 80:
+            elif avg_cpu and avg_cpu > 80:
                 recommendations.append("HIGH: CPU 80-90% usage. Plan capacity expansion and optimize resource-intensive processes.")
         
         memory_percents = [r.memory_percent for r in self.results if r.memory_percent is not None]
         if memory_percents:
-            avg_memory = safe_avg(memory_percents)
-            if avg_memory > 95:
+            avg_memory = self._safe_avg(memory_percents)
+            if avg_memory and avg_memory > 95:
                 recommendations.append("CRITICAL: Memory >95% usage. Immediate memory optimization or hardware upgrade required.")
-            elif avg_memory > 85:
+            elif avg_memory and avg_memory > 85:
                 recommendations.append("HIGH: Memory 85-95% usage. Monitor for memory leaks and plan capacity increases.")
         
         # Advanced Network Analysis
         retrans_rates = [r.tcp_retransmission_rate for r in self.results if r.tcp_retransmission_rate is not None]
         if retrans_rates:
-            avg_retrans = safe_avg(retrans_rates)
-            if avg_retrans > 2:
+            avg_retrans = self._safe_avg(retrans_rates)
+            if avg_retrans and avg_retrans > 2:
                 recommendations.append("MEDIUM: TCP retransmission rate >2%. Investigate network congestion and buffer sizing.")
         
         # QoS Analysis
@@ -633,34 +633,34 @@ class StreamSwarmPDFReport:
         # Application Layer Analysis
         content_times = [r.content_download_time for r in self.results if r.content_download_time is not None]
         if content_times:
-            avg_content = safe_avg(content_times)
-            if avg_content > 5000:  # 5 seconds
+            avg_content = self._safe_avg(content_times)
+            if avg_content and avg_content > 5000:  # 5 seconds
                 recommendations.append("MEDIUM: Slow content download >5s. Optimize content delivery, enable compression, or implement CDN.")
         
         compression_ratios = [r.compression_ratio for r in self.results if r.compression_ratio is not None]
         if compression_ratios:
-            avg_compression = safe_avg(compression_ratios)
-            if avg_compression < 20:
+            avg_compression = self._safe_avg(compression_ratios)
+            if avg_compression and avg_compression < 20:
                 recommendations.append("LOW: Low compression ratio <20%. Enable gzip/deflate compression to improve transfer efficiency.")
         
         # Infrastructure Health Analysis
         memory_errors = [r.memory_error_rate for r in self.results if r.memory_error_rate is not None]
         if memory_errors:
-            avg_errors = safe_avg(memory_errors)
-            if avg_errors > 1:
+            avg_errors = self._safe_avg(memory_errors)
+            if avg_errors and avg_errors > 1:
                 recommendations.append("HIGH: Memory errors detected >1/hr. Investigate RAM health and consider ECC memory.")
         
         power_consumption = [r.power_consumption_watts for r in self.results if r.power_consumption_watts is not None]
         if power_consumption:
-            avg_power = safe_avg(power_consumption)
-            if avg_power > 200:
+            avg_power = self._safe_avg(power_consumption)
+            if avg_power and avg_power > 200:
                 recommendations.append("INFO: High power consumption >200W. Consider energy optimization for cost reduction.")
         
         # Bandwidth Analysis
         bandwidths_down = [r.bandwidth_download for r in self.results if r.bandwidth_download is not None]
         if bandwidths_down:
-            avg_down = safe_avg(bandwidths_down)
-            if avg_down < 10:
+            avg_down = self._safe_avg(bandwidths_down)
+            if avg_down and avg_down < 10:
                 recommendations.append("MEDIUM: Low download bandwidth <10 Mbps. Consider bandwidth upgrade for improved user experience.")
         
         # Client Performance Comparison
@@ -671,7 +671,7 @@ class StreamSwarmPDFReport:
                 if client_results:
                     client_latencies = [r.ping_latency for r in client_results if r.ping_latency is not None]
                     if client_latencies:
-                        avg_latency = safe_avg(client_latencies)
+                        avg_latency = self._safe_avg(client_latencies)
                         if avg_latency is not None:
                             client_performance[client.hostname] = avg_latency
             
