@@ -574,6 +574,46 @@ def get_test_data(test_id):
             'x': timestamp,
             'y': result.bandwidth_download
         })
+        data['metrics']['cpu_cores'][client_id].append({
+            'x': timestamp,
+            'y': result.cpu_cores
+        })
+        data['metrics']['cpu_freq_current'][client_id].append({
+            'x': timestamp,
+            'y': result.cpu_freq_current
+        })
+        data['metrics']['cpu_temperature'][client_id].append({
+            'x': timestamp,
+            'y': result.cpu_temperature
+        })
+        data['metrics']['memory_available'][client_id].append({
+            'x': timestamp,
+            'y': result.memory_available / (1024**3) if result.memory_available else None  # Convert bytes to GB
+        })
+        data['metrics']['memory_cached'][client_id].append({
+            'x': timestamp,
+            'y': result.memory_cached / (1024**3) if result.memory_cached else None  # Convert bytes to GB
+        })
+        data['metrics']['memory_buffers'][client_id].append({
+            'x': timestamp,
+            'y': result.memory_buffers / (1024**3) if result.memory_buffers else None  # Convert bytes to GB
+        })
+        data['metrics']['swap_used'][client_id].append({
+            'x': timestamp,
+            'y': result.swap_used / (1024**3) if result.swap_used else None  # Convert bytes to GB
+        })
+        data['metrics']['swap_percent'][client_id].append({
+            'x': timestamp,
+            'y': result.swap_percent
+        })
+        data['metrics']['process_count'][client_id].append({
+            'x': timestamp,
+            'y': result.process_count
+        })
+        data['metrics']['tcp_connections'][client_id].append({
+            'x': timestamp,
+            'y': result.tcp_connections
+        })
     
     return jsonify(data)
 
