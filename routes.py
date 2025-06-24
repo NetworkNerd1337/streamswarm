@@ -82,6 +82,16 @@ def tests():
     """Test management view"""
     tests = Test.query.order_by(Test.created_at.desc()).all()
     clients = Client.query.filter_by(status='online').all()
+    
+    # Mark clients as available/busy for test assignment
+    for client in clients:
+        busy_tests = db.session.query(Test).join(TestClient).filter(
+            TestClient.client_id == client.id,
+            Test.status.in_(['running', 'pending'])
+        ).all()
+        client.is_available = len(busy_tests) == 0
+        client.active_tests = [test.name for test in busy_tests]
+    
     return render_template('tests.html', tests=tests, clients=clients)
 
 @app.route('/test/<int:test_id>')
