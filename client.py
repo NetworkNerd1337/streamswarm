@@ -46,7 +46,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class StreamSwarmClient:
-    def __init__(self, server_url, client_name=None):
+    def __init__(self, server_url, client_name=None, api_token=None):
         self.server_url = server_url.rstrip('/')
         self.client_name = client_name or platform.node()
         self.client_id = None
@@ -1117,6 +1117,7 @@ class StreamSwarmClient:
 def main():
     parser = argparse.ArgumentParser(description='StreamSwarm Client')
     parser.add_argument('--server', required=True, help='Server URL (e.g., http://localhost:5000)')
+    parser.add_argument('--token', required=True, help='API token for authentication')
     parser.add_argument('--name', help='Client name (defaults to hostname)')
     parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
     
@@ -1126,7 +1127,7 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     
     # Create and start client
-    client = StreamSwarmClient(args.server, args.name)
+    client = StreamSwarmClient(args.server, args.name, args.token)
     client.start()
 
 if __name__ == '__main__':
