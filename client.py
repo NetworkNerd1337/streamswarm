@@ -289,14 +289,27 @@ class StreamSwarmClient:
                 # Get top processes by CPU usage
                 try:
                     processes = []
-                    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+                    # First, call cpu_percent() on all processes to initialize measurements
+                    for proc in psutil.process_iter():
+                        try:
+                            proc.cpu_percent()  # Initialize CPU measurement
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            continue
+                    
+                    # Wait a short time to get meaningful CPU measurements
+                    time.sleep(0.1)
+                    
+                    # Now collect actual process information with CPU usage
+                    for proc in psutil.process_iter(['pid', 'name', 'memory_percent']):
                         try:
                             proc_info = proc.info
-                            if proc_info['cpu_percent'] is not None and proc_info['memory_percent'] is not None:
+                            cpu_percent = proc.cpu_percent()  # Get current CPU usage
+                            
+                            if cpu_percent is not None and proc_info['memory_percent'] is not None:
                                 processes.append({
                                     'pid': proc_info['pid'],
                                     'name': proc_info['name'],
-                                    'cpu_percent': round(proc_info['cpu_percent'], 2),
+                                    'cpu_percent': round(cpu_percent, 2),
                                     'memory_percent': round(proc_info['memory_percent'], 2)
                                 })
                         except (psutil.NoSuchProcess, psutil.AccessDenied):

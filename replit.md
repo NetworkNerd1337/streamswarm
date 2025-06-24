@@ -103,6 +103,8 @@ The deployment supports both single-instance development and horizontally scaled
   - Improved test creation UX by automatically stripping protocol prefixes from destination input
   - Added helpful text to destination field explaining protocol prefixes are not needed
   - Enhanced form validation to clean destination input both client-side and server-side
+  - Fixed process monitoring display in test results page with dedicated "Process Monitoring Details" section
+  - Successfully implemented process data visualization showing actual system processes with resource consumption
 
 - June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, implemented client eligibility checking, and added API token authentication
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
