@@ -122,7 +122,7 @@ class StreamSwarmClient:
             try:
                 headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
                 response = requests.post(
-                    urljoin(self.server_url, f'/api/clients/{self.client_id}/heartbeat'),
+                    urljoin(self.server_url, f'/api/client/{self.client_id}/heartbeat'),
                     headers=headers,
                     timeout=5
                 )
@@ -1065,7 +1065,7 @@ class StreamSwarmClient:
             try:
                 headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
                 response = requests.get(
-                    urljoin(self.server_url, f'/api/clients/{self.client_id}/tests'),
+                    urljoin(self.server_url, f'/api/client/{self.client_id}/tests'),
                     headers=headers,
                     timeout=10
                 )
