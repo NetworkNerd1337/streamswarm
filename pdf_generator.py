@@ -133,8 +133,11 @@ class StreamSwarmPDFReport:
         total_measurements = len(self.results)
         test_duration = (self.test.completed_at - self.test.started_at).total_seconds() / 3600 if self.test.completed_at else 0
         
-        avg_latency = sum(r.ping_latency for r in self.results if r.ping_latency) / max(1, len([r for r in self.results if r.ping_latency]))
-        avg_packet_loss = sum(r.ping_packet_loss for r in self.results if r.ping_packet_loss) / max(1, len([r for r in self.results if r.ping_packet_loss]))
+        latency_values = [r.ping_latency for r in self.results if r.ping_latency is not None]
+        packet_loss_values = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
+        
+        avg_latency = safe_avg(latency_values) or 0
+        avg_packet_loss = safe_avg(packet_loss_values) or 0
         
         summary = f"""
         This report analyzes network performance data collected from {len(self.clients)} monitoring locations 
@@ -186,6 +189,13 @@ class StreamSwarmPDFReport:
             filtered = [v for v in values if v is not None and v != 0]
             return sum(filtered) / len(filtered) if filtered else None
         
+        # Helper function to safely get min/max
+        def safe_min_max(values):
+            filtered = [v for v in values if v is not None]
+            if not filtered:
+                return None, None
+            return min(filtered), max(filtered)
+        
         tables = []
         
         # Network Performance Metrics Table
@@ -196,32 +206,42 @@ class StreamSwarmPDFReport:
         latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
         if latencies:
             avg_lat = safe_avg(latencies)
-            status = 'Excellent' if avg_lat < 50 else 'Good' if avg_lat < 100 else 'Poor'
-            network_data.append(['Ping Latency (ms)', f'{avg_lat:.1f}', f'{min(latencies):.1f}', f'{max(latencies):.1f}', status])
+            min_lat, max_lat = safe_min_max(latencies)
+            if avg_lat is not None and min_lat is not None and max_lat is not None:
+                status = 'Excellent' if avg_lat < 50 else 'Good' if avg_lat < 100 else 'Poor'
+                network_data.append(['Ping Latency (ms)', f'{avg_lat:.1f}', f'{min_lat:.1f}', f'{max_lat:.1f}', status])
         
         packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         if packet_losses:
             avg_loss = safe_avg(packet_losses)
-            status = 'Excellent' if avg_loss < 1 else 'Good' if avg_loss < 3 else 'Poor'
-            network_data.append(['Packet Loss (%)', f'{avg_loss:.2f}', f'{min(packet_losses):.2f}', f'{max(packet_losses):.2f}', status])
+            min_loss, max_loss = safe_min_max(packet_losses)
+            if avg_loss is not None and min_loss is not None and max_loss is not None:
+                status = 'Excellent' if avg_loss < 1 else 'Good' if avg_loss < 3 else 'Poor'
+                network_data.append(['Packet Loss (%)', f'{avg_loss:.2f}', f'{min_loss:.2f}', f'{max_loss:.2f}', status])
         
         jitters = [r.jitter for r in self.results if r.jitter is not None]
         if jitters:
             avg_jitter = safe_avg(jitters)
-            status = 'Excellent' if avg_jitter < 10 else 'Good' if avg_jitter < 30 else 'Poor'
-            network_data.append(['Network Jitter (ms)', f'{avg_jitter:.2f}', f'{min(jitters):.2f}', f'{max(jitters):.2f}', status])
+            min_jitter, max_jitter = safe_min_max(jitters)
+            if avg_jitter is not None and min_jitter is not None and max_jitter is not None:
+                status = 'Excellent' if avg_jitter < 10 else 'Good' if avg_jitter < 30 else 'Poor'
+                network_data.append(['Network Jitter (ms)', f'{avg_jitter:.2f}', f'{min_jitter:.2f}', f'{max_jitter:.2f}', status])
         
         dns_times = [r.dns_resolution_time for r in self.results if r.dns_resolution_time is not None]
         if dns_times:
             avg_dns = safe_avg(dns_times)
-            status = 'Excellent' if avg_dns < 20 else 'Good' if avg_dns < 50 else 'Poor'
-            network_data.append(['DNS Resolution (ms)', f'{avg_dns:.1f}', f'{min(dns_times):.1f}', f'{max(dns_times):.1f}', status])
+            min_dns, max_dns = safe_min_max(dns_times)
+            if avg_dns is not None and min_dns is not None and max_dns is not None:
+                status = 'Excellent' if avg_dns < 20 else 'Good' if avg_dns < 50 else 'Poor'
+                network_data.append(['DNS Resolution (ms)', f'{avg_dns:.1f}', f'{min_dns:.1f}', f'{max_dns:.1f}', status])
         
         bandwidths_down = [r.bandwidth_download for r in self.results if r.bandwidth_download is not None]
         if bandwidths_down:
             avg_down = safe_avg(bandwidths_down)
-            status = 'Excellent' if avg_down > 100 else 'Good' if avg_down > 25 else 'Poor'
-            network_data.append(['Download Speed (Mbps)', f'{avg_down:.1f}', f'{min(bandwidths_down):.1f}', f'{max(bandwidths_down):.1f}', status])
+            min_down, max_down = safe_min_max(bandwidths_down)
+            if avg_down is not None and min_down is not None and max_down is not None:
+                status = 'Excellent' if avg_down > 100 else 'Good' if avg_down > 25 else 'Poor'
+                network_data.append(['Download Speed (Mbps)', f'{avg_down:.1f}', f'{min_down:.1f}', f'{max_down:.1f}', status])
         
         if len(network_data) > 1:
             network_table = Table(network_data, colWidths=[2*inch, 1*inch, 0.8*inch, 0.8*inch, 1*inch])
@@ -245,26 +265,34 @@ class StreamSwarmPDFReport:
         cpu_percents = [r.cpu_percent for r in self.results if r.cpu_percent is not None]
         if cpu_percents:
             avg_cpu = safe_avg(cpu_percents)
-            status = 'Excellent' if avg_cpu < 50 else 'Good' if avg_cpu < 80 else 'Poor'
-            system_data.append(['CPU Usage (%)', f'{avg_cpu:.1f}', f'{min(cpu_percents):.1f}', f'{max(cpu_percents):.1f}', status])
+            min_cpu, max_cpu = safe_min_max(cpu_percents)
+            if avg_cpu is not None and min_cpu is not None and max_cpu is not None:
+                status = 'Excellent' if avg_cpu < 50 else 'Good' if avg_cpu < 80 else 'Poor'
+                system_data.append(['CPU Usage (%)', f'{avg_cpu:.1f}', f'{min_cpu:.1f}', f'{max_cpu:.1f}', status])
         
         memory_percents = [r.memory_percent for r in self.results if r.memory_percent is not None]
         if memory_percents:
             avg_mem = safe_avg(memory_percents)
-            status = 'Excellent' if avg_mem < 60 else 'Good' if avg_mem < 80 else 'Poor'
-            system_data.append(['Memory Usage (%)', f'{avg_mem:.1f}', f'{min(memory_percents):.1f}', f'{max(memory_percents):.1f}', status])
+            min_mem, max_mem = safe_min_max(memory_percents)
+            if avg_mem is not None and min_mem is not None and max_mem is not None:
+                status = 'Excellent' if avg_mem < 60 else 'Good' if avg_mem < 80 else 'Poor'
+                system_data.append(['Memory Usage (%)', f'{avg_mem:.1f}', f'{min_mem:.1f}', f'{max_mem:.1f}', status])
         
         disk_percents = [r.disk_percent for r in self.results if r.disk_percent is not None]
         if disk_percents:
             avg_disk = safe_avg(disk_percents)
-            status = 'Excellent' if avg_disk < 70 else 'Good' if avg_disk < 85 else 'Poor'
-            system_data.append(['Disk Usage (%)', f'{avg_disk:.1f}', f'{min(disk_percents):.1f}', f'{max(disk_percents):.1f}', status])
+            min_disk, max_disk = safe_min_max(disk_percents)
+            if avg_disk is not None and min_disk is not None and max_disk is not None:
+                status = 'Excellent' if avg_disk < 70 else 'Good' if avg_disk < 85 else 'Poor'
+                system_data.append(['Disk Usage (%)', f'{avg_disk:.1f}', f'{min_disk:.1f}', f'{max_disk:.1f}', status])
         
         load_1mins = [r.cpu_load_1min for r in self.results if r.cpu_load_1min is not None]
         if load_1mins:
             avg_load = safe_avg(load_1mins)
-            status = 'Excellent' if avg_load < 1 else 'Good' if avg_load < 2 else 'Poor'
-            system_data.append(['CPU Load (1min)', f'{avg_load:.2f}', f'{min(load_1mins):.2f}', f'{max(load_1mins):.2f}', status])
+            min_load, max_load = safe_min_max(load_1mins)
+            if avg_load is not None and min_load is not None and max_load is not None:
+                status = 'Excellent' if avg_load < 1 else 'Good' if avg_load < 2 else 'Poor'
+                system_data.append(['CPU Load (1min)', f'{avg_load:.2f}', f'{min_load:.2f}', f'{max_load:.2f}', status])
         
         if len(system_data) > 1:
             system_table = Table(system_data, colWidths=[2*inch, 1*inch, 0.8*inch, 0.8*inch, 1*inch])
@@ -641,14 +669,19 @@ class StreamSwarmPDFReport:
                 if client_results:
                     client_latencies = [r.ping_latency for r in client_results if r.ping_latency is not None]
                     if client_latencies:
-                        client_performance[client.hostname] = safe_avg(client_latencies)
+                        avg_latency = safe_avg(client_latencies)
+                        if avg_latency is not None:
+                            client_performance[client.hostname] = avg_latency
             
             if len(client_performance) > 1:
-                best_client = min(client_performance.items(), key=lambda x: x[1])
-                worst_client = max(client_performance.items(), key=lambda x: x[1])
-                
-                if worst_client[1] > best_client[1] * 1.5:
-                    recommendations.append(f"MEDIUM: Performance disparity detected. {worst_client[0]} shows significantly higher latency than {best_client[0]}. Investigate network path optimization.")
+                # Filter out None values before comparison
+                valid_performance = {k: v for k, v in client_performance.items() if v is not None}
+                if len(valid_performance) > 1:
+                    best_client = min(valid_performance.items(), key=lambda x: x[1])
+                    worst_client = max(valid_performance.items(), key=lambda x: x[1])
+                    
+                    if worst_client[1] > best_client[1] * 1.5:
+                        recommendations.append(f"MEDIUM: Performance disparity detected. {worst_client[0]} shows significantly higher latency than {best_client[0]}. Investigate network path optimization.")
         
         # General recommendations if performance is good
         if not recommendations:
