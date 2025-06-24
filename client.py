@@ -718,58 +718,100 @@ class StreamSwarmClient:
         return metrics
     
     def _http_bandwidth_test(self, destination):
-        """HTTP-based bandwidth test using httpbin.org for reliability"""
+        """HTTP-based bandwidth test using multiple endpoints for accuracy"""
         import time
         import requests
         
         metrics = {'bandwidth_upload': None, 'bandwidth_download': None}
         
+        # Multiple test endpoints for more representative results
+        test_endpoints = [
+            ("https://httpbin.org", "/bytes", "/post"),
+            ("https://speed.cloudflare.com", "/__down?bytes", "/__up"),
+        ]
+        
+        download_results = []
+        upload_results = []
+        
         try:
             session = requests.Session()
-            session.timeout = 15  # Shorter timeout
+            session.timeout = 20
             
-            # Download test - use httpbin.org for consistent results
-            try:
-                test_size = 2097152  # 2MB for more accurate download measurement
-                start_time = time.time()
-                response = session.get(f"https://httpbin.org/bytes/{test_size}", 
-                                     timeout=15, stream=True)
-                
-                if response.status_code == 200:
-                    total_bytes = 0
-                    for chunk in response.iter_content(chunk_size=8192):
-                        total_bytes += len(chunk)
-                        # Stop if we got our expected amount
-                        if total_bytes >= test_size:
-                            break
+            for base_url, download_path, upload_path in test_endpoints:
+                try:
+                    # Download test - measure actual download bandwidth
+                    if "httpbin.org" in base_url:
+                        test_size = 3145728  # 3MB for better accuracy
+                        start_time = time.time()
+                        response = session.get(f"{base_url}{download_path}/{test_size}", 
+                                             timeout=20, stream=True)
+                        
+                        if response.status_code == 200:
+                            total_bytes = 0
+                            for chunk in response.iter_content(chunk_size=16384):
+                                total_bytes += len(chunk)
+                                if total_bytes >= test_size:
+                                    break
+                            
+                            elapsed_time = time.time() - start_time
+                            if elapsed_time > 1.0 and total_bytes > 0:  # Minimum 1s for accuracy
+                                download_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
+                                download_results.append(download_mbps)
+                                logger.debug(f"Download from {base_url}: {download_mbps:.2f} Mbps")
                     
-                    elapsed_time = time.time() - start_time
-                    if elapsed_time > 0.5 and total_bytes > 0:  # Minimum 0.5s for download accuracy
-                        # Convert to Mbps
-                        bandwidth_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
-                        metrics['bandwidth_download'] = round(bandwidth_mbps, 2)
-                        logger.debug(f"Download: {total_bytes} bytes in {elapsed_time:.2f}s = {bandwidth_mbps:.2f} Mbps")
+                    elif "cloudflare" in base_url:
+                        # Cloudflare speed test endpoint
+                        test_size = 2097152  # 2MB
+                        start_time = time.time()
+                        response = session.get(f"{base_url}{download_path}={test_size}", 
+                                             timeout=20, stream=True)
                         
-            except Exception as e:
-                logger.debug(f"HTTP download test failed: {e}")
-            
-            # Upload test - use larger payload for more accurate measurement
-            try:
-                test_data = b'0' * 1048576  # 1MB upload test for better accuracy
-                start_time = time.time()
-                response = session.post("https://httpbin.org/post", 
-                                      data=test_data, 
-                                      timeout=15)
+                        if response.status_code == 200:
+                            total_bytes = 0
+                            for chunk in response.iter_content(chunk_size=16384):
+                                total_bytes += len(chunk)
+                            
+                            elapsed_time = time.time() - start_time
+                            if elapsed_time > 1.0 and total_bytes > 0:
+                                download_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
+                                download_results.append(download_mbps)
+                                logger.debug(f"Download from {base_url}: {download_mbps:.2f} Mbps")
                 
-                if response.status_code == 200:
-                    elapsed_time = time.time() - start_time
-                    if elapsed_time > 0.5:  # Minimum 0.5s for upload accuracy
-                        bandwidth_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
-                        metrics['bandwidth_upload'] = round(bandwidth_mbps, 2)
-                        logger.debug(f"Upload: {len(test_data)} bytes in {elapsed_time:.2f}s = {bandwidth_mbps:.2f} Mbps")
+                except Exception as e:
+                    logger.debug(f"Download test failed for {base_url}: {e}")
+                    continue
+                
+                try:
+                    # Upload test - measure actual upload bandwidth
+                    if "httpbin.org" in base_url:
+                        test_data = b'0' * 1572864  # 1.5MB upload for better accuracy
+                        start_time = time.time()
+                        response = session.post(f"{base_url}{upload_path}", 
+                                              data=test_data, timeout=20)
                         
-            except Exception as e:
-                logger.debug(f"HTTP upload test failed: {e}")
+                        if response.status_code == 200:
+                            elapsed_time = time.time() - start_time
+                            if elapsed_time > 1.0:  # Minimum 1s for accuracy
+                                upload_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
+                                upload_results.append(upload_mbps)
+                                logger.debug(f"Upload to {base_url}: {upload_mbps:.2f} Mbps")
+                
+                except Exception as e:
+                    logger.debug(f"Upload test failed for {base_url}: {e}")
+                    continue
+            
+            # Calculate median results for better accuracy
+            if download_results:
+                download_results.sort()
+                median_download = download_results[len(download_results)//2]
+                metrics['bandwidth_download'] = round(median_download, 2)
+                logger.info(f"Download bandwidth: {median_download:.2f} Mbps (from {len(download_results)} tests)")
+            
+            if upload_results:
+                upload_results.sort()
+                median_upload = upload_results[len(upload_results)//2]
+                metrics['bandwidth_upload'] = round(median_upload, 2)
+                logger.info(f"Upload bandwidth: {median_upload:.2f} Mbps (from {len(upload_results)} tests)")
         
         except Exception as e:
             logger.warning(f"HTTP bandwidth test failed: {e}")
@@ -796,11 +838,11 @@ class StreamSwarmClient:
                 st = speedtest.Speedtest()
                 st.get_best_server()
                 
-                # Download test only (upload is slower)
+                # Download test - measure client downloading from internet
                 download_speed = st.download()
                 metrics['bandwidth_download'] = round(download_speed / 1000000, 2)
                 
-                # Quick upload test
+                # Upload test - measure client uploading to internet
                 upload_speed = st.upload()
                 metrics['bandwidth_upload'] = round(upload_speed / 1000000, 2)
                 

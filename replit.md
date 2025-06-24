@@ -85,6 +85,17 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 24, 2025: Fixed bandwidth chart rendering issues and improved bandwidth testing accuracy
+  - Resolved JavaScript syntax errors preventing chart initialization
+  - Enhanced data filtering to properly handle null/zero bandwidth values for clean chart display
+  - Fixed Chart.js configuration structure with proper closing braces
+  - Added manual refresh button to tests page instead of auto-refresh for better user control
+  - Bandwidth upload and download charts now display connected lines only where actual measurements exist
+  - Eliminated broken disconnected line segments in bandwidth visualizations
+  - Enhanced bandwidth testing methodology with multiple endpoints for more accurate measurements
+  - Increased test payload sizes and minimum test duration for better bandwidth accuracy
+  - Added median calculation from multiple test endpoints to reduce measurement variance
+
 - June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, implemented client eligibility checking, and added API token authentication
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
   - Enhanced bandwidth testing with reduced timeouts (15s) and improved error handling
