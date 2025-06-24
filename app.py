@@ -48,5 +48,16 @@ def tojson_filter(value):
             return {}
     return value or {}
 
+@app.template_filter('from_json')
+def from_json_filter(value):
+    """Convert JSON string to Python object"""
+    if isinstance(value, str):
+        try:
+            import json
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    return value if value else []
+
 # Import routes
 import routes
