@@ -351,6 +351,14 @@ class StreamSwarmClient:
             except:
                 metrics['cpu_temperature'] = None
             
+            # Network interface detection
+            try:
+                interface_info = self._get_network_interface_info()
+                metrics['network_interface_info'] = json.dumps(interface_info)
+            except Exception as e:
+                logger.debug(f"Network interface detection failed: {e}")
+                metrics['network_interface_info'] = json.dumps({})
+            
             return metrics
             
         except Exception as e:

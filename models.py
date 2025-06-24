@@ -236,6 +236,9 @@ class TestResult(db.Model):
     memory_error_rate = db.Column(db.Float)  # ECC memory error rate (errors per hour)
     network_interface_errors = db.Column(Text)  # JSON string of physical layer error rates
     
+    # Network interface detection
+    network_interface_info = db.Column(Text)  # JSON string of network interface details
+    
     def to_dict(self):
         return {
             'id': self.id,

@@ -319,6 +319,141 @@
         </div>
     </div>
     
+    <!-- Network Interface Details -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-network-wired me-2"></i>
+                        Network Interface Details by Client
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set interface_clients = results|selectattr('network_interface_info')|groupby('client_id') %}
+                    {% if interface_clients %}
+                        {% for client_id, client_results in interface_clients %}
+                            {% set client = clients|selectattr('id', 'equalto', client_id)|first %}
+                            {% set interface_data = client_results[0].network_interface_info | tojsonfilter %}
+                            {% if interface_data and interface_data.primary_interface %}
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-desktop me-2"></i>
+                                            {{ client.hostname if client else 'Unknown Client' }}
+                                            <small class="text-muted">({{ client.ip_address if client else 'Unknown IP' }})</small>
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-primary mb-3">Primary Interface</h6>
+                                                <div class="mb-2">
+                                                    <strong>Interface:</strong> 
+                                                    <span class="badge bg-secondary">{{ interface_data.primary_interface }}</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>Type:</strong>
+                                                    {% if interface_data.is_wireless %}
+                                                        <span class="badge bg-info">
+                                                            <i class="fas fa-wifi me-1"></i>Wireless
+                                                        </span>
+                                                    {% elif interface_data.interface_type == 'ethernet' %}
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-ethernet me-1"></i>Ethernet
+                                                        </span>
+                                                    {% elif interface_data.interface_type == 'vpn' %}
+                                                        <span class="badge bg-warning">
+                                                            <i class="fas fa-shield-alt me-1"></i>VPN
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">{{ interface_data.interface_type|title }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% if interface_data.connection_speed %}
+                                                    <div class="mb-2">
+                                                        <strong>Speed:</strong> {{ interface_data.connection_speed }} Mbps
+                                                    </div>
+                                                {% endif %}
+                                                {% if interface_data.duplex_mode and interface_data.duplex_mode != 'unknown' %}
+                                                    <div class="mb-2">
+                                                        <strong>Duplex:</strong> {{ interface_data.duplex_mode|title }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if interface_data.is_wireless and interface_data.wireless_info %}
+                                                <div class="col-md-6">
+                                                    <h6 class="text-info mb-3">Wireless Details</h6>
+                                                    {% if interface_data.wireless_info.ssid %}
+                                                        <div class="mb-2">
+                                                            <strong>Network (SSID):</strong> {{ interface_data.wireless_info.ssid }}
+                                                        </div>
+                                                    {% endif %}
+                                                    {% if interface_data.wireless_info.signal_strength %}
+                                                        <div class="mb-2">
+                                                            <strong>Signal Strength:</strong> {{ interface_data.wireless_info.signal_strength }}
+                                                        </div>
+                                                    {% endif %}
+                                                    {% if interface_data.wireless_info.frequency %}
+                                                        <div class="mb-2">
+                                                            <strong>Frequency:</strong> {{ interface_data.wireless_info.frequency }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            {% elif not interface_data.is_wireless %}
+                                                <div class="col-md-6">
+                                                    <h6 class="text-success mb-3">Connection Details</h6>
+                                                    <div class="alert alert-success">
+                                                        <i class="fas fa-check-circle me-2"></i>
+                                                        Wired connection provides stable, low-latency networking
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if interface_data.all_interfaces|length > 1 %}
+                                            <hr>
+                                            <h6 class="text-secondary mb-3">All Network Interfaces</h6>
+                                            <div class="row">
+                                                {% for interface in interface_data.all_interfaces %}
+                                                    <div class="col-md-4 mb-2">
+                                                        <div class="card bg-light">
+                                                            <div class="card-body py-2">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <div>
+                                                                        <strong>{{ interface.name }}</strong>
+                                                                        {% if interface.is_up %}
+                                                                            <span class="badge bg-success ms-1">UP</span>
+                                                                        {% else %}
+                                                                            <span class="badge bg-danger ms-1">DOWN</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    {% if interface.speed %}
+                                                                        <small class="text-muted">{{ interface.speed }} Mbps</small>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No network interface data available for this test.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Comprehensive Metrics Analysis -->
     {% if test_results %}
     <div class="row mb-4">
