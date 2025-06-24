@@ -247,6 +247,81 @@
         </div>
     </div>
     
+    <!-- Detailed Process Monitoring -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2"></i>
+                        Process Monitoring Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set latest_cpu_data = test_results | selectattr('top_processes_cpu') | first %}
+                    {% if latest_cpu_data and latest_cpu_data.top_processes_cpu %}
+                        {% set cpu_processes = latest_cpu_data.top_processes_cpu | from_json %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-microchip me-2"></i>Top Processes by CPU Usage
+                                </h6>
+                                {% for process in cpu_processes[:5] %}
+                                    <div class="card mb-2">
+                                        <div class="card-body py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ process.name }}</strong>
+                                                    <small class="text-muted d-block">PID: {{ process.pid }}</small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-primary">{{ "%.1f"|format(process.cpu_percent) }}% CPU</span>
+                                                    <span class="badge bg-secondary">{{ "%.1f"|format(process.memory_percent) }}% RAM</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {% set latest_mem_data = test_results | selectattr('top_processes_memory') | first %}
+                                {% if latest_mem_data and latest_mem_data.top_processes_memory %}
+                                    {% set mem_processes = latest_mem_data.top_processes_memory | from_json %}
+                                    <h6 class="text-success mb-3">
+                                        <i class="fas fa-memory me-2"></i>Top Processes by Memory Usage
+                                    </h6>
+                                    {% for process in mem_processes[:5] %}
+                                        <div class="card mb-2">
+                                            <div class="card-body py-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>{{ process.name }}</strong>
+                                                        <small class="text-muted d-block">PID: {{ process.pid }}</small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <span class="badge bg-success">{{ "%.1f"|format(process.memory_percent) }}% RAM</span>
+                                                        <span class="badge bg-secondary">{{ "%.1f"|format(process.cpu_percent) }}% CPU</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No detailed process monitoring data available for this test.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Comprehensive Metrics Analysis -->
     {% if test_results %}
     <div class="row mb-4">
