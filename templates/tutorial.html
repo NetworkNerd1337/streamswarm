@@ -821,6 +821,273 @@ nssm install StreamSwarmClient</code></pre>
         </div>
     </div>
 
+    <!-- Metrics Definition Guide -->
+    <div class="row mb-4" id="metrics-definition">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Metrics Definition Guide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Comprehensive reference for all performance metrics collected during network monitoring tests. Each metric provides specific insights into system and network behavior.</p>
+                    
+                    <div class="row">
+                        <!-- Network Performance Metrics -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-network-wired me-2"></i>
+                                Network Performance
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>Network Latency (ms)</strong>
+                                <p class="small text-muted mb-1">Round-trip time for ICMP ping packets to destination.</p>
+                                <span class="badge bg-success me-1">&lt;50ms: Excellent</span>
+                                <span class="badge bg-warning me-1">50-150ms: Good</span>
+                                <span class="badge bg-danger">&gt;150ms: Poor</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Packet Loss (%)</strong>
+                                <p class="small text-muted mb-1">Percentage of packets lost during transmission.</p>
+                                <span class="badge bg-success me-1">0%: Perfect</span>
+                                <span class="badge bg-warning me-1">1-5%: Acceptable</span>
+                                <span class="badge bg-danger">&gt;5%: Critical</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Network Jitter (ms)</strong>
+                                <p class="small text-muted mb-1">Variation in packet arrival times indicating network stability.</p>
+                                <span class="badge bg-success me-1">&lt;5ms: Stable</span>
+                                <span class="badge bg-warning me-1">5-20ms: Moderate</span>
+                                <span class="badge bg-danger">&gt;20ms: Unstable</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Traceroute Hops</strong>
+                                <p class="small text-muted mb-1">Number of network devices between client and destination.</p>
+                                <span class="badge bg-info me-1">Shows network path complexity</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Bandwidth Upload/Download (Mbps)</strong>
+                                <p class="small text-muted mb-1">Data transfer speeds for upload and download operations.</p>
+                                <span class="badge bg-info me-1">Measures connection capacity</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Network Metrics -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-layer-group me-2"></i>
+                                Advanced Network Analysis
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>DNS Resolution Time (ms)</strong>
+                                <p class="small text-muted mb-1">Time to resolve domain names to IP addresses.</p>
+                                <span class="badge bg-success me-1">&lt;50ms: Fast</span>
+                                <span class="badge bg-warning me-1">50-200ms: Normal</span>
+                                <span class="badge bg-danger">&gt;200ms: Slow</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>TCP Connect Time (ms)</strong>
+                                <p class="small text-muted mb-1">Time to establish TCP connection handshake.</p>
+                                <span class="badge bg-info me-1">Measures connection establishment speed</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>SSL Handshake Time (ms)</strong>
+                                <p class="small text-muted mb-1">Time to complete SSL/TLS security negotiation.</p>
+                                <span class="badge bg-info me-1">Indicates encryption overhead</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Time to First Byte (TTFB) (ms)</strong>
+                                <p class="small text-muted mb-1">Time from request sent to first response byte received.</p>
+                                <span class="badge bg-success me-1">&lt;200ms: Fast</span>
+                                <span class="badge bg-warning me-1">200-1000ms: Normal</span>
+                                <span class="badge bg-danger">&gt;1000ms: Slow</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- System Performance Metrics -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-success mb-3">
+                                <i class="fas fa-microchip me-2"></i>
+                                System Performance
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>CPU Usage (%)</strong>
+                                <p class="small text-muted mb-1">Percentage of CPU processing power currently in use.</p>
+                                <span class="badge bg-success me-1">&lt;70%: Normal</span>
+                                <span class="badge bg-warning me-1">70-90%: High</span>
+                                <span class="badge bg-danger">&gt;90%: Critical</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Memory Usage (%)</strong>
+                                <p class="small text-muted mb-1">Percentage of system RAM currently allocated.</p>
+                                <span class="badge bg-success me-1">&lt;80%: Good</span>
+                                <span class="badge bg-warning me-1">80-95%: High</span>
+                                <span class="badge bg-danger">&gt;95%: Critical</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Disk Usage (%)</strong>
+                                <p class="small text-muted mb-1">Percentage of storage space currently used.</p>
+                                <span class="badge bg-success me-1">&lt;80%: Safe</span>
+                                <span class="badge bg-warning me-1">80-95%: Monitor</span>
+                                <span class="badge bg-danger">&gt;95%: Critical</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>CPU Load Average</strong>
+                                <p class="small text-muted mb-1">System load over 1, 5, and 15 minute intervals.</p>
+                                <span class="badge bg-info me-1">Values relative to CPU core count</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Process Count</strong>
+                                <p class="small text-muted mb-1">Total number of running processes on the system.</p>
+                                <span class="badge bg-success me-1">50-150: Light</span>
+                                <span class="badge bg-warning me-1">150-300: Normal</span>
+                                <span class="badge bg-danger">&gt;300: Heavy</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Memory & Storage Details -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-warning mb-3">
+                                <i class="fas fa-memory me-2"></i>
+                                Memory & Storage Details
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>Memory Available (GB)</strong>
+                                <p class="small text-muted mb-1">Amount of RAM available for new processes.</p>
+                                <span class="badge bg-info me-1">Free memory for applications</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Memory Cached (GB)</strong>
+                                <p class="small text-muted mb-1">RAM used for file system caching to improve performance.</p>
+                                <span class="badge bg-info me-1">System optimization</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Memory Buffers (GB)</strong>
+                                <p class="small text-muted mb-1">RAM used for I/O buffers and kernel operations.</p>
+                                <span class="badge bg-info me-1">Kernel memory management</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Swap Usage (GB/%)</strong>
+                                <p class="small text-muted mb-1">Virtual memory usage when RAM is full.</p>
+                                <span class="badge bg-success me-1">0%: Optimal</span>
+                                <span class="badge bg-warning me-1">1-10%: Monitor</span>
+                                <span class="badge bg-danger">&gt;10%: Problem</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Disk Read/Write IOPS</strong>
+                                <p class="small text-muted mb-1">Input/Output operations per second for storage devices.</p>
+                                <span class="badge bg-info me-1">Storage performance indicator</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Network Interface Statistics -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-secondary mb-3">
+                                <i class="fas fa-ethernet me-2"></i>
+                                Network Interface Statistics
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>Network Bytes Sent/Received</strong>
+                                <p class="small text-muted mb-1">Total data transferred through network interfaces.</p>
+                                <span class="badge bg-info me-1">Cumulative traffic volume</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Network Packets Sent/Received</strong>
+                                <p class="small text-muted mb-1">Count of individual network packets processed.</p>
+                                <span class="badge bg-info me-1">Network activity level</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Network Errors In/Out</strong>
+                                <p class="small text-muted mb-1">Count of network transmission errors detected.</p>
+                                <span class="badge bg-success me-1">0: Perfect</span>
+                                <span class="badge bg-warning me-1">1-10: Monitor</span>
+                                <span class="badge bg-danger">&gt;10: Issues</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Network Drops In/Out</strong>
+                                <p class="small text-muted mb-1">Packets dropped due to buffer overflow or congestion.</p>
+                                <span class="badge bg-success me-1">0: Optimal</span>
+                                <span class="badge bg-danger">&gt;0: Congestion</span>
+                            </div>
+                        </div>
+                        
+                        <!-- System Hardware -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-dark mb-3">
+                                <i class="fas fa-cogs me-2"></i>
+                                Hardware Monitoring
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>CPU Cores</strong>
+                                <p class="small text-muted mb-1">Number of processing cores available in the system.</p>
+                                <span class="badge bg-info me-1">Hardware specification</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>CPU Temperature (°C)</strong>
+                                <p class="small text-muted mb-1">Current processor temperature for thermal monitoring.</p>
+                                <span class="badge bg-success me-1">&lt;60°C: Cool</span>
+                                <span class="badge bg-warning me-1">60-80°C: Warm</span>
+                                <span class="badge bg-danger">&gt;80°C: Hot</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>CPU Frequency (MHz)</strong>
+                                <p class="small text-muted mb-1">Current processor operating frequency.</p>
+                                <span class="badge bg-info me-1">Performance scaling indicator</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>TCP Connections</strong>
+                                <p class="small text-muted mb-1">Number of active TCP network connections.</p>
+                                <span class="badge bg-success me-1">&lt;100: Light</span>
+                                <span class="badge bg-warning me-1">100-500: Normal</span>
+                                <span class="badge bg-danger">&gt;500: Heavy</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Understanding Metric Relationships</h6>
+                        <p class="small mb-2"><strong>Network Issues:</strong> High latency with packet loss often indicates congestion. Jitter spikes suggest unstable routing.</p>
+                        <p class="small mb-2"><strong>System Performance:</strong> High CPU with low memory usage suggests compute-bound tasks. High memory with normal CPU indicates memory-intensive applications.</p>
+                        <p class="small mb-0"><strong>Correlation Analysis:</strong> Network performance degrades when system resources (CPU/Memory) exceed 90% usage. Monitor both categories together.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Use Cases -->
     <div class="row mb-4" id="use-cases">
         <div class="col-12">
