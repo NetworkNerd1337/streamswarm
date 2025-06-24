@@ -734,21 +734,6 @@ function initializeCharts() {
                         }
                     }
                 }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            },
-            elements: {
-                point: {
-                    radius: function(context) {
-                        return (currentMetric === 'bandwidth_upload' || currentMetric === 'bandwidth_download') ? 4 : 3;
-                    }
-                },
-                line: {
-                    spanGaps: false // Don't connect across missing data points
-                }
             }
         }
     });
