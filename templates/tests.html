@@ -31,10 +31,16 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-list me-2"></i>
-                        Test List
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Test List
+                        </h5>
+                        <button id="autoRefreshToggle" class="btn btn-sm btn-outline-success" onclick="toggleAutoRefresh()">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Auto-refresh: ON
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if tests %}
@@ -375,8 +381,81 @@ function updateTestProgress() {
     });
 }
 
-// Update progress every 5 seconds for running tests
-setInterval(updateTestProgress, 5000);
-updateTestProgress(); // Initial call
+// Auto-refresh functionality for tests page
+let lastTestCount = {{ tests|length }};
+let autoRefreshEnabled = true;
+let refreshInterval;
+
+function toggleAutoRefresh() {
+    autoRefreshEnabled = !autoRefreshEnabled;
+    if (autoRefreshEnabled) {
+        startAutoRefresh();
+        showToast('Auto-refresh enabled', 'success');
+    } else {
+        stopAutoRefresh();
+        showToast('Auto-refresh disabled', 'info');
+    }
+}
+
+function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    
+    // Check for test changes every 10 seconds
+    refreshInterval = setInterval(async () => {
+        if (!autoRefreshEnabled) return;
+        
+        try {
+            // Check if page is visible to avoid unnecessary requests
+            if (document.hidden) return;
+            
+            const response = await fetch('/api/tests/count');
+            if (response.ok) {
+                const data = await response.json();
+                
+                // If test count changed, refresh the page
+                if (data.count !== lastTestCount) {
+                    console.log(`Test count changed from ${lastTestCount} to ${data.count}, refreshing page`);
+                    window.location.reload();
+                    return;
+                }
+            }
+            
+            // Update progress for existing tests
+            updateTestProgress();
+            
+        } catch (error) {
+            console.log('Auto-refresh check failed:', error);
+        }
+    }, 10000);
+    
+    // Also update progress more frequently for running tests
+    setInterval(updateTestProgress, 5000);
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+}
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        console.log('Page hidden - pausing auto-refresh');
+    } else {
+        console.log('Page visible - resuming auto-refresh');
+        if (autoRefreshEnabled) {
+            // Immediate check when page becomes visible
+            setTimeout(() => {
+                updateTestProgress();
+            }, 1000);
+        }
+    }
+});
+
+// Start auto-refresh and initial progress update
+startAutoRefresh();
+updateTestProgress();
 </script>
 {% endblock %}
