@@ -32,7 +32,7 @@ class StreamSwarmPDFReport:
         self.results = TestResult.query.filter_by(test_id=test_id).order_by(TestResult.timestamp).all()
         self.clients = Client.query.join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
-    def _self._safe_avg(self, values):
+    def _safe_avg(self, values):
         """Helper function to safely calculate averages"""
         filtered = [v for v in values if v is not None and v != 0]
         return sum(filtered) / len(filtered) if filtered else None
@@ -148,8 +148,8 @@ class StreamSwarmPDFReport:
         latency_values = [r.ping_latency for r in self.results if r.ping_latency is not None]
         packet_loss_values = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         
-        avg_latency = self._self._safe_avg(latency_values) or 0
-        avg_packet_loss = self._self._safe_avg(packet_loss_values) or 0
+        avg_latency = self._safe_avg(latency_values) or 0
+        avg_packet_loss = self._safe_avg(packet_loss_values) or 0
         
         summary = f"""
         This report analyzes network performance data collected from {len(self.clients)} monitoring locations 
@@ -207,7 +207,7 @@ class StreamSwarmPDFReport:
         
         latencies = [r.ping_latency for r in self.results if r.ping_latency is not None]
         if latencies:
-            avg_lat = self._self._safe_avg(latencies)
+            avg_lat = self._safe_avg(latencies)
             min_lat, max_lat = self._safe_min_max(latencies)
             if avg_lat is not None and min_lat is not None and max_lat is not None:
                 status = 'Excellent' if avg_lat < 50 else 'Good' if avg_lat < 100 else 'Poor'
@@ -215,7 +215,7 @@ class StreamSwarmPDFReport:
         
         packet_losses = [r.ping_packet_loss for r in self.results if r.ping_packet_loss is not None]
         if packet_losses:
-            avg_loss = self._self._safe_avg(packet_losses)
+            avg_loss = self._safe_avg(packet_losses)
             min_loss, max_loss = self._safe_min_max(packet_losses)
             if avg_loss is not None and min_loss is not None and max_loss is not None:
                 status = 'Excellent' if avg_loss < 1 else 'Good' if avg_loss < 3 else 'Poor'
@@ -223,7 +223,7 @@ class StreamSwarmPDFReport:
         
         jitters = [r.jitter for r in self.results if r.jitter is not None]
         if jitters:
-            avg_jitter = self._self._safe_avg(jitters)
+            avg_jitter = self._safe_avg(jitters)
             min_jitter, max_jitter = self._safe_min_max(jitters)
             if avg_jitter is not None and min_jitter is not None and max_jitter is not None:
                 status = 'Excellent' if avg_jitter < 10 else 'Good' if avg_jitter < 30 else 'Poor'
@@ -231,7 +231,7 @@ class StreamSwarmPDFReport:
         
         dns_times = [r.dns_resolution_time for r in self.results if r.dns_resolution_time is not None]
         if dns_times:
-            avg_dns = self._self._safe_avg(dns_times)
+            avg_dns = self._safe_avg(dns_times)
             min_dns, max_dns = self._safe_min_max(dns_times)
             if avg_dns is not None and min_dns is not None and max_dns is not None:
                 status = 'Excellent' if avg_dns < 20 else 'Good' if avg_dns < 50 else 'Poor'
@@ -239,7 +239,7 @@ class StreamSwarmPDFReport:
         
         bandwidths_down = [r.bandwidth_download for r in self.results if r.bandwidth_download is not None]
         if bandwidths_down:
-            avg_down = self._self._safe_avg(bandwidths_down)
+            avg_down = self._safe_avg(bandwidths_down)
             min_down, max_down = self._safe_min_max(bandwidths_down)
             if avg_down is not None and min_down is not None and max_down is not None:
                 status = 'Excellent' if avg_down > 100 else 'Good' if avg_down > 25 else 'Poor'
@@ -266,7 +266,7 @@ class StreamSwarmPDFReport:
         
         cpu_percents = [r.cpu_percent for r in self.results if r.cpu_percent is not None]
         if cpu_percents:
-            avg_cpu = self._self._safe_avg(cpu_percents)
+            avg_cpu = self._safe_avg(cpu_percents)
             min_cpu, max_cpu = self._safe_min_max(cpu_percents)
             if avg_cpu is not None and min_cpu is not None and max_cpu is not None:
                 status = 'Excellent' if avg_cpu < 50 else 'Good' if avg_cpu < 80 else 'Poor'
@@ -274,7 +274,7 @@ class StreamSwarmPDFReport:
         
         memory_percents = [r.memory_percent for r in self.results if r.memory_percent is not None]
         if memory_percents:
-            avg_mem = self._self._safe_avg(memory_percents)
+            avg_mem = self._safe_avg(memory_percents)
             min_mem, max_mem = self._safe_min_max(memory_percents)
             if avg_mem is not None and min_mem is not None and max_mem is not None:
                 status = 'Excellent' if avg_mem < 60 else 'Good' if avg_mem < 80 else 'Poor'
@@ -282,7 +282,7 @@ class StreamSwarmPDFReport:
         
         disk_percents = [r.disk_percent for r in self.results if r.disk_percent is not None]
         if disk_percents:
-            avg_disk = self._self._safe_avg(disk_percents)
+            avg_disk = self._safe_avg(disk_percents)
             min_disk, max_disk = self._safe_min_max(disk_percents)
             if avg_disk is not None and min_disk is not None and max_disk is not None:
                 status = 'Excellent' if avg_disk < 70 else 'Good' if avg_disk < 85 else 'Poor'
@@ -290,7 +290,7 @@ class StreamSwarmPDFReport:
         
         load_1mins = [r.cpu_load_1min for r in self.results if r.cpu_load_1min is not None]
         if load_1mins:
-            avg_load = self._self._safe_avg(load_1mins)
+            avg_load = self._safe_avg(load_1mins)
             min_load, max_load = self._safe_min_max(load_1mins)
             if avg_load is not None and min_load is not None and max_load is not None:
                 status = 'Excellent' if avg_load < 1 else 'Good' if avg_load < 2 else 'Poor'
@@ -317,7 +317,7 @@ class StreamSwarmPDFReport:
         
         mtu_sizes = [r.mtu_size for r in self.results if r.mtu_size is not None]
         if mtu_sizes:
-            avg_mtu = self._self._safe_avg(mtu_sizes)
+            avg_mtu = self._safe_avg(mtu_sizes)
             advanced_data.append(['MTU Size (bytes)', f'{avg_mtu:.0f}', 'Standard', '', ''])
         
         retrans_rates = [r.tcp_retransmission_rate for r in self.results if r.tcp_retransmission_rate is not None]
@@ -568,7 +568,7 @@ class StreamSwarmPDFReport:
         if not self.results:
             return ""
         
-        def self._safe_avg(values):
+        def safe_avg(values):
             filtered = [v for v in values if v is not None and v != 0]
             return sum(filtered) / len(filtered) if filtered else None
         
