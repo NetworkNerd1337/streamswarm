@@ -92,9 +92,11 @@ The deployment supports both single-instance development and horizontally scaled
   - Added manual refresh button to tests page instead of auto-refresh for better user control
   - Bandwidth upload and download charts now display connected lines only where actual measurements exist
   - Eliminated broken disconnected line segments in bandwidth visualizations
-  - Enhanced bandwidth testing methodology with multiple endpoints for more accurate measurements
-  - Increased test payload sizes and minimum test duration for better bandwidth accuracy
-  - Added median calculation from multiple test endpoints to reduce measurement variance
+  - Fixed bandwidth testing to measure connection between client and specified destination (not through external servers)
+  - Corrected bandwidth test methodology to test actual client-to-destination path instead of client-to-internet
+  - Enhanced TCP socket-based bandwidth testing as primary method for destination-specific measurements
+  - Added proper URL parsing and endpoint detection for HTTP-based bandwidth tests to destinations
+  - Speedtest-cli now used only as fallback when destination-specific tests fail
 
 - June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, implemented client eligibility checking, and added API token authentication
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
