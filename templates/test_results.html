@@ -258,12 +258,11 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    {% set found_data = false %}
-                    {% for result in test_results %}
-                        {% if result.top_processes_cpu and not found_data %}
-                            {% set found_data = true %}
-                            {% set cpu_processes = result.top_processes_cpu | tojsonfilter %}
-                            {% set mem_processes = result.top_processes_memory | tojsonfilter %}
+                    {% if results %}
+                        {% for result in results %}
+                            {% if result.top_processes_cpu %}
+                                {% set cpu_processes = result.top_processes_cpu | tojsonfilter %}
+                                {% set mem_processes = result.top_processes_memory | tojsonfilter %}
                             
                             <div class="row">
                                 <div class="col-md-6">
@@ -310,9 +309,12 @@
                                     {% endfor %}
                                 </div>
                             </div>
-                        {% endif %}
-                    {% endfor %}
-                    {% if not found_data %}
+                                {% break %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if not results or not results|selectattr('top_processes_cpu')|list %}
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
                             No detailed process monitoring data available for this test.
