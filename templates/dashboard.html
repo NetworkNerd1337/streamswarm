@@ -100,6 +100,11 @@
                 </div>
                 <div class="card-body">
                     <canvas id="latencyChart" height="300"></canvas>
+                    <div id="no-latency-data" class="text-center text-muted mt-3" style="display: none;">
+                        <i class="fas fa-chart-line fa-2x mb-2"></i>
+                        <p>No network data available yet.<br>
+                        <small>Run a test to see latency trends here.</small></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -138,12 +143,21 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <canvas id="cpuChart" height="200"></canvas>
+                            <div id="no-cpu-data" class="text-center text-muted" style="display: none;">
+                                <small>No CPU data</small>
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <canvas id="memoryChart" height="200"></canvas>
+                            <div id="no-memory-data" class="text-center text-muted" style="display: none;">
+                                <small>No memory data</small>
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <canvas id="diskChart" height="200"></canvas>
+                            <div id="no-disk-data" class="text-center text-muted" style="display: none;">
+                                <small>No disk data</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -196,8 +210,15 @@ function updateDashboardMetrics() {
         .then(data => {
             // Update latency chart
             if (latencyChart && data.latency_data && latencyChart.data.datasets.length > 0) {
-                latencyChart.data.datasets[0].data = data.latency_data;
-                latencyChart.update('none');
+                if (data.latency_data.length > 0) {
+                    latencyChart.data.datasets[0].data = data.latency_data;
+                    latencyChart.update('none');
+                    document.getElementById('no-latency-data').style.display = 'none';
+                    document.getElementById('latencyChart').style.display = 'block';
+                } else {
+                    document.getElementById('no-latency-data').style.display = 'block';
+                    document.getElementById('latencyChart').style.display = 'none';
+                }
             }
             
             // Update resource charts
