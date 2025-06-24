@@ -27,7 +27,7 @@ def require_api_token(f):
         
         token = auth_header.split(' ')[1]
         
-        # Validate token
+        # Validate token - must be consumed and active
         api_token = ApiToken.query.filter_by(token=token, status='consumed').first()
         if not api_token:
             return jsonify({'error': 'Invalid or inactive API token'}), 401
@@ -130,13 +130,21 @@ def register_client():
     if not hostname or not ip_address or not token:
         return jsonify({'error': 'Missing hostname, ip_address, or token'}), 400
     
-    # Validate and consume token
-    api_token = ApiToken.query.filter_by(token=token, status='available').first()
-    if not api_token:
-        return jsonify({'error': 'Invalid or already used token'}), 401
-    
     # Check if client already exists
     existing_client = Client.query.filter_by(hostname=hostname, ip_address=ip_address).first()
+    
+    # Validate token - allow available tokens or consumed tokens belonging to this client
+    api_token = ApiToken.query.filter_by(token=token).first()
+    if not api_token:
+        return jsonify({'error': 'Invalid token'}), 401
+    
+    # If token is consumed, verify it belongs to the same client
+    if api_token.status == 'consumed':
+        if not existing_client or api_token.client_id != existing_client.id:
+            return jsonify({'error': 'Token already consumed by different client'}), 401
+        # Token belongs to this client - allow reconnection
+    elif api_token.status != 'available':
+        return jsonify({'error': 'Token is not available'}), 401
     
     if existing_client:
         # Update existing client
@@ -156,16 +164,17 @@ def register_client():
         db.session.add(client)
         db.session.flush()  # Get client ID
     
-    # Consume the token
-    api_token.consume(client.id)
+    # Consume the token if it's not already consumed
+    if api_token.status == 'available':
+        api_token.consume(client.id)
     
     db.session.commit()
     
     return jsonify({
         'client_id': client.id,
         'token': token,  # Return token for client to use in future requests
-        'status': 'registered',
-        'message': 'Client registered successfully'
+        'status': 'registered' if api_token.status == 'available' else 'reconnected',
+        'message': 'Client registered successfully' if existing_client is None else 'Client reconnected successfully'
     })
 
 @app.route('/api/client/<int:client_id>/heartbeat', methods=['POST'])
