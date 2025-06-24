@@ -458,6 +458,65 @@
                                                             <td>{{ proc_count | average | round(0) | int if proc_count else 'N/A' }}</td>
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
+                                                        <tr>
+                                                            <td colspan="3">
+                                                                <div class="mt-3">
+                                                                    <strong>Top Processes by CPU Usage:</strong>
+                                                                    {% set latest_cpu_data = test_results | selectattr('top_processes_cpu') | first %}
+                                                                    {% if latest_cpu_data and latest_cpu_data.top_processes_cpu %}
+                                                                        {% set cpu_processes = latest_cpu_data.top_processes_cpu | from_json %}
+                                                                        <div class="row mt-2">
+                                                                            {% for process in cpu_processes[:5] %}
+                                                                                <div class="col-md-6 mb-2">
+                                                                                    <div class="card card-body py-2">
+                                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                                            <div>
+                                                                                                <strong>{{ process.name }}</strong>
+                                                                                                <small class="text-muted d-block">PID: {{ process.pid }}</small>
+                                                                                            </div>
+                                                                                            <div class="text-end">
+                                                                                                <span class="badge bg-primary">{{ "%.1f"|format(process.cpu_percent) }}% CPU</span>
+                                                                                                <span class="badge bg-secondary">{{ "%.1f"|format(process.memory_percent) }}% RAM</span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                    {% else %}
+                                                                        <div class="text-muted">No process data available</div>
+                                                                    {% endif %}
+                                                                </div>
+                                                                
+                                                                <div class="mt-3">
+                                                                    <strong>Top Processes by Memory Usage:</strong>
+                                                                    {% set latest_mem_data = test_results | selectattr('top_processes_memory') | first %}
+                                                                    {% if latest_mem_data and latest_mem_data.top_processes_memory %}
+                                                                        {% set mem_processes = latest_mem_data.top_processes_memory | from_json %}
+                                                                        <div class="row mt-2">
+                                                                            {% for process in mem_processes[:5] %}
+                                                                                <div class="col-md-6 mb-2">
+                                                                                    <div class="card card-body py-2">
+                                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                                            <div>
+                                                                                                <strong>{{ process.name }}</strong>
+                                                                                                <small class="text-muted d-block">PID: {{ process.pid }}</small>
+                                                                                            </div>
+                                                                                            <div class="text-end">
+                                                                                                <span class="badge bg-secondary">{{ "%.1f"|format(process.memory_percent) }}% RAM</span>
+                                                                                                <span class="badge bg-primary">{{ "%.1f"|format(process.cpu_percent) }}% CPU</span>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            {% endfor %}
+                                                                        </div>
+                                                                    {% else %}
+                                                                        <div class="text-muted">No process data available</div>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
                                                     </tbody>
                                                 </table>
                                             </div>
