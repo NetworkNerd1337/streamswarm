@@ -95,9 +95,11 @@ class StreamSwarmClient:
                 'system_info': self.system_info
             }
             
+            headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
             response = requests.post(
-                urljoin(self.server_url, '/api/client/register'),
+                urljoin(self.server_url, '/api/register'),
                 json=data,
+                headers=headers,
                 timeout=10
             )
             
@@ -117,8 +119,10 @@ class StreamSwarmClient:
         """Send periodic heartbeat to server"""
         while self.running:
             try:
+                headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
                 response = requests.post(
-                    urljoin(self.server_url, f'/api/client/{self.client_id}/heartbeat'),
+                    urljoin(self.server_url, f'/api/clients/{self.client_id}/heartbeat'),
+                    headers=headers,
                     timeout=5
                 )
                 
@@ -1058,8 +1062,10 @@ class StreamSwarmClient:
         """Check for new tests from server"""
         while self.running:
             try:
+                headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
                 response = requests.get(
-                    urljoin(self.server_url, f'/api/client/{self.client_id}/tests'),
+                    urljoin(self.server_url, f'/api/clients/{self.client_id}/tests'),
+                    headers=headers,
                     timeout=10
                 )
                 
