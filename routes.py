@@ -430,6 +430,7 @@ def get_test_data(test_id):
             'memory_available': {},
             'memory_cached': {},
             'memory_buffers': {},
+            'swap_used': {},
             'swap_percent': {},
             'process_count': {},
             'tcp_connections': {},
