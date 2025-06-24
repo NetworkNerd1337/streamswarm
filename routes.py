@@ -373,10 +373,21 @@ def create_test():
         return jsonify({'error': 'Missing required fields'}), 400
     
     try:
+        # Clean up destination by removing protocol prefixes
+        destination = data['destination'].strip()
+        if destination.startswith('http://'):
+            destination = destination[7:]
+        elif destination.startswith('https://'):
+            destination = destination[8:]
+        
+        # Remove trailing slash if present
+        if destination.endswith('/'):
+            destination = destination[:-1]
+        
         test = Test(
             name=data['name'],
             description=data.get('description', ''),
-            destination=data['destination'],
+            destination=destination,
             scheduled_time=datetime.fromisoformat(data['scheduled_time']) if data.get('scheduled_time') else None,
             duration=data.get('duration', 300),
             interval=data.get('interval', 5)

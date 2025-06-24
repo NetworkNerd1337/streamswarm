@@ -185,7 +185,13 @@
                             <div class="col-md-6 mb-3">
                                 <label for="testDestination" class="form-label">Destination</label>
                                 <input type="text" class="form-control" id="testDestination" 
-                                       placeholder="e.g., google.com, 8.8.8.8" required>
+                                       placeholder="e.g., google.com, 8.8.8.8, example.com" required>
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Enter hostname or IP address only. Protocol prefixes (http://, https://) will be automatically removed.
+                                    </small>
+                                </div>
                             </div>
                         </div>
                         
@@ -267,10 +273,24 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
     }
     
     // Prepare test data
+    let destination = document.getElementById('testDestination').value.trim();
+    
+    // Strip protocol prefixes if present
+    if (destination.startsWith('http://')) {
+        destination = destination.substring(7);
+    } else if (destination.startsWith('https://')) {
+        destination = destination.substring(8);
+    }
+    
+    // Remove trailing slash if present
+    if (destination.endsWith('/')) {
+        destination = destination.slice(0, -1);
+    }
+    
     const testData = {
         name: document.getElementById('testName').value,
         description: document.getElementById('testDescription').value,
-        destination: document.getElementById('testDestination').value,
+        destination: destination,
         duration: parseInt(document.getElementById('testDuration').value),
         interval: parseInt(document.getElementById('testInterval').value),
         scheduled_time: document.getElementById('scheduledTime').value || null,

@@ -100,6 +100,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Added detailed process monitoring with top processes ranked by CPU and memory consumption
   - Enhanced process metrics to show process names, PIDs, and resource usage percentages
   - Updated database schema and UI to display top 5 processes by CPU and memory usage in test results
+  - Improved test creation UX by automatically stripping protocol prefixes from destination input
+  - Added helpful text to destination field explaining protocol prefixes are not needed
+  - Enhanced form validation to clean destination input both client-side and server-side
 
 - June 23, 2025: Fixed bandwidth testing methodology, dashboard overview cards, missing metrics functionality, implemented client eligibility checking, and added API token authentication
   - Resolved bandwidth measurement issues by optimizing HTTP-based testing using httpbin.org
