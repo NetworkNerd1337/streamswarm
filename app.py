@@ -32,6 +32,8 @@ db.init_app(app)
 with app.app_context():
     # Import models to ensure tables are created
     import models
+    # Import routes to register them with the app
+    import routes
     db.create_all()
 
 # Custom Jinja filters

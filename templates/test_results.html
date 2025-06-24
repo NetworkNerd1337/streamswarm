@@ -733,6 +733,22 @@ function initializeCharts() {
                             return value;
                         }
                     }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                elements: {
+                    point: {
+                        radius: function(context) {
+                            return (currentMetric === 'bandwidth_upload' || currentMetric === 'bandwidth_download') ? 4 : 3;
+                        }
+                    },
+                    line: {
+                        spanGaps: false // Don't connect across missing data points
+                    }
+                }
                 }
             }
         }
@@ -899,13 +915,42 @@ function showMetric(metric) {
             const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1'];
             const color = colors[index % colors.length];
             
+            // Get raw data and filter out null/undefined values
+            let rawData = testData.metrics[metric] && testData.metrics[metric][clientId] ? testData.metrics[metric][clientId] : [];
+            
+            // For bandwidth metrics, filter out null/zero values and ensure proper data structure
+            let filteredData = rawData;
+            if (metric === 'bandwidth_upload' || metric === 'bandwidth_download') {
+                filteredData = rawData.filter(point => {
+                    return point && 
+                           point.x && 
+                           point.y !== null && 
+                           point.y !== undefined && 
+                           point.y > 0; // Only show actual bandwidth measurements
+                }).map(point => ({
+                    x: new Date(point.x),
+                    y: parseFloat(point.y)
+                }));
+            } else {
+                // Standard filtering for other metrics
+                filteredData = rawData.filter(point => {
+                    return point && point.x && point.y !== null && point.y !== undefined;
+                }).map(point => ({
+                    x: new Date(point.x),
+                    y: parseFloat(point.y)
+                }));
+            }
+            
             return {
                 label: testData.clients[clientId],
-                data: testData.metrics[metric] && testData.metrics[metric][clientId] ? testData.metrics[metric][clientId] : [],
+                data: filteredData,
                 borderColor: color,
                 backgroundColor: color + '20',
                 fill: false,
-                tension: 0.1
+                tension: 0.1,
+                spanGaps: false, // Don't connect gaps in bandwidth data
+                pointRadius: metric === 'bandwidth_upload' || metric === 'bandwidth_download' ? 4 : 3,
+                pointHoverRadius: metric === 'bandwidth_upload' || metric === 'bandwidth_download' ? 6 : 4
             };
         });
         
@@ -948,6 +993,8 @@ function getMetricTitle(metric) {
         'swap_used': 'Swap Used Over Time (GB)',
         'swap_percent': 'Swap Usage Over Time (%)',
         'disk_read_iops': 'Disk Read IOPS Over Time',
+        'bandwidth_upload': 'Bandwidth Upload Over Time',
+        'bandwidth_download': 'Bandwidth Download Over Time',
         'disk_write_iops': 'Disk Write IOPS Over Time',
         'disk_read_bytes_sec': 'Disk Read Throughput Over Time',
         'disk_write_bytes_sec': 'Disk Write Throughput Over Time',
