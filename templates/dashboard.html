@@ -195,7 +195,7 @@ function updateDashboardMetrics() {
         .then(response => response.json())
         .then(data => {
             // Update latency chart
-            if (latencyChart && data.latency_data) {
+            if (latencyChart && data.latency_data && latencyChart.data.datasets.length > 0) {
                 latencyChart.data.datasets[0].data = data.latency_data;
                 latencyChart.update('none');
             }
@@ -275,7 +275,13 @@ function initializeLatencyChart() {
         type: 'line',
         data: {
             labels: [],
-            datasets: []
+            datasets: [{
+                label: 'Average Latency',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
         },
         options: {
             responsive: true,
