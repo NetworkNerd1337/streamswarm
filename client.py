@@ -895,7 +895,7 @@ class StreamSwarmClient:
             metrics['bandwidth_upload'] = round(result['upload'], 2) if result['upload'] else None
             metrics['bandwidth_download'] = round(result['download'], 2) if result['download'] else None
             
-            logger.info(f"Internet speed test completed: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
+            logger.info(f"Speedtest completed - Download: {metrics['bandwidth_download']} Mbps, Upload: {metrics['bandwidth_upload']} Mbps")
                 
         except Exception as e:
             logger.warning(f"Speedtest setup failed: {e}")
