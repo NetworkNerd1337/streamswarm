@@ -2,7 +2,7 @@ modules = ["python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "imagemagickBig", "iputils", "openssl", "pkg-config", "postgresql", "qhull", "sox", "tcl", "tcpdump", "tk", "traceroute", "wireshark"]
+packages = ["cairo", "ffmpeg-full", "freetype", "ghostscript", "glibcLocales", "gobject-introspection", "gtk3", "imagemagickBig", "iputils", "openssl", "pkg-config", "postgresql", "qhull", "sox", "tcl", "tcpdump", "tk", "traceroute", "wirelesstools", "wireshark"]
 
 [deployment]
 deploymentTarget = "autoscale"

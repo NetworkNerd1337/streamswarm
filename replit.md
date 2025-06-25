@@ -108,6 +108,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Added comprehensive logging for wireless detection debugging and troubleshooting
   - Updated tutorial and documentation with wireless system dependencies (libiw-dev, network-manager, iwlib)
   - Enhanced client deployment instructions to include wireless detection tool installation for Ubuntu/Debian/CentOS systems
+  - Added iwlib Python library integration as primary wireless detection method with enhanced debugging
+  - Created wireless_debug.py diagnostic tool for troubleshooting client wireless detection issues
+  - Enhanced wireless detection logging with detailed troubleshooting steps for when wireless details aren't captured
 
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization

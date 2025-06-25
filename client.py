@@ -1361,7 +1361,56 @@ class StreamSwarmClient:
                 import subprocess
                 import os
                 
-                # Method 1: Try iwconfig first
+                # Method 0: Try iwlib Python library first (most reliable)
+                try:
+                    import iwlib
+                    logger.debug(f"Attempting iwlib scan for {interface_name}")
+                    
+                    # Get wireless interface statistics
+                    stats = iwlib.get_iwconfig(interface_name)
+                    if stats:
+                        logger.debug(f"iwlib stats for {interface_name}: {stats}")
+                        
+                        # Extract SSID
+                        if 'ESSID' in stats and stats['ESSID']:
+                            essid = stats['ESSID'].strip('"')
+                            if essid and essid != 'off/any':
+                                wireless_info['ssid'] = essid
+                        
+                        # Extract frequency
+                        if 'Frequency' in stats and stats['Frequency']:
+                            wireless_info['frequency'] = f"{stats['Frequency']} GHz"
+                        
+                        # Extract access point
+                        if 'Access Point' in stats and stats['Access Point']:
+                            ap = stats['Access Point']
+                            if ap != '00:00:00:00:00:00':
+                                wireless_info['access_point'] = ap
+                    
+                    # Get signal quality information
+                    try:
+                        scan_results = iwlib.scan(interface_name)
+                        if scan_results:
+                            logger.debug(f"iwlib scan results for {interface_name}: found {len(scan_results)} networks")
+                            # Find the connected network
+                            for network in scan_results:
+                                if wireless_info['ssid'] and network.get('ESSID') == wireless_info['ssid']:
+                                    if 'stats' in network and 'level' in network['stats']:
+                                        wireless_info['signal_strength'] = f"{network['stats']['level']} dBm"
+                                    break
+                    except Exception as e:
+                        logger.debug(f"iwlib scan failed: {e}")
+                    
+                    if wireless_info['ssid']:
+                        logger.info(f"iwlib successfully detected wireless info for {interface_name}: {wireless_info}")
+                        return wireless_info
+                    
+                except ImportError:
+                    logger.debug("iwlib Python library not available - install with: pip install iwlib")
+                except Exception as e:
+                    logger.debug(f"iwlib detection failed: {e}")
+                
+                # Method 1: Try iwconfig command
                 try:
                     result = subprocess.run(['iwconfig', interface_name], 
                                           capture_output=True, text=True, timeout=5)
@@ -1376,6 +1425,7 @@ class StreamSwarmClient:
                                 ssid = essid_line.split('ESSID:"')[1].split('"')[0]
                                 if ssid and ssid != 'off/any':
                                     wireless_info['ssid'] = ssid
+                                    logger.info(f"iwconfig found SSID: {ssid}")
                         
                         # Parse signal strength
                         if 'Signal level=' in output:
@@ -1392,9 +1442,11 @@ class StreamSwarmClient:
                                 wireless_info['frequency'] = freq_part
                                 
                 except subprocess.TimeoutExpired:
-                    logger.debug(f"iwconfig timeout for {interface_name}")
+                    logger.warning(f"iwconfig timeout for {interface_name}")
                 except FileNotFoundError:
-                    logger.debug("iwconfig not available")
+                    logger.warning("iwconfig command not found - install wireless-tools package")
+                except Exception as e:
+                    logger.debug(f"iwconfig failed: {e}")
                 
                 # Method 2: Try nmcli as fallback
                 if not wireless_info['ssid']:
@@ -1410,13 +1462,16 @@ class StreamSwarmClient:
                                         ssid = parts[1]
                                         if ssid:
                                             wireless_info['ssid'] = ssid
+                                            logger.info(f"nmcli found SSID: {ssid}")
                                         if len(parts) >= 3 and parts[2]:
                                             wireless_info['signal_strength'] = f"{parts[2]} dBm"
                                         if len(parts) >= 4 and parts[3]:
                                             wireless_info['frequency'] = f"{parts[3]} MHz"
                                         break
                     except (subprocess.TimeoutExpired, FileNotFoundError):
-                        logger.debug("nmcli not available or timeout")
+                        logger.warning("nmcli not available or timeout - install NetworkManager")
+                    except Exception as e:
+                        logger.debug(f"nmcli failed: {e}")
                 
                 # Method 3: Try /proc/net/wireless
                 if not wireless_info['ssid']:
@@ -1509,11 +1564,17 @@ class StreamSwarmClient:
         except Exception as e:
             logger.debug(f"Wireless info detection failed: {e}")
         
-        # Log what we found
+        # Enhanced logging for troubleshooting
         if any(wireless_info.values()):
-            logger.info(f"Wireless info collected for {interface_name}: {wireless_info}")
+            logger.info(f"✓ Wireless info collected for {interface_name}: SSID={wireless_info.get('ssid', 'None')}, Signal={wireless_info.get('signal_strength', 'None')}, Freq={wireless_info.get('frequency', 'None')}")
         else:
-            logger.debug(f"No wireless information available for {interface_name}")
+            logger.warning(f"⚠ No wireless information available for {interface_name} despite being detected as wireless interface")
+            logger.warning("   Troubleshooting steps:")
+            logger.warning("   1. Ensure client has wireless tools: sudo apt install wireless-tools iw")
+            logger.warning("   2. Ensure NetworkManager is installed: sudo apt install network-manager") 
+            logger.warning("   3. Ensure iwlib Python package: pip install iwlib")
+            logger.warning("   4. Check interface is connected: iwconfig " + interface_name)
+            logger.warning("   5. Run client with --verbose for detailed debugging")
         
         return wireless_info
     
