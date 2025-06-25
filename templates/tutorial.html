@@ -1005,6 +1005,52 @@ nssm install StreamSwarmClient</code></pre>
                     </div>
                     
                     <div class="row">
+                        <!-- Network Interface Detection -->
+                        <div class="col-lg-6 mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-network-wired me-2"></i>
+                                Network Interface Detection
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <strong>Primary Interface Type</strong>
+                                <p class="small text-muted mb-1">Automatic detection of connection type for troubleshooting context.</p>
+                                <span class="badge bg-success me-1">Ethernet: Stable</span>
+                                <span class="badge bg-info me-1">Wireless: Variable</span>
+                                <span class="badge bg-warning me-1">VPN: Tunneled</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Connection Speed (Mbps/Gbps)</strong>
+                                <p class="small text-muted mb-1">Reported link speed capacity of the network interface.</p>
+                                <span class="badge bg-success me-1">1-10 Gbps: High-speed</span>
+                                <span class="badge bg-warning me-1">100 Mbps: Standard</span>
+                                <span class="badge bg-danger me-1">10 Mbps: Legacy</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Duplex Mode</strong>
+                                <p class="small text-muted mb-1">Communication mode affecting throughput potential.</p>
+                                <span class="badge bg-success me-1">Full: Optimal</span>
+                                <span class="badge bg-warning me-1">Half: Limited</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Wireless SSID & Signal</strong>
+                                <p class="small text-muted mb-1">WiFi network name and signal strength for wireless clients.</p>
+                                <span class="badge bg-success me-1">-30 to -50 dBm: Excellent</span>
+                                <span class="badge bg-warning me-1">-50 to -70 dBm: Good</span>
+                                <span class="badge bg-danger me-1">&lt;-70 dBm: Poor</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Interface Status (UP/DOWN)</strong>
+                                <p class="small text-muted mb-1">Current operational state of all network adapters.</p>
+                                <span class="badge bg-success me-1">UP: Active</span>
+                                <span class="badge bg-danger me-1">DOWN: Inactive</span>
+                            </div>
+                        </div>
+                        
                         <!-- Network Interface Statistics -->
                         <div class="col-lg-6 mb-4">
                             <h6 class="text-secondary mb-3">
@@ -1078,6 +1124,14 @@ nssm install StreamSwarmClient</code></pre>
                     </div>
                     
                     <div class="alert alert-info">
+                        <h6><i class="fas fa-network-wired me-2"></i>Network Interface Troubleshooting</h6>
+                        <p class="small mb-2"><strong>Interface Type Correlation:</strong> Wireless clients typically show higher latency and jitter than ethernet. VPN connections add encryption overhead.</p>
+                        <p class="small mb-2"><strong>Speed Limitations:</strong> Performance cannot exceed interface speed. 100 Mbps ethernet limits bandwidth regardless of ISP capacity.</p>
+                        <p class="small mb-2"><strong>Wireless Analysis:</strong> Signal strength below -70 dBm often causes packet loss and latency spikes. Check frequency band and interference.</p>
+                        <p class="small mb-0"><strong>Duplex Issues:</strong> Half-duplex connections cause collisions and reduced throughput. Full-duplex is essential for modern networks.</p>
+                    </div>
+                    
+                    <div class="alert alert-success">
                         <h6><i class="fas fa-info-circle me-2"></i>Understanding Metric Relationships</h6>
                         <p class="small mb-2"><strong>Network Issues:</strong> High latency with packet loss often indicates congestion. Jitter spikes suggest unstable routing.</p>
                         <p class="small mb-2"><strong>System Performance:</strong> High CPU with low memory usage suggests compute-bound tasks. High memory with normal CPU indicates memory-intensive applications.</p>
