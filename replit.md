@@ -85,6 +85,14 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
+- June 25, 2025: Updated tutorial and metrics definition guide with comprehensive network interface detection documentation
+  - Added detailed Network Interface Detection section explaining automatic interface type detection
+  - Enhanced metrics list to include all 8 new network interface metrics (interface type, speed, duplex, wireless details, etc.)
+  - Created Network Interface Troubleshooting Guide with practical interpretation guidelines
+  - Added signal strength analysis guide for wireless connections (-30 to -70 dBm ranges)
+  - Enhanced use case examples to include network interface correlation with performance issues
+  - Updated tutorial page to emphasize per-client network environment analysis capabilities
+
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization
   - Enhanced data filtering to properly handle null/zero bandwidth values for clean chart display
