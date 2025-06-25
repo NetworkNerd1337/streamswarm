@@ -355,8 +355,9 @@ class StreamSwarmClient:
             try:
                 interface_info = self._get_network_interface_info()
                 metrics['network_interface_info'] = json.dumps(interface_info)
+                logger.debug(f"Network interface info collected: {interface_info.get('primary_interface', 'unknown')}")
             except Exception as e:
-                logger.debug(f"Network interface detection failed: {e}")
+                logger.warning(f"Network interface detection failed: {e}")
                 metrics['network_interface_info'] = json.dumps({})
             
             return metrics
@@ -853,43 +854,53 @@ class StreamSwarmClient:
         
         try:
             import speedtest
-            import signal
+            import threading
+            import time
             
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Speedtest timed out")
+            # Use threading timeout instead of signal (which doesn't work in threads)
+            result = {'upload': None, 'download': None, 'error': None}
             
-            # Set 45 second timeout for speedtest
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(45)
+            def run_speedtest():
+                try:
+                    logger.info("Running internet speed test...")
+                    st = speedtest.Speedtest()
+                    st.get_best_server()
+                    
+                    # Test download speed
+                    logger.debug("Testing download speed...")
+                    download_bps = st.download()
+                    result['download'] = download_bps / 1_000_000  # Convert to Mbps
+                    
+                    # Test upload speed  
+                    logger.debug("Testing upload speed...")
+                    upload_bps = st.upload()
+                    result['upload'] = upload_bps / 1_000_000  # Convert to Mbps
+                    
+                except Exception as e:
+                    result['error'] = str(e)
             
-            try:
-                logger.info("Running internet speed test...")
-                
-                # Initialize speedtest
-                st = speedtest.Speedtest()
-                st.get_best_server()
-                
-                # Download test - measure actual internet download speed
-                logger.debug("Testing download speed...")
-                download_speed = st.download()
-                metrics['bandwidth_download'] = round(download_speed / 1000000, 2)
-                
-                # Upload test - measure actual internet upload speed
-                logger.debug("Testing upload speed...")
-                upload_speed = st.upload()
-                metrics['bandwidth_upload'] = round(upload_speed / 1000000, 2)
-                
-                logger.info(f"Internet speed test completed: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
-                
-            finally:
-                signal.alarm(0)  # Cancel timeout
+            # Run speedtest in a separate thread with timeout
+            test_thread = threading.Thread(target=run_speedtest, daemon=True)
+            test_thread.start()
+            test_thread.join(timeout=45)  # 45 second timeout
             
-        except ImportError:
-            logger.warning("speedtest-cli not available - install with: pip install speedtest-cli")
-        except TimeoutError:
-            logger.warning("Speedtest timed out after 45 seconds")
+            if test_thread.is_alive():
+                logger.warning("Speedtest timeout - falling back to HTTP test")
+                return self._http_internet_speed_test()
+            
+            if result['error']:
+                logger.warning(f"Speedtest failed: {result['error']}")
+                return self._http_internet_speed_test()
+                
+            metrics['bandwidth_upload'] = round(result['upload'], 2) if result['upload'] else None
+            metrics['bandwidth_download'] = round(result['download'], 2) if result['download'] else None
+            
+            logger.info(f"Internet speed test completed: {metrics['bandwidth_download']} Mbps down, {metrics['bandwidth_upload']} Mbps up")
+                
         except Exception as e:
-            logger.warning(f"Speedtest failed: {e}")
+            logger.warning(f"Speedtest setup failed: {e}")
+            # Fall back to HTTP test
+            return self._http_internet_speed_test()
         
         return metrics
     
