@@ -85,7 +85,13 @@ The deployment supports both single-instance development and horizontally scaled
 
 ## Recent Changes
 
-- June 25, 2025: Updated tutorial and metrics definition guide with comprehensive network interface detection documentation
+- June 25, 2025: Fixed thread-safe bandwidth testing and updated tutorial documentation
+  - Fixed speedtest-cli signal handler error in threaded environment by implementing threading-based timeout
+  - Enhanced HTTP bandwidth testing with improved timeout handling and better error logging
+  - Replaced signal-based timeout with thread.join(timeout) for thread-safe operation
+  - Added fallback logic to ensure bandwidth tests complete even when speedtest-cli fails
+  - Improved bandwidth test reliability by ensuring minimum test duration for accurate measurements
+  - Updated tutorial and metrics definition guide with comprehensive network interface detection documentation
   - Added detailed Network Interface Detection section explaining automatic interface type detection
   - Enhanced metrics list to include all 8 new network interface metrics (interface type, speed, duplex, wireless details, etc.)
   - Created Network Interface Troubleshooting Guide with practical interpretation guidelines
