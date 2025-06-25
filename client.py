@@ -54,6 +54,7 @@ class StreamSwarmClient:
         self.running = False
         self.heartbeat_thread = None
         self.test_threads = {}
+        self.signal_strength_tracker = {}
         
         # Get system information
         self.system_info = self._get_system_info()
@@ -1577,6 +1578,98 @@ class StreamSwarmClient:
             logger.warning("   5. Run client with --verbose for detailed debugging")
         
         return wireless_info
+    
+    def _get_current_signal_strength(self):
+        """Get current wireless signal strength for monitoring during tests"""
+        try:
+            # Get network interfaces first
+            net_if_stats = psutil.net_if_stats()
+            wireless_interfaces = []
+            
+            # Identify wireless interfaces
+            for name in net_if_stats:
+                if any(prefix in name.lower() for prefix in ['wlan', 'wifi', 'wl', 'ath', 'ra', 'wlp']):
+                    wireless_interfaces.append(name)
+                elif os.path.exists(f"/sys/class/net/{name}/wireless"):
+                    wireless_interfaces.append(name)
+            
+            if not wireless_interfaces:
+                return None
+            
+            # Get signal strength for the first active wireless interface
+            for interface in wireless_interfaces:
+                if platform.system().lower() == 'linux':
+                    # Method 1: Try iwlib Python library
+                    try:
+                        import iwlib
+                        stats = iwlib.get_iwconfig(interface)
+                        if stats and 'stats' in stats:
+                            if 'level' in stats['stats']:
+                                return float(stats['stats']['level'])
+                    except (ImportError, Exception):
+                        pass
+                    
+                    # Method 2: Try iwconfig command
+                    try:
+                        result = subprocess.run(['iwconfig', interface], 
+                                              capture_output=True, text=True, timeout=3)
+                        if result.returncode == 0:
+                            output = result.stdout
+                            for line in output.split('\n'):
+                                if 'Signal level=' in line:
+                                    # Extract signal level (e.g., "Signal level=-45 dBm")
+                                    signal_part = line.split('Signal level=')[1].split()[0]
+                                    if signal_part.replace('-', '').replace('.', '').isdigit():
+                                        return float(signal_part)
+                    except Exception:
+                        pass
+                    
+                    # Method 3: Try nmcli
+                    try:
+                        result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SIGNAL', 'dev', 'wifi'], 
+                                              capture_output=True, text=True, timeout=3)
+                        if result.returncode == 0:
+                            for line in result.stdout.strip().split('\n'):
+                                if line.startswith('yes:'):
+                                    parts = line.split(':')
+                                    if len(parts) >= 2 and parts[1]:
+                                        return float(parts[1])
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        
+        return None
+    
+    def _update_signal_strength_tracker(self, test_id, current_strength):
+        """Update signal strength statistics for a test"""
+        if current_strength is None:
+            return
+        
+        if test_id not in self.signal_strength_tracker:
+            self.signal_strength_tracker[test_id] = {
+                'values': [],
+                'min': current_strength,
+                'max': current_strength,
+                'sum': 0.0,
+                'count': 0
+            }
+        
+        tracker = self.signal_strength_tracker[test_id]
+        tracker['values'].append(current_strength)
+        tracker['min'] = min(tracker['min'], current_strength)
+        tracker['max'] = max(tracker['max'], current_strength)
+        tracker['sum'] += current_strength
+        tracker['count'] += 1
+    
+    def _get_signal_strength_stats(self, test_id):
+        """Get signal strength statistics for a test"""
+        if test_id not in self.signal_strength_tracker or self.signal_strength_tracker[test_id]['count'] == 0:
+            return None, None, None, 0
+        
+        tracker = self.signal_strength_tracker[test_id]
+        avg = tracker['sum'] / tracker['count']
+        return tracker['min'], tracker['max'], avg, tracker['count']
     
     def start(self):
         """Start the client"""

@@ -239,6 +239,12 @@ class TestResult(db.Model):
     # Network interface detection
     network_interface_info = db.Column(Text)  # JSON string of network interface details
     
+    # Signal strength monitoring for wireless connections
+    signal_strength_min = db.Column(db.Float)  # Minimum signal strength during test (dBm)
+    signal_strength_max = db.Column(db.Float)  # Maximum signal strength during test (dBm)
+    signal_strength_avg = db.Column(db.Float)  # Average signal strength during test (dBm)
+    signal_strength_samples = db.Column(db.Integer)  # Number of signal strength samples collected
+    
     def to_dict(self):
         return {
             'id': self.id,
@@ -307,5 +313,10 @@ class TestResult(db.Model):
             'cos_value': self.cos_value,
             'traffic_class': self.traffic_class,
             'qos_policy_compliant': self.qos_policy_compliant,
-            'bandwidth_per_class': json.loads(self.bandwidth_per_class) if self.bandwidth_per_class else {}
+            'bandwidth_per_class': json.loads(self.bandwidth_per_class) if self.bandwidth_per_class else {},
+            # Signal strength monitoring  
+            'signal_strength_min': self.signal_strength_min,
+            'signal_strength_max': self.signal_strength_max,
+            'signal_strength_avg': self.signal_strength_avg,
+            'signal_strength_samples': self.signal_strength_samples
         }
