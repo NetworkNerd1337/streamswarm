@@ -388,14 +388,7 @@
                                                     {% if interface_data.wireless_info and (interface_data.wireless_info.ssid or interface_data.wireless_info.signal_strength or interface_data.wireless_info.frequency) %}
                                                         {% if interface_data.wireless_info.ssid %}
                                                             <div class="mb-2">
-                                                                <strong>Network (SSID):</strong> 
-                                                                {% if "Disconnected" in interface_data.wireless_info.ssid %}
-                                                                    <span class="text-warning">{{ interface_data.wireless_info.ssid }}</span>
-                                                                {% elif "tools not available" in interface_data.wireless_info.ssid %}
-                                                                    <span class="text-danger">{{ interface_data.wireless_info.ssid }}</span>
-                                                                {% else %}
-                                                                    <span class="text-success">{{ interface_data.wireless_info.ssid }}</span>
-                                                                {% endif %}
+                                                                <strong>Network (SSID):</strong> {{ interface_data.wireless_info.ssid }}
                                                             </div>
                                                         {% endif %}
                                                         {% if interface_data.wireless_info.signal_strength %}
@@ -411,18 +404,6 @@
                                                         {% if interface_data.wireless_info.security %}
                                                             <div class="mb-2">
                                                                 <strong>Security:</strong> {{ interface_data.wireless_info.security }}
-                                                            </div>
-                                                        {% endif %}
-                                                        
-                                                        {% if "tools available" in interface_data.wireless_info.ssid %}
-                                                            <div class="alert alert-success mt-2">
-                                                                <i class="fas fa-check-circle me-2"></i>
-                                                                Wireless detection tools are installed and working. Interface appears to be disconnected from any network.
-                                                            </div>
-                                                        {% elif "tools not available" in interface_data.wireless_info.ssid %}
-                                                            <div class="alert alert-warning mt-2">
-                                                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                                                Wireless detection tools (iwconfig, nmcli, iw) are not available. Install them to see detailed wireless information.
                                                             </div>
                                                         {% endif %}
                                                     {% else %}

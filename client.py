@@ -1395,30 +1395,14 @@ class StreamSwarmClient:
                     logger.debug(f"iwconfig timeout for {interface_name}")
                 except FileNotFoundError:
                     logger.debug("iwconfig not available")
-                except Exception as e:
-                    logger.debug(f"iwconfig error: {e}")
                 
                 # Method 2: Try nmcli as fallback
                 if not wireless_info['ssid']:
                     try:
-                        # First try to get connection info
-                        result = subprocess.run(['nmcli', '-t', '-f', 'DEVICE,STATE,CONNECTION', 'dev'], 
-                                              capture_output=True, text=True, timeout=5)
-                        if result.returncode == 0:
-                            logger.debug(f"nmcli dev output: {result.stdout}")
-                            for line in result.stdout.strip().split('\n'):
-                                if interface_name in line and 'connected' in line:
-                                    parts = line.split(':')
-                                    if len(parts) >= 3:
-                                        connection_name = parts[2]
-                                        logger.debug(f"Found active connection: {connection_name}")
-                                        break
-                        
-                        # Get detailed wifi info
                         result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SSID,SIGNAL,FREQ', 'dev', 'wifi'], 
                                               capture_output=True, text=True, timeout=5)
                         if result.returncode == 0:
-                            logger.debug(f"nmcli wifi output: {result.stdout}")
+                            logger.debug(f"nmcli output: {result.stdout}")
                             for line in result.stdout.strip().split('\n'):
                                 if line.startswith('yes:'):
                                     parts = line.split(':')
@@ -1433,26 +1417,18 @@ class StreamSwarmClient:
                                         break
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         logger.debug("nmcli not available or timeout")
-                    except Exception as e:
-                        logger.debug(f"nmcli error: {e}")
                 
-                # Method 3: Try /proc/net/wireless for signal info
-                if not wireless_info['signal_strength']:
+                # Method 3: Try /proc/net/wireless
+                if not wireless_info['ssid']:
                     try:
                         with open('/proc/net/wireless', 'r') as f:
                             lines = f.readlines()
                             for line in lines:
                                 if interface_name in line:
                                     parts = line.split()
-                                    if len(parts) >= 4:
+                                    if len(parts) >= 3:
                                         # Signal quality info available
                                         logger.debug(f"/proc/net/wireless data for {interface_name}: {line.strip()}")
-                                        # Extract signal level (usually in dBm, third field)
-                                        try:
-                                            signal_level = float(parts[3])
-                                            wireless_info['signal_strength'] = f"{signal_level} dBm"
-                                        except (ValueError, IndexError):
-                                            pass
                                         break
                     except (FileNotFoundError, PermissionError):
                         logger.debug("/proc/net/wireless not accessible")
@@ -1481,29 +1457,12 @@ class StreamSwarmClient:
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         logger.debug("iw command not available or timeout")
                 
-                # Method 5: Check if interface is wireless but disconnected
+                # Method 5: Check /sys/class/net for wireless info
                 try:
                     wireless_path = f"/sys/class/net/{interface_name}/wireless"
                     if os.path.exists(wireless_path):
                         logger.debug(f"Wireless interface detected via /sys/class/net/{interface_name}/wireless")
-                        
-                        # If no SSID found yet, interface might be disconnected
-                        if not wireless_info['ssid']:
-                            # Check if tools are available and provide appropriate message
-                            tools_available = []
-                            for tool in ['iwconfig', 'nmcli', 'iw']:
-                                try:
-                                    subprocess.run([tool, '--version'], capture_output=True, timeout=2)
-                                    tools_available.append(tool)
-                                except (FileNotFoundError, subprocess.TimeoutExpired):
-                                    pass
-                            
-                            if tools_available:
-                                wireless_info['ssid'] = f"Disconnected (tools available: {', '.join(tools_available)})"
-                                logger.info(f"Wireless interface {interface_name} detected but not connected. Tools available: {tools_available}")
-                            else:
-                                wireless_info['ssid'] = "Wireless tools not available"
-                                logger.debug(f"Wireless interface {interface_name} detected but no wireless tools available")
+                        # Interface is wireless but detailed info may not be available
                 except Exception:
                     pass
             
