@@ -254,6 +254,8 @@ def submit_test_results():
             ssl_handshake_time=data.get('ssl_handshake_time'),
             ttfb=data.get('ttfb'),
             jitter=data.get('jitter'),
+            # Network interface information
+            network_interface_info=data.get('network_interface_info'),
             # Network interface metrics
             network_bytes_sent=data.get('network_bytes_sent'),
             network_bytes_recv=data.get('network_bytes_recv'),
