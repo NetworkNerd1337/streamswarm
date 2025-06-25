@@ -1396,6 +1396,20 @@ psql $DATABASE_URL -c "SELECT pg_size_pretty(pg_database_size('streamswarm'));"<
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#client-busy">
+                                    <i class="fas fa-clock text-warning me-2"></i>
+                                    Client shows busy when trying to schedule a test
+                                </button>
+                            </h2>
+                            <div id="client-busy" class="accordion-collapse collapse" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <p>Clients are marked busy and are ineligible for tests when they are assigned to active or scheduled tests.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

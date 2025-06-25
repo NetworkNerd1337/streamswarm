@@ -100,6 +100,7 @@ The deployment supports both single-instance development and horizontally scaled
   - Added signal strength analysis guide for wireless connections (-30 to -70 dBm ranges)
   - Enhanced use case examples to include network interface correlation with performance issues
   - Updated tutorial page to emphasize per-client network environment analysis capabilities
+  - Added FAQ item to tutorial page addressing client busy status during test scheduling
 
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization
