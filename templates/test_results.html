@@ -425,22 +425,20 @@
                                             <h6 class="text-light mb-3">All Network Interfaces</h6>
                                             <div class="row">
                                                 {% for interface in interface_data.all_interfaces %}
-                                                    <div class="col-md-4 mb-2">
-                                                        <div class="card bg-secondary border-dark">
-                                                            <div class="card-body py-2 bg-secondary text-white">
-                                                                <div class="d-flex justify-content-between align-items-center">
-                                                                    <div>
-                                                                        <strong>{{ interface.name }}</strong>
-                                                                        {% if interface.is_up %}
-                                                                            <span class="badge bg-success ms-1">UP</span>
-                                                                        {% else %}
-                                                                            <span class="badge bg-danger ms-1">DOWN</span>
-                                                                        {% endif %}
-                                                                    </div>
-                                                                    {% if interface.speed %}
-                                                                        <small class="text-light opacity-75">{{ interface.speed }} Mbps</small>
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="bg-secondary border border-secondary rounded p-2">
+                                                            <div class="d-flex justify-content-between align-items-center text-white">
+                                                                <div>
+                                                                    <strong>{{ interface.name }}</strong>
+                                                                    {% if interface.is_up %}
+                                                                        <span class="badge bg-success ms-1">UP</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-danger ms-1">DOWN</span>
                                                                     {% endif %}
                                                                 </div>
+                                                                {% if interface.speed %}
+                                                                    <small class="text-light opacity-75">{{ interface.speed }} Mbps</small>
+                                                                {% endif %}
                                                             </div>
                                                         </div>
                                                     </div>
