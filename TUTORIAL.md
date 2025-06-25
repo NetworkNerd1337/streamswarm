@@ -19,6 +19,9 @@ sudo apt install build-essential libffi-dev libssl-dev
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool
 sudo apt install libpcap-dev tcpdump
 
+# Install wireless detection tools
+sudo apt install libiw-dev network-manager
+
 # Create convenient symbolic links (optional)
 sudo ln -sf /usr/bin/python3.9 /usr/bin/python
 sudo ln -sf /usr/bin/pip3.9 /usr/bin/pip
@@ -37,6 +40,9 @@ sudo dnf install openssl-devel libffi-devel
 # Install system monitoring dependencies
 sudo dnf install iputils traceroute lm_sensors smartmontools ethtool
 sudo dnf install libpcap-devel tcpdump
+
+# Install wireless detection tools
+sudo dnf install NetworkManager
 
 # For older systems, replace 'dnf' with 'yum'
 ```

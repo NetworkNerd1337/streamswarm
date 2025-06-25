@@ -106,6 +106,8 @@ The deployment supports both single-instance development and horizontally scaled
   - Added cross-platform wireless detection support for Linux, macOS, and Windows environments
   - Improved wireless details display with informative message when system tools are unavailable
   - Added comprehensive logging for wireless detection debugging and troubleshooting
+  - Updated tutorial and documentation with wireless system dependencies (libiw-dev, network-manager, iwlib)
+  - Enhanced client deployment instructions to include wireless detection tool installation for Ubuntu/Debian/CentOS systems
 
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization

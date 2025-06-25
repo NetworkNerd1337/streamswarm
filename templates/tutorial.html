@@ -212,7 +212,7 @@ brew install libpcap
                         <div class="col-lg-6">
                             <h6>All Dependencies (Single Command)</h6>
                             <div class="bg-dark p-3 rounded">
-                                <code class="text-light small">pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0</code>
+                                <code class="text-light small">pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 iwlib>=1.6.0</code>
                             </div>
                         </div>
                         
@@ -222,8 +222,8 @@ brew install libpcap
                                 <code class="text-light small">
 # Core application<br>
 pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary werkzeug email-validator<br><br>
-# Advanced features<br>
-pip install scapy speedtest-cli<br><br>
+# Advanced features (including wireless detection)<br>
+pip install scapy speedtest-cli iwlib<br><br>
 # Report generation<br>
 pip install reportlab matplotlib
                                 </code>
@@ -252,8 +252,10 @@ pip install reportlab matplotlib
                                         <code class="text-light small">
 # Ubuntu/Debian<br>
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump<br><br>
+# Wireless detection tools (Ubuntu/Debian)<br>
+sudo apt install libiw-dev network-manager<br><br>
 # CentOS/RHEL/Fedora<br>
-sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump<br><br>
+sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump NetworkManager<br><br>
 # Initialize sensors<br>
 sudo sensors-detect --auto
                                         </code>
@@ -779,16 +781,19 @@ python client.py --server https://internal-server.company.com:5000 --token YOUR_
 git clone https://github.com/NetworkNerd1337/Swarm.git
 cd Swarm
 
-# 2. Install client dependencies
-pip install psutil requests
+# 2. Install system dependencies (Ubuntu/Debian)
+sudo apt install iputils-ping traceroute libiw-dev network-manager
 
-# 3. Get API token from administrator
+# 3. Install Python dependencies
+pip install psutil requests iwlib
+
+# 4. Get API token from administrator
 # (or create one in web interface)
 
-# 4. Connect with authentication
+# 5. Connect with authentication
 python client.py --server https://your-server.com --token YOUR_API_TOKEN
 
-# 5. Connect with custom name
+# 6. Connect with custom name
 python client.py --server https://your-server.com --token YOUR_API_TOKEN --name "Production-01"</code></pre>
                         </div>
                         
@@ -797,7 +802,10 @@ python client.py --server https://your-server.com --token YOUR_API_TOKEN --name 
                             <pre class="bg-dark text-light p-2 rounded"><code># Deploy to each location:
 git clone https://github.com/NetworkNerd1337/Swarm.git
 cd Swarm
-pip install psutil requests
+
+# Install system dependencies for wireless detection
+sudo apt install iputils-ping traceroute libiw-dev network-manager
+pip install psutil requests iwlib
 
 # New York Office (external deployment)
 python client.py --server https://your-domain.com --token NYC_API_TOKEN --name "NYC-Office"

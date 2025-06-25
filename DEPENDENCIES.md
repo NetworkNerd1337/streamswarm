@@ -173,6 +173,9 @@ sudo apt install lm-sensors smartmontools ethtool
 # Development libraries for packet analysis
 sudo apt install libpcap-dev tcpdump
 
+# Wireless detection tools
+sudo apt install libiw-dev network-manager
+
 # Optional: Hardware monitoring setup
 sudo sensors-detect --auto
 ```
@@ -187,6 +190,9 @@ sudo dnf install lm_sensors smartmontools ethtool
 
 # Development libraries
 sudo dnf install libpcap-devel tcpdump
+
+# Wireless detection tools
+sudo dnf install NetworkManager
 
 # Initialize sensors
 sudo sensors-detect --auto
