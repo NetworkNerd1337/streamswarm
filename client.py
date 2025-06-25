@@ -811,13 +811,17 @@ class StreamSwarmClient:
                             break
                     
                     elapsed_time = time.time() - start_time
-                    if elapsed_time > 1.0 and total_bytes > 0:  # Minimum 1s for accuracy
+                    if elapsed_time > 0.5 and total_bytes > 1048576:  # Minimum 0.5s and 1MB for accuracy
                         download_mbps = (total_bytes * 8) / (elapsed_time * 1000000)
                         metrics['bandwidth_download'] = round(download_mbps, 2)
-                        logger.debug(f"Download speed test: {total_bytes} bytes in {elapsed_time:.2f}s = {download_mbps:.2f} Mbps")
+                        logger.info(f"Download speed test: {total_bytes} bytes in {elapsed_time:.2f}s = {download_mbps:.2f} Mbps")
+                    else:
+                        logger.warning(f"Download test insufficient data: {total_bytes} bytes in {elapsed_time:.2f}s")
+                else:
+                    logger.warning(f"Download test failed with status: {response.status_code}")
                         
             except Exception as e:
-                logger.debug(f"HTTP download speed test failed: {e}")
+                logger.warning(f"HTTP download speed test failed: {e}")
             
             # Upload test - upload to reliable endpoint
             try:
@@ -828,24 +832,30 @@ class StreamSwarmClient:
                     # Try httpbin first
                     response = session.post("https://httpbin.org/post", 
                                           data=test_data, timeout=20)
-                except:
+                except Exception as upload_e:
+                    logger.debug(f"httpbin upload failed: {upload_e}")
                     # Fallback to Google
                     response = session.post("https://www.google.com/gen_204", 
                                           data=test_data, timeout=20)
                 
                 if response.status_code in [200, 204]:
                     elapsed_time = time.time() - start_time
-                    if elapsed_time > 1.0:  # Minimum 1s for accuracy
+                    if elapsed_time > 0.5:  # Minimum 0.5s for accuracy
                         upload_mbps = (len(test_data) * 8) / (elapsed_time * 1000000)
                         metrics['bandwidth_upload'] = round(upload_mbps, 2)
-                        logger.debug(f"Upload speed test: {len(test_data)} bytes in {elapsed_time:.2f}s = {upload_mbps:.2f} Mbps")
+                        logger.info(f"Upload speed test: {len(test_data)} bytes in {elapsed_time:.2f}s = {upload_mbps:.2f} Mbps")
+                    else:
+                        logger.warning(f"Upload test too fast: {elapsed_time:.2f}s")
+                else:
+                    logger.warning(f"Upload test failed with status: {response.status_code}")
                         
             except Exception as e:
-                logger.debug(f"HTTP upload speed test failed: {e}")
+                logger.warning(f"HTTP upload speed test failed: {e}")
         
         except Exception as e:
             logger.warning(f"HTTP internet speed test failed: {e}")
         
+        logger.info(f"HTTP bandwidth test results - Download: {metrics.get('bandwidth_download', 'None')} Mbps, Upload: {metrics.get('bandwidth_upload', 'None')} Mbps")
         return metrics
     
     def _speedtest_bandwidth_test(self):
