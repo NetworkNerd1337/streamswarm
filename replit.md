@@ -111,6 +111,9 @@ The deployment supports both single-instance development and horizontally scaled
   - Added iwlib Python library integration as primary wireless detection method with enhanced debugging
   - Created wireless_debug.py diagnostic tool for troubleshooting client wireless detection issues
   - Enhanced wireless detection logging with detailed troubleshooting steps for when wireless details aren't captured
+  - Implemented signal strength monitoring throughout test duration with min/avg/max statistics tracking
+  - Added comprehensive signal strength fluctuation analysis with visual indicators for stability assessment
+  - Enhanced test results display with signal strength variability analysis and performance impact interpretation
 
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization

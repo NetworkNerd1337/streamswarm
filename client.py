@@ -506,12 +506,29 @@ class StreamSwarmClient:
                 # Get system metrics
                 system_metrics = self._get_system_metrics()
                 
+                # Monitor signal strength during this measurement
+                current_signal = self._get_current_signal_strength()
+                if current_signal is not None:
+                    self._update_signal_strength_tracker(test_id, current_signal)
+                    logger.debug(f"Signal strength sample: {current_signal} dBm")
+                
                 # Perform network tests
                 ping_result = self._ping_test(destination)
                 traceroute_result = self._traceroute_test(destination)
                 advanced_network = self._advanced_network_test(destination)
                 qos_metrics = self._qos_test(destination)
                 bandwidth_metrics = self._bandwidth_test(destination)
+                
+                # Add signal strength statistics to this measurement
+                sig_min, sig_max, sig_avg, sig_samples = self._get_signal_strength_stats(test_id)
+                signal_strength_data = {}
+                if sig_samples > 0:
+                    signal_strength_data = {
+                        'signal_strength_min': sig_min,
+                        'signal_strength_max': sig_max,
+                        'signal_strength_avg': round(sig_avg, 2),
+                        'signal_strength_samples': sig_samples
+                    }
                 
                 # Prepare test result data
                 result_data = {
@@ -526,7 +543,8 @@ class StreamSwarmClient:
                     'traceroute_data': traceroute_result.get('data', []),
                     **advanced_network,
                     **qos_metrics,
-                    **bandwidth_metrics
+                    **bandwidth_metrics,
+                    **signal_strength_data
                 }
                 
                 # Submit results to server
@@ -550,6 +568,13 @@ class StreamSwarmClient:
             time.sleep(interval)
         
         logger.info(f"Test {test_id} completed")
+        
+        # Clean up signal strength tracker for this test
+        if test_id in self.signal_strength_tracker:
+            sig_min, sig_max, sig_avg, sig_samples = self._get_signal_strength_stats(test_id)
+            if sig_samples > 0:
+                logger.info(f"Signal strength during test: min={sig_min} dBm, max={sig_max} dBm, avg={sig_avg:.1f} dBm ({sig_samples} samples)")
+            del self.signal_strength_tracker[test_id]
         
         # Remove from active tests
         if test_id in self.test_threads:
