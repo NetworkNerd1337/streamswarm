@@ -336,18 +336,18 @@
                             {% set client = clients|selectattr('id', 'equalto', client_id)|first %}
                             {% set interface_data = client_results[0].network_interface_info | tojsonfilter %}
                             {% if interface_data and interface_data.primary_interface %}
-                                <div class="card mb-3">
-                                    <div class="card-header bg-light">
+                                <div class="card mb-3 bg-dark border-secondary">
+                                    <div class="card-header bg-secondary text-white">
                                         <h6 class="mb-0">
                                             <i class="fas fa-desktop me-2"></i>
                                             {{ client.hostname if client else 'Unknown Client' }}
-                                            <small class="text-muted">({{ client.ip_address if client else 'Unknown IP' }})</small>
+                                            <small class="text-light opacity-75">({{ client.ip_address if client else 'Unknown IP' }})</small>
                                         </h6>
                                     </div>
-                                    <div class="card-body">
+                                    <div class="card-body bg-dark text-white">
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <h6 class="text-primary mb-3">Primary Interface</h6>
+                                                <h6 class="text-info mb-3">Primary Interface</h6>
                                                 <div class="mb-2">
                                                     <strong>Interface:</strong> 
                                                     <span class="badge bg-secondary">{{ interface_data.primary_interface }}</span>
@@ -409,17 +409,25 @@
                                                         Wired connection provides stable, low-latency networking
                                                     </div>
                                                 </div>
+                                            {% else %}
+                                                <div class="col-md-6">
+                                                    <h6 class="text-warning mb-3">Wireless Details</h6>
+                                                    <div class="alert alert-warning">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                                        Wireless interface detected but detailed information not available
+                                                    </div>
+                                                </div>
                                             {% endif %}
                                         </div>
                                         
                                         {% if interface_data.all_interfaces|length > 1 %}
-                                            <hr>
-                                            <h6 class="text-secondary mb-3">All Network Interfaces</h6>
+                                            <hr class="border-secondary">
+                                            <h6 class="text-light mb-3">All Network Interfaces</h6>
                                             <div class="row">
                                                 {% for interface in interface_data.all_interfaces %}
                                                     <div class="col-md-4 mb-2">
-                                                        <div class="card bg-light">
-                                                            <div class="card-body py-2">
+                                                        <div class="card bg-secondary border-dark">
+                                                            <div class="card-body py-2 bg-secondary text-white">
                                                                 <div class="d-flex justify-content-between align-items-center">
                                                                     <div>
                                                                         <strong>{{ interface.name }}</strong>
@@ -430,7 +438,7 @@
                                                                         {% endif %}
                                                                     </div>
                                                                     {% if interface.speed %}
-                                                                        <small class="text-muted">{{ interface.speed }} Mbps</small>
+                                                                        <small class="text-light opacity-75">{{ interface.speed }} Mbps</small>
                                                                     {% endif %}
                                                                 </div>
                                                             </div>

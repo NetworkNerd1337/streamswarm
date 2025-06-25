@@ -101,6 +101,7 @@ The deployment supports both single-instance development and horizontally scaled
   - Enhanced use case examples to include network interface correlation with performance issues
   - Updated tutorial page to emphasize per-client network environment analysis capabilities
   - Added FAQ item to tutorial page addressing client busy status during test scheduling
+  - Fixed network interface details card styling to match application dark theme
 
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization
