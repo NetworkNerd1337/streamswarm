@@ -102,6 +102,10 @@ The deployment supports both single-instance development and horizontally scaled
   - Updated tutorial page to emphasize per-client network environment analysis capabilities
   - Added FAQ item to tutorial page addressing client busy status during test scheduling
   - Fixed network interface details card styling to match application dark theme
+  - Enhanced wireless information collection with multi-method detection (iwconfig, nmcli, iw, /proc/net/wireless)
+  - Added cross-platform wireless detection support for Linux, macOS, and Windows environments
+  - Improved wireless details display with informative message when system tools are unavailable
+  - Added comprehensive logging for wireless detection debugging and troubleshooting
 
 - June 24, 2025: Fixed bandwidth chart rendering issues, improved bandwidth testing accuracy, and added detailed process monitoring
   - Resolved JavaScript syntax errors preventing chart initialization

@@ -382,22 +382,34 @@
                                                 {% endif %}
                                             </div>
                                             
-                                            {% if interface_data.is_wireless and interface_data.wireless_info %}
+                                            {% if interface_data.is_wireless %}
                                                 <div class="col-md-6">
                                                     <h6 class="text-info mb-3">Wireless Details</h6>
-                                                    {% if interface_data.wireless_info.ssid %}
-                                                        <div class="mb-2">
-                                                            <strong>Network (SSID):</strong> {{ interface_data.wireless_info.ssid }}
-                                                        </div>
-                                                    {% endif %}
-                                                    {% if interface_data.wireless_info.signal_strength %}
-                                                        <div class="mb-2">
-                                                            <strong>Signal Strength:</strong> {{ interface_data.wireless_info.signal_strength }}
-                                                        </div>
-                                                    {% endif %}
-                                                    {% if interface_data.wireless_info.frequency %}
-                                                        <div class="mb-2">
-                                                            <strong>Frequency:</strong> {{ interface_data.wireless_info.frequency }}
+                                                    {% if interface_data.wireless_info and (interface_data.wireless_info.ssid or interface_data.wireless_info.signal_strength or interface_data.wireless_info.frequency) %}
+                                                        {% if interface_data.wireless_info.ssid %}
+                                                            <div class="mb-2">
+                                                                <strong>Network (SSID):</strong> {{ interface_data.wireless_info.ssid }}
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if interface_data.wireless_info.signal_strength %}
+                                                            <div class="mb-2">
+                                                                <strong>Signal Strength:</strong> {{ interface_data.wireless_info.signal_strength }}
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if interface_data.wireless_info.frequency %}
+                                                            <div class="mb-2">
+                                                                <strong>Frequency:</strong> {{ interface_data.wireless_info.frequency }}
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if interface_data.wireless_info.security %}
+                                                            <div class="mb-2">
+                                                                <strong>Security:</strong> {{ interface_data.wireless_info.security }}
+                                                            </div>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <div class="alert alert-info">
+                                                            <i class="fas fa-info-circle me-2"></i>
+                                                            Wireless interface detected but detailed information requires system tools (iwconfig, nmcli, iw) that may not be available in this environment.
                                                         </div>
                                                     {% endif %}
                                                 </div>

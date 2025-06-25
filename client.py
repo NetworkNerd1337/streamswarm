@@ -1358,15 +1358,16 @@ class StreamSwarmClient:
         
         try:
             if platform.system().lower() == 'linux':
-                # Try to get wireless info using iwconfig or similar tools
                 import subprocess
+                import os
                 
-                # Try iwconfig first
+                # Method 1: Try iwconfig first
                 try:
                     result = subprocess.run(['iwconfig', interface_name], 
                                           capture_output=True, text=True, timeout=5)
                     if result.returncode == 0:
                         output = result.stdout
+                        logger.debug(f"iwconfig output for {interface_name}: {output}")
                         
                         # Parse SSID
                         if 'ESSID:' in output:
@@ -1391,28 +1392,128 @@ class StreamSwarmClient:
                                 wireless_info['frequency'] = freq_part
                                 
                 except subprocess.TimeoutExpired:
-                    pass
+                    logger.debug(f"iwconfig timeout for {interface_name}")
                 except FileNotFoundError:
-                    # iwconfig not available, try other methods
-                    pass
+                    logger.debug("iwconfig not available")
                 
-                # Try nmcli as fallback
+                # Method 2: Try nmcli as fallback
                 if not wireless_info['ssid']:
                     try:
-                        result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SSID', 'dev', 'wifi'], 
+                        result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SSID,SIGNAL,FREQ', 'dev', 'wifi'], 
                                               capture_output=True, text=True, timeout=5)
                         if result.returncode == 0:
+                            logger.debug(f"nmcli output: {result.stdout}")
                             for line in result.stdout.strip().split('\n'):
                                 if line.startswith('yes:'):
-                                    ssid = line.split(':', 1)[1]
-                                    if ssid:
-                                        wireless_info['ssid'] = ssid
+                                    parts = line.split(':')
+                                    if len(parts) >= 2:
+                                        ssid = parts[1]
+                                        if ssid:
+                                            wireless_info['ssid'] = ssid
+                                        if len(parts) >= 3 and parts[2]:
+                                            wireless_info['signal_strength'] = f"{parts[2]} dBm"
+                                        if len(parts) >= 4 and parts[3]:
+                                            wireless_info['frequency'] = f"{parts[3]} MHz"
                                         break
                     except (subprocess.TimeoutExpired, FileNotFoundError):
-                        pass
+                        logger.debug("nmcli not available or timeout")
+                
+                # Method 3: Try /proc/net/wireless
+                if not wireless_info['ssid']:
+                    try:
+                        with open('/proc/net/wireless', 'r') as f:
+                            lines = f.readlines()
+                            for line in lines:
+                                if interface_name in line:
+                                    parts = line.split()
+                                    if len(parts) >= 3:
+                                        # Signal quality info available
+                                        logger.debug(f"/proc/net/wireless data for {interface_name}: {line.strip()}")
+                                        break
+                    except (FileNotFoundError, PermissionError):
+                        logger.debug("/proc/net/wireless not accessible")
+                
+                # Method 4: Try iw command
+                if not wireless_info['ssid']:
+                    try:
+                        result = subprocess.run(['iw', 'dev', interface_name, 'link'], 
+                                              capture_output=True, text=True, timeout=5)
+                        if result.returncode == 0:
+                            output = result.stdout
+                            logger.debug(f"iw output for {interface_name}: {output}")
+                            
+                            # Parse SSID from iw output
+                            for line in output.split('\n'):
+                                if 'SSID:' in line:
+                                    ssid = line.split('SSID:')[1].strip()
+                                    if ssid:
+                                        wireless_info['ssid'] = ssid
+                                elif 'freq:' in line:
+                                    freq = line.split('freq:')[1].split()[0]
+                                    wireless_info['frequency'] = f"{freq} MHz"
+                                elif 'signal:' in line:
+                                    signal = line.split('signal:')[1].split()[0]
+                                    wireless_info['signal_strength'] = f"{signal} dBm"
+                    except (subprocess.TimeoutExpired, FileNotFoundError):
+                        logger.debug("iw command not available or timeout")
+                
+                # Method 5: Check /sys/class/net for wireless info
+                try:
+                    wireless_path = f"/sys/class/net/{interface_name}/wireless"
+                    if os.path.exists(wireless_path):
+                        logger.debug(f"Wireless interface detected via /sys/class/net/{interface_name}/wireless")
+                        # Interface is wireless but detailed info may not be available
+                except Exception:
+                    pass
+            
+            elif platform.system().lower() == 'darwin':  # macOS
+                try:
+                    import subprocess
+                    # Try airport command on macOS
+                    result = subprocess.run(['/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport', '-I'], 
+                                          capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        output = result.stdout
+                        for line in output.split('\n'):
+                            if 'SSID:' in line:
+                                wireless_info['ssid'] = line.split('SSID:')[1].strip()
+                            elif 'agrCtlRSSI:' in line:
+                                wireless_info['signal_strength'] = f"{line.split('agrCtlRSSI:')[1].strip()} dBm"
+                            elif 'channel:' in line:
+                                wireless_info['frequency'] = line.split('channel:')[1].strip()
+                except Exception as e:
+                    logger.debug(f"macOS wireless detection failed: {e}")
+            
+            elif platform.system().lower() == 'windows':
+                try:
+                    import subprocess
+                    # Try netsh on Windows
+                    result = subprocess.run(['netsh', 'wlan', 'show', 'profiles'], 
+                                          capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        # Get current connection info
+                        result2 = subprocess.run(['netsh', 'wlan', 'show', 'interfaces'], 
+                                               capture_output=True, text=True, timeout=5)
+                        if result2.returncode == 0:
+                            output = result2.stdout
+                            for line in output.split('\n'):
+                                if 'SSID' in line and ':' in line:
+                                    wireless_info['ssid'] = line.split(':', 1)[1].strip()
+                                elif 'Signal' in line and ':' in line:
+                                    wireless_info['signal_strength'] = line.split(':', 1)[1].strip()
+                                elif 'Channel' in line and ':' in line:
+                                    wireless_info['frequency'] = line.split(':', 1)[1].strip()
+                except Exception as e:
+                    logger.debug(f"Windows wireless detection failed: {e}")
                         
         except Exception as e:
             logger.debug(f"Wireless info detection failed: {e}")
+        
+        # Log what we found
+        if any(wireless_info.values()):
+            logger.info(f"Wireless info collected for {interface_name}: {wireless_info}")
+        else:
+            logger.debug(f"No wireless information available for {interface_name}")
         
         return wireless_info
     
