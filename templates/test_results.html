@@ -475,70 +475,10 @@
                                                                 {% break %}
                                                             {% endif %}
                                                         {% endfor %}
-                                                                <div class="row text-center">
-                                                                    <div class="col-4">
-                                                                        <div class="bg-danger bg-opacity-25 border border-danger rounded p-2">
-                                                                            <small class="text-danger">Min</small><br>
-                                                                            <strong class="text-white">{{ "%.1f"|format(overall_min) }} dBm</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="bg-warning bg-opacity-25 border border-warning rounded p-2">
-                                                                            <small class="text-warning">Avg</small><br>
-                                                                            <strong class="text-white">{{ "%.1f"|format(overall_avg) }} dBm</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="bg-success bg-opacity-25 border border-success rounded p-2">
-                                                                            <small class="text-success">Max</small><br>
-                                                                            <strong class="text-white">{{ "%.1f"|format(overall_max) }} dBm</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <small class="text-muted mt-2 d-block">
-                                                                    Based on {{ total_samples }} measurements throughout test duration
-                                                                </small>
-                                                                
-                                                                <!-- Signal strength interpretation -->
-                                                                {% if overall_avg >= -30 %}
-                                                                    <div class="alert alert-success mt-2 py-2">
-                                                                        <small><i class="fas fa-check-circle me-1"></i> Excellent signal strength</small>
-                                                                    </div>
-                                                                {% elif overall_avg >= -50 %}
-                                                                    <div class="alert alert-info mt-2 py-2">
-                                                                        <small><i class="fas fa-info-circle me-1"></i> Good signal strength</small>
-                                                                    </div>
-                                                                {% elif overall_avg >= -70 %}
-                                                                    <div class="alert alert-warning mt-2 py-2">
-                                                                        <small><i class="fas fa-exclamation-triangle me-1"></i> Fair signal strength</small>
-                                                                    </div>
-                                                                {% else %}
-                                                                    <div class="alert alert-danger mt-2 py-2">
-                                                                        <small><i class="fas fa-exclamation-circle me-1"></i> Poor signal strength</small>
-                                                                    </div>
-                                                                {% endif %}
-                                                                
-                                                                <!-- Signal fluctuation analysis -->
-                                                                {% set signal_range = overall_max - overall_min %}
-                                                                {% if signal_range > 20 %}
-                                                                    <div class="alert alert-warning mt-2 py-2">
-                                                                        <small><i class="fas fa-chart-line me-1"></i> High signal fluctuation detected ({{ "%.1f"|format(signal_range) }} dBm range)</small>
-                                                                    </div>
-                                                                {% elif signal_range > 10 %}
-                                                                    <div class="alert alert-info mt-2 py-2">
-                                                                        <small><i class="fas fa-chart-line me-1"></i> Moderate signal variation ({{ "%.1f"|format(signal_range) }} dBm range)</small>
-                                                                    </div>
-                                                                {% else %}
-                                                                    <div class="alert alert-success mt-2 py-2">
-                                                                        <small><i class="fas fa-check-circle me-1"></i> Stable signal strength ({{ "%.1f"|format(signal_range) }} dBm range)</small>
-                                                                    </div>
-                                                                {% endif %}
-                                                            {% endif %}
-                                                        {% endif %}
                                                     {% else %}
                                                         <div class="alert alert-info">
                                                             <i class="fas fa-info-circle me-2"></i>
-                                                            Wireless interface detected but detailed information requires system tools (iwconfig, nmcli, iw) that may not be available in this environment.
+                                                            Wireless interface detected but detailed information requires the 'iw' package (install with: sudo apt install iw) that may not be available in this environment.
                                                         </div>
                                                     {% endif %}
                                                 </div>
