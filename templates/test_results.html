@@ -424,7 +424,7 @@
                                                         
                                                         <!-- Signal strength monitoring statistics -->
                                                         {% for result in test_results %}
-                                                            {% if result.signal_strength_min is not none and result.signal_strength_max is not none and result.signal_strength_avg is not none %}
+                                                            {% if result.signal_strength_min and result.signal_strength_max and result.signal_strength_avg and result.signal_strength_samples and result.signal_strength_samples > 3 %}
                                                                 <hr class="border-secondary my-3">
                                                                 <h6 class="text-info mb-2">
                                                                     <i class="fas fa-signal me-2"></i>
@@ -451,7 +451,7 @@
                                                                     </div>
                                                                 </div>
                                                                 <small class="text-muted mt-2 d-block">
-                                                                    Based on {{ result.signal_strength_samples or 0 }} measurements throughout test duration
+                                                                    Based on {{ result.signal_strength_samples }} measurements throughout test duration
                                                                 </small>
                                                                 
                                                                 <!-- Signal strength interpretation -->
@@ -472,6 +472,7 @@
                                                                         <small><i class="fas fa-times-circle me-1"></i> Poor signal strength</small>
                                                                     </div>
                                                                 {% endif %}
+                                                                {% break %}
                                                             {% endif %}
                                                         {% endfor %}
                                                     {% else %}
