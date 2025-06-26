@@ -510,7 +510,9 @@ class StreamSwarmClient:
                 current_signal = self._get_current_signal_strength()
                 if current_signal is not None:
                     self._update_signal_strength_tracker(test_id, current_signal)
-                    logger.debug(f"Signal strength sample: {current_signal} dBm")
+                    logger.info(f"Signal strength sample: {current_signal} dBm")
+                else:
+                    logger.info("No wireless signal strength detected")
                 
                 # Perform network tests
                 ping_result = self._ping_test(destination)
@@ -1618,7 +1620,10 @@ class StreamSwarmClient:
                 elif os.path.exists(f"/sys/class/net/{name}/wireless"):
                     wireless_interfaces.append(name)
             
+            logger.debug(f"Detected wireless interfaces: {wireless_interfaces}")
+            
             if not wireless_interfaces:
+                logger.debug("No wireless interfaces found")
                 return None
             
             # Get signal strength for the first active wireless interface
