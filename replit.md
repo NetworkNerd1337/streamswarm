@@ -1,0 +1,101 @@
+# StreamSwarm - Distributed Network Monitoring System
+
+## Overview
+
+StreamSwarm is a comprehensive Python-based distributed network monitoring system that provides real-time network performance testing and system resource monitoring across multiple client hosts. The system follows a client-server architecture where a central Flask server manages tests and collects data from distributed Python clients that perform network monitoring tasks.
+
+## System Architecture
+
+### Overall Architecture
+- **Frontend**: Flask-based web application with Bootstrap UI framework
+- **Backend**: Python Flask server with SQLAlchemy ORM
+- **Database**: SQLite (with PostgreSQL support via configuration)
+- **Client Architecture**: Standalone Python clients that connect to the central server
+- **Deployment**: Gunicorn WSGI server with autoscaling support
+
+### Key Design Decisions
+1. **Client-Server Model**: Chosen to enable distributed monitoring from multiple network locations
+2. **Web-based Dashboard**: Provides real-time visualization and test management
+3. **SQLAlchemy ORM**: Enables database flexibility and easy schema management
+4. **Token-based Authentication**: Secures client-server communication
+5. **Modular Design**: Separate client and server components for flexible deployment
+
+## Key Components
+
+### Server Components
+- **Flask Application** (`app.py`): Core application setup with database configuration
+- **Models** (`models.py`): Database schema definitions using SQLAlchemy
+- **Routes** (`routes.py`): API endpoints and web interface handlers
+- **PDF Generator** (`pdf_generator.py`): Executive reporting functionality
+- **Templates**: HTML templates for web dashboard interface
+
+### Client Components
+- **Client Application** (`client.py`): Standalone monitoring client with 65+ metrics collection
+- **Network Testing**: Ping, traceroute, bandwidth, and QoS analysis
+- **System Monitoring**: CPU, memory, disk, and network interface tracking
+- **Wireless Detection**: Signal strength and wireless network analysis
+
+### Database Schema
+- **Client**: Stores client information and system details
+- **Test**: Defines network monitoring tests with configuration
+- **TestResult**: Stores collected metrics and performance data
+- **TestClient**: Many-to-many relationship for test assignments
+- **ApiToken**: Manages client authentication tokens
+
+## Data Flow
+
+1. **Client Registration**: Clients register with server and receive API tokens
+2. **Test Assignment**: Server assigns tests to specific clients based on configuration
+3. **Metric Collection**: Clients perform network tests and collect system metrics
+4. **Data Transmission**: Results sent to server via HTTP API with JSON payload
+5. **Data Storage**: Server stores results in database with timestamp and client association
+6. **Visualization**: Web dashboard displays real-time charts and historical data
+7. **Reporting**: PDF reports generated on-demand with comprehensive analysis
+
+## External Dependencies
+
+### Python Libraries
+- **Flask**: Web framework and API server
+- **SQLAlchemy**: Database ORM and schema management
+- **psutil**: System resource monitoring
+- **requests**: HTTP client for API communication
+- **speedtest-cli**: Internet bandwidth testing
+- **scapy**: Advanced network packet analysis
+- **matplotlib**: Chart generation for reports
+- **reportlab**: PDF report generation
+
+### System Dependencies
+- **Network Tools**: ping, traceroute, iwconfig for network testing
+- **System Tools**: lm-sensors, smartmontools for hardware monitoring
+- **Database**: PostgreSQL support via psycopg2-binary
+
+### Optional Dependencies
+- **iwlib**: Wireless interface monitoring (graceful fallback if unavailable)
+- **libpcap**: Advanced packet capture capabilities
+
+## Deployment Strategy
+
+### Development Deployment
+- Flask development server on port 5000
+- SQLite database for simplicity
+- Debug mode enabled for development
+
+### Production Deployment
+- Gunicorn WSGI server with multiple workers
+- PostgreSQL database for scalability
+- Autoscaling deployment target configured
+- Environment variable configuration for secrets
+
+### Client Deployment
+- Standalone Python script deployment
+- Command-line arguments for server connection
+- Automatic reconnection and error handling
+- Cross-platform support (Linux/Windows)
+
+## Changelog
+
+- June 26, 2025. Initial setup
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.

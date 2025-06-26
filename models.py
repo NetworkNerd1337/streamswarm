@@ -244,6 +244,7 @@ class TestResult(db.Model):
     signal_strength_max = db.Column(db.Float)  # Maximum signal strength during test (dBm)
     signal_strength_avg = db.Column(db.Float)  # Average signal strength during test (dBm)
     signal_strength_samples = db.Column(db.Integer)  # Number of signal strength samples collected
+    signal_strength_data = db.Column(Text)  # Comma-delimited raw signal strength readings
     
     def to_dict(self):
         return {

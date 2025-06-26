@@ -523,14 +523,15 @@ class StreamSwarmClient:
                 bandwidth_metrics = self._bandwidth_test(destination)
                 
                 # Add signal strength statistics to this measurement
-                sig_min, sig_max, sig_avg, sig_samples = self._get_signal_strength_stats(test_id)
+                sig_min, sig_max, sig_avg, sig_samples, sig_data = self._get_signal_strength_stats(test_id)
                 signal_strength_data = {}
                 if sig_samples > 0:
                     signal_strength_data = {
                         'signal_strength_min': sig_min,
                         'signal_strength_max': sig_max,
                         'signal_strength_avg': round(sig_avg, 2),
-                        'signal_strength_samples': sig_samples
+                        'signal_strength_samples': sig_samples,
+                        'signal_strength_data': sig_data
                     }
                 
                 # Prepare test result data
@@ -1794,11 +1795,13 @@ class StreamSwarmClient:
     def _get_signal_strength_stats(self, test_id):
         """Get signal strength statistics for a test"""
         if test_id not in self.signal_strength_tracker or self.signal_strength_tracker[test_id]['count'] == 0:
-            return None, None, None, 0
+            return None, None, None, 0, None
         
         tracker = self.signal_strength_tracker[test_id]
         avg = tracker['sum'] / tracker['count']
-        return tracker['min'], tracker['max'], avg, tracker['count']
+        # Create comma-delimited string of all values
+        values_str = ','.join(str(round(val, 1)) for val in tracker['values'])
+        return tracker['min'], tracker['max'], avg, tracker['count'], values_str
     
     def start(self):
         """Start the client"""
