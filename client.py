@@ -1452,13 +1452,47 @@ class StreamSwarmClient:
                         if 'type managed' in output or 'type AP' in output or 'type monitor' in output:
                             wireless_info['type'] = 'wireless'
                             logger.info(f"Confirmed {interface_name} is wireless interface")
+                        
+                        # Parse detailed interface information
+                        for line in output.split('\n'):
+                            line = line.strip()
                             
-                        # Get channel/frequency info
-                        if 'channel' in output:
-                            for line in output.split('\n'):
+                            # Extract MAC address
+                            if line.startswith('addr '):
+                                mac_addr = line.split('addr ')[1].strip()
+                                wireless_info['mac_address'] = mac_addr
+                                logger.debug(f"Found MAC address: {mac_addr}")
+                            
+                            # Extract channel and frequency info
+                            elif 'channel' in line.lower() and 'MHz' in line:
+                                # Parse lines like: "channel 6 (2437 MHz), width: 20 MHz, center1: 2437 MHz"
+                                if '(' in line and 'MHz' in line:
+                                    try:
+                                        # Extract frequency from parentheses
+                                        freq_part = line.split('(')[1].split(' MHz')[0]
+                                        wireless_info['frequency'] = f"{freq_part} MHz"
+                                        logger.debug(f"Found frequency: {freq_part} MHz")
+                                    except:
+                                        pass
+                                
+                                # Extract channel number
                                 if 'channel' in line.lower():
-                                    wireless_info['channel_info'] = line.strip()
-                                    break
+                                    try:
+                                        channel_part = line.lower().split('channel')[1].strip().split()[0]
+                                        wireless_info['channel'] = channel_part
+                                        logger.debug(f"Found channel: {channel_part}")
+                                    except:
+                                        pass
+                            
+                            # Extract transmission power
+                            elif 'txpower' in line.lower():
+                                try:
+                                    # Parse lines like: "txpower 20.00 dBm"
+                                    txpower_part = line.split('txpower')[1].strip()
+                                    wireless_info['txpower'] = txpower_part
+                                    logger.debug(f"Found txpower: {txpower_part}")
+                                except:
+                                    pass
                     
                     # Get connection info (SSID and signal strength)
                     link_result = subprocess.run(['iw', 'dev', interface_name, 'link'], 
@@ -1629,7 +1663,7 @@ class StreamSwarmClient:
         
         # Enhanced logging for troubleshooting
         if any(wireless_info.values()):
-            logger.info(f"✓ Wireless info collected for {interface_name}: SSID={wireless_info.get('ssid', 'None')}, Signal={wireless_info.get('signal_strength', 'None')}, Freq={wireless_info.get('frequency', 'None')}")
+            logger.info(f"✓ Wireless info collected for {interface_name}: SSID={wireless_info.get('ssid', 'None')}, Signal={wireless_info.get('signal_strength', 'None')}, Freq={wireless_info.get('frequency', 'None')}, Channel={wireless_info.get('channel', 'None')}, MAC={wireless_info.get('mac_address', 'None')}, TxPower={wireless_info.get('txpower', 'None')}")
         else:
             logger.warning(f"⚠ No wireless information available for {interface_name} despite being detected as wireless interface")
             logger.warning("   Troubleshooting steps:")

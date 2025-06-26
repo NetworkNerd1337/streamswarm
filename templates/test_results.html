@@ -401,6 +401,21 @@
                                                                 <strong>Frequency:</strong> {{ interface_data.wireless_info.frequency }}
                                                             </div>
                                                         {% endif %}
+                                                        {% if interface_data.wireless_info.channel %}
+                                                            <div class="mb-2">
+                                                                <strong>Channel:</strong> {{ interface_data.wireless_info.channel }}
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if interface_data.wireless_info.mac_address %}
+                                                            <div class="mb-2">
+                                                                <strong>MAC Address:</strong> {{ interface_data.wireless_info.mac_address }}
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if interface_data.wireless_info.txpower %}
+                                                            <div class="mb-2">
+                                                                <strong>TX Power:</strong> {{ interface_data.wireless_info.txpower }}
+                                                            </div>
+                                                        {% endif %}
                                                         {% if interface_data.wireless_info.security %}
                                                             <div class="mb-2">
                                                                 <strong>Security:</strong> {{ interface_data.wireless_info.security }}

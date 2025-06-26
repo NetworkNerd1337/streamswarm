@@ -97,7 +97,12 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
-- June 26, 2025. Initial setup
+- June 26, 2025: Updated wireless detection to use modern `iw` command instead of deprecated `iwconfig`
+  - Replaced all `iwconfig` calls with `iw dev <interface> info` and `iw dev <interface> link` 
+  - Enhanced signal strength monitoring during tests with multiple sample collection
+  - Improved wireless interface detection for better compatibility with modern Linux distributions
+  - Updated troubleshooting messages to reference `iw` instead of `wireless-tools`
+- June 26, 2025: Initial setup
 
 ## User Preferences
 
