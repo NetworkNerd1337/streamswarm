@@ -1635,8 +1635,11 @@ class StreamSwarmClient:
                         stats = iwlib.get_iwconfig(interface)
                         if stats and 'stats' in stats:
                             if 'level' in stats['stats']:
-                                return float(stats['stats']['level'])
-                    except (ImportError, Exception):
+                                signal_val = float(stats['stats']['level'])
+                                logger.debug(f"iwlib signal strength for {interface}: {signal_val} dBm")
+                                return signal_val
+                    except (ImportError, Exception) as e:
+                        logger.debug(f"iwlib failed for {interface}: {e}")
                         pass
                     
                     # Method 2: Try iwconfig command
@@ -1645,13 +1648,18 @@ class StreamSwarmClient:
                                               capture_output=True, text=True, timeout=3)
                         if result.returncode == 0:
                             output = result.stdout
+                            logger.debug(f"iwconfig output for {interface}: {output}")
                             for line in output.split('\n'):
                                 if 'Signal level=' in line:
+                                    logger.debug(f"Found signal line: {line.strip()}")
                                     # Extract signal level (e.g., "Signal level=-45 dBm")
                                     signal_part = line.split('Signal level=')[1].split()[0]
                                     if signal_part.replace('-', '').replace('.', '').isdigit():
-                                        return float(signal_part)
-                    except Exception:
+                                        signal_val = float(signal_part)
+                                        logger.debug(f"iwconfig signal strength for {interface}: {signal_val} dBm")
+                                        return signal_val
+                    except Exception as e:
+                        logger.debug(f"iwconfig failed for {interface}: {e}")
                         pass
                     
                     # Method 3: Try nmcli
@@ -1659,12 +1667,39 @@ class StreamSwarmClient:
                         result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SIGNAL', 'dev', 'wifi'], 
                                               capture_output=True, text=True, timeout=3)
                         if result.returncode == 0:
+                            logger.debug(f"nmcli output: {result.stdout}")
                             for line in result.stdout.strip().split('\n'):
                                 if line.startswith('yes:'):
                                     parts = line.split(':')
                                     if len(parts) >= 2 and parts[1]:
-                                        return float(parts[1])
-                    except Exception:
+                                        try:
+                                            signal_val = int(parts[1])
+                                            # Convert percentage to dBm (rough approximation)
+                                            signal_dbm = -100 + (signal_val * 70 / 100)
+                                            logger.debug(f"nmcli signal strength: {signal_dbm} dBm (from {signal_val}%)")
+                                            return signal_dbm
+                                        except ValueError:
+                                            pass
+                    except Exception as e:
+                        logger.debug(f"nmcli failed: {e}")
+                        pass
+                    
+                    # Method 4: Try /proc/net/wireless for Linux
+                    try:
+                        with open('/proc/net/wireless', 'r') as f:
+                            lines = f.readlines()
+                            for line in lines:
+                                if interface in line:
+                                    parts = line.split()
+                                    if len(parts) >= 4:
+                                        # Signal level is typically in the 4th column
+                                        signal_str = parts[3].rstrip('.')
+                                        if signal_str.replace('-', '').isdigit():
+                                            signal_val = float(signal_str)
+                                            logger.debug(f"/proc/net/wireless signal: {signal_val} dBm")
+                                            return signal_val
+                    except Exception as e:
+                        logger.debug(f"/proc/net/wireless failed: {e}")
                         pass
         except Exception:
             pass
