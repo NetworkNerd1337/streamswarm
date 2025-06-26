@@ -15,6 +15,7 @@ import platform
 import socket
 import struct
 import fcntl
+import re
 from datetime import datetime, timezone
 import zoneinfo
 import psutil
@@ -510,9 +511,9 @@ class StreamSwarmClient:
                 current_signal = self._get_current_signal_strength()
                 if current_signal is not None:
                     self._update_signal_strength_tracker(test_id, current_signal)
-                    logger.info(f"Signal strength sample: {current_signal} dBm")
+                    logger.info(f"Signal strength sample {len(self.signal_strength_tracker.get(test_id, {}).get('values', []))}: {current_signal} dBm")
                 else:
-                    logger.info("No wireless signal strength detected")
+                    logger.debug("No wireless signal strength detected in this measurement interval")
                 
                 # Perform network tests
                 ping_result = self._ping_test(destination)
@@ -1628,8 +1629,34 @@ class StreamSwarmClient:
             
             # Get signal strength for the first active wireless interface
             for interface in wireless_interfaces:
+                # Check if interface is up
+                if_stats = net_if_stats.get(interface)
+                if not if_stats or not if_stats.isup:
+                    logger.debug(f"Interface {interface} is not up")
+                    continue
+                
                 if platform.system().lower() == 'linux':
-                    # Method 1: Try iwlib Python library
+                    # Method 1: Try /proc/net/wireless first (most reliable)
+                    try:
+                        with open('/proc/net/wireless', 'r') as f:
+                            lines = f.readlines()
+                            for line in lines:
+                                if interface in line and not line.strip().startswith('Inter-'):
+                                    parts = line.split()
+                                    logger.debug(f"/proc/net/wireless line for {interface}: {line.strip()}")
+                                    if len(parts) >= 4:
+                                        # Signal level is typically in the 4th column (index 3)
+                                        signal_str = parts[3].rstrip('.')
+                                        logger.debug(f"Raw signal string: '{signal_str}'")
+                                        if signal_str.replace('-', '').replace('.', '').isdigit():
+                                            signal_val = float(signal_str)
+                                            logger.debug(f"/proc/net/wireless signal for {interface}: {signal_val} dBm")
+                                            return signal_val
+                    except Exception as e:
+                        logger.debug(f"/proc/net/wireless failed for {interface}: {e}")
+                        pass
+                    
+                    # Method 2: Try iwlib Python library
                     try:
                         import iwlib
                         stats = iwlib.get_iwconfig(interface)
@@ -1673,49 +1700,63 @@ class StreamSwarmClient:
                         logger.debug(f"iwconfig failed for {interface}: {e}")
                         pass
                     
-                    # Method 3: Try nmcli
+                    # Method 3: Try nmcli with multiple formats
                     try:
-                        result = subprocess.run(['nmcli', '-t', '-f', 'ACTIVE,SIGNAL', 'dev', 'wifi'], 
+                        result = subprocess.run(['nmcli', '-f', 'ACTIVE,SIGNAL,SSID', 'dev', 'wifi'], 
                                               capture_output=True, text=True, timeout=3)
                         if result.returncode == 0:
-                            logger.debug(f"nmcli output: {result.stdout}")
-                            for line in result.stdout.strip().split('\n'):
-                                if line.startswith('yes:'):
-                                    parts = line.split(':')
-                                    if len(parts) >= 2 and parts[1]:
-                                        try:
-                                            signal_val = int(parts[1])
-                                            # Convert percentage to dBm (rough approximation)
-                                            signal_dbm = -100 + (signal_val * 70 / 100)
-                                            logger.debug(f"nmcli signal strength: {signal_dbm} dBm (from {signal_val}%)")
-                                            return signal_dbm
-                                        except ValueError:
-                                            pass
+                            logger.debug(f"nmcli dev wifi output: {result.stdout}")
+                            lines = result.stdout.strip().split('\n')
+                            for line in lines[1:]:  # Skip header
+                                if 'yes' in line.lower() or '*' in line:
+                                    parts = line.split()
+                                    for part in parts:
+                                        if part.isdigit() and 0 <= int(part) <= 100:
+                                            signal_percent = int(part)
+                                            # Convert percentage to dBm 
+                                            signal_dbm = -100 + (signal_percent * 70 / 100)
+                                            logger.debug(f"nmcli signal strength: {signal_dbm:.1f} dBm (from {signal_percent}%)")
+                                            return round(signal_dbm, 1)
                     except Exception as e:
-                        logger.debug(f"nmcli failed: {e}")
+                        logger.debug(f"nmcli dev wifi failed: {e}")
                         pass
                     
-                    # Method 4: Try /proc/net/wireless for Linux
+                    # Method 4: Try nmcli connection info for active interface
                     try:
-                        with open('/proc/net/wireless', 'r') as f:
-                            lines = f.readlines()
-                            for line in lines:
-                                if interface in line and not line.strip().startswith('Inter-'):
-                                    parts = line.split()
-                                    logger.debug(f"/proc/net/wireless line for {interface}: {line.strip()}")
-                                    logger.debug(f"/proc/net/wireless parts: {parts}")
-                                    if len(parts) >= 4:
-                                        # Signal level is typically in the 4th column (index 3)
-                                        signal_str = parts[3].rstrip('.')
-                                        logger.debug(f"Raw signal string: '{signal_str}'")
-                                        if signal_str.replace('-', '').replace('.', '').isdigit():
-                                            signal_val = float(signal_str)
-                                            logger.debug(f"/proc/net/wireless signal for {interface}: {signal_val} dBm")
-                                            return signal_val
-                                        else:
-                                            logger.debug(f"Signal string '{signal_str}' is not numeric")
+                        result = subprocess.run(['nmcli', 'con', 'show', '--active'], 
+                                              capture_output=True, text=True, timeout=3)
+                        if result.returncode == 0:
+                            logger.debug(f"nmcli active connections: {result.stdout}")
+                            # Look for wireless connections and get signal info
+                            for line in result.stdout.split('\n'):
+                                if '802-11-wireless' in line or 'wifi' in line.lower():
+                                    connection_name = line.split()[0]
+                                    # Get detailed info for this connection
+                                    detail_result = subprocess.run(['nmcli', 'con', 'show', connection_name], 
+                                                                 capture_output=True, text=True, timeout=3)
+                                    if detail_result.returncode == 0:
+                                        for detail_line in detail_result.stdout.split('\n'):
+                                            if 'signal' in detail_line.lower():
+                                                logger.debug(f"nmcli signal line: {detail_line}")
                     except Exception as e:
-                        logger.debug(f"/proc/net/wireless failed: {e}")
+                        logger.debug(f"nmcli connection info failed: {e}")
+                        pass
+                    
+                    # Method 5: Try iw command
+                    try:
+                        result = subprocess.run(['iw', interface, 'link'], 
+                                              capture_output=True, text=True, timeout=3)
+                        if result.returncode == 0:
+                            logger.debug(f"iw link output for {interface}: {result.stdout}")
+                            for line in result.stdout.split('\n'):
+                                if 'signal:' in line.lower():
+                                    signal_match = re.search(r'signal:\s*(-?\d+(?:\.\d+)?)', line)
+                                    if signal_match:
+                                        signal_val = float(signal_match.group(1))
+                                        logger.debug(f"iw signal strength for {interface}: {signal_val} dBm")
+                                        return signal_val
+                    except Exception as e:
+                        logger.debug(f"iw command failed: {e}")
                         pass
         except Exception as e:
             logger.debug(f"Error in signal strength detection: {e}")
