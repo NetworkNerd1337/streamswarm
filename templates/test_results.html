@@ -423,57 +423,56 @@
                                                         {% endif %}
                                                         
                                                         <!-- Signal strength monitoring statistics -->
-                                                        {% for result in test_results %}
-                                                            {% if result.signal_strength_min and result.signal_strength_max and result.signal_strength_avg and result.signal_strength_samples and result.signal_strength_samples > 3 %}
-                                                                <hr class="border-secondary my-3">
-                                                                <h6 class="text-info mb-2">
-                                                                    <i class="fas fa-signal me-2"></i>
-                                                                    Signal Strength During Test
-                                                                </h6>
-                                                                <div class="row text-center">
-                                                                    <div class="col-4">
-                                                                        <div class="bg-danger bg-opacity-25 border border-danger rounded p-2">
-                                                                            <small class="text-danger">Min</small><br>
-                                                                            <strong class="text-white">{{ "%.1f"|format(result.signal_strength_min) }} dBm</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="bg-warning bg-opacity-25 border border-warning rounded p-2">
-                                                                            <small class="text-warning">Avg</small><br>
-                                                                            <strong class="text-white">{{ "%.1f"|format(result.signal_strength_avg) }} dBm</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="bg-success bg-opacity-25 border border-success rounded p-2">
-                                                                            <small class="text-success">Max</small><br>
-                                                                            <strong class="text-white">{{ "%.1f"|format(result.signal_strength_max) }} dBm</strong>
-                                                                        </div>
+                                                        {% set signal_result = results|selectattr('signal_strength_min')|selectattr('signal_strength_max')|selectattr('signal_strength_avg')|selectattr('signal_strength_samples')|selectattr('signal_strength_samples', 'greaterthan', 1)|first %}
+                                                        {% if signal_result %}
+                                                            <hr class="border-secondary my-3">
+                                                            <h6 class="text-info mb-2">
+                                                                <i class="fas fa-signal me-2"></i>
+                                                                Signal Strength During Test
+                                                            </h6>
+                                                            <div class="row text-center">
+                                                                <div class="col-4">
+                                                                    <div class="bg-danger bg-opacity-25 border border-danger rounded p-2">
+                                                                        <small class="text-danger">Min</small><br>
+                                                                        <strong class="text-white">{{ "%.1f"|format(signal_result.signal_strength_min) }} dBm</strong>
                                                                     </div>
                                                                 </div>
-                                                                <small class="text-muted mt-2 d-block">
-                                                                    Based on {{ result.signal_strength_samples }} measurements throughout test duration
-                                                                </small>
-                                                                
-                                                                <!-- Signal strength interpretation -->
-                                                                {% if result.signal_strength_avg >= -30 %}
-                                                                    <div class="alert alert-success mt-2 py-2">
-                                                                        <small><i class="fas fa-check-circle me-1"></i> Excellent signal strength</small>
+                                                                <div class="col-4">
+                                                                    <div class="bg-warning bg-opacity-25 border border-warning rounded p-2">
+                                                                        <small class="text-warning">Avg</small><br>
+                                                                        <strong class="text-white">{{ "%.1f"|format(signal_result.signal_strength_avg) }} dBm</strong>
                                                                     </div>
-                                                                {% elif result.signal_strength_avg >= -50 %}
-                                                                    <div class="alert alert-info mt-2 py-2">
-                                                                        <small><i class="fas fa-info-circle me-1"></i> Good signal strength</small>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="bg-success bg-opacity-25 border border-success rounded p-2">
+                                                                        <small class="text-success">Max</small><br>
+                                                                        <strong class="text-white">{{ "%.1f"|format(signal_result.signal_strength_max) }} dBm</strong>
                                                                     </div>
-                                                                {% elif result.signal_strength_avg >= -70 %}
-                                                                    <div class="alert alert-warning mt-2 py-2">
-                                                                        <small><i class="fas fa-exclamation-triangle me-1"></i> Fair signal strength</small>
-                                                                    </div>
-                                                                {% else %}
-                                                                    <div class="alert alert-danger mt-2 py-2">
-                                                                        <small><i class="fas fa-times-circle me-1"></i> Poor signal strength</small>
-                                                                    </div>
-                                                                {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            <small class="text-muted mt-2 d-block">
+                                                                Based on {{ signal_result.signal_strength_samples }} measurements throughout test duration
+                                                            </small>
+                                                            
+                                                            <!-- Signal strength interpretation -->
+                                                            {% if signal_result.signal_strength_avg >= -30 %}
+                                                                <div class="alert alert-success mt-2 py-2">
+                                                                    <small><i class="fas fa-check-circle me-1"></i> Excellent signal strength</small>
+                                                                </div>
+                                                            {% elif signal_result.signal_strength_avg >= -50 %}
+                                                                <div class="alert alert-info mt-2 py-2">
+                                                                    <small><i class="fas fa-info-circle me-1"></i> Good signal strength</small>
+                                                                </div>
+                                                            {% elif signal_result.signal_strength_avg >= -70 %}
+                                                                <div class="alert alert-warning mt-2 py-2">
+                                                                    <small><i class="fas fa-exclamation-triangle me-1"></i> Fair signal strength</small>
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="alert alert-danger mt-2 py-2">
+                                                                    <small><i class="fas fa-times-circle me-1"></i> Poor signal strength</small>
+                                                                </div>
                                                             {% endif %}
-                                                        {% endfor %}
+                                                        {% endif %}
                                                     {% else %}
                                                         <div class="alert alert-info">
                                                             <i class="fas fa-info-circle me-2"></i>
