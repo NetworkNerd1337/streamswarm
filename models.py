@@ -319,5 +319,6 @@ class TestResult(db.Model):
             'signal_strength_min': self.signal_strength_min,
             'signal_strength_max': self.signal_strength_max,
             'signal_strength_avg': self.signal_strength_avg,
-            'signal_strength_samples': self.signal_strength_samples
+            'signal_strength_samples': self.signal_strength_samples,
+            'signal_strength_data': self.signal_strength_data
         }

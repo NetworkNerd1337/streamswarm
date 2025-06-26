@@ -335,7 +335,13 @@ def submit_test_results():
             fan_speeds_rpm=data.get('fan_speeds_rpm'),
             smart_drive_health=data.get('smart_drive_health'),
             memory_error_rate=data.get('memory_error_rate'),
-            network_interface_errors=data.get('network_interface_errors')
+            network_interface_errors=data.get('network_interface_errors'),
+            # Signal strength monitoring
+            signal_strength_min=data.get('signal_strength_min'),
+            signal_strength_max=data.get('signal_strength_max'),
+            signal_strength_avg=data.get('signal_strength_avg'),
+            signal_strength_samples=data.get('signal_strength_samples'),
+            signal_strength_data=data.get('signal_strength_data')
         )
         
         db.session.add(result)

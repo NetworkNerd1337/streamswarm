@@ -575,7 +575,7 @@ class StreamSwarmClient:
         
         # Clean up signal strength tracker for this test
         if test_id in self.signal_strength_tracker:
-            sig_min, sig_max, sig_avg, sig_samples = self._get_signal_strength_stats(test_id)
+            sig_min, sig_max, sig_avg, sig_samples, sig_data = self._get_signal_strength_stats(test_id)
             if sig_samples > 0:
                 logger.info(f"Signal strength during test: min={sig_min} dBm, max={sig_max} dBm, avg={sig_avg:.1f} dBm ({sig_samples} samples)")
             del self.signal_strength_tracker[test_id]

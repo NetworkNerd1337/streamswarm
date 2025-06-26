@@ -408,21 +408,28 @@
                                                         {% endif %}
                                                         
                                                         <!-- Signal strength monitoring statistics -->
-                                                        {% set signal_samples = test_results | map(attribute='signal_strength_samples') | select('number') | list %}
-                                                        {% if signal_samples and signal_samples | sum > 0 %}
-                                                            <hr class="border-secondary my-3">
-                                                            <h6 class="text-info mb-2">
-                                                                <i class="fas fa-signal me-2"></i>
-                                                                Signal Strength During Test
-                                                            </h6>
-                                                            {% set sig_min_values = test_results | map(attribute='signal_strength_min') | select('number') | list %}
-                                                            {% set sig_max_values = test_results | map(attribute='signal_strength_max') | select('number') | list %}
-                                                            {% set sig_avg_values = test_results | map(attribute='signal_strength_avg') | select('number') | list %}
-                                                            {% if sig_min_values and sig_max_values and sig_avg_values %}
-                                                                {% set overall_min = sig_min_values | min %}
-                                                                {% set overall_max = sig_max_values | max %}
-                                                                {% set overall_avg = sig_avg_values | average %}
-                                                                {% set total_samples = signal_samples | sum %}
+                                                        {% set signal_data_values = test_results | map(attribute='signal_strength_data') | select('string') | list %}
+                                                        {% if signal_data_values %}
+                                                            {% set all_signal_stats = [] %}
+                                                            {% for data in signal_data_values %}
+                                                                {% if data %}
+                                                                    {% set parsed = data | parse_signal_data %}
+                                                                    {% if parsed.count > 0 %}
+                                                                        {% set _ = all_signal_stats.extend(parsed.values) %}
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            
+                                                            {% if all_signal_stats %}
+                                                                <hr class="border-secondary my-3">
+                                                                <h6 class="text-info mb-2">
+                                                                    <i class="fas fa-signal me-2"></i>
+                                                                    Signal Strength During Test
+                                                                </h6>
+                                                                {% set overall_min = all_signal_stats | min %}
+                                                                {% set overall_max = all_signal_stats | max %}
+                                                                {% set overall_avg = all_signal_stats | sum / all_signal_stats | length %}
+                                                                {% set total_samples = all_signal_stats | length %}
                                                                 <div class="row text-center">
                                                                     <div class="col-4">
                                                                         <div class="bg-danger bg-opacity-25 border border-danger rounded p-2">
