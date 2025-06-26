@@ -65,13 +65,16 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 - **reportlab**: PDF report generation
 
 ### System Dependencies
-- **Network Tools**: ping, traceroute, iwconfig for network testing
+- **Network Tools**: ping, traceroute, iw for network testing
 - **System Tools**: lm-sensors, smartmontools for hardware monitoring
 - **Database**: PostgreSQL support via psycopg2-binary
 
 ### Optional Dependencies
 - **iwlib**: Wireless interface monitoring (graceful fallback if unavailable)
 - **libpcap**: Advanced packet capture capabilities
+
+### Deprecated Dependencies (No Longer Used)
+- **wireless-tools**: Replaced by modern iw package for wireless interface management
 
 ## Deployment Strategy
 

@@ -1440,43 +1440,76 @@ class StreamSwarmClient:
                 except Exception as e:
                     logger.debug(f"iwlib detection failed: {e}")
                 
-                # Method 1: Try iwconfig command
+                # Method 1: Try modern iw command (replacement for deprecated iwconfig)
                 try:
-                    result = subprocess.run(['iwconfig', interface_name], 
+                    result = subprocess.run(['iw', 'dev', interface_name, 'info'], 
                                           capture_output=True, text=True, timeout=5)
                     if result.returncode == 0:
                         output = result.stdout
-                        logger.debug(f"iwconfig output for {interface_name}: {output}")
+                        logger.debug(f"iw dev {interface_name} info output: {output}")
+                        
+                        # Parse interface type to confirm it's wireless
+                        if 'type managed' in output or 'type AP' in output or 'type monitor' in output:
+                            wireless_info['type'] = 'wireless'
+                            logger.info(f"Confirmed {interface_name} is wireless interface")
+                            
+                        # Get channel/frequency info
+                        if 'channel' in output:
+                            for line in output.split('\n'):
+                                if 'channel' in line.lower():
+                                    wireless_info['channel_info'] = line.strip()
+                                    break
+                    
+                    # Get connection info (SSID and signal strength)
+                    link_result = subprocess.run(['iw', 'dev', interface_name, 'link'], 
+                                               capture_output=True, text=True, timeout=5)
+                    if link_result.returncode == 0:
+                        link_output = link_result.stdout
+                        logger.debug(f"iw dev {interface_name} link output: {link_output}")
                         
                         # Parse SSID
-                        if 'ESSID:' in output:
-                            essid_line = [line for line in output.split('\n') if 'ESSID:' in line][0]
-                            if 'ESSID:"' in essid_line:
-                                ssid = essid_line.split('ESSID:"')[1].split('"')[0]
-                                if ssid and ssid != 'off/any':
-                                    wireless_info['ssid'] = ssid
-                                    logger.info(f"iwconfig found SSID: {ssid}")
+                        if 'Connected to' in link_output:
+                            for line in link_output.split('\n'):
+                                if 'SSID:' in line:
+                                    ssid = line.split('SSID:')[1].strip()
+                                    if ssid:
+                                        wireless_info['ssid'] = ssid
+                                        logger.info(f"iw found SSID: {ssid}")
+                                    break
                         
                         # Parse signal strength
-                        if 'Signal level=' in output:
-                            signal_line = [line for line in output.split('\n') if 'Signal level=' in line][0]
-                            if 'Signal level=' in signal_line:
-                                signal_part = signal_line.split('Signal level=')[1].split()[0]
-                                wireless_info['signal_strength'] = signal_part
-                        
-                        # Parse frequency
-                        if 'Frequency:' in output:
-                            freq_line = [line for line in output.split('\n') if 'Frequency:' in line][0]
-                            if 'Frequency:' in freq_line:
-                                freq_part = freq_line.split('Frequency:')[1].split()[0]
-                                wireless_info['frequency'] = freq_part
+                        if 'signal:' in link_output:
+                            for line in link_output.split('\n'):
+                                if 'signal:' in line:
+                                    signal_part = line.split('signal:')[1].strip().split()[0]
+                                    wireless_info['signal_strength'] = signal_part
+                                    logger.info(f"iw found signal strength: {signal_part}")
+                                    break
+                    
+                    # Get frequency/channel details
+                    scan_result = subprocess.run(['iw', 'dev', interface_name, 'scan', 'dump'], 
+                                               capture_output=True, text=True, timeout=10)
+                    if scan_result.returncode == 0 and wireless_info.get('ssid'):
+                        scan_output = scan_result.stdout
+                        # Parse frequency for connected network
+                        current_ssid = wireless_info.get('ssid')
+                        in_target_bss = False
+                        for line in scan_output.split('\n'):
+                            if f'SSID: {current_ssid}' in line:
+                                in_target_bss = True
+                            elif line.startswith('BSS ') and in_target_bss:
+                                in_target_bss = False
+                            elif in_target_bss and 'freq:' in line:
+                                freq_part = line.split('freq:')[1].strip().split()[0]
+                                wireless_info['frequency'] = f"{freq_part} MHz"
+                                break
                                 
                 except subprocess.TimeoutExpired:
-                    logger.warning(f"iwconfig timeout for {interface_name}")
+                    logger.warning(f"iw command timeout for {interface_name}")
                 except FileNotFoundError:
-                    logger.warning("iwconfig command not found - install wireless-tools package")
+                    logger.warning("iw command not found - install iw package")
                 except Exception as e:
-                    logger.debug(f"iwconfig failed: {e}")
+                    logger.debug(f"iw command failed: {e}")
                 
                 # Method 2: Try nmcli as fallback
                 if not wireless_info['ssid']:
@@ -1600,10 +1633,10 @@ class StreamSwarmClient:
         else:
             logger.warning(f"⚠ No wireless information available for {interface_name} despite being detected as wireless interface")
             logger.warning("   Troubleshooting steps:")
-            logger.warning("   1. Ensure client has wireless tools: sudo apt install wireless-tools iw")
+            logger.warning("   1. Ensure client has wireless tools: sudo apt install iw")
             logger.warning("   2. Ensure NetworkManager is installed: sudo apt install network-manager") 
             logger.warning("   3. Ensure iwlib Python package: pip install iwlib")
-            logger.warning("   4. Check interface is connected: iwconfig " + interface_name)
+            logger.warning("   4. Check interface is connected: iw dev " + interface_name + " link")
             logger.warning("   5. Run client with --verbose for detailed debugging")
         
         return wireless_info
@@ -1670,20 +1703,20 @@ class StreamSwarmClient:
                         logger.debug(f"iwlib failed for {interface}: {e}")
                         pass
                     
-                    # Method 2: Try iwconfig command
+                    # Method 3: Try modern iw command (replacement for deprecated iwconfig)
                     try:
-                        result = subprocess.run(['iwconfig', interface], 
+                        result = subprocess.run(['iw', 'dev', interface, 'link'], 
                                               capture_output=True, text=True, timeout=3)
                         if result.returncode == 0:
                             output = result.stdout
-                            logger.debug(f"iwconfig output for {interface}: {output}")
+                            logger.debug(f"iw dev {interface} link output: {output}")
                             for line in output.split('\n'):
-                                if 'Signal level=' in line:
+                                if 'signal:' in line:
                                     logger.debug(f"Found signal line: {line.strip()}")
-                                    # Extract signal level (e.g., "Signal level=-45 dBm" or "Signal level=-45/100")
+                                    # Extract signal level (e.g., "signal: -45 dBm")
                                     try:
-                                        signal_part = line.split('Signal level=')[1].split()[0]
-                                        # Handle different formats: -45, -45/100, -45dBm
+                                        signal_part = line.split('signal:')[1].strip().split()[0]
+                                        # Handle different formats: -45, -45dBm
                                         signal_part = signal_part.replace('dBm', '').replace('dbm', '')
                                         if '/' in signal_part:
                                             signal_part = signal_part.split('/')[0]
@@ -1692,13 +1725,15 @@ class StreamSwarmClient:
                                         signal_clean = signal_part.strip()
                                         if signal_clean.replace('-', '').replace('.', '').isdigit():
                                             signal_val = float(signal_clean)
-                                            logger.debug(f"iwconfig signal strength for {interface}: {signal_val} dBm")
+                                            logger.debug(f"iw signal strength for {interface}: {signal_val} dBm")
                                             return signal_val
                                     except (IndexError, ValueError) as e:
                                         logger.debug(f"Failed to parse signal from line '{line.strip()}': {e}")
                                         continue
+                    except FileNotFoundError:
+                        logger.debug("iw command not found - install iw package")
                     except Exception as e:
-                        logger.debug(f"iwconfig failed for {interface}: {e}")
+                        logger.debug(f"iw command failed for {interface}: {e}")
                         pass
                     
                     # Method 3: Try nmcli with multiple formats
