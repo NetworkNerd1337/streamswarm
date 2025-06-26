@@ -1652,12 +1652,23 @@ class StreamSwarmClient:
                             for line in output.split('\n'):
                                 if 'Signal level=' in line:
                                     logger.debug(f"Found signal line: {line.strip()}")
-                                    # Extract signal level (e.g., "Signal level=-45 dBm")
-                                    signal_part = line.split('Signal level=')[1].split()[0]
-                                    if signal_part.replace('-', '').replace('.', '').isdigit():
-                                        signal_val = float(signal_part)
-                                        logger.debug(f"iwconfig signal strength for {interface}: {signal_val} dBm")
-                                        return signal_val
+                                    # Extract signal level (e.g., "Signal level=-45 dBm" or "Signal level=-45/100")
+                                    try:
+                                        signal_part = line.split('Signal level=')[1].split()[0]
+                                        # Handle different formats: -45, -45/100, -45dBm
+                                        signal_part = signal_part.replace('dBm', '').replace('dbm', '')
+                                        if '/' in signal_part:
+                                            signal_part = signal_part.split('/')[0]
+                                        
+                                        # Clean and validate the signal value
+                                        signal_clean = signal_part.strip()
+                                        if signal_clean.replace('-', '').replace('.', '').isdigit():
+                                            signal_val = float(signal_clean)
+                                            logger.debug(f"iwconfig signal strength for {interface}: {signal_val} dBm")
+                                            return signal_val
+                                    except (IndexError, ValueError) as e:
+                                        logger.debug(f"Failed to parse signal from line '{line.strip()}': {e}")
+                                        continue
                     except Exception as e:
                         logger.debug(f"iwconfig failed for {interface}: {e}")
                         pass
@@ -1689,21 +1700,33 @@ class StreamSwarmClient:
                         with open('/proc/net/wireless', 'r') as f:
                             lines = f.readlines()
                             for line in lines:
-                                if interface in line:
+                                if interface in line and not line.strip().startswith('Inter-'):
                                     parts = line.split()
+                                    logger.debug(f"/proc/net/wireless line for {interface}: {line.strip()}")
+                                    logger.debug(f"/proc/net/wireless parts: {parts}")
                                     if len(parts) >= 4:
-                                        # Signal level is typically in the 4th column
+                                        # Signal level is typically in the 4th column (index 3)
                                         signal_str = parts[3].rstrip('.')
-                                        if signal_str.replace('-', '').isdigit():
+                                        logger.debug(f"Raw signal string: '{signal_str}'")
+                                        if signal_str.replace('-', '').replace('.', '').isdigit():
                                             signal_val = float(signal_str)
-                                            logger.debug(f"/proc/net/wireless signal: {signal_val} dBm")
+                                            logger.debug(f"/proc/net/wireless signal for {interface}: {signal_val} dBm")
                                             return signal_val
+                                        else:
+                                            logger.debug(f"Signal string '{signal_str}' is not numeric")
                     except Exception as e:
                         logger.debug(f"/proc/net/wireless failed: {e}")
                         pass
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Error in signal strength detection: {e}")
             pass
         
+        # If all methods failed, log comprehensive debug info
+        try:
+            logger.warning(f"All signal strength detection methods failed for wireless interfaces: {wireless_interfaces}")
+        except NameError:
+            logger.warning("Signal strength detection failed - no wireless interfaces detected")
+        logger.debug("Available wireless detection methods were: iwlib, iwconfig, nmcli, /proc/net/wireless")
         return None
     
     def _update_signal_strength_tracker(self, test_id, current_strength):
