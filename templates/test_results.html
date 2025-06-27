@@ -674,6 +674,94 @@
                                                                 {% endif %}
                                                             </td>
                                                         </tr>
+                                                        <tr>
+                                                            <td>Network Packets Sent</td>
+                                                            {% set avg_packets_sent = test_results | map(attribute='network_packets_sent') | select('number') | list %}
+                                                            <td>{{ "{:,}".format(avg_packets_sent | average | round(0) | int) if avg_packets_sent else 'N/A' }}</td>
+                                                            <td><span class="badge bg-info">Info</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Packets Received</td>
+                                                            {% set avg_packets_recv = test_results | map(attribute='network_packets_recv') | select('number') | list %}
+                                                            <td>{{ "{:,}".format(avg_packets_recv | average | round(0) | int) if avg_packets_recv else 'N/A' }}</td>
+                                                            <td><span class="badge bg-info">Info</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Bytes Sent</td>
+                                                            {% set avg_bytes_sent = test_results | map(attribute='network_bytes_sent') | select('number') | list %}
+                                                            <td>{{ (avg_bytes_sent | average | filesizeformat) if avg_bytes_sent else 'N/A' }}</td>
+                                                            <td><span class="badge bg-info">Info</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Bytes Received</td>
+                                                            {% set avg_bytes_recv = test_results | map(attribute='network_bytes_recv') | select('number') | list %}
+                                                            <td>{{ (avg_bytes_recv | average | filesizeformat) if avg_bytes_recv else 'N/A' }}</td>
+                                                            <td><span class="badge bg-info">Info</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Errors In</td>
+                                                            {% set avg_errors_in = test_results | map(attribute='network_errors_in') | select('number') | list %}
+                                                            <td>{{ "{:,}".format(avg_errors_in | average | round(0) | int) if avg_errors_in else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_errors_in and (avg_errors_in | average) == 0 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_errors_in and (avg_errors_in | average) < 10 %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% elif avg_errors_in %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Errors Out</td>
+                                                            {% set avg_errors_out = test_results | map(attribute='network_errors_out') | select('number') | list %}
+                                                            <td>{{ "{:,}".format(avg_errors_out | average | round(0) | int) if avg_errors_out else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_errors_out and (avg_errors_out | average) == 0 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_errors_out and (avg_errors_out | average) < 10 %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% elif avg_errors_out %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Drops In</td>
+                                                            {% set avg_drops_in = test_results | map(attribute='network_drops_in') | select('number') | list %}
+                                                            <td>{{ "{:,}".format(avg_drops_in | average | round(0) | int) if avg_drops_in else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_drops_in and (avg_drops_in | average) == 0 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_drops_in and (avg_drops_in | average) < 5 %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% elif avg_drops_in %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Network Drops Out</td>
+                                                            {% set avg_drops_out = test_results | map(attribute='network_drops_out') | select('number') | list %}
+                                                            <td>{{ "{:,}".format(avg_drops_out | average | round(0) | int) if avg_drops_out else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_drops_out and (avg_drops_out | average) == 0 %}
+                                                                    <span class="badge bg-success">Good</span>
+                                                                {% elif avg_drops_out and (avg_drops_out | average) < 5 %}
+                                                                    <span class="badge bg-warning">Monitor</span>
+                                                                {% elif avg_drops_out %}
+                                                                    <span class="badge bg-danger">High</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
                                                     </tbody>
                                                 </table>
                                             </div>
