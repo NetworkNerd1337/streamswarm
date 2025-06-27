@@ -884,6 +884,14 @@ def get_test_data(test_id):
             'x': timestamp,
             'y': result.network_drops_out
         })
+        data['metrics']['network_packets_sent'][client_id].append({
+            'x': timestamp,
+            'y': result.network_packets_sent
+        })
+        data['metrics']['network_packets_recv'][client_id].append({
+            'x': timestamp,
+            'y': result.network_packets_recv
+        })
         data['metrics']['disk_read_iops'][client_id].append({
             'x': timestamp,
             'y': result.disk_read_iops
