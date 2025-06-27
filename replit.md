@@ -109,6 +109,8 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Token management endpoints with enhanced validation and duplicate prevention
   - Fixed network interface data display issue by correcting JSON validation and storage format
   - Cleaned up 24 malformed network interface records from database
+  - Fixed network packet metrics display issue by adding missing data population in API endpoint
+  - Added comprehensive network interface metrics to test results tables (packets, bytes, errors, drops)
   - Maintained backward compatibility while strengthening security posture
 - June 26, 2025: Enhanced wireless detection with comprehensive `iw` command integration
   - Replaced deprecated `iwconfig` calls with modern `iw dev <interface> info` and `iw dev <interface> link`
