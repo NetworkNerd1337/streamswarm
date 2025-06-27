@@ -10,11 +10,102 @@ import os
 import threading
 import time
 from pdf_generator import generate_test_report_pdf
-from validation import (
-    validate_request_data, validate_query_params, validate_pagination_params,
-    ClientRegistrationSchema, TestResultSchema, TestCreationSchema, ApiTokenSchema,
-    sanitize_string, sanitize_filename, rate_limit_check, ValidationError as CustomValidationError
-)
+import bleach
+import re
+import ipaddress
+
+# Input validation functions
+def sanitize_string(text, max_length=255):
+    """Sanitize string input to prevent injection attacks"""
+    if not text:
+        return text
+    
+    # Remove null bytes and control characters
+    text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', str(text))
+    
+    # Strip dangerous characters for SQL injection prevention
+    text = re.sub(r'[<>&"\'\\;]', '', text)
+    
+    # Limit length
+    if len(text) > max_length:
+        text = text[:max_length]
+    
+    return text.strip()
+
+def validate_hostname(hostname):
+    """Validate hostname format"""
+    if not hostname:
+        return False, "Hostname is required"
+    
+    hostname = sanitize_string(hostname, 253)
+    
+    # Check format using regex
+    hostname_pattern = re.compile(
+        r'^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$'
+    )
+    
+    if not hostname_pattern.match(hostname):
+        return False, "Invalid hostname format"
+    
+    return True, hostname
+
+def validate_ip_address(ip):
+    """Validate IP address format"""
+    if not ip:
+        return False, "IP address is required"
+    
+    try:
+        ipaddress.ip_address(ip)
+        return True, ip
+    except ValueError:
+        return False, "Invalid IP address format"
+
+def validate_json_field(json_str):
+    """Validate JSON string field"""
+    if not json_str:
+        return True, json_str
+    
+    try:
+        parsed = json.loads(json_str)
+        return True, json.dumps(parsed)
+    except (json.JSONDecodeError, TypeError):
+        return False, "Invalid JSON format"
+
+def validate_positive_number(value, field_name="Value"):
+    """Validate positive number"""
+    try:
+        num = float(value)
+        if num < 0:
+            return False, f"{field_name} must be positive"
+        return True, num
+    except (ValueError, TypeError):
+        return False, f"{field_name} must be a valid number"
+
+# Rate limiting storage
+_rate_limits = {}
+
+def check_rate_limit(client_ip, endpoint, max_requests=100, window_seconds=3600):
+    """Check rate limiting"""
+    import time
+    current_time = time.time()
+    key = f"{client_ip}:{endpoint}"
+    
+    if key not in _rate_limits:
+        _rate_limits[key] = []
+    
+    # Clean old requests
+    _rate_limits[key] = [
+        req_time for req_time in _rate_limits[key]
+        if current_time - req_time < window_seconds
+    ]
+    
+    # Check limit
+    if len(_rate_limits[key]) >= max_requests:
+        return False
+    
+    # Add current request
+    _rate_limits[key].append(current_time)
+    return True
 
 # Authentication decorator for API endpoints
 def require_api_token(f):
@@ -128,17 +219,35 @@ def register_client():
     """Register a new client using an available API token"""
     # Rate limiting
     client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
-    if not rate_limit_check(client_ip, 'register', max_requests=10, time_window=3600):
+    if not check_rate_limit(client_ip, 'register', max_requests=10, window_seconds=3600):
         return jsonify({'error': 'Rate limit exceeded'}), 429
     
-    # Validate input data
-    validated_data, errors = validate_request_data(ClientRegistrationSchema)
-    if errors:
-        return jsonify({'error': 'Validation failed', 'details': errors}), 400
+    # Get and validate input data
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
     
-    hostname = validated_data['hostname']
-    ip_address = validated_data['ip_address']
-    token = validated_data['api_token']
+    # Validate hostname
+    hostname_valid, hostname = validate_hostname(data.get('hostname'))
+    if not hostname_valid:
+        return jsonify({'error': hostname}), 400
+    
+    # Validate IP address
+    ip_valid, ip_address = validate_ip_address(data.get('ip_address'))
+    if not ip_valid:
+        return jsonify({'error': ip_address}), 400
+    
+    # Validate token
+    token = sanitize_string(data.get('token'), 64)
+    if not token:
+        return jsonify({'error': 'API token is required'}), 400
+    
+    # Validate system info JSON if provided
+    system_info = data.get('system_info')
+    if system_info:
+        json_valid, system_info = validate_json_field(json.dumps(system_info))
+        if not json_valid:
+            return jsonify({'error': 'Invalid system_info format'}), 400
     
     # Check if client already exists
     existing_client = Client.query.filter_by(hostname=hostname, ip_address=ip_address).first()
@@ -160,7 +269,7 @@ def register_client():
         # Update existing client
         existing_client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
         existing_client.status = 'online'
-        existing_client.system_info = validated_data.get('system_info')
+        existing_client.system_info = system_info
         client = existing_client
     else:
         # Create new client
@@ -169,7 +278,7 @@ def register_client():
             ip_address=ip_address,
             status='online',
             last_seen=datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None),
-            system_info=json.dumps(data.get('system_info', {}))
+            system_info=system_info
         )
         db.session.add(client)
         db.session.flush()  # Get client ID
@@ -235,15 +344,93 @@ def get_client_tests(client_id):
 @require_api_token
 def submit_test_results():
     """Submit test results from client"""
-    data = request.get_json()
+    # Rate limiting
+    client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
+    if not check_rate_limit(client_ip, 'test_results', max_requests=1000, window_seconds=3600):
+        return jsonify({'error': 'Rate limit exceeded'}), 429
     
-    if not data or 'client_id' not in data or 'test_id' not in data:
-        return jsonify({'error': 'Missing required fields'}), 400
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    # Validate required fields
+    try:
+        client_id = int(data.get('client_id', 0))
+        test_id = int(data.get('test_id', 0))
+        if client_id <= 0 or test_id <= 0:
+            raise ValueError("Invalid ID")
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid client_id or test_id'}), 400
+    
+    # Validate and sanitize all numeric fields
+    def safe_float(value, field_name, min_val=None, max_val=None):
+        if value is None:
+            return None
+        try:
+            val = float(value)
+            if min_val is not None and val < min_val:
+                raise ValueError(f"{field_name} cannot be negative")
+            if max_val is not None and val > max_val:
+                raise ValueError(f"{field_name} exceeds maximum value")
+            return val
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid {field_name}")
+    
+    def safe_int(value, field_name, min_val=None):
+        if value is None:
+            return None
+        try:
+            val = int(value)
+            if min_val is not None and val < min_val:
+                raise ValueError(f"{field_name} cannot be negative")
+            return val
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid {field_name}")
+    
+    def safe_json_string(value, field_name):
+        if value is None:
+            return None
+        try:
+            if isinstance(value, dict):
+                return json.dumps(value)
+            elif isinstance(value, str):
+                json.loads(value)  # Validate JSON
+                return value
+            else:
+                return json.dumps(value)
+        except (TypeError, json.JSONDecodeError):
+            raise ValueError(f"Invalid JSON format for {field_name}")
     
     try:
+        # Validate all fields
+        cpu_percent = safe_float(data.get('cpu_percent'), 'cpu_percent', 0, 100)
+        memory_percent = safe_float(data.get('memory_percent'), 'memory_percent', 0, 100)
+        memory_used = safe_int(data.get('memory_used'), 'memory_used', 0)
+        memory_total = safe_int(data.get('memory_total'), 'memory_total', 0)
+        disk_percent = safe_float(data.get('disk_percent'), 'disk_percent', 0, 100)
+        disk_used = safe_int(data.get('disk_used'), 'disk_used', 0)
+        disk_total = safe_int(data.get('disk_total'), 'disk_total', 0)
+        ping_latency = safe_float(data.get('ping_latency'), 'ping_latency', 0)
+        ping_packet_loss = safe_float(data.get('ping_packet_loss'), 'ping_packet_loss', 0, 100)
+        bandwidth_upload = safe_float(data.get('bandwidth_upload'), 'bandwidth_upload', 0)
+        bandwidth_download = safe_float(data.get('bandwidth_download'), 'bandwidth_download', 0)
+        
+        # Validate JSON fields
+        traceroute_data = safe_json_string(data.get('traceroute_data'), 'traceroute_data')
+        network_interface_info = sanitize_string(data.get('network_interface_info'), 2000) if data.get('network_interface_info') else None
+        top_processes_cpu = safe_json_string(data.get('top_processes_cpu'), 'top_processes_cpu')
+        top_processes_memory = safe_json_string(data.get('top_processes_memory'), 'top_processes_memory')
+        
+        # Validate signal strength fields
+        signal_strength_min = safe_float(data.get('signal_strength_min'), 'signal_strength_min')
+        signal_strength_max = safe_float(data.get('signal_strength_max'), 'signal_strength_max')
+        signal_strength_avg = safe_float(data.get('signal_strength_avg'), 'signal_strength_avg')
+        signal_strength_samples = safe_int(data.get('signal_strength_samples'), 'signal_strength_samples', 0)
+        signal_strength_data = sanitize_string(data.get('signal_strength_data'), 5000) if data.get('signal_strength_data') else None
+        
         result = TestResult(
-            test_id=data['test_id'],
-            client_id=data['client_id'],
+            test_id=test_id,
+            client_id=client_id,
             timestamp=datetime.fromisoformat(data.get('timestamp', datetime.now(zoneinfo.ZoneInfo('America/New_York')).isoformat())).replace(tzinfo=None),
             cpu_percent=data.get('cpu_percent'),
             memory_percent=data.get('memory_percent'),
