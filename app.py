@@ -43,13 +43,20 @@ def tojson_filter(value):
     if isinstance(value, str):
         try:
             import json
-            return json.loads(value)
+            result = json.loads(value)
+            print(f"Debug: JSON parsed successfully: {type(result)}")
+            return result
         except json.JSONDecodeError:
             # Try to handle Python dict notation (malformed JSON)
             try:
                 import ast
-                return ast.literal_eval(value)
-            except (ValueError, SyntaxError):
+                # First try to fix common JSON issues
+                fixed_value = value.replace('null', 'None').replace('true', 'True').replace('false', 'False')
+                result = ast.literal_eval(fixed_value)
+                print(f"Debug: AST parsed successfully: {type(result)}")
+                return result
+            except (ValueError, SyntaxError) as e:
+                print(f"Debug: JSON parse failed: {str(e)[:100]}")
                 return {}
     return value or {}
 

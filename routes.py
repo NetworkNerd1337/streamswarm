@@ -238,6 +238,12 @@ def test_results(test_id):
     results = TestResult.query.filter_by(test_id=test_id).order_by(TestResult.timestamp.asc()).all()
     clients = db.session.query(Client).join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
+    # Debug: Check if we have network interface data
+    interface_results = [r for r in results if r.network_interface_info]
+    print(f"Debug: Found {len(interface_results)} results with network interface data for test {test_id}")
+    if interface_results:
+        print(f"Debug: Sample interface data: {interface_results[0].network_interface_info[:100]}...")
+    
     return render_template('test_results.html', test=test, results=results, clients=clients)
 
 @app.route('/tutorial')
