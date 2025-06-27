@@ -283,6 +283,18 @@ class StreamSwarmClient:
                     'network_drops_out': None
                 })
             
+            # TCP retransmission rate calculation
+            try:
+                tcp_retrans_data = self._get_tcp_retransmission_stats()
+                metrics.update(tcp_retrans_data)
+            except Exception as e:
+                logger.debug(f"TCP retransmission stats collection failed: {e}")
+                metrics.update({
+                    'tcp_retransmission_rate': None,
+                    'tcp_out_of_order_packets': None,
+                    'tcp_duplicate_acks': None
+                })
+            
             # Process and connection metrics
             try:
                 metrics['process_count'] = len(psutil.pids())
@@ -1376,6 +1388,92 @@ class StreamSwarmClient:
             logger.debug(f"Network interface detection error: {e}")
         
         return interface_info
+    
+    def _get_tcp_retransmission_stats(self):
+        """Get TCP retransmission statistics from /proc/net/snmp"""
+        tcp_stats = {
+            'tcp_retransmission_rate': None,
+            'tcp_out_of_order_packets': None,
+            'tcp_duplicate_acks': None
+        }
+        
+        try:
+            if platform.system().lower() == 'linux':
+                # Read TCP statistics from /proc/net/snmp
+                with open('/proc/net/snmp', 'r') as f:
+                    content = f.read()
+                
+                # Parse TCP statistics
+                tcp_line = None
+                tcp_values = None
+                
+                for line in content.strip().split('\n'):
+                    if line.startswith('Tcp:'):
+                        if tcp_line is None:
+                            tcp_line = line  # Header line
+                        else:
+                            tcp_values = line  # Values line
+                            break
+                
+                if tcp_line and tcp_values:
+                    headers = tcp_line.split()[1:]  # Skip 'Tcp:'
+                    values = tcp_values.split()[1:]  # Skip 'Tcp:'
+                    
+                    # Create a dictionary of TCP stats
+                    tcp_dict = dict(zip(headers, [int(v) for v in values]))
+                    
+                    # Calculate retransmission rate
+                    if 'OutSegs' in tcp_dict and 'RetransSegs' in tcp_dict:
+                        out_segs = tcp_dict['OutSegs']
+                        retrans_segs = tcp_dict['RetransSegs']
+                        
+                        if out_segs > 0:
+                            retrans_rate = (retrans_segs / out_segs) * 100
+                            tcp_stats['tcp_retransmission_rate'] = round(retrans_rate, 3)
+                    
+                    # Get out-of-order packets if available
+                    if 'OutOfOrderSegs' in tcp_dict:
+                        tcp_stats['tcp_out_of_order_packets'] = tcp_dict['OutOfOrderSegs']
+                    
+                    # Calculate duplicate ACKs if available
+                    # Note: This is an approximation as exact duplicate ACK count isn't in /proc/net/snmp
+                    if 'InSegs' in tcp_dict and 'OutSegs' in tcp_dict:
+                        # Use a heuristic: estimate duplicate ACKs from retransmissions
+                        if 'RetransSegs' in tcp_dict:
+                            tcp_stats['tcp_duplicate_acks'] = tcp_dict['RetransSegs'] * 2  # Rough estimate
+                
+                # Store previous values for rate calculation if this is the first measurement
+                if not hasattr(self, '_prev_tcp_stats'):
+                    self._prev_tcp_stats = tcp_dict.copy() if tcp_dict else {}
+                    # Set initial rate to 0 for first measurement
+                    if tcp_stats['tcp_retransmission_rate'] is None:
+                        tcp_stats['tcp_retransmission_rate'] = 0.0
+                else:
+                    # Calculate rate since last measurement
+                    if tcp_dict and 'OutSegs' in tcp_dict and 'RetransSegs' in tcp_dict:
+                        prev_out = self._prev_tcp_stats.get('OutSegs', 0)
+                        prev_retrans = self._prev_tcp_stats.get('RetransSegs', 0)
+                        
+                        delta_out = tcp_dict['OutSegs'] - prev_out
+                        delta_retrans = tcp_dict['RetransSegs'] - prev_retrans
+                        
+                        if delta_out > 0:
+                            retrans_rate = (delta_retrans / delta_out) * 100
+                            tcp_stats['tcp_retransmission_rate'] = round(max(0, retrans_rate), 3)
+                        else:
+                            tcp_stats['tcp_retransmission_rate'] = 0.0
+                    
+                    # Update previous values
+                    self._prev_tcp_stats = tcp_dict.copy() if tcp_dict else {}
+                
+            else:
+                # For non-Linux systems, TCP retransmission stats are not easily available
+                logger.debug("TCP retransmission stats only available on Linux systems")
+                
+        except Exception as e:
+            logger.debug(f"Failed to collect TCP retransmission stats: {e}")
+        
+        return tcp_stats
     
     def _get_wireless_info(self, interface_name):
         """Get wireless-specific information"""

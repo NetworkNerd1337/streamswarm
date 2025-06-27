@@ -97,7 +97,11 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
-- June 27, 2025: Fixed missing Network Performance Metrics section display issue
+- June 27, 2025: Implemented TCP retransmission rate collection and fixed metrics display
+  - Added comprehensive TCP retransmission statistics collection from /proc/net/snmp on Linux systems
+  - Implemented TCP retransmission rate calculation as percentage of total segments sent
+  - Enhanced client to collect tcp_retransmission_rate, tcp_out_of_order_packets, and tcp_duplicate_acks
+  - Fixed missing Network Performance Metrics section display issue
   - Resolved template variable reference error preventing comprehensive metrics from showing
   - Added missing 'average' template filter to Flask application for metrics calculations
   - Fixed network interface data display with proper JSON formatting and tooltips
