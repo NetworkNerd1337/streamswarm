@@ -97,6 +97,12 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
+- June 27, 2025: Fixed missing Network Performance Metrics section display issue
+  - Resolved template variable reference error preventing comprehensive metrics from showing
+  - Added missing 'average' template filter to Flask application for metrics calculations
+  - Fixed network interface data display with proper JSON formatting and tooltips
+  - Enhanced user interface with explanatory tooltips for network errors vs drops metrics
+  - All 65+ network and system metrics now display correctly in test results
 - June 27, 2025: Comprehensive security enhancements and input validation system
   - Implemented robust input validation across all API endpoints to prevent injection attacks
   - Added rate limiting to all API endpoints (registration, test creation, token management)

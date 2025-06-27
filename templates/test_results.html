@@ -619,9 +619,18 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Ping Latency (ms)</td>
-                                                            <td id="metrics-avg-latency">--</td>
-                                                            <td id="metrics-latency-status">
-                                                                <span class="badge bg-secondary">Loading...</span>
+                                                            {% set avg_latency = results | map(attribute='ping_latency') | select('number') | list %}
+                                                            <td>{{ "%.2f"|format(avg_latency | average) if avg_latency else 'N/A' }}</td>
+                                                            <td>
+                                                                {% if avg_latency and (avg_latency | average) < 50 %}
+                                                                    <span class="badge bg-success">Excellent</span>
+                                                                {% elif avg_latency and (avg_latency | average) < 100 %}
+                                                                    <span class="badge bg-warning">Good</span>
+                                                                {% elif avg_latency %}
+                                                                    <span class="badge bg-danger">Poor</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">No Data</span>
+                                                                {% endif %}
                                                             </td>
                                                         </tr>
                                                         <tr>
