@@ -97,6 +97,17 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
+- June 27, 2025: Comprehensive security enhancements and input validation system
+  - Implemented robust input validation across all API endpoints to prevent injection attacks
+  - Added rate limiting to all API endpoints (registration, test creation, token management)
+  - Enhanced URL destination validation supporting paths and parameters while maintaining security
+  - Comprehensive sanitization of all user inputs with proper field validation
+  - Validated numeric fields with appropriate ranges and type checking
+  - Added JSON field validation with safe parsing for complex data structures
+  - Signal strength data validation with proper statistical field handling
+  - Test creation endpoint now supports complex URLs (e.g., video URLs with parameters)
+  - Token management endpoints with enhanced validation and duplicate prevention
+  - Maintained backward compatibility while strengthening security posture
 - June 26, 2025: Enhanced wireless detection with comprehensive `iw` command integration
   - Replaced deprecated `iwconfig` calls with modern `iw dev <interface> info` and `iw dev <interface> link`
   - Added parsing for MAC address, channel number, frequency, and transmission power data

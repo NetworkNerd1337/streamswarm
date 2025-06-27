@@ -458,7 +458,7 @@ def submit_test_results():
         
         # Validate JSON fields
         traceroute_data = safe_json_string(data.get('traceroute_data'), 'traceroute_data')
-        network_interface_info = sanitize_string(data.get('network_interface_info'), 2000) if data.get('network_interface_info') else None
+        network_interface_info = safe_json_string(data.get('network_interface_info'), 'network_interface_info')
         top_processes_cpu = safe_json_string(data.get('top_processes_cpu'), 'top_processes_cpu')
         top_processes_memory = safe_json_string(data.get('top_processes_memory'), 'top_processes_memory')
         
@@ -467,7 +467,7 @@ def submit_test_results():
         signal_strength_max = safe_float(data.get('signal_strength_max'), 'signal_strength_max')
         signal_strength_avg = safe_float(data.get('signal_strength_avg'), 'signal_strength_avg')
         signal_strength_samples = safe_int(data.get('signal_strength_samples'), 'signal_strength_samples', 0)
-        signal_strength_data = sanitize_string(data.get('signal_strength_data'), 5000) if data.get('signal_strength_data') else None
+        signal_strength_data = data.get('signal_strength_data') if data.get('signal_strength_data') else None
         
         result = TestResult(
             test_id=test_id,
