@@ -49,6 +49,47 @@ def validate_hostname(hostname):
     
     return True, hostname
 
+def validate_url_destination(destination):
+    """Validate URL destination with hostname/IP validation and safe path/parameter handling"""
+    if not destination:
+        return False, "Destination is required"
+    
+    # Remove dangerous characters but preserve URL structure
+    destination = re.sub(r'[<>&"\'\\;`]', '', destination)
+    destination = destination.strip()
+    
+    # Extract hostname/IP from URL for validation
+    url_parts = destination.split('/')
+    hostname_part = url_parts[0]
+    
+    # Handle query parameters in hostname part
+    if '?' in hostname_part:
+        hostname_part = hostname_part.split('?')[0]
+    
+    # Validate the hostname/IP part
+    hostname_valid, validated_hostname = validate_hostname(hostname_part)
+    ip_valid, validated_ip = validate_ip_address(hostname_part)
+    
+    if not hostname_valid and not ip_valid:
+        return False, f"Invalid hostname or IP address: {hostname_part}"
+    
+    # Reconstruct the destination with validated hostname/IP
+    if hostname_valid:
+        validated_base = validated_hostname
+    else:
+        validated_base = validated_ip
+    
+    # Rebuild the full destination with path and parameters
+    if len(url_parts) > 1:
+        path_and_params = '/'.join(url_parts[1:])
+        # Additional sanitization for path and parameters
+        path_and_params = re.sub(r'[<>&"\'\\;`]', '', path_and_params)
+        validated_destination = f"{validated_base}/{path_and_params}"
+    else:
+        validated_destination = validated_base
+    
+    return True, validated_destination
+
 def validate_ip_address(ip):
     """Validate IP address format"""
     if not ip:
@@ -640,16 +681,12 @@ def create_test():
         if destination.endswith('/'):
             destination = destination[:-1]
         
-        # Validate destination format (hostname or IP)
-        hostname_valid, validated_hostname = validate_hostname(destination)
-        ip_valid, validated_ip = validate_ip_address(destination)
+        # Validate destination format (URL, hostname, or IP)
+        dest_valid, validated_destination = validate_url_destination(destination)
+        if not dest_valid:
+            return jsonify({'error': f'Invalid destination: {validated_destination}'}), 400
         
-        if hostname_valid:
-            destination = validated_hostname
-        elif ip_valid:
-            destination = validated_ip
-        else:
-            return jsonify({'error': 'Invalid destination format - must be a valid hostname or IP address'}), 400
+        destination = validated_destination
         
         test = Test(
             name=name,
