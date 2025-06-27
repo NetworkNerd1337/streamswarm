@@ -699,7 +699,11 @@
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Network Errors In</td>
+                                                            <td>
+                                                                Network Errors In
+                                                                <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                   title="Hardware/driver-level errors while receiving packets (checksum failures, malformed packets, interface issues). Zero errors indicates healthy network hardware."></i>
+                                                            </td>
                                                             {% set avg_errors_in = test_results | map(attribute='network_errors_in') | select('number') | list %}
                                                             <td>{{ "{:,}".format(avg_errors_in | average | round(0) | int) if avg_errors_in else 'N/A' }}</td>
                                                             <td>
@@ -715,7 +719,11 @@
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Network Errors Out</td>
+                                                            <td>
+                                                                Network Errors Out
+                                                                <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                   title="Hardware/driver-level errors while sending packets. Zero errors indicates healthy network hardware and proper packet transmission."></i>
+                                                            </td>
                                                             {% set avg_errors_out = test_results | map(attribute='network_errors_out') | select('number') | list %}
                                                             <td>{{ "{:,}".format(avg_errors_out | average | round(0) | int) if avg_errors_out else 'N/A' }}</td>
                                                             <td>
@@ -731,13 +739,19 @@
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Network Drops In</td>
+                                                            <td>
+                                                                Network Drops In
+                                                                <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                   title="Incoming packets dropped due to buffer overflows, network congestion, firewalls, or traffic shaping. Normal during high traffic or with security filtering."></i>
+                                                            </td>
                                                             {% set avg_drops_in = test_results | map(attribute='network_drops_in') | select('number') | list %}
                                                             <td>{{ "{:,}".format(avg_drops_in | average | round(0) | int) if avg_drops_in else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_drops_in and (avg_drops_in | average) == 0 %}
                                                                     <span class="badge bg-success">Good</span>
-                                                                {% elif avg_drops_in and (avg_drops_in | average) < 5 %}
+                                                                {% elif avg_drops_in and (avg_drops_in | average) < 5000 %}
+                                                                    <span class="badge bg-info">Normal</span>
+                                                                {% elif avg_drops_in and (avg_drops_in | average) < 20000 %}
                                                                     <span class="badge bg-warning">Monitor</span>
                                                                 {% elif avg_drops_in %}
                                                                     <span class="badge bg-danger">High</span>
@@ -747,7 +761,11 @@
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td>Network Drops Out</td>
+                                                            <td>
+                                                                Network Drops Out
+                                                                <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                   title="Outgoing packets dropped due to buffer overflows or traffic shaping. Often zero on most systems (always 0 on macOS/BSD)."></i>
+                                                            </td>
                                                             {% set avg_drops_out = test_results | map(attribute='network_drops_out') | select('number') | list %}
                                                             <td>{{ "{:,}".format(avg_drops_out | average | round(0) | int) if avg_drops_out else 'N/A' }}</td>
                                                             <td>
@@ -764,6 +782,34 @@
                                                         </tr>
                                                     </tbody>
                                                 </table>
+                                                
+                                                <!-- Network Metrics Explanation -->
+                                                <div class="alert alert-info mt-3">
+                                                    <h6><i class="fas fa-info-circle me-2"></i>Understanding Network Metrics</h6>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <strong>Network Errors:</strong>
+                                                            <ul class="mb-2">
+                                                                <li>Hardware/driver-level issues</li>
+                                                                <li>Corrupted or malformed packets</li>
+                                                                <li>Interface hardware problems</li>
+                                                                <li>Zero errors = healthy hardware</li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <strong>Network Drops:</strong>
+                                                            <ul class="mb-2">
+                                                                <li>Buffer overflows during traffic spikes</li>
+                                                                <li>Firewall/security filtering</li>
+                                                                <li>Network congestion management</li>
+                                                                <li>QoS/traffic shaping policies</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        <strong>Common Pattern:</strong> High drops with zero errors typically indicates normal network traffic management rather than hardware issues.
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1000,6 +1046,12 @@ let currentMetric = 'ping_latency';
 
 document.addEventListener('DOMContentLoaded', function() {
     loadTestData();
+    
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 
 async function loadTestData() {
