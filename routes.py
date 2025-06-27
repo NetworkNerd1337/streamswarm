@@ -10,6 +10,11 @@ import os
 import threading
 import time
 from pdf_generator import generate_test_report_pdf
+from validation import (
+    validate_request_data, validate_query_params, validate_pagination_params,
+    ClientRegistrationSchema, TestResultSchema, TestCreationSchema, ApiTokenSchema,
+    sanitize_string, sanitize_filename, rate_limit_check, ValidationError as CustomValidationError
+)
 
 # Authentication decorator for API endpoints
 def require_api_token(f):
@@ -121,14 +126,19 @@ def tokens():
 @app.route('/api/client/register', methods=['POST'])
 def register_client():
     """Register a new client using an available API token"""
-    data = request.get_json()
+    # Rate limiting
+    client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
+    if not rate_limit_check(client_ip, 'register', max_requests=10, time_window=3600):
+        return jsonify({'error': 'Rate limit exceeded'}), 429
     
-    hostname = data.get('hostname')
-    ip_address = data.get('ip_address')
-    token = data.get('token')
+    # Validate input data
+    validated_data, errors = validate_request_data(ClientRegistrationSchema)
+    if errors:
+        return jsonify({'error': 'Validation failed', 'details': errors}), 400
     
-    if not hostname or not ip_address or not token:
-        return jsonify({'error': 'Missing hostname, ip_address, or token'}), 400
+    hostname = validated_data['hostname']
+    ip_address = validated_data['ip_address']
+    token = validated_data['api_token']
     
     # Check if client already exists
     existing_client = Client.query.filter_by(hostname=hostname, ip_address=ip_address).first()
@@ -150,7 +160,7 @@ def register_client():
         # Update existing client
         existing_client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
         existing_client.status = 'online'
-        existing_client.system_info = json.dumps(data.get('system_info', {}))
+        existing_client.system_info = validated_data.get('system_info')
         client = existing_client
     else:
         # Create new client
