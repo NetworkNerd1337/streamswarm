@@ -435,8 +435,20 @@ def submit_test_results():
             if isinstance(value, dict):
                 return json.dumps(value)
             elif isinstance(value, str):
-                json.loads(value)  # Validate JSON
-                return value
+                # Try to parse as JSON first
+                try:
+                    json.loads(value)
+                    return value
+                except json.JSONDecodeError:
+                    # If it's malformed JSON (like Python dict repr), try to fix it
+                    try:
+                        # This is a simple fix for Python dict notation to JSON
+                        import ast
+                        parsed = ast.literal_eval(value)
+                        return json.dumps(parsed)
+                    except (ValueError, SyntaxError):
+                        # If all else fails, return as string but log the issue
+                        return value
             else:
                 return json.dumps(value)
         except (TypeError, json.JSONDecodeError):

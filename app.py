@@ -44,8 +44,13 @@ def tojson_filter(value):
         try:
             import json
             return json.loads(value)
-        except:
-            return {}
+        except json.JSONDecodeError:
+            # Try to handle Python dict notation (malformed JSON)
+            try:
+                import ast
+                return ast.literal_eval(value)
+            except (ValueError, SyntaxError):
+                return {}
     return value or {}
 
 @app.template_filter('from_json')
