@@ -74,6 +74,43 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Footer -->
+    <footer class="bg-dark border-top border-secondary mt-5">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StreamSwarm" height="24" class="me-2">
+                        <span class="fw-bold text-white">StreamSwarm</span>
+                    </div>
+                    <p class="text-muted mb-0">Distributed Network Performance Monitoring</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-white mb-3">Quick Links</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <ul class="list-unstyled">
+                                <li><a href="{{ url_for('dashboard') }}" class="text-muted text-decoration-none small"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                <li><a href="{{ url_for('clients') }}" class="text-muted text-decoration-none small"><i class="fas fa-desktop me-2"></i>Clients</a></li>
+                                <li><a href="{{ url_for('tests') }}" class="text-muted text-decoration-none small"><i class="fas fa-flask me-2"></i>Tests</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <ul class="list-unstyled">
+                                <li><a href="{{ url_for('tutorial') }}" class="text-muted text-decoration-none small"><i class="fas fa-graduation-cap me-2"></i>Tutorial</a></li>
+                                <li><a href="{{ url_for('tokens') }}" class="text-muted text-decoration-none small"><i class="fas fa-key me-2"></i>API Tokens</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-secondary my-3">
+            <div class="text-center">
+                <small class="text-muted">Copyright 2025 RH Research Labs</small>
+            </div>
+        </div>
+    </footer>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     

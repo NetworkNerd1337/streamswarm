@@ -316,3 +316,37 @@
     margin-bottom: 1.5rem;
     opacity: 0.7;
 }
+
+/* Footer styling */
+footer {
+    margin-top: auto;
+}
+
+footer .list-unstyled li {
+    margin-bottom: 0.5rem;
+}
+
+footer .list-unstyled a {
+    transition: color 0.2s ease;
+}
+
+footer .list-unstyled a:hover {
+    color: var(--ss-primary) !important;
+    text-decoration: none;
+}
+
+footer .list-unstyled a i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Ensure footer stays at bottom */
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
