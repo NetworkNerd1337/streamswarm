@@ -45,48 +45,7 @@ def tojson_filter(value):
             import json
             return json.loads(value)
         except json.JSONDecodeError:
-            # For malformed data, extract basic info with regex
-            try:
-                import re
-                # Create a basic dict with extracted values for display
-                result = {}
-                
-                # Extract primary interface
-                if match := re.search(r'primary_interface:\s*([a-zA-Z0-9]+)', value):
-                    result['primary_interface'] = match.group(1)
-                
-                # Extract interface type
-                if match := re.search(r'interface_type:\s*([a-zA-Z]+)', value):
-                    result['interface_type'] = match.group(1)
-                
-                # Extract wireless flag
-                if 'is_wireless: true' in value:
-                    result['is_wireless'] = True
-                elif 'is_wireless: false' in value:
-                    result['is_wireless'] = False
-                
-                # Extract wireless info
-                if result.get('is_wireless'):
-                    wireless_info = {}
-                    if match := re.search(r'ssid:\s*([^,}]+)', value):
-                        wireless_info['ssid'] = match.group(1).strip()
-                    if match := re.search(r'signal_strength:\s*(-?\d+)', value):
-                        wireless_info['signal_strength'] = int(match.group(1))
-                    if match := re.search(r'frequency:\s*([^,}]+)', value):
-                        wireless_info['frequency'] = match.group(1).strip()
-                    if match := re.search(r'channel:\s*(\d+)', value):
-                        wireless_info['channel'] = int(match.group(1))
-                    if match := re.search(r'mac_address:\s*([^,}]+)', value):
-                        wireless_info['mac_address'] = match.group(1).strip()
-                    if match := re.search(r'txpower:\s*([^,}]+)', value):
-                        wireless_info['txpower'] = match.group(1).strip()
-                    
-                    if wireless_info:
-                        result['wireless_info'] = wireless_info
-                
-                return result if result else {}
-            except Exception:
-                return {}
+            return {}
     return value or {}
 
 @app.template_filter('from_json')

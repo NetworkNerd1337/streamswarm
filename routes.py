@@ -440,15 +440,27 @@ def submit_test_results():
                     json.loads(value)
                     return value
                 except json.JSONDecodeError:
-                    # If it's malformed JSON (like Python dict repr), try to fix it
+                    # If it's malformed JSON (like Python dict repr), fix it properly
                     try:
-                        # This is a simple fix for Python dict notation to JSON
                         import ast
-                        parsed = ast.literal_eval(value)
+                        import re
+                        
+                        # Fix common Python dict notation issues
+                        fixed_value = value
+                        
+                        # Replace Python literals with JSON equivalents
+                        fixed_value = fixed_value.replace('null', 'None')
+                        fixed_value = fixed_value.replace('true', 'True') 
+                        fixed_value = fixed_value.replace('false', 'False')
+                        
+                        # Parse as Python literal
+                        parsed = ast.literal_eval(fixed_value)
+                        
+                        # Convert to proper JSON
                         return json.dumps(parsed)
+                        
                     except (ValueError, SyntaxError):
-                        # If all else fails, return as string but log the issue
-                        return value
+                        raise ValueError(f"Invalid format for {field_name}: unable to parse as JSON or Python literal")
             else:
                 return json.dumps(value)
         except (TypeError, json.JSONDecodeError):
