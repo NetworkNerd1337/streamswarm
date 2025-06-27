@@ -81,5 +81,18 @@ def parse_signal_data_filter(value):
     except:
         return {'min': None, 'max': None, 'avg': None, 'count': 0, 'values': []}
 
+@app.template_filter('average')
+def average_filter(values):
+    """Calculate the average of a list of values"""
+    if not values:
+        return None
+    try:
+        valid_values = [v for v in values if v is not None]
+        if not valid_values:
+            return None
+        return sum(valid_values) / len(valid_values)
+    except (TypeError, ValueError):
+        return None
+
 # Import routes
 import routes
