@@ -534,13 +534,19 @@ def submit_test_results():
             memory_error_rate=data.get('memory_error_rate'),
             network_interface_errors=data.get('network_interface_errors'),
             # Signal strength monitoring
-            signal_strength_min=data.get('signal_strength_min'),
-            signal_strength_max=data.get('signal_strength_max'),
-            signal_strength_avg=data.get('signal_strength_avg'),
-            signal_strength_samples=data.get('signal_strength_samples'),
-            signal_strength_data=data.get('signal_strength_data')
+            signal_strength_min=signal_strength_min,
+            signal_strength_max=signal_strength_max,
+            signal_strength_avg=signal_strength_avg,
+            signal_strength_samples=signal_strength_samples,
+            signal_strength_data=signal_strength_data
         )
         
+    except ValueError as e:
+        return jsonify({'error': f'Validation error: {str(e)}'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
+    
+    try:
         db.session.add(result)
         db.session.commit()
         
@@ -572,14 +578,59 @@ def submit_test_results():
 @app.route('/api/test/create', methods=['POST'])
 def create_test():
     """Create a new test"""
-    data = request.get_json()
+    # Rate limiting
+    client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
+    if not check_rate_limit(client_ip, 'create_test', max_requests=50, window_seconds=3600):
+        return jsonify({'error': 'Rate limit exceeded'}), 429
     
-    if not data or 'name' not in data or 'destination' not in data:
-        return jsonify({'error': 'Missing required fields'}), 400
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    # Validate required fields
+    name = sanitize_string(data.get('name'), 255)
+    if not name:
+        return jsonify({'error': 'Test name is required'}), 400
+    
+    destination = sanitize_string(data.get('destination'), 255)
+    if not destination:
+        return jsonify({'error': 'Test destination is required'}), 400
+    
+    # Validate optional fields
+    description = sanitize_string(data.get('description', ''), 1000)
+    
+    try:
+        duration = int(data.get('duration', 300))
+        if duration <= 0 or duration > 86400:  # Max 24 hours
+            return jsonify({'error': 'Duration must be between 1 and 86400 seconds'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid duration format'}), 400
+    
+    try:
+        interval = int(data.get('interval', 5))
+        if interval <= 0 or interval > 3600:  # Max 1 hour
+            return jsonify({'error': 'Interval must be between 1 and 3600 seconds'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid interval format'}), 400
+    
+    # Validate client IDs
+    client_ids = data.get('client_ids', [])
+    if not isinstance(client_ids, list):
+        return jsonify({'error': 'client_ids must be a list'}), 400
+    
+    validated_client_ids = []
+    for client_id in client_ids:
+        try:
+            validated_id = int(client_id)
+            if validated_id <= 0:
+                raise ValueError("Invalid client ID")
+            validated_client_ids.append(validated_id)
+        except (ValueError, TypeError):
+            return jsonify({'error': f'Invalid client ID: {client_id}'}), 400
     
     try:
         # Clean up destination by removing protocol prefixes
-        destination = data['destination'].strip()
+        destination = destination.strip()
         if destination.startswith('http://'):
             destination = destination[7:]
         elif destination.startswith('https://'):
@@ -589,21 +640,31 @@ def create_test():
         if destination.endswith('/'):
             destination = destination[:-1]
         
+        # Validate destination format (hostname or IP)
+        hostname_valid, validated_hostname = validate_hostname(destination)
+        ip_valid, validated_ip = validate_ip_address(destination)
+        
+        if hostname_valid:
+            destination = validated_hostname
+        elif ip_valid:
+            destination = validated_ip
+        else:
+            return jsonify({'error': 'Invalid destination format - must be a valid hostname or IP address'}), 400
+        
         test = Test(
-            name=data['name'],
-            description=data.get('description', ''),
+            name=name,
+            description=description,
             destination=destination,
-            scheduled_time=datetime.fromisoformat(data['scheduled_time']) if data.get('scheduled_time') else None,
-            duration=data.get('duration', 300),
-            interval=data.get('interval', 5)
+            scheduled_time=datetime.fromisoformat(data['scheduled_time']).replace(tzinfo=None) if data.get('scheduled_time') else None,
+            duration=duration,
+            interval=interval
         )
         
         db.session.add(test)
         db.session.flush()  # Get the test ID
         
         # Assign clients to test
-        client_ids = data.get('client_ids', [])
-        for client_id in client_ids:
+        for client_id in validated_client_ids:
             test_client = TestClient(test_id=test.id, client_id=client_id)
             db.session.add(test_client)
         
@@ -1139,10 +1200,11 @@ def delete_client(client_id):
 @app.route('/api/tokens', methods=['GET'])
 def get_tokens():
     """Get all API tokens with optional filtering"""
-    status_filter = request.args.get('status')
+    # Validate query parameters
+    status_filter = sanitize_string(request.args.get('status'), 20)
     
     query = ApiToken.query
-    if status_filter:
+    if status_filter and status_filter in ['available', 'consumed', 'revoked']:
         query = query.filter_by(status=status_filter)
     
     tokens = query.order_by(ApiToken.created_at.desc()).all()
@@ -1155,20 +1217,32 @@ def get_tokens():
 @app.route('/api/tokens', methods=['POST'])
 def create_token():
     """Create a new API token"""
-    data = request.get_json()
+    # Rate limiting
+    client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
+    if not check_rate_limit(client_ip, 'create_token', max_requests=20, window_seconds=3600):
+        return jsonify({'error': 'Rate limit exceeded'}), 429
     
-    if not data or 'name' not in data:
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No JSON data provided'}), 400
+    
+    # Validate token name
+    name = sanitize_string(data.get('name'), 255)
+    if not name:
         return jsonify({'error': 'Token name is required'}), 400
     
+    # Validate description
+    description = sanitize_string(data.get('description', ''), 1000)
+    
     # Check for duplicate names
-    existing = ApiToken.query.filter_by(name=data['name']).first()
+    existing = ApiToken.query.filter_by(name=name).first()
     if existing:
         return jsonify({'error': 'Token name already exists'}), 400
     
     try:
         token = ApiToken(
-            name=data['name'],
-            description=data.get('description', '')
+            name=name,
+            description=description
         )
         
         db.session.add(token)
@@ -1188,28 +1262,45 @@ def create_token():
 @app.route('/api/tokens/<int:token_id>', methods=['PUT'])
 def update_token(token_id):
     """Update an API token"""
+    # Rate limiting
+    client_ip = request.environ.get('REMOTE_ADDR', '127.0.0.1')
+    if not check_rate_limit(client_ip, 'update_token', max_requests=50, window_seconds=3600):
+        return jsonify({'error': 'Rate limit exceeded'}), 429
+    
     token = ApiToken.query.get_or_404(token_id)
     data = request.get_json()
     
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return jsonify({'error': 'No JSON data provided'}), 400
     
     try:
         if 'name' in data:
+            # Validate and sanitize name
+            name = sanitize_string(data['name'], 255)
+            if not name:
+                return jsonify({'error': 'Token name cannot be empty'}), 400
+            
             # Check for duplicate names (excluding current token)
             existing = ApiToken.query.filter(
-                ApiToken.name == data['name'],
+                ApiToken.name == name,
                 ApiToken.id != token_id
             ).first()
             if existing:
                 return jsonify({'error': 'Token name already exists'}), 400
-            token.name = data['name']
+            token.name = name
         
         if 'description' in data:
-            token.description = data['description']
+            # Validate and sanitize description
+            description = sanitize_string(data['description'], 1000)
+            token.description = description
         
-        if 'status' in data and data['status'] in ['available', 'consumed', 'revoked']:
-            token.status = data['status']
+        if 'status' in data:
+            # Validate status value
+            status = sanitize_string(data['status'], 20)
+            if status and status in ['available', 'consumed', 'revoked']:
+                token.status = status
+            else:
+                return jsonify({'error': 'Invalid status value'}), 400
         
         db.session.commit()
         
