@@ -1368,6 +1368,28 @@ class StreamSwarmClient:
                     wireless_info = self._get_wireless_info(primary_interface)
                     interface_info['wireless_info'] = wireless_info
             
+            # Always check for wireless interfaces, even if primary interface is not wireless
+            if not interface_info['is_wireless']:
+                # Look for any wireless interfaces among all available interfaces
+                for interface_name in net_if_stats.keys():
+                    if interface_name == 'lo' or interface_name.startswith('lo'):
+                        continue
+                        
+                    # Check if this interface appears to be wireless
+                    interface_name_lower = interface_name.lower()
+                    if any(wireless_prefix in interface_name_lower for wireless_prefix in 
+                           ['wlan', 'wifi', 'wl', 'ath', 'ra', 'wlp']):
+                        # Found a wireless interface, get its information
+                        stats = net_if_stats[interface_name]
+                        if stats.isup:  # Only check active wireless interfaces
+                            wireless_info = self._get_wireless_info(interface_name)
+                            if wireless_info:  # If we got wireless data
+                                interface_info['wireless_info'] = wireless_info
+                                # Add wireless interface details but keep primary interface info
+                                interface_info['wireless_interface_name'] = interface_name
+                                interface_info['has_secondary_wireless'] = True
+                                break
+            
             # Collect information about all network interfaces
             all_interfaces = []
             for interface_name, stats in net_if_stats.items():

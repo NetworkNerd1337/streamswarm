@@ -356,7 +356,14 @@
                                                     <strong>Type:</strong>
                                                     {% if interface_data.is_wireless %}
                                                         <span class="badge bg-info">
-                                                            <i class="fas fa-wifi me-1"></i>Wireless
+                                                            <i class="fas fa-wifi me-1"></i>Wireless (Primary)
+                                                        </span>
+                                                    {% elif interface_data.has_secondary_wireless and interface_data.interface_type == 'ethernet' %}
+                                                        <span class="badge bg-success me-1">
+                                                            <i class="fas fa-ethernet me-1"></i>Ethernet (Primary)
+                                                        </span>
+                                                        <span class="badge bg-info">
+                                                            <i class="fas fa-wifi me-1"></i>Wireless (Secondary)
                                                         </span>
                                                     {% elif interface_data.interface_type == 'ethernet' %}
                                                         <span class="badge bg-success">
@@ -382,9 +389,15 @@
                                                 {% endif %}
                                             </div>
                                             
-                                            {% if interface_data.is_wireless %}
+                                            {% if interface_data.is_wireless or interface_data.has_secondary_wireless %}
                                                 <div class="col-md-6">
-                                                    <h6 class="text-info mb-3">Wireless Details</h6>
+                                                    <h6 class="text-info mb-3">
+                                                        {% if interface_data.is_wireless %}
+                                                            Wireless Details (Primary Interface)
+                                                        {% else %}
+                                                            Wireless Details (Secondary Interface: {{ interface_data.wireless_interface_name }})
+                                                        {% endif %}
+                                                    </h6>
                                                     {% if interface_data.wireless_info and (interface_data.wireless_info.ssid or interface_data.wireless_info.signal_strength or interface_data.wireless_info.frequency) %}
                                                         {% if interface_data.wireless_info.ssid %}
                                                             <div class="mb-2">
