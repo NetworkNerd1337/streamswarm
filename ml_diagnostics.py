@@ -64,6 +64,15 @@ class NetworkDiagnosticEngine:
                     logger.info(f"Loaded {model_name} from {filepath}")
                 except Exception as e:
                     logger.warning(f"Failed to load {model_name}: {e}")
+        
+        # Load feature columns used during training
+        feature_columns_path = os.path.join(self.models_dir, "feature_columns.joblib")
+        if os.path.exists(feature_columns_path):
+            try:
+                self.feature_columns = joblib.load(feature_columns_path)
+                logger.info(f"Loaded feature columns: {len(self.feature_columns)} features")
+            except Exception as e:
+                logger.warning(f"Failed to load feature columns: {e}")
     
     def _save_models(self):
         """Save trained models to disk"""
@@ -79,6 +88,11 @@ class NetworkDiagnosticEngine:
             for encoder_name, encoder in self.encoders.items():
                 filepath = os.path.join(self.models_dir, f"{encoder_name}_encoder.joblib")
                 joblib.dump(encoder, filepath)
+            
+            # Save feature columns used during training
+            if hasattr(self, 'feature_columns'):
+                filepath = os.path.join(self.models_dir, "feature_columns.joblib")
+                joblib.dump(self.feature_columns, filepath)
                 
             logger.info("Models saved successfully")
         except Exception as e:
@@ -325,6 +339,9 @@ class NetworkDiagnosticEngine:
                 logger.info("Health classification report:")
                 logger.info(classification_report(y_test, y_pred))
             
+            # Store the feature columns used for training
+            self.feature_columns = list(X.columns)
+            
             # Train performance predictor (predict latency based on other metrics)
             if 'ping_latency' in features_df.columns:
                 # Use other features to predict latency
@@ -337,6 +354,8 @@ class NetworkDiagnosticEngine:
                     performance_predictor = GradientBoostingRegressor(n_estimators=100, random_state=42)
                     performance_predictor.fit(X_perf_scaled, y_perf)
                     self.models['performance_predictor'] = performance_predictor
+                    # Store the feature columns used for performance prediction
+                    self.performance_feature_columns = feature_cols
             
             # Save trained models
             self._save_models()
@@ -390,7 +409,14 @@ class NetworkDiagnosticEngine:
         # Run ML analysis if models are available
         if 'main' in self.scalers and X is not None:
             try:
-                X_scaled = self.scalers['main'].transform(X)
+                # Use the same feature columns that were used during training
+                if hasattr(self, 'feature_columns'):
+                    # Reorder columns to match training order and select only training features
+                    X_model = X[self.feature_columns]
+                else:
+                    X_model = X
+                
+                X_scaled = self.scalers['main'].transform(X_model)
                 
                 # Anomaly detection
                 if 'anomaly_detector' in self.models:
@@ -419,8 +445,10 @@ class NetworkDiagnosticEngine:
                     
                     # Feature importance
                     if hasattr(self.models['health_classifier'], 'feature_importances_'):
+                        # Use the feature columns that were used during training
+                        feature_names = self.feature_columns if hasattr(self, 'feature_columns') else X_model.columns
                         feature_importance = dict(zip(
-                            features_df.columns,
+                            feature_names,
                             self.models['health_classifier'].feature_importances_
                         ))
                         # Sort by importance and get top 5
