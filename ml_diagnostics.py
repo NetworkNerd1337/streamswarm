@@ -410,10 +410,15 @@ class NetworkDiagnosticEngine:
         if 'main' in self.scalers and X is not None:
             try:
                 # Use the same feature columns that were used during training
-                if hasattr(self, 'feature_columns'):
+                if hasattr(self, 'feature_columns') and self.feature_columns:
                     # Reorder columns to match training order and select only training features
-                    X_model = X[self.feature_columns]
+                    logger.info(f"Using saved feature columns: {len(self.feature_columns)} features")
+                    # Ensure we only use features that exist in both sets
+                    available_features = [col for col in self.feature_columns if col in X.columns]
+                    X_model = X[available_features]
+                    logger.info(f"Filtered to {len(available_features)} available features")
                 else:
+                    logger.warning("No feature columns found, using all features")
                     X_model = X
                 
                 X_scaled = self.scalers['main'].transform(X_model)
