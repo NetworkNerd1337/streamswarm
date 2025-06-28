@@ -537,6 +537,139 @@ psql "$DATABASE_URL" -c "SELECT version();"
         </div>
     </div>
 
+    <!-- AI/ML Diagnostic Setup -->
+    <div class="row mb-4" id="ai-ml-setup">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-brain me-2"></i>
+                        AI/ML Diagnostic System Setup
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-shield-alt me-2"></i>Zero-Trust Architecture</h6>
+                                <p class="mb-0">StreamSwarm's AI diagnostic system runs entirely locally with no external dependencies. All machine learning models and processing happen on your server, ensuring complete data privacy and zero-trust compliance.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Linux OS Dependencies
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small">Install OS-level packages for optimal AI/ML performance:</p>
+                                    <div class="bg-dark p-2 rounded mb-2">
+                                        <code class="text-light small">
+# Ubuntu/Debian<br>
+sudo apt install python3-numpy python3-scipy python3-sklearn libatlas-base-dev liblapack-dev gfortran<br><br>
+# CentOS/RHEL/Fedora<br>
+sudo dnf install python3-numpy python3-scipy python3-scikit-learn atlas-devel lapack-devel gcc-gfortran
+                                        </code>
+                                    </div>
+                                    <p class="small text-muted">These packages provide optimized mathematical libraries for faster ML computations.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-python me-2"></i>
+                                        Python ML Packages
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small">Install Python machine learning libraries:</p>
+                                    <div class="bg-dark p-2 rounded mb-2">
+                                        <code class="text-light small">
+# Install AI/ML packages<br>
+pip install scikit-learn>=1.0.0 pandas>=1.3.0 numpy>=1.20.0 joblib>=1.0.0
+                                        </code>
+                                    </div>
+                                    <div class="small">
+                                        <strong>Package purposes:</strong>
+                                        <ul class="mt-2 mb-0">
+                                            <li><strong>scikit-learn</strong>: ML algorithms</li>
+                                            <li><strong>pandas</strong>: Data analysis</li>
+                                            <li><strong>numpy</strong>: Mathematical operations</li>
+                                            <li><strong>joblib</strong>: Model serialization</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-robot me-2"></i>
+                                        AI Diagnostic Features
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <h6 class="text-primary">Health Scoring</h6>
+                                            <p class="small">AI models analyze 25+ metrics to calculate overall network health scores (0-100) with intelligent categorization.</p>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <h6 class="text-primary">Anomaly Detection</h6>
+                                            <p class="small">Isolation Forest algorithm identifies unusual network behavior and performance deviations automatically.</p>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <h6 class="text-primary">Smart Recommendations</h6>
+                                            <p class="small">Ensemble models provide actionable troubleshooting guidance and performance optimization suggestions.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle me-2"></i>Using AI Diagnostics</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Automatic Setup:</strong>
+                                        <ol class="small mt-2">
+                                            <li>AI models auto-train after 50+ test results</li>
+                                            <li>Visit "AI Models" section to check training status</li>
+                                            <li>Click "Train Models" button if needed</li>
+                                        </ol>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Running Diagnostics:</strong>
+                                        <ol class="small mt-2">
+                                            <li>Go to any test results page</li>
+                                            <li>Click "Diagnose Results" button</li>
+                                            <li>Review AI-powered analysis and recommendations</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Architecture Overview -->
     <div class="row mb-4" id="architecture">
         <div class="col-12">
