@@ -436,7 +436,7 @@
                                                         {% endif %}
                                                         
                                                         <!-- Signal strength monitoring statistics for this client -->
-                                                        {% set client_signal_result = client_results|selectattr('signal_strength_min')|selectattr('signal_strength_max')|selectattr('signal_strength_avg')|selectattr('signal_strength_samples')|selectattr('signal_strength_samples', 'greaterthan', 1)|first %}
+                                                        {% set client_signal_result = client_results|selectattr('signal_strength_min')|selectattr('signal_strength_max')|selectattr('signal_strength_avg')|selectattr('signal_strength_samples')|selectattr('signal_strength_samples', 'greaterthan', 0)|sort(attribute='signal_strength_samples', reverse=true)|first %}
                                                         {% if client_signal_result %}
                                                             <hr class="border-secondary my-3">
                                                             <h6 class="text-info mb-2">
