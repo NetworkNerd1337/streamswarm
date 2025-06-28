@@ -991,6 +991,28 @@
                                     </h2>
                                     <div id="appMetrics" class="accordion-collapse collapse" data-bs-parent="#metricsAccordion">
                                         <div class="accordion-body">
+                                            <!-- Application & Infrastructure Metrics Info Panel -->
+                                            <div class="alert alert-info mb-3">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-1 text-center">
+                                                        <i class="fas fa-info-circle fa-2x"></i>
+                                                    </div>
+                                                    <div class="col-md-11">
+                                                        <h6 class="alert-heading mb-2">Application & Infrastructure Metrics Collection</h6>
+                                                        <p class="mb-2">
+                                                            <strong>Collection Window:</strong> Application metrics are collected during the <strong>first 2 intervals</strong> only, 
+                                                            Infrastructure metrics during the <strong>first interval</strong> only of each test.
+                                                        </p>
+                                                        <p class="mb-2">
+                                                            <strong>Recommended Settings:</strong> For reliable metric collection, use test duration ≥600 seconds with interval ≥15 seconds.
+                                                        </p>
+                                                        <p class="mb-0">
+                                                            <strong>Requirements:</strong> Linux systems with network access for Application metrics, hardware monitoring files (/sys/class/) for Infrastructure metrics.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
                                             <div class="table-responsive">
                                                 <table class="table table-sm">
                                                     <thead>
