@@ -558,7 +558,16 @@ class NetworkDiagnosticEngine:
             if os.path.exists(filepath):
                 mtime = os.path.getmtime(filepath)
                 last_modified = datetime.fromtimestamp(mtime)
-                if status['last_training'] is None or last_modified > status['last_training']:
+                # Compare with existing last_training timestamp
+                should_update = status['last_training'] is None
+                if not should_update and status['last_training']:
+                    try:
+                        existing_training = datetime.fromisoformat(status['last_training'])
+                        should_update = last_modified > existing_training
+                    except (ValueError, TypeError):
+                        should_update = True
+                
+                if should_update:
                     status['last_training'] = last_modified.isoformat()
         
         return status
