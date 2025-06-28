@@ -309,7 +309,7 @@ class NetworkDiagnosticEngine:
                 else:
                     health_scores.append('critical')
             
-            # Train scaler
+            # Train scaler on the main feature set (including ping_latency)
             scaler = StandardScaler()
             X_scaled = scaler.fit_transform(X)
             self.scalers['main'] = scaler
