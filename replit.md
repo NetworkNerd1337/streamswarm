@@ -108,6 +108,9 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Updated template logic to select result with maximum signal strength samples using sort(attribute='signal_strength_samples', reverse=true)
   - Enhanced client deletion error messages to clearly indicate when API tokens must be deleted first
   - Added specific check for API token foreign key constraints with user-friendly guidance to delete tokens in Token Management section
+  - Fixed Network Bytes Sent/Received calculations to show actual traffic during test period instead of meaningless averages
+  - Changed from averaging cumulative interface counters to calculating difference (max - min) for accurate network traffic measurement
+  - Network byte metrics now display realistic values representing actual data transferred during test execution
 - June 28, 2025: Implemented Application & Infrastructure metrics collection
   - Added comprehensive application-layer metrics collection including content download time and compression ratio analysis
   - Implemented infrastructure monitoring for power consumption, memory error rates, fan speeds, and drive health
