@@ -122,6 +122,9 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Application & Infrastructure Metrics accordion section now correctly displays real data when clients submit comprehensive test results
   - Verified Application metrics display: Content Download Time (150.75ms), Compression Ratio (35.5%), Power Consumption (15.2W)
   - Metrics collection occurs during actual client test execution in first 1-2 intervals for optimal performance measurement
+  - Enhanced client logging to diagnose Application & Infrastructure metrics collection issues in real environments
+  - External clients (SWARMSTREAM, SWARMSTREAM01) updated to latest client code version with enhanced metrics support
+  - Test 53 running with updated client to verify Application & Infrastructure metrics collection functionality
 - June 27, 2025: Implemented TCP retransmission rate collection and fixed metrics display
   - Added comprehensive TCP retransmission statistics collection from /proc/net/snmp on Linux systems
   - Implemented TCP retransmission rate calculation as percentage of total segments sent
