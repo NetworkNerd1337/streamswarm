@@ -2045,7 +2045,9 @@ class StreamSwarmClient:
             # Measure content download time
             start_time = time.time()
             try:
-                response = session.get(destination, timeout=15, stream=True)
+                logger.info(f"Attempting HTTP request to {destination} for application metrics")
+                response = session.get(destination, timeout=10, stream=True)
+                logger.info(f"HTTP response received: {response.status_code}")
                 
                 # Track response codes
                 status_code = response.status_code
@@ -2133,8 +2135,10 @@ class StreamSwarmClient:
         }
         
         try:
+            logger.info("Starting infrastructure metrics collection...")
             # Power consumption monitoring (Linux only)
             if platform.system().lower() == 'linux':
+                logger.debug("Linux system detected, checking power monitoring sources")
                 # Try to get power consumption from various sources
                 power_sources = [
                     '/sys/class/power_supply/BAT0/power_now',  # Battery power
