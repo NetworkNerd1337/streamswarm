@@ -48,6 +48,7 @@ class NetworkDiagnosticEngine:
             'health_classifier': 'health_classifier.joblib',
             'performance_predictor': 'performance_predictor.joblib',
             'scaler': 'feature_scaler.joblib',
+            'performance_scaler': 'performance_scaler.joblib',
             'health_encoder': 'health_encoder.joblib'
         }
         
@@ -57,6 +58,8 @@ class NetworkDiagnosticEngine:
                 try:
                     if model_name == 'scaler':
                         self.scalers['main'] = joblib.load(filepath)
+                    elif model_name == 'performance_scaler':
+                        self.scalers['performance'] = joblib.load(filepath)
                     elif model_name == 'health_encoder':
                         self.encoders['health'] = joblib.load(filepath)
                     else:
@@ -82,7 +85,10 @@ class NetworkDiagnosticEngine:
                 joblib.dump(model, filepath)
                 
             for scaler_name, scaler in self.scalers.items():
-                filepath = os.path.join(self.models_dir, "feature_scaler.joblib")
+                if scaler_name == 'main':
+                    filepath = os.path.join(self.models_dir, "feature_scaler.joblib")
+                else:
+                    filepath = os.path.join(self.models_dir, f"{scaler_name}_scaler.joblib")
                 joblib.dump(scaler, filepath)
                 
             for encoder_name, encoder in self.encoders.items():
@@ -350,10 +356,13 @@ class NetworkDiagnosticEngine:
                 y_perf = X['ping_latency'].fillna(0)
                 
                 if len(X_perf) > 10:  # Minimum samples for regression
-                    X_perf_scaled = scaler.fit_transform(X_perf)
+                    # Use a separate scaler for performance prediction
+                    perf_scaler = StandardScaler()
+                    X_perf_scaled = perf_scaler.fit_transform(X_perf)
                     performance_predictor = GradientBoostingRegressor(n_estimators=100, random_state=42)
                     performance_predictor.fit(X_perf_scaled, y_perf)
                     self.models['performance_predictor'] = performance_predictor
+                    self.scalers['performance'] = perf_scaler
                     # Store the feature columns used for performance prediction
                     self.performance_feature_columns = feature_cols
             
