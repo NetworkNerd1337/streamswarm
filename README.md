@@ -1,13 +1,15 @@
 # StreamSwarm
 
-A Python-based client-server network monitoring system with web dashboard for distributed testing and analysis.
+A Python-based client-server network monitoring system with AI-powered diagnostics, web dashboard, and zero-trust ML capabilities for distributed testing and analysis.
 
 ## Overview
 
-StreamSwarm is a comprehensive Python-based distributed network monitoring system that collects 65+ performance metrics including network testing, bandwidth measurement, QoS analysis, application-layer monitoring, performance profiling, and infrastructure health across multiple client hosts. The system features a centralized web dashboard for managing clients, scheduling tests, and visualizing comprehensive performance data with professional PDF reporting.
+StreamSwarm is a comprehensive Python-based distributed network monitoring system that collects 65+ performance metrics including network testing, bandwidth measurement, QoS analysis, application-layer monitoring, performance profiling, and infrastructure health across multiple client hosts. The system features AI-powered diagnostic capabilities using local machine learning models, a centralized web dashboard for managing clients, scheduling tests, and visualizing comprehensive performance data with professional PDF reporting.
 
 ## Features
 
+- **AI-Powered Network Diagnostics**: Local machine learning models for anomaly detection, health classification, and intelligent troubleshooting recommendations
+- **Zero-Trust ML Architecture**: All AI processing runs locally using Scikit-learn with no external dependencies or cloud connections
 - **Network Performance Monitoring**: Comprehensive latency, packet loss, jitter, bandwidth, and connectivity testing
 - **Advanced Network Analysis**: MTU discovery, TCP window scaling, congestion control, retransmission analysis
 - **Quality of Service**: DSCP/CoS detection, per-class latency, traffic policing, ECN analysis
@@ -29,8 +31,16 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 2. **Install Dependencies:**
    ```bash
-   pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary speedtest-cli reportlab matplotlib scapy email-validator werkzeug
+   # Python packages (server)
+   pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary speedtest-cli reportlab matplotlib scapy email-validator werkzeug scikit-learn pandas numpy joblib
+   
+   # System packages (Ubuntu/Debian)
    sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump
+   sudo apt install iw wireless-tools libiw-dev network-manager
+   
+   # AI/ML dependencies (optional but recommended for server)
+   sudo apt install python3-numpy python3-scipy python3-sklearn
+   sudo apt install libatlas-base-dev liblapack-dev gfortran
    ```
 
 3. **Start the server:**
@@ -48,6 +58,46 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 6. **Create tests:** Use the web interface to schedule network monitoring tests
 
 See [USAGE.md](USAGE.md) for detailed instructions.
+
+## AI/ML Diagnostic System
+
+StreamSwarm includes an advanced AI diagnostic system that provides intelligent analysis of network performance data using local machine learning models.
+
+### Machine Learning Features
+
+**Core Capabilities:**
+- **Anomaly Detection**: Identifies unusual network patterns using Isolation Forest algorithm
+- **Health Classification**: Classifies network health status using Random Forest
+- **Performance Prediction**: Predicts network performance trends using Gradient Boosting
+- **Issue Classification**: Automatically categorizes and prioritizes network issues
+- **Intelligent Recommendations**: Provides specific troubleshooting guidance
+
+**Zero-Trust Architecture:**
+- All ML processing runs locally on your server using Scikit-learn
+- No external API calls or cloud dependencies required
+- Training data never leaves your network infrastructure
+- Models are stored locally in the `ml_models/` directory
+
+### AI Usage Quick Start
+
+1. **Collect Data**: Run at least 50 network monitoring tests
+2. **Train Models**: Visit "AI Models" page and click "Train Models"
+3. **Run Diagnostics**: Click "Diagnose Results" on any completed test
+4. **Review Analysis**: Get health scores, issue detection, and recommendations
+
+**Health Score Interpretation:**
+- **80-100**: Healthy network performance
+- **60-79**: Warning - some issues detected  
+- **0-59**: Critical - significant problems identified
+
+### Supported ML Models
+
+- **Isolation Forest**: Anomaly detection in network metrics
+- **Random Forest**: Health status classification
+- **Gradient Boosting**: Performance trend prediction
+- **Feature Engineering**: 25+ metrics including latency, bandwidth, system resources
+
+See [TUTORIAL.md](TUTORIAL.md) for comprehensive AI/ML setup and usage instructions.
 
 ## Architecture
 

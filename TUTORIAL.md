@@ -19,8 +19,12 @@ sudo apt install build-essential libffi-dev libssl-dev
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool
 sudo apt install libpcap-dev tcpdump
 
-# Install wireless detection tools
-sudo apt install libiw-dev network-manager
+# Install wireless detection tools (modern iw package)
+sudo apt install iw wireless-tools libiw-dev network-manager
+
+# Install AI/ML dependencies for server (optional but recommended)
+sudo apt install python3-numpy python3-scipy python3-sklearn
+sudo apt install libatlas-base-dev liblapack-dev gfortran
 
 # Create convenient symbolic links (optional)
 sudo ln -sf /usr/bin/python3.9 /usr/bin/python
@@ -41,8 +45,12 @@ sudo dnf install openssl-devel libffi-devel
 sudo dnf install iputils traceroute lm_sensors smartmontools ethtool
 sudo dnf install libpcap-devel tcpdump
 
-# Install wireless detection tools
-sudo dnf install NetworkManager
+# Install wireless detection tools (modern iw package)
+sudo dnf install iw wireless-tools NetworkManager
+
+# Install AI/ML dependencies for server (optional but recommended)
+sudo dnf install python3-numpy python3-scipy python3-scikit-learn
+sudo dnf install atlas-devel lapack-devel gcc-gfortran
 
 # For older systems, replace 'dnf' with 'yum'
 ```
@@ -881,6 +889,123 @@ while True:
     check_performance_thresholds()
     time.sleep(300)  # Check every 5 minutes
 ```
+
+## AI/ML Diagnostic System
+
+StreamSwarm includes an advanced AI diagnostic system that provides intelligent analysis of network performance data. The ML system uses local Scikit-learn models to ensure zero-trust network compatibility with no external dependencies.
+
+### AI Features Overview
+
+**Machine Learning Capabilities:**
+- **Anomaly Detection:** Identifies unusual network patterns using Isolation Forest
+- **Health Classification:** Classifies network health status using Random Forest
+- **Performance Prediction:** Predicts network performance trends using Gradient Boosting
+- **Issue Classification:** Automatically categorizes and prioritizes network issues
+- **Intelligent Recommendations:** Provides specific troubleshooting guidance
+
+**Zero-Trust Compliance:**
+- All ML processing runs locally on your server
+- No external API calls or cloud dependencies required
+- Training data never leaves your network infrastructure
+- Models are stored locally in the `ml_models/` directory
+
+### Setting Up AI Diagnostics
+
+**1. Install ML Dependencies:**
+```bash
+# Already included in server installation (Ubuntu/Debian)
+sudo apt install python3-numpy python3-scipy python3-sklearn
+sudo apt install libatlas-base-dev liblapack-dev gfortran
+
+# For CentOS/RHEL/Fedora
+sudo dnf install python3-numpy python3-scipy python3-scikit-learn
+sudo dnf install atlas-devel lapack-devel gcc-gfortran
+```
+
+**2. Python Package Installation:**
+```bash
+# Server requirements already include ML packages
+pip install scikit-learn>=1.0.0 pandas>=1.3.0 numpy>=1.20.0 joblib>=1.0.0
+```
+
+**3. Access AI Model Management:**
+- Navigate to "AI Models" in the web interface
+- Check model status and training data availability
+- Train models when you have at least 50 test results
+
+### Using AI Diagnostics
+
+**Step 1: Train ML Models**
+1. Collect at least 50 test results from your network monitoring
+2. Visit the "AI Models" page in the web interface
+3. Click "Train Models" to build your diagnostic models
+4. Training typically takes 30-60 seconds depending on data size
+
+**Step 2: Run Diagnostic Analysis**
+1. Complete a network monitoring test (status: completed or failed)
+2. Go to the test results page
+3. Click the "Diagnose Results" button
+4. Review the AI-generated analysis
+
+**Step 3: Interpret Results**
+
+*Health Score:*
+- **80-100:** Healthy network performance
+- **60-79:** Warning - some issues detected
+- **0-59:** Critical - significant problems identified
+
+*Issue Detection:*
+- High/Medium/Low severity issues with specific descriptions
+- Automatic categorization (latency, packet loss, system performance)
+- Targeted recommendations for each detected issue
+
+*Feature Importance:*
+- Shows which metrics most influenced the diagnosis
+- Helps focus troubleshooting efforts on key areas
+- Updates based on your specific network patterns
+
+### AI Diagnostic Use Cases
+
+**Scenario 1: Proactive Network Health Monitoring**
+```bash
+# Set up regular diagnostic analysis
+# 1. Run daily performance tests
+# 2. Use AI diagnostics to identify trends
+# 3. Address issues before they impact users
+```
+
+**Scenario 2: Troubleshooting Network Issues**
+- Run diagnostic analysis on failed or problematic tests
+- Review AI-generated issue categories and recommendations
+- Focus on high-severity issues first
+- Use feature importance to guide investigation
+
+**Scenario 3: Performance Optimization**
+- Compare diagnostic results across different time periods
+- Identify performance patterns and bottlenecks
+- Use ML insights to optimize network configuration
+- Track improvement over time with health scores
+
+### Advanced AI Configuration
+
+**Model Retraining:**
+- Models automatically improve as you collect more data
+- Retrain monthly or after significant network changes
+- Models adapt to your specific network environment and patterns
+
+**Feature Engineering:**
+The AI system analyzes 25+ features including:
+- Network Performance: Latency, packet loss, jitter, bandwidth
+- System Performance: CPU, memory, disk usage, load averages
+- Application Metrics: Content download time, compression ratios
+- Infrastructure Metrics: Power consumption, hardware health
+- Quality of Service: DSCP values, traffic classification
+
+**Interpretation Guidelines:**
+- Health scores are relative to your network baseline
+- Anomaly detection improves accuracy with more training data
+- Issue recommendations are based on network performance best practices
+- Feature importance helps identify root causes vs symptoms
 
 ## Troubleshooting Common Issues
 
