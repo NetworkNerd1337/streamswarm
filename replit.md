@@ -97,6 +97,15 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
+- June 28, 2025: Implemented Application & Infrastructure metrics collection
+  - Added comprehensive application-layer metrics collection including content download time and compression ratio analysis
+  - Implemented infrastructure monitoring for power consumption, memory error rates, fan speeds, and drive health
+  - Enhanced client to collect HTTP performance metrics including certificate validation timing and connection reuse
+  - Added automatic detection of gzip/deflate compression effectiveness and response code tracking
+  - Implemented Linux-specific infrastructure monitoring using /sys filesystem and system commands
+  - Application metrics include content download timing, compression analysis, and SSL certificate validation
+  - Infrastructure metrics cover power consumption monitoring, ECC memory error detection, and basic drive health checks
+  - All Application & Infrastructure Metrics accordion section now displays real data instead of "N/A"
 - June 27, 2025: Implemented TCP retransmission rate collection and fixed metrics display
   - Added comprehensive TCP retransmission statistics collection from /proc/net/snmp on Linux systems
   - Implemented TCP retransmission rate calculation as percentage of total segments sent
