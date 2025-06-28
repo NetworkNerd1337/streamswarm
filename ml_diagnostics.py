@@ -232,108 +232,104 @@ class NetworkDiagnosticEngine:
             # Prepare training data - handle NaN and infinite values
             X = features_df.replace([float('inf'), float('-inf')], 0).fillna(0)
             
-            # Ensure all values are numeric and finite
-            for col in X.columns:
-                X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0)
-            
             # Create health labels based on calculated scores
             health_scores = []
             for i in range(len(X)):
-            row = X.iloc[i]
+                row = X.iloc[i]
+                
+                # Calculate health score for individual row
+                network_score = 100
+                if row['ping_latency'] > 0:
+                    network_score -= min(row['ping_latency'] / 2, 50)
+                if row['ping_packet_loss'] > 0:
+                    network_score -= min(row['ping_packet_loss'] * 10, 40)
+                if row['jitter'] > 0:
+                    network_score -= min(row['jitter'] / 2, 10)
+                
+                system_score = 100
+                if row['cpu_percent'] > 80:
+                    system_score -= 30
+                elif row['cpu_percent'] > 60:
+                    system_score -= 15
+                if row['memory_percent'] > 90:
+                    system_score -= 20
+                elif row['memory_percent'] > 75:
+                    system_score -= 10
+                
+                reliability_score = 100
+                if row['total_network_errors'] > 0:
+                    reliability_score -= min(row['total_network_errors'], 30)
+                if row['tcp_retransmission_rate'] > 5:
+                    reliability_score -= 20
+                elif row['tcp_retransmission_rate'] > 2:
+                    reliability_score -= 10
+                
+                efficiency_score = 100
+                if row['bandwidth_download'] < 100:
+                    efficiency_score -= 20
+                if row['compression_ratio'] < 20:
+                    efficiency_score -= 10
+                
+                # Calculate weighted average
+                weights = {'network': 0.4, 'system': 0.3, 'reliability': 0.2, 'efficiency': 0.1}
+                score = (
+                    network_score * weights['network'] +
+                    system_score * weights['system'] +
+                    reliability_score * weights['reliability'] +
+                    efficiency_score * weights['efficiency']
+                )
+                score = max(0, min(100, score))
+                
+                if score >= 80:
+                    health_scores.append('healthy')
+                elif score >= 60:
+                    health_scores.append('warning')
+                else:
+                    health_scores.append('critical')
             
-            # Calculate health score for individual row
-            network_score = 100
-            if row['ping_latency'] > 0:
-                network_score -= min(row['ping_latency'] / 2, 50)
-            if row['ping_packet_loss'] > 0:
-                network_score -= min(row['ping_packet_loss'] * 10, 40)
-            if row['jitter'] > 0:
-                network_score -= min(row['jitter'] / 2, 10)
+            # Train scaler
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            self.scalers['main'] = scaler
             
-            system_score = 100
-            if row['cpu_percent'] > 80:
-                system_score -= 30
-            elif row['cpu_percent'] > 60:
-                system_score -= 15
-            if row['memory_percent'] > 90:
-                system_score -= 20
-            elif row['memory_percent'] > 75:
-                system_score -= 10
+            # Train anomaly detection model (fixed contamination parameter)
+            anomaly_model = IsolationForest(contamination='auto', random_state=42)
+            anomaly_model.fit(X_scaled)
+            self.models['anomaly_detector'] = anomaly_model
             
-            reliability_score = 100
-            if row['total_network_errors'] > 0:
-                reliability_score -= min(row['total_network_errors'], 30)
-            if row['tcp_retransmission_rate'] > 5:
-                reliability_score -= 20
-            elif row['tcp_retransmission_rate'] > 2:
-                reliability_score -= 10
+            # Train health classification model
+            if len(set(health_scores)) > 1:  # Only train if we have multiple classes
+                health_encoder = LabelEncoder()
+                y_encoded = health_encoder.fit_transform(health_scores)
+                self.encoders['health'] = health_encoder
+                
+                # Split data for training
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X_scaled, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
+                )
+                
+                health_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+                health_classifier.fit(X_train, y_train)
+                self.models['health_classifier'] = health_classifier
+                
+                # Evaluate model
+                y_pred = health_classifier.predict(X_test)
+                logger.info("Health classification report:")
+                logger.info(classification_report(y_test, y_pred))
             
-            efficiency_score = 100
-            if row['bandwidth_download'] < 100:
-                efficiency_score -= 20
-            if row['compression_ratio'] < 20:
-                efficiency_score -= 10
+            # Train performance predictor (predict latency based on other metrics)
+            if 'ping_latency' in features_df.columns:
+                # Use other features to predict latency
+                feature_cols = [col for col in features_df.columns if col != 'ping_latency']
+                X_perf = X[feature_cols].fillna(0)
+                y_perf = X['ping_latency'].fillna(0)
+                
+                if len(X_perf) > 10:  # Minimum samples for regression
+                    X_perf_scaled = scaler.fit_transform(X_perf)
+                    performance_predictor = GradientBoostingRegressor(n_estimators=100, random_state=42)
+                    performance_predictor.fit(X_perf_scaled, y_perf)
+                    self.models['performance_predictor'] = performance_predictor
             
-            # Calculate weighted average
-            weights = {'network': 0.4, 'system': 0.3, 'reliability': 0.2, 'efficiency': 0.1}
-            score = (
-                network_score * weights['network'] +
-                system_score * weights['system'] +
-                reliability_score * weights['reliability'] +
-                efficiency_score * weights['efficiency']
-            )
-            score = max(0, min(100, score))
-            
-            if score >= 80:
-                health_scores.append('healthy')
-            elif score >= 60:
-                health_scores.append('warning')
-            else:
-                health_scores.append('critical')
-        
-        # Train scaler
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        self.scalers['main'] = scaler
-        
-        # Train anomaly detection model
-        anomaly_model = IsolationForest(contamination=0.1, random_state=42)
-        anomaly_model.fit(X_scaled)
-        self.models['anomaly_detector'] = anomaly_model
-        
-        # Train health classification model
-        if len(set(health_scores)) > 1:  # Only train if we have multiple classes
-            health_encoder = LabelEncoder()
-            y_encoded = health_encoder.fit_transform(health_scores)
-            self.encoders['health'] = health_encoder
-            
-            # Split data for training
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_scaled, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
-            )
-            
-            health_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-            health_classifier.fit(X_train, y_train)
-            self.models['health_classifier'] = health_classifier
-            
-            # Evaluate model
-            y_pred = health_classifier.predict(X_test)
-            logger.info("Health classification report:")
-            logger.info(classification_report(y_test, y_pred))
-        
-        # Train performance predictor (predict latency based on other metrics)
-        if 'ping_latency' in features_df.columns:
-            # Use other features to predict latency
-            feature_cols = [col for col in features_df.columns if col != 'ping_latency']
-            X_perf = X[feature_cols].fillna(0)
-            y_perf = X['ping_latency'].fillna(0)
-            
-            if len(X_perf) > 10:  # Minimum samples for regression
-                X_perf_scaled = scaler.fit_transform(X_perf)
-                performance_predictor = GradientBoostingRegressor(n_estimators=100, random_state=42)
-                performance_predictor.fit(X_perf_scaled, y_perf)
-                self.models['performance_predictor'] = performance_predictor
-        
             # Save trained models
             self._save_models()
             
