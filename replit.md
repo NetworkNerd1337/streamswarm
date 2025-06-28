@@ -97,6 +97,13 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
+- June 28, 2025: Enhanced wireless interface detection for mixed network environments
+  - Updated template logic to display wireless details for secondary wireless interfaces when primary is Ethernet
+  - Enhanced interface type badges to show both "Ethernet (Primary)" and "Wireless (Secondary)" when both are present
+  - Modified wireless detection to properly identify and display secondary wireless interface name (e.g., wlan0)
+  - Improved user experience by showing complete wireless information regardless of primary interface type
+  - Fixed wireless details section header to clearly indicate secondary interface status with interface name
+  - Template now correctly displays comprehensive wireless details (SSID, signal strength, frequency, channel, MAC, TX power) for all wireless interfaces
 - June 28, 2025: Implemented Application & Infrastructure metrics collection
   - Added comprehensive application-layer metrics collection including content download time and compression ratio analysis
   - Implemented infrastructure monitoring for power consumption, memory error rates, fan speeds, and drive health
