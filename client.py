@@ -537,12 +537,22 @@ class StreamSwarmClient:
                 # Collect application metrics (only once per test, not every interval)
                 application_metrics = {}
                 if time.time() - start_time < interval * 2:  # Only in first two intervals
+                    logger.info("Collecting application metrics...")
                     application_metrics = self._get_application_metrics(destination)
+                    if any(v is not None for v in application_metrics.values()):
+                        logger.info(f"Application metrics collected: {list(k for k,v in application_metrics.items() if v is not None)}")
+                    else:
+                        logger.warning("No application metrics were collected")
                 
                 # Collect infrastructure metrics (only once per test)
                 infrastructure_metrics = {}
                 if time.time() - start_time < interval:  # Only in first interval
+                    logger.info("Collecting infrastructure metrics...")
                     infrastructure_metrics = self._get_infrastructure_metrics()
+                    if any(v is not None for v in infrastructure_metrics.values()):
+                        logger.info(f"Infrastructure metrics collected: {list(k for k,v in infrastructure_metrics.items() if v is not None)}")
+                    else:
+                        logger.warning("No infrastructure metrics were collected")
                 
                 # Add signal strength statistics to this measurement
                 sig_min, sig_max, sig_avg, sig_samples, sig_data = self._get_signal_strength_stats(test_id)
@@ -2024,7 +2034,10 @@ class StreamSwarmClient:
             
             parsed_url = urlparse(destination)
             if not parsed_url.netloc:
+                logger.warning(f"Invalid URL for application metrics: {destination}")
                 return metrics
+            
+            logger.debug(f"Starting application metrics collection for: {destination}")
             
             # Test HTTP performance
             session = requests.Session()
@@ -2100,13 +2113,14 @@ class StreamSwarmClient:
                         logger.debug(f"SSL certificate validation timing failed: {e}")
                         
             except Exception as e:
-                logger.debug(f"Application metrics collection failed for {destination}: {e}")
+                logger.warning(f"Application metrics collection failed for {destination}: {e}")
                 
-        except ImportError:
-            logger.debug("requests library not available for application metrics")
+        except ImportError as e:
+            logger.warning(f"requests library not available for application metrics: {e}")
         except Exception as e:
-            logger.debug(f"Application metrics collection error: {e}")
+            logger.warning(f"Application metrics collection error: {e}")
         
+        logger.debug(f"Application metrics collected: {[(k, v) for k, v in metrics.items() if v is not None]}")
         return metrics
     
     def _get_infrastructure_metrics(self):
@@ -2195,8 +2209,9 @@ class StreamSwarmClient:
                     logger.debug(f"Drive health check failed: {e}")
                 
         except Exception as e:
-            logger.debug(f"Infrastructure metrics collection error: {e}")
+            logger.warning(f"Infrastructure metrics collection error: {e}")
         
+        logger.debug(f"Infrastructure metrics collected: {[(k, v) for k, v in metrics.items() if v is not None]}")
         return metrics
     
     def start(self):
