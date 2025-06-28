@@ -97,6 +97,16 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
+- June 28, 2025: Implemented comprehensive AI/ML diagnostic system with zero-trust architecture
+  - Added local machine learning capabilities using Scikit-learn for network performance analysis
+  - Implemented ensemble approach with Isolation Forest (anomaly detection), Random Forest (health classification), and Gradient Boosting (performance prediction)
+  - Created "Diagnose Results" button functionality for AI-powered test analysis with health scoring and issue detection
+  - Added "AI Models" management section with training interface and model status monitoring
+  - Enhanced feature engineering to analyze 25+ metrics including network performance, system resources, and QoS data
+  - Implemented zero-trust compliance with all ML processing running locally with no external dependencies
+  - Added comprehensive documentation for AI/ML setup, usage instructions, and Linux package dependencies
+  - Updated TUTORIAL.md, README.md, USAGE.md, and DEPENDENCIES.md with AI/ML information and installation instructions
+  - Models provide intelligent recommendations, issue categorization, and troubleshooting guidance for network administrators
 - June 28, 2025: Enhanced wireless interface detection for mixed network environments
   - Updated template logic to display wireless details for secondary wireless interfaces when primary is Ethernet
   - Enhanced interface type badges to show both "Ethernet (Primary)" and "Wireless (Secondary)" when both are present

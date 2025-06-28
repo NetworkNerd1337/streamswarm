@@ -46,6 +46,7 @@
                         <div class="col-md-6">
                             <h6>Advanced Topics</h6>
                             <ul class="list-unstyled">
+                                <li><a href="#ai-ml-setup" class="text-decoration-none">AI/ML Diagnostic Setup</a></li>
                                 <li><a href="#metrics-definition" class="text-decoration-none">Metrics Definition Guide</a></li>
                                 <li><a href="#use-cases" class="text-decoration-none">Real-World Use Cases</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Multi-Client Setup</a></li>
@@ -214,7 +215,7 @@ brew install libpcap
                         <div class="col-lg-6">
                             <h6>All Dependencies (Single Command)</h6>
                             <div class="bg-dark p-3 rounded">
-                                <code class="text-light small">pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 iwlib>=1.6.0</code>
+                                <code class="text-light small">pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 iwlib>=1.6.0 scikit-learn>=1.0.0 pandas>=1.3.0 numpy>=1.20.0 joblib>=1.0.0</code>
                             </div>
                         </div>
                         
@@ -227,7 +228,9 @@ pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary werk
 # Advanced features (including wireless detection)<br>
 pip install scapy speedtest-cli iwlib<br><br>
 # Report generation<br>
-pip install reportlab matplotlib
+pip install reportlab matplotlib<br><br>
+# AI/ML diagnostic capabilities (optional but recommended)<br>
+pip install scikit-learn pandas numpy joblib
                                 </code>
                             </div>
                         </div>
@@ -256,8 +259,12 @@ pip install reportlab matplotlib
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump<br><br>
 # Wireless detection tools (Ubuntu/Debian)<br>
 sudo apt install libiw-dev network-manager<br><br>
+# AI/ML OS-level dependencies (Ubuntu/Debian)<br>
+sudo apt install python3-numpy python3-scipy python3-sklearn libatlas-base-dev liblapack-dev gfortran<br><br>
 # CentOS/RHEL/Fedora<br>
 sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump NetworkManager<br><br>
+# AI/ML OS-level dependencies (CentOS/RHEL/Fedora)<br>
+sudo dnf install python3-numpy python3-scipy python3-scikit-learn atlas-devel lapack-devel gcc-gfortran<br><br>
 # Initialize sensors<br>
 sudo sensors-detect --auto
                                         </code>
