@@ -710,14 +710,24 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Network Bytes Sent</td>
-                                                            {% set avg_bytes_sent = results | map(attribute='network_bytes_sent') | select('number') | list %}
-                                                            <td>{{ (avg_bytes_sent | average | filesizeformat) if avg_bytes_sent else 'N/A' }}</td>
+                                                            {% set bytes_sent_values = results | map(attribute='network_bytes_sent') | select('number') | list %}
+                                                            {% if bytes_sent_values and bytes_sent_values|length > 1 %}
+                                                                {% set traffic_sent = (bytes_sent_values | max) - (bytes_sent_values | min) %}
+                                                                <td>{{ traffic_sent | filesizeformat }}</td>
+                                                            {% else %}
+                                                                <td>N/A</td>
+                                                            {% endif %}
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td>Network Bytes Received</td>
-                                                            {% set avg_bytes_recv = results | map(attribute='network_bytes_recv') | select('number') | list %}
-                                                            <td>{{ (avg_bytes_recv | average | filesizeformat) if avg_bytes_recv else 'N/A' }}</td>
+                                                            {% set bytes_recv_values = results | map(attribute='network_bytes_recv') | select('number') | list %}
+                                                            {% if bytes_recv_values and bytes_recv_values|length > 1 %}
+                                                                {% set traffic_recv = (bytes_recv_values | max) - (bytes_recv_values | min) %}
+                                                                <td>{{ traffic_recv | filesizeformat }}</td>
+                                                            {% else %}
+                                                                <td>N/A</td>
+                                                            {% endif %}
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
                                                         <tr>
