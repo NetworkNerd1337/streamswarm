@@ -22,6 +22,9 @@
         <div class="col-auto">
             <div class="btn-group" role="group">
                 {% if test.status in ['completed', 'failed'] %}
+                    <a href="{{ url_for('diagnose_test', test_id=test.id) }}" class="btn btn-primary">
+                        <i class="fas fa-stethoscope me-1"></i> Diagnose Results
+                    </a>
                     <button class="btn btn-success" onclick="exportPDF({{ test.id }})">
                         <i class="fas fa-file-pdf me-1"></i> Export PDF Report
                     </button>

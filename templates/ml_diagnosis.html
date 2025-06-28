@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}ML Diagnosis - {{ test.name }} - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-stethoscope me-2"></i>
+                AI Diagnostic Analysis: {{ test.name }}
+            </h1>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-{{ 'success' if test.status == 'completed' else 'danger' }} fs-6">
+                    {{ test.status | title }}
+                </span>
+                <span class="text-muted">Destination: <code>{{ test.destination }}</code></span>
+                <span class="text-muted">{{ results_count }} measurements</span>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('test_results', test_id=test.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-chart-line me-1"></i>
+                    View Results
+                </a>
+                <a href="{{ url_for('tests') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Back to Tests
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card" id="analysis-status">
+                <div class="card-body text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="mt-3">Running AI Diagnostic Analysis...</h5>
+                    <p class="text-muted">Analyzing {{ results_count }} measurements with machine learning models</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnosis Results (Hidden initially) -->
+    <div id="diagnosis-results" style="display: none;">
+        <!-- Health Score -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-heartbeat me-2"></i>
+                            Overall Health Score
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="display-4 mb-2" id="health-score">--</div>
+                        <div class="progress mb-2" style="height: 25px;">
+                            <div class="progress-bar" id="health-progress" role="progressbar" style="width: 0%;">
+                                <span id="health-status" class="fw-bold">--</span>
+                            </div>
+                        </div>
+                        <small class="text-muted">Score: 0-59 Critical, 60-79 Warning, 80-100 Healthy</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            AI Analysis Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="h4 text-warning" id="anomalies-count">--</div>
+                                <small class="text-muted">Anomalies</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h4 text-info" id="model-confidence">--</div>
+                                <small class="text-muted">Confidence</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h4 text-secondary" id="analysis-time">--</div>
+                                <small class="text-muted">Analysis Time</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issues Detected -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Issues Detected
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="issues-list">
+                            <!-- Issues will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            AI Recommendations
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recommendations-list">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Importance -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Key Performance Factors
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Metrics that most influenced the diagnosis:</p>
+                        <div id="feature-importance">
+                            <!-- Feature importance will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error State (Hidden initially) -->
+    <div id="analysis-error" style="display: none;">
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Analysis Error
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0" id="error-message">An error occurred during analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Run diagnosis when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    runDiagnosis();
+});
+
+function runDiagnosis() {
+    const testId = {{ test.id }};
+    
+    fetch(`/api/test/${testId}/diagnose`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showError(data.error);
+        } else {
+            displayResults(data);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError('Failed to run diagnostic analysis');
+    });
+}
+
+function displayResults(diagnosis) {
+    // Hide loading status
+    document.getElementById('analysis-status').style.display = 'none';
+    
+    // Show results
+    document.getElementById('diagnosis-results').style.display = 'block';
+    
+    // Health Score
+    const healthScore = diagnosis.health_score || 0;
+    const healthStatus = diagnosis.health_status || 'unknown';
+    
+    document.getElementById('health-score').textContent = healthScore.toFixed(1);
+    
+    const progressBar = document.getElementById('health-progress');
+    const statusElement = document.getElementById('health-status');
+    
+    progressBar.style.width = `${healthScore}%`;
+    statusElement.textContent = healthStatus.toUpperCase();
+    
+    // Set color based on health status
+    progressBar.className = 'progress-bar';
+    if (healthStatus === 'healthy') {
+        progressBar.classList.add('bg-success');
+    } else if (healthStatus === 'warning') {
+        progressBar.classList.add('bg-warning');
+    } else {
+        progressBar.classList.add('bg-danger');
+    }
+    
+    // AI Summary
+    document.getElementById('anomalies-count').textContent = diagnosis.anomalies_detected || 0;
+    document.getElementById('model-confidence').textContent = diagnosis.model_confidence ? 
+        `${diagnosis.model_confidence}%` : 'N/A';
+    
+    // Analysis timestamp
+    if (diagnosis.analysis_timestamp) {
+        const timestamp = new Date(diagnosis.analysis_timestamp);
+        document.getElementById('analysis-time').textContent = timestamp.toLocaleTimeString();
+    }
+    
+    // Issues
+    displayIssues(diagnosis.issues_detected || []);
+    
+    // Recommendations
+    displayRecommendations(diagnosis.recommendations || []);
+    
+    // Feature Importance
+    displayFeatureImportance(diagnosis.feature_importance || {});
+}
+
+function displayIssues(issues) {
+    const issuesContainer = document.getElementById('issues-list');
+    
+    if (issues.length === 0) {
+        issuesContainer.innerHTML = `
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                No significant issues detected in the test results.
+            </div>
+        `;
+        return;
+    }
+    
+    let issuesHtml = '';
+    issues.forEach(issue => {
+        const severityClass = issue.severity === 'high' ? 'danger' : 
+                            issue.severity === 'medium' ? 'warning' : 'info';
+        const severityIcon = issue.severity === 'high' ? 'exclamation-triangle' : 
+                           issue.severity === 'medium' ? 'exclamation-circle' : 'info-circle';
+        
+        issuesHtml += `
+            <div class="alert alert-${severityClass}" role="alert">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-${severityIcon} me-2 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${issue.description}</div>
+                        ${issue.recommendation ? `<div class="mt-2"><strong>Recommendation:</strong> ${issue.recommendation}</div>` : ''}
+                    </div>
+                    <span class="badge bg-${severityClass} ms-2">${issue.severity.toUpperCase()}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    issuesContainer.innerHTML = issuesHtml;
+}
+
+function displayRecommendations(recommendations) {
+    const recommendationsContainer = document.getElementById('recommendations-list');
+    
+    if (recommendations.length === 0) {
+        recommendationsContainer.innerHTML = `
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                No specific recommendations at this time.
+            </div>
+        `;
+        return;
+    }
+    
+    let recommendationsHtml = '<ul class="list-group list-group-flush">';
+    recommendations.forEach(recommendation => {
+        recommendationsHtml += `
+            <li class="list-group-item">
+                <i class="fas fa-arrow-right text-primary me-2"></i>
+                ${recommendation}
+            </li>
+        `;
+    });
+    recommendationsHtml += '</ul>';
+    
+    recommendationsContainer.innerHTML = recommendationsHtml;
+}
+
+function displayFeatureImportance(importance) {
+    const importanceContainer = document.getElementById('feature-importance');
+    
+    if (Object.keys(importance).length === 0) {
+        importanceContainer.innerHTML = `
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                Feature importance data not available. Train ML models to get detailed analysis.
+            </div>
+        `;
+        return;
+    }
+    
+    let importanceHtml = '';
+    Object.entries(importance).forEach(([feature, score]) => {
+        const percentage = (score * 100).toFixed(1);
+        const featureName = feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
+        importanceHtml += `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between">
+                    <span>${featureName}</span>
+                    <span class="text-muted">${percentage}%</span>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-info" role="progressbar" 
+                         style="width: ${percentage}%;"></div>
+                </div>
+            </div>
+        `;
+    });
+    
+    importanceContainer.innerHTML = importanceHtml;
+}
+
+function showError(message) {
+    // Hide loading status
+    document.getElementById('analysis-status').style.display = 'none';
+    
+    // Show error
+    document.getElementById('analysis-error').style.display = 'block';
+    document.getElementById('error-message').textContent = message;
+}
+</script>
+{% endblock %}

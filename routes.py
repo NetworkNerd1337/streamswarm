@@ -10,6 +10,7 @@ import os
 import threading
 import time
 from pdf_generator import generate_test_report_pdf
+from ml_diagnostics import diagnostic_engine
 import bleach
 import re
 import ipaddress
@@ -1434,3 +1435,66 @@ def regenerate_token(token_id):
         db.session.rollback()
         logging.error(f"Error regenerating token: {str(e)}")
         return jsonify({'error': 'Failed to regenerate token'}), 500
+
+# ML Diagnostics Routes
+
+@app.route('/diagnose/<int:test_id>')
+def diagnose_test(test_id):
+    """ML Diagnostic analysis page for test results"""
+    test = Test.query.get_or_404(test_id)
+    
+    if test.status not in ['completed', 'failed']:
+        flash('Can only diagnose completed or failed tests', 'warning')
+        return redirect(url_for('test_results', test_id=test_id))
+    
+    # Get basic test info for the page
+    results_count = TestResult.query.filter_by(test_id=test_id).count()
+    
+    return render_template('ml_diagnosis.html', 
+                         test=test, 
+                         results_count=results_count)
+
+@app.route('/api/test/<int:test_id>/diagnose', methods=['POST'])
+def api_diagnose_test(test_id):
+    """API endpoint to run ML diagnosis on test results"""
+    try:
+        diagnosis = diagnostic_engine.diagnose_test(test_id)
+        return jsonify(diagnosis)
+    except Exception as e:
+        logging.error(f"Error running diagnosis: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/ml-models')
+def ml_models():
+    """ML Model management page"""
+    model_status = diagnostic_engine.get_model_status()
+    return render_template('ml_models.html', model_status=model_status)
+
+@app.route('/api/ml-models/train', methods=['POST'])
+def train_ml_models():
+    """Train ML models with available data"""
+    try:
+        success = diagnostic_engine.train_models()
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': 'Models trained successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'warning',
+                'message': 'Not enough data for training. Need at least 50 samples.'
+            }), 400
+    except Exception as e:
+        logging.error(f"Error training models: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ml-models/status')
+def ml_models_status():
+    """Get ML model status"""
+    try:
+        status = diagnostic_engine.get_model_status()
+        return jsonify(status)
+    except Exception as e:
+        logging.error(f"Error getting model status: {str(e)}")
+        return jsonify({'error': str(e)}), 500

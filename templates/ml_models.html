@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}ML Model Management - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-robot me-2"></i>
+                Machine Learning Models
+            </h1>
+            <p class="text-muted">Manage and train AI models for network diagnostic analysis</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Model Status Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Models Trained</h5>
+                    <h2 class="text-{{ 'success' if model_status.models_trained else 'warning' }}">
+                        {{ model_status.models_available | length }}
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Training Data</h5>
+                    <h2 class="text-info">{{ model_status.total_training_samples }}</h2>
+                    <small class="text-muted">test results</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Last Training</h5>
+                    <h2 class="text-secondary">
+                        {% if model_status.last_training %}
+                            <small>{{ model_status.last_training | truncate(10, True, '') }}</small>
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Status</h5>
+                    <h2>
+                        {% if model_status.models_trained %}
+                            <span class="badge bg-success fs-6">Ready</span>
+                        {% else %}
+                            <span class="badge bg-warning fs-6">Not Trained</span>
+                        {% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Model Training
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="mb-3">
+                                Train machine learning models using available test result data. 
+                                Models learn from network performance patterns to provide intelligent diagnostics.
+                            </p>
+                            
+                            {% if model_status.total_training_samples < 50 %}
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Insufficient Data:</strong> Need at least 50 test results for training. 
+                                    Currently have {{ model_status.total_training_samples }} samples.
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info" role="alert">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Ready for Training:</strong> {{ model_status.total_training_samples }} test results available.
+                                    Training typically takes 30-60 seconds.
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button id="train-btn" class="btn btn-primary btn-lg" onclick="trainModels()" 
+                                    {% if model_status.total_training_samples < 50 %}disabled{% endif %}>
+                                <i class="fas fa-play me-2"></i>
+                                Train Models
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Details -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Model Architecture
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">Anomaly Detection</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> Isolation Forest<br>
+                                        <strong>Purpose:</strong> Detect unusual network patterns<br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if 'anomaly_detector' in model_status.models_available else 'secondary' }}">
+                                            {{ 'Trained' if 'anomaly_detector' in model_status.models_available else 'Not Trained' }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Health Classification</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> Random Forest<br>
+                                        <strong>Purpose:</strong> Classify network health status<br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if 'health_classifier' in model_status.models_available else 'secondary' }}">
+                                            {{ 'Trained' if 'health_classifier' in model_status.models_available else 'Not Trained' }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">Performance Prediction</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> Gradient Boosting<br>
+                                        <strong>Purpose:</strong> Predict network performance<br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if 'performance_predictor' in model_status.models_available else 'secondary' }}">
+                                            {{ 'Trained' if 'performance_predictor' in model_status.models_available else 'Not Trained' }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feature Engineering -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Feature Engineering
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        ML models analyze 25+ features extracted from test results:
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Network Performance Features:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-dot-circle text-primary me-2"></i>Latency, Packet Loss, Jitter</li>
+                                <li><i class="fas fa-dot-circle text-primary me-2"></i>Bandwidth (Upload/Download)</li>
+                                <li><i class="fas fa-dot-circle text-primary me-2"></i>DNS Resolution Time</li>
+                                <li><i class="fas fa-dot-circle text-primary me-2"></i>TCP Connection Time</li>
+                                <li><i class="fas fa-dot-circle text-primary me-2"></i>SSL Handshake Time</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>System Performance Features:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-dot-circle text-success me-2"></i>CPU, Memory, Disk Usage</li>
+                                <li><i class="fas fa-dot-circle text-success me-2"></i>System Load (1, 5, 15 min)</li>
+                                <li><i class="fas fa-dot-circle text-success me-2"></i>Network Interface Errors</li>
+                                <li><i class="fas fa-dot-circle text-success me-2"></i>TCP Retransmission Rate</li>
+                                <li><i class="fas fa-dot-circle text-success me-2"></i>Application & Infrastructure Metrics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zero-Trust Compliance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Zero-Trust Network Compliance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>Local Processing Only:</h6>
+                            <ul class="mb-3">
+                                <li>All ML models run locally using Scikit-learn</li>
+                                <li>No external API calls or cloud dependencies</li>
+                                <li>Training data never leaves your network</li>
+                                <li>Models are stored locally in <code>ml_models/</code> directory</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                                <div class="mt-2">
+                                    <strong>100% Offline</strong><br>
+                                    <small class="text-muted">No Internet Required</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Progress Modal -->
+    <div class="modal fade" id="trainingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Training ML Models
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Training in Progress...</h5>
+                    <p class="text-muted mb-0">
+                        Analyzing test data and building ML models. This may take up to 60 seconds.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function trainModels() {
+    // Disable button and show modal
+    const trainBtn = document.getElementById('train-btn');
+    trainBtn.disabled = true;
+    trainBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Training...';
+    
+    const modal = new bootstrap.Modal(document.getElementById('trainingModal'));
+    modal.show();
+    
+    // Start training
+    fetch('/api/ml-models/train', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        modal.hide();
+        
+        if (data.status === 'success') {
+            showToast('ML models trained successfully!', 'success');
+            // Reload page to show updated status
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || 'Training failed', 'warning');
+            trainBtn.disabled = false;
+            trainBtn.innerHTML = '<i class="fas fa-play me-2"></i>Train Models';
+        }
+    })
+    .catch(error => {
+        modal.hide();
+        console.error('Error:', error);
+        showToast('Training failed', 'danger');
+        trainBtn.disabled = false;
+        trainBtn.innerHTML = '<i class="fas fa-play me-2"></i>Train Models';
+    });
+}
+
+function showToast(message, type) {
+    // Create and show toast notification
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove element after hiding
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>
+{% endblock %}
