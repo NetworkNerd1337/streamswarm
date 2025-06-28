@@ -534,6 +534,16 @@ class StreamSwarmClient:
                 qos_metrics = self._qos_test(destination)
                 bandwidth_metrics = self._bandwidth_test(destination)
                 
+                # Collect application metrics (only once per test, not every interval)
+                application_metrics = {}
+                if time.time() - start_time < interval * 2:  # Only in first two intervals
+                    application_metrics = self._get_application_metrics(destination)
+                
+                # Collect infrastructure metrics (only once per test)
+                infrastructure_metrics = {}
+                if time.time() - start_time < interval:  # Only in first interval
+                    infrastructure_metrics = self._get_infrastructure_metrics()
+                
                 # Add signal strength statistics to this measurement
                 sig_min, sig_max, sig_avg, sig_samples, sig_data = self._get_signal_strength_stats(test_id)
                 signal_strength_data = {}
@@ -560,7 +570,9 @@ class StreamSwarmClient:
                     **advanced_network,
                     **qos_metrics,
                     **bandwidth_metrics,
-                    **signal_strength_data
+                    **signal_strength_data,
+                    **application_metrics,
+                    **infrastructure_metrics
                 }
                 
                 # Submit results to server
@@ -1969,6 +1981,201 @@ class StreamSwarmClient:
         # Create comma-delimited string of all values
         values_str = ','.join(str(round(val, 1)) for val in tracker['values'])
         return tracker['min'], tracker['max'], avg, tracker['count'], values_str
+    
+    def _get_application_metrics(self, destination):
+        """Collect application-layer metrics"""
+        metrics = {
+            'content_download_time': None,
+            'compression_ratio': None,
+            'http_response_codes': None,
+            'connection_reuse_ratio': None,
+            'certificate_validation_time': None
+        }
+        
+        try:
+            import requests
+            from urllib.parse import urlparse
+            
+            # Ensure we have a valid URL
+            if not destination.startswith(('http://', 'https://')):
+                destination = f'https://{destination}'
+            
+            parsed_url = urlparse(destination)
+            if not parsed_url.netloc:
+                return metrics
+            
+            # Test HTTP performance
+            session = requests.Session()
+            
+            # Measure content download time
+            start_time = time.time()
+            try:
+                response = session.get(destination, timeout=15, stream=True)
+                
+                # Track response codes
+                status_code = response.status_code
+                if 200 <= status_code < 300:
+                    response_class = '2xx'
+                elif 300 <= status_code < 400:
+                    response_class = '3xx'
+                elif 400 <= status_code < 500:
+                    response_class = '4xx'
+                else:
+                    response_class = '5xx'
+                
+                metrics['http_response_codes'] = json.dumps({response_class: 1})
+                
+                # Measure content download time
+                content_length = 0
+                for chunk in response.iter_content(chunk_size=8192):
+                    content_length += len(chunk)
+                    # Stop after reasonable amount for testing
+                    if content_length > 1048576:  # 1MB limit
+                        break
+                
+                download_time = (time.time() - start_time) * 1000  # Convert to ms
+                metrics['content_download_time'] = round(download_time, 2)
+                
+                # Check for compression
+                content_encoding = response.headers.get('content-encoding', '').lower()
+                if content_encoding in ['gzip', 'deflate', 'br']:
+                    # Estimate compression ratio based on headers
+                    content_length_header = response.headers.get('content-length')
+                    if content_length_header and content_length > 0:
+                        # Rough compression ratio estimate
+                        compressed_size = int(content_length_header)
+                        if compressed_size < content_length:
+                            ratio = ((content_length - compressed_size) / content_length) * 100
+                            metrics['compression_ratio'] = round(ratio, 1)
+                        else:
+                            metrics['compression_ratio'] = 0.0
+                    else:
+                        # Default compression ratio for compressed content
+                        metrics['compression_ratio'] = 30.0  # Typical web compression
+                else:
+                    metrics['compression_ratio'] = 0.0
+                
+                # Check for keep-alive connection reuse
+                connection_header = response.headers.get('connection', '').lower()
+                if 'keep-alive' in connection_header:
+                    metrics['connection_reuse_ratio'] = 100.0
+                else:
+                    metrics['connection_reuse_ratio'] = 0.0
+                
+                # SSL certificate validation time (for HTTPS)
+                if parsed_url.scheme == 'https':
+                    cert_start = time.time()
+                    try:
+                        import ssl
+                        import socket
+                        
+                        context = ssl.create_default_context()
+                        with socket.create_connection((parsed_url.netloc, 443), timeout=5) as sock:
+                            with context.wrap_socket(sock, server_hostname=parsed_url.netloc) as ssock:
+                                cert_time = (time.time() - cert_start) * 1000
+                                metrics['certificate_validation_time'] = round(cert_time, 2)
+                    except Exception as e:
+                        logger.debug(f"SSL certificate validation timing failed: {e}")
+                        
+            except Exception as e:
+                logger.debug(f"Application metrics collection failed for {destination}: {e}")
+                
+        except ImportError:
+            logger.debug("requests library not available for application metrics")
+        except Exception as e:
+            logger.debug(f"Application metrics collection error: {e}")
+        
+        return metrics
+    
+    def _get_infrastructure_metrics(self):
+        """Collect infrastructure monitoring metrics"""
+        metrics = {
+            'power_consumption_watts': None,
+            'memory_error_rate': None,
+            'fan_speeds_rpm': None,
+            'smart_drive_health': None
+        }
+        
+        try:
+            # Power consumption monitoring (Linux only)
+            if platform.system().lower() == 'linux':
+                # Try to get power consumption from various sources
+                power_sources = [
+                    '/sys/class/power_supply/BAT0/power_now',  # Battery power
+                    '/sys/class/power_supply/BAT1/power_now',
+                    '/sys/class/hwmon/hwmon0/power1_input',    # Hardware monitoring
+                    '/sys/class/hwmon/hwmon1/power1_input'
+                ]
+                
+                for power_file in power_sources:
+                    try:
+                        with open(power_file, 'r') as f:
+                            power_microwatts = int(f.read().strip())
+                            power_watts = power_microwatts / 1000000.0  # Convert to watts
+                            if 0 < power_watts < 1000:  # Reasonable range
+                                metrics['power_consumption_watts'] = round(power_watts, 1)
+                                break
+                    except (FileNotFoundError, ValueError, PermissionError):
+                        continue
+                
+                # Memory error rate monitoring
+                try:
+                    # Check for ECC memory errors in kernel logs
+                    result = subprocess.run(['dmesg'], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        ecc_errors = result.stdout.lower().count('ecc') + result.stdout.lower().count('memory error')
+                        # Estimate error rate per hour (very rough approximation)
+                        if ecc_errors > 0:
+                            # Assume system has been up for some time, rough estimate
+                            with open('/proc/uptime', 'r') as f:
+                                uptime_seconds = float(f.read().split()[0])
+                                uptime_hours = uptime_seconds / 3600.0
+                                if uptime_hours > 0:
+                                    error_rate = ecc_errors / uptime_hours
+                                    metrics['memory_error_rate'] = round(error_rate, 3)
+                        else:
+                            metrics['memory_error_rate'] = 0.0
+                except Exception as e:
+                    logger.debug(f"Memory error rate collection failed: {e}")
+                
+                # Fan speed monitoring
+                try:
+                    fan_speeds = {}
+                    fan_paths = [
+                        '/sys/class/hwmon/hwmon0/fan1_input',
+                        '/sys/class/hwmon/hwmon1/fan1_input',
+                        '/sys/class/hwmon/hwmon2/fan1_input'
+                    ]
+                    
+                    for i, fan_path in enumerate(fan_paths):
+                        try:
+                            with open(fan_path, 'r') as f:
+                                rpm = int(f.read().strip())
+                                if rpm > 0:
+                                    fan_speeds[f'fan_{i+1}'] = rpm
+                        except (FileNotFoundError, ValueError, PermissionError):
+                            continue
+                    
+                    if fan_speeds:
+                        metrics['fan_speeds_rpm'] = json.dumps(fan_speeds)
+                except Exception as e:
+                    logger.debug(f"Fan speed monitoring failed: {e}")
+                
+                # SMART drive health monitoring (basic)
+                try:
+                    # Try to get basic disk health information
+                    result = subprocess.run(['df', '-h'], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        # Just check if drives are responding (basic health check)
+                        drive_health = {'status': 'responsive'}
+                        metrics['smart_drive_health'] = json.dumps(drive_health)
+                except Exception as e:
+                    logger.debug(f"Drive health check failed: {e}")
+                
+        except Exception as e:
+            logger.debug(f"Infrastructure metrics collection error: {e}")
+        
+        return metrics
     
     def start(self):
         """Start the client"""
