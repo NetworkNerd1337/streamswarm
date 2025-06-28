@@ -135,7 +135,10 @@ class NetworkDiagnosticEngine:
                 # Derived Features
                 'latency_jitter_ratio': (result.jitter / result.ping_latency) if result.ping_latency and result.ping_latency > 0 else 0,
                 'bandwidth_ratio': (result.bandwidth_upload / result.bandwidth_download) if result.bandwidth_download and result.bandwidth_download > 0 else 0,
-                'system_load_avg': (result.cpu_load_1min + result.cpu_load_5min + result.cpu_load_15min) / 3 if all([result.cpu_load_1min, result.cpu_load_5min, result.cpu_load_15min]) else 0,
+                'system_load_avg': (
+                    ((result.cpu_load_1min or 0) + (result.cpu_load_5min or 0) + (result.cpu_load_15min or 0)) / 3 
+                    if any([result.cpu_load_1min, result.cpu_load_5min, result.cpu_load_15min]) else 0
+                ),
                 'total_network_errors': (result.network_errors_in or 0) + (result.network_errors_out or 0),
                 'total_network_drops': (result.network_drops_in or 0) + (result.network_drops_out or 0),
             }
@@ -209,29 +212,78 @@ class NetworkDiagnosticEngine:
         """
         Train ML models using available test result data
         """
-        logger.info("Starting model training...")
-        
-        # Get all test results from database
-        results = TestResult.query.all()
-        
-        if len(results) < min_samples:
-            logger.warning(f"Not enough data for training. Need at least {min_samples} samples, have {len(results)}")
-            return False
-        
-        # Extract features
-        features_df = self.extract_features(results)
-        
-        if features_df.empty:
-            logger.error("No features extracted from test results")
-            return False
-        
-        # Prepare training data
-        X = features_df.fillna(0)  # Fill NaN values with 0
-        
-        # Create health labels based on calculated scores
-        health_scores = []
-        for i in range(len(X)):
-            score = self.calculate_health_score(X.iloc[i:i+1])
+        try:
+            logger.info("Starting model training...")
+            
+            # Get all test results from database
+            results = TestResult.query.all()
+            
+            if len(results) < min_samples:
+                logger.warning(f"Not enough data for training. Need at least {min_samples} samples, have {len(results)}")
+                return False
+            
+            # Extract features
+            features_df = self.extract_features(results)
+            
+            if features_df.empty:
+                logger.error("No features extracted from test results")
+                return False
+            
+            # Prepare training data - handle NaN and infinite values
+            X = features_df.replace([float('inf'), float('-inf')], 0).fillna(0)
+            
+            # Ensure all values are numeric and finite
+            for col in X.columns:
+                X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0)
+            
+            # Create health labels based on calculated scores
+            health_scores = []
+            for i in range(len(X)):
+            row = X.iloc[i]
+            
+            # Calculate health score for individual row
+            network_score = 100
+            if row['ping_latency'] > 0:
+                network_score -= min(row['ping_latency'] / 2, 50)
+            if row['ping_packet_loss'] > 0:
+                network_score -= min(row['ping_packet_loss'] * 10, 40)
+            if row['jitter'] > 0:
+                network_score -= min(row['jitter'] / 2, 10)
+            
+            system_score = 100
+            if row['cpu_percent'] > 80:
+                system_score -= 30
+            elif row['cpu_percent'] > 60:
+                system_score -= 15
+            if row['memory_percent'] > 90:
+                system_score -= 20
+            elif row['memory_percent'] > 75:
+                system_score -= 10
+            
+            reliability_score = 100
+            if row['total_network_errors'] > 0:
+                reliability_score -= min(row['total_network_errors'], 30)
+            if row['tcp_retransmission_rate'] > 5:
+                reliability_score -= 20
+            elif row['tcp_retransmission_rate'] > 2:
+                reliability_score -= 10
+            
+            efficiency_score = 100
+            if row['bandwidth_download'] < 100:
+                efficiency_score -= 20
+            if row['compression_ratio'] < 20:
+                efficiency_score -= 10
+            
+            # Calculate weighted average
+            weights = {'network': 0.4, 'system': 0.3, 'reliability': 0.2, 'efficiency': 0.1}
+            score = (
+                network_score * weights['network'] +
+                system_score * weights['system'] +
+                reliability_score * weights['reliability'] +
+                efficiency_score * weights['efficiency']
+            )
+            score = max(0, min(100, score))
+            
             if score >= 80:
                 health_scores.append('healthy')
             elif score >= 60:
@@ -282,11 +334,17 @@ class NetworkDiagnosticEngine:
                 performance_predictor.fit(X_perf_scaled, y_perf)
                 self.models['performance_predictor'] = performance_predictor
         
-        # Save trained models
-        self._save_models()
-        
-        logger.info(f"Model training completed with {len(results)} samples")
-        return True
+            # Save trained models
+            self._save_models()
+            
+            logger.info(f"Model training completed with {len(results)} samples")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error training models: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False
     
     def diagnose_test(self, test_id: int) -> Dict[str, Any]:
         """
