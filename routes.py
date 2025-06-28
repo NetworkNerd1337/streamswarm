@@ -1237,12 +1237,21 @@ def delete_client(client_id):
         if client.status == 'online':
             return jsonify({'error': 'Cannot delete online client. Client must be offline first.'}), 400
         
+        # Check for API token references
+        api_token_count = ApiToken.query.filter_by(client_id=client_id).count()
+        
         # Check if client has test data
         result_count = TestResult.query.filter_by(client_id=client_id).count()
         test_client_count = TestClient.query.filter_by(client_id=client_id).count()
         
         # Store client info for logging
         client_hostname = client.hostname
+        
+        if api_token_count > 0:
+            # API tokens must be deleted first
+            return jsonify({
+                'error': f'Cannot delete client "{client_hostname}" because it has {api_token_count} API token(s) assigned. Please delete the API token(s) first in the Token Management section, then try deleting the client again.'
+            }), 400
         
         if result_count > 0 or test_client_count > 0:
             # Cannot delete client with existing test data due to foreign key constraints

@@ -106,6 +106,8 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Template now correctly displays comprehensive wireless details (SSID, signal strength, frequency, channel, MAC, TX power) for all wireless interfaces
   - Fixed signal strength measurement count display to show actual sample count instead of hardcoded "2 measurements"
   - Updated template logic to select result with maximum signal strength samples using sort(attribute='signal_strength_samples', reverse=true)
+  - Enhanced client deletion error messages to clearly indicate when API tokens must be deleted first
+  - Added specific check for API token foreign key constraints with user-friendly guidance to delete tokens in Token Management section
 - June 28, 2025: Implemented Application & Infrastructure metrics collection
   - Added comprehensive application-layer metrics collection including content download time and compression ratio analysis
   - Implemented infrastructure monitoring for power consumption, memory error rates, fan speeds, and drive health
