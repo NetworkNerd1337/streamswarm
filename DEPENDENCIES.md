@@ -19,6 +19,13 @@ sudo apt install build-essential libffi-dev libssl-dev
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool
 sudo apt install libpcap-dev tcpdump
 
+# Install wireless detection tools (modern iw package)
+sudo apt install iw wireless-tools libiw-dev network-manager
+
+# Install AI/ML dependencies for server (optional but recommended)
+sudo apt install python3-numpy python3-scipy python3-sklearn
+sudo apt install libatlas-base-dev liblapack-dev gfortran
+
 # Create symbolic links for convenience (optional)
 sudo ln -sf /usr/bin/python3.9 /usr/bin/python
 sudo ln -sf /usr/bin/pip3.9 /usr/bin/pip
@@ -32,6 +39,13 @@ sudo dnf install python3.9 python3.9-pip python3.9-devel gcc openssl-devel libff
 # Install system monitoring dependencies
 sudo dnf install iputils traceroute lm_sensors smartmontools ethtool
 sudo dnf install libpcap-devel tcpdump
+
+# Install wireless detection tools (modern iw package)
+sudo dnf install iw wireless-tools NetworkManager
+
+# Install AI/ML dependencies for server (optional but recommended)
+sudo dnf install python3-numpy python3-scipy python3-scikit-learn
+sudo dnf install atlas-devel lapack-devel gcc-gfortran
 
 # For older versions, replace 'dnf' with 'yum'
 ```
@@ -107,6 +121,12 @@ pip install speedtest-cli>=2.1.3
 # Professional report generation and visualization
 pip install reportlab>=4.4.0
 pip install matplotlib>=3.10.0
+
+# AI/ML diagnostic capabilities (optional but recommended for server)
+pip install scikit-learn>=1.0.0
+pip install pandas>=1.3.0
+pip install numpy>=1.20.0
+pip install joblib>=1.0.0
 ```
 
 ## Single Command Installation
@@ -114,7 +134,7 @@ pip install matplotlib>=3.10.0
 Install all dependencies at once:
 
 ```bash
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 scikit-learn>=1.0.0 pandas>=1.3.0 numpy>=1.20.0 joblib>=1.0.0
 ```
 
 ## Package Descriptions
@@ -132,6 +152,10 @@ pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-bina
 - **speedtest-cli**: Internet bandwidth testing and speed measurement with multi-method approach
 - **reportlab**: Professional PDF document generation with executive-level reporting
 - **matplotlib**: Chart and graph generation for performance trend analysis
+- **scikit-learn**: Machine learning library for AI-powered network diagnostics and anomaly detection
+- **pandas**: Data analysis and manipulation library for ML feature engineering
+- **numpy**: Numerical computing library for mathematical operations in ML models
+- **joblib**: Efficient serialization of ML models and parallel processing utilities
 
 ## Optional: Create requirements.txt
 

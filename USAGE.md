@@ -147,6 +147,34 @@ Open your web browser and navigate to the server URL. You'll see three main sect
 - **Database Performance**: Query time estimation for web applications
 - **Multipath Detection**: MPTCP and ECMP path diversity analysis
 
+### AI/ML Diagnostic Analysis
+
+StreamSwarm includes an advanced AI diagnostic system that provides intelligent analysis of network performance data using local machine learning models.
+
+**AI Features:**
+- **Anomaly Detection**: Identifies unusual network patterns using Isolation Forest
+- **Health Classification**: Classifies network health status using Random Forest
+- **Performance Prediction**: Predicts network performance trends using Gradient Boosting
+- **Issue Classification**: Automatically categorizes and prioritizes network issues
+- **Intelligent Recommendations**: Provides specific troubleshooting guidance
+
+**Zero-Trust Architecture:**
+- All ML processing runs locally using Scikit-learn
+- No external API calls or cloud dependencies
+- Training data never leaves your network
+- Models stored locally in `ml_models/` directory
+
+**Health Score Interpretation:**
+- **80-100**: Healthy network performance
+- **60-79**: Warning - some issues detected
+- **0-59**: Critical - significant problems identified
+
+**How to Use AI Diagnostics:**
+1. Collect at least 50 test results from network monitoring
+2. Visit "AI Models" page and click "Train Models"
+3. Click "Diagnose Results" on any completed test
+4. Review AI-generated analysis with health scores and recommendations
+
 ### Infrastructure Health Monitoring
 - **Power Management**: Energy consumption tracking where accessible
 - **Cooling Systems**: Fan speed and thermal monitoring

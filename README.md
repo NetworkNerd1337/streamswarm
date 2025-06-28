@@ -123,9 +123,10 @@ See [TUTORIAL.md](TUTORIAL.md) for comprehensive AI/ML setup and usage instructi
 #### Server Requirements
 - Python 3.8+ (3.9+ recommended)
 - PostgreSQL (recommended) or SQLite
-- 2GB RAM minimum, 4GB+ recommended
+- 2GB RAM minimum, 4GB+ recommended for AI/ML features
 - Network access for client connections
 - Administrative privileges for system monitoring
+- Additional ML dependencies: scikit-learn, pandas, numpy, joblib
 
 #### Client Requirements
 - Python 3.8+ (3.9+ recommended)
