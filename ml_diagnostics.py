@@ -133,8 +133,16 @@ class NetworkDiagnosticEngine:
                 'signal_strength_max': result.signal_strength_max or 0,
                 
                 # Derived Features
-                'latency_jitter_ratio': (result.jitter / result.ping_latency) if result.ping_latency and result.ping_latency > 0 else 0,
-                'bandwidth_ratio': (result.bandwidth_upload / result.bandwidth_download) if result.bandwidth_download and result.bandwidth_download > 0 else 0,
+                'latency_jitter_ratio': (
+                    (result.jitter or 0) / (result.ping_latency or 1) 
+                    if result.ping_latency and result.ping_latency > 0 and result.jitter is not None 
+                    else 0
+                ),
+                'bandwidth_ratio': (
+                    (result.bandwidth_upload or 0) / (result.bandwidth_download or 1) 
+                    if result.bandwidth_download and result.bandwidth_download > 0 and result.bandwidth_upload is not None 
+                    else 0
+                ),
                 'system_load_avg': (
                     ((result.cpu_load_1min or 0) + (result.cpu_load_5min or 0) + (result.cpu_load_15min or 0)) / 3 
                     if any([result.cpu_load_1min, result.cpu_load_5min, result.cpu_load_15min]) else 0
