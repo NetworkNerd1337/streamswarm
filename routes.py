@@ -21,22 +21,39 @@ import ipaddress
 # ================================
 
 def admin_required(f):
-    """Decorator to require admin role for access"""
+    """Decorator to require admin role for access with development mode bypass"""
     @wraps(f)
-    @login_required
     def decorated_function(*args, **kwargs):
-        if not current_user.is_admin():
-            flash('Admin access required.', 'danger')
-            return redirect(url_for('dashboard'))
-        return f(*args, **kwargs)
+        # Check if development mode is enabled
+        if SystemConfig.is_development_mode():
+            # In development mode, bypass admin checks
+            return f(*args, **kwargs)
+            
+        # Normal admin authentication check
+        from flask_login import login_required
+        @login_required
+        @wraps(f)
+        def inner(*args, **kwargs):
+            if not current_user.is_admin():
+                flash('Admin access required.', 'danger')
+                return redirect(url_for('dashboard'))
+            return f(*args, **kwargs)
+        return inner(*args, **kwargs)
     return decorated_function
 
 def web_auth_required(f):
-    """Decorator to require web GUI authentication (separate from API tokens)"""
+    """Decorator to require web GUI authentication with development mode bypass"""
     @wraps(f)
-    @login_required
     def decorated_function(*args, **kwargs):
-        return f(*args, **kwargs)
+        # Check if development mode is enabled
+        if SystemConfig.is_development_mode():
+            # In development mode, bypass authentication
+            return f(*args, **kwargs)
+        
+        # Normal authentication check
+        from flask_login import login_required
+        return login_required(f)(*args, **kwargs)
+    
     return decorated_function
 
 # Input validation functions
