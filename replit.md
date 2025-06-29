@@ -110,9 +110,12 @@ The system follows a distributed client-server model with the following key comp
 - June 29, 2025. Fixed MTU Size display bug in Network Performance Metrics
 - June 29, 2025. Implemented Development Mode feature for admin users to temporarily disable authentication
 - June 29, 2025. Enhanced error handling for malformed URLs and graceful error pages
+- June 29, 2025. Implemented case-insensitive username authentication for better user experience
+- June 29, 2025. Restructured system configuration: moved Dev Mode to organized System Configuration page in user dropdown
 
 ## User Preferences
 
 - Preferred communication style: Simple, everyday language
 - Development workflow: User finds authentication systems make development/troubleshooting more difficult and prefers bypass capability for faster iteration
 - Error handling: User expects graceful error pages instead of white "Internal Server Error" screens for better user experience
+- System organization: User prefers organized, intuitive navigation with dedicated configuration sections rather than scattered individual menu items

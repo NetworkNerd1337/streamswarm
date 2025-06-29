@@ -107,8 +107,17 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
     - Added "Dev Mode" navigation link and control page for admin users
   - **ENHANCED** Error handling and user experience:
     - Fixed login page internal server errors caused by malformed URL parameters (e.g., /login%3Fnext=%)
-    - Added comprehensive error handlers for 400, 404, and 500 errors with styled error pages
+    - Added comprehensive error handlers for 400, 404, and 500 error pages with styled error pages
     - Implemented graceful error recovery with user-friendly messages instead of white error screens
+  - **IMPROVED** Authentication system usability:
+    - Implemented case-insensitive username authentication for better user experience
+    - Users can now login with username in any case variation (admin, ADMIN, Admin, etc.)
+    - Updated all username uniqueness checks to be case-insensitive across the system
+  - **RESTRUCTURED** System Configuration organization:
+    - Created dedicated System Configuration page accessible from user account dropdown (admin only)
+    - Moved Development Mode settings from main navigation to System Configuration subsection
+    - Added breadcrumb navigation and organized foundation for future system settings
+    - Improved intuitive access to admin features through structured configuration dashboard
 
 ## Development Status
 
