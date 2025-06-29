@@ -681,16 +681,31 @@
                                                         </tr>
                                                         <tr>
                                                             <td>MTU Size</td>
-                                                            {% set has_mtu_data = false %}
+                                                            {% set mtu_values = [] %}
                                                             {% for result in results %}
-                                                                {% if result.network_interface_info and '"mtu": 1500' in result.network_interface_info %}
-                                                                    {% set has_mtu_data = true %}
-                                                                    {% break %}
+                                                                {% if result.network_interface_info %}
+                                                                    {% set interface_data = result.network_interface_info | from_json %}
+                                                                    {% if interface_data.get('all_interfaces') %}
+                                                                        {% for interface in interface_data.all_interfaces %}
+                                                                            {% if interface.get('mtu') and interface.get('is_up') %}
+                                                                                {% set _ = mtu_values.append(interface.mtu) %}
+                                                                            {% endif %}
+                                                                        {% endfor %}
+                                                                    {% endif %}
                                                                 {% endif %}
                                                             {% endfor %}
-                                                            {% if has_mtu_data %}
-                                                                <td>1500 bytes</td>
-                                                                <td><span class="badge bg-success">Standard</span></td>
+                                                            {% if mtu_values %}
+                                                                {% set avg_mtu = (mtu_values | sum / mtu_values | length) | round(0) | int %}
+                                                                <td>{{ avg_mtu }} bytes</td>
+                                                                <td>
+                                                                    {% if avg_mtu == 1500 %}
+                                                                        <span class="badge bg-success">Standard</span>
+                                                                    {% elif avg_mtu > 1500 %}
+                                                                        <span class="badge bg-info">Jumbo</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-warning">Small</span>
+                                                                    {% endif %}
+                                                                </td>
                                                             {% else %}
                                                                 <td>N/A</td>
                                                                 <td><span class="badge bg-secondary">N/A</span></td>

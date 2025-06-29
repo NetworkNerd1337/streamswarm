@@ -80,8 +80,8 @@ def from_json_filter(value):
         try:
             return json.loads(value)
         except (json.JSONDecodeError, TypeError):
-            return []
-    return value if value else []
+            return {}
+    return value if value else {}
 
 @app.template_filter('parse_signal_data')
 def parse_signal_data_filter(value):
