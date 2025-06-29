@@ -198,10 +198,10 @@
                 </div>
                 <div class="card-body">
                     <p class="mb-3">
-                        ML models analyze 25+ features extracted from test results:
+                        ML models analyze 35+ features extracted from test results:
                     </p>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <h6>Network Performance Features:</h6>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-dot-circle text-primary me-2"></i>Latency, Packet Loss, Jitter</li>
@@ -209,10 +209,21 @@
                                 <li><i class="fas fa-dot-circle text-primary me-2"></i>DNS Resolution Time</li>
                                 <li><i class="fas fa-dot-circle text-primary me-2"></i>TCP Connection Time</li>
                                 <li><i class="fas fa-dot-circle text-primary me-2"></i>SSL Handshake Time</li>
+                                <li><i class="fas fa-dot-circle text-primary me-2"></i>Signal Strength (Wireless)</li>
                             </ul>
                         </div>
-                        <div class="col-md-6">
-                            <h6>System Performance Features:</h6>
+                        <div class="col-md-4">
+                            <h6>TCP Handshake Analysis:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-dot-circle text-info me-2"></i>SYN, SYN-ACK, ACK Timing</li>
+                                <li><i class="fas fa-dot-circle text-info me-2"></i>Total Handshake Time</li>
+                                <li><i class="fas fa-dot-circle text-info me-2"></i>Network Delay vs Server Processing</li>
+                                <li><i class="fas fa-dot-circle text-info me-2"></i>Handshake Efficiency Ratio</li>
+                                <li><i class="fas fa-dot-circle text-info me-2"></i>Connection Overhead Analysis</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>System & Application Features:</h6>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-dot-circle text-success me-2"></i>CPU, Memory, Disk Usage</li>
                                 <li><i class="fas fa-dot-circle text-success me-2"></i>System Load (1, 5, 15 min)</li>
