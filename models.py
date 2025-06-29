@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default='user')  # 'user' or 'admin'
-    is_active = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     last_login = db.Column(db.DateTime, nullable=True)
     
@@ -31,6 +31,11 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         """Check if user has admin role"""
         return self.role == 'admin'
+    
+    @property
+    def is_active(self):
+        """Flask-Login requires is_active property"""
+        return self.active
     
     def update_last_login(self):
         """Update last login timestamp"""

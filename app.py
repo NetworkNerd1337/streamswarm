@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -43,7 +44,6 @@ def tojson_filter(value):
     """Convert JSON string to Python object"""
     if isinstance(value, str):
         try:
-            import json
             return json.loads(value)
         except json.JSONDecodeError:
             return {}
@@ -54,7 +54,6 @@ def from_json_filter(value):
     """Convert JSON string to Python object"""
     if isinstance(value, str):
         try:
-            import json
             return json.loads(value)
         except (json.JSONDecodeError, TypeError):
             return []
