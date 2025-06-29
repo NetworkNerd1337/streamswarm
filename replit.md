@@ -114,6 +114,7 @@ The system follows a distributed client-server model with the following key comp
 - June 29, 2025. Restructured system configuration: moved Dev Mode to organized System Configuration page in user dropdown
 - June 29, 2025. Implemented comprehensive TCP Window Analysis feature for advanced network bottleneck attribution with real-time monitoring and efficiency scoring
 - June 29, 2025. TCP Window Analysis testing completed: Core functions validated, database schema configured with 21 TCP fields, bottleneck detection working correctly. Clients require updated client.py code to enable TCP monitoring capabilities.
+- June 29, 2025. Fixed critical Jinja2 template compatibility issue: Replaced problematic map(attribute) filter chains with custom extract_numeric filter to resolve template rendering errors and restore web interface functionality.
 
 ## User Preferences
 

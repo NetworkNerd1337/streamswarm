@@ -895,9 +895,8 @@
                                                                 <h4 class="mb-2">
                                                                     {% set first_bottleneck = None %}
                                                                     {% for result in tcp_results %}
-                                                                        {% if result.tcp_bottleneck_type %}
+                                                                        {% if result.tcp_bottleneck_type and not first_bottleneck %}
                                                                             {% set first_bottleneck = result.tcp_bottleneck_type %}
-                                                                            {% break %}
                                                                         {% endif %}
                                                                     {% endfor %}
                                                                     {% if first_bottleneck %}
