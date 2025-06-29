@@ -2,9 +2,51 @@ from app import db
 from datetime import datetime, timezone
 import zoneinfo
 from sqlalchemy import Text, JSON
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import secrets
 import string
+
+class User(UserMixin, db.Model):
+    """Web GUI user authentication model - separate from client API tokens"""
+    __tablename__ = 'web_users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), default='user')  # 'user' or 'admin'
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    last_login = db.Column(db.DateTime, nullable=True)
+    
+    def set_password(self, password):
+        """Hash and set password"""
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """Check password against hash"""
+        return check_password_hash(self.password_hash, password)
+    
+    def is_admin(self):
+        """Check if user has admin role"""
+        return self.role == 'admin'
+    
+    def update_last_login(self):
+        """Update last login timestamp"""
+        self.last_login = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        db.session.commit()
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role': self.role,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_login': self.last_login.isoformat() if self.last_login else None
+        }
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
