@@ -681,9 +681,34 @@
                                                         </tr>
                                                         <tr>
                                                             <td>MTU Size</td>
-                                                            {% set avg_mtu = results | map(attribute='mtu_size') | select('number') | list %}
-                                                            <td>{{ avg_mtu | average | round(0) | int if avg_mtu else 'N/A' }} bytes</td>
-                                                            <td><span class="badge bg-info">Info</span></td>
+                                                            {% set mtu_values = [] %}
+                                                            {% for result in results %}
+                                                                {% if result.network_interface_info %}
+                                                                    {% set interface_data = result.network_interface_info | from_json %}
+                                                                    {% if interface_data and interface_data.all_interfaces %}
+                                                                        {% for interface in interface_data.all_interfaces %}
+                                                                            {% if interface.mtu and interface.is_up %}
+                                                                                {% set _ = mtu_values.append(interface.mtu) %}
+                                                                            {% endif %}
+                                                                        {% endfor %}
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            <td>{{ mtu_values | average | round(0) | int if mtu_values else 'N/A' }} bytes</td>
+                                                            <td>
+                                                                {% if mtu_values %}
+                                                                    {% set avg_mtu = mtu_values | average %}
+                                                                    {% if avg_mtu == 1500 %}
+                                                                        <span class="badge bg-success">Standard</span>
+                                                                    {% elif avg_mtu > 1500 %}
+                                                                        <span class="badge bg-info">Jumbo</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-warning">Small</span>
+                                                                    {% endif %}
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">N/A</span>
+                                                                {% endif %}
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <td>TCP Retransmission Rate (%)</td>
