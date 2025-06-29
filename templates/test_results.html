@@ -1253,22 +1253,18 @@
                                                 </div>
                                                 
                                                 <!-- Diagnostic Analysis -->
-                                                <!-- DEBUG: handshake_results count = {{ handshake_results | length if handshake_results else 0 }} -->
-                                                {% if handshake_results %}
+                                                {% if handshake_analysis_results %}
                                                     <div class="alert alert-info mt-3">
                                                         <h6 class="alert-heading">
                                                             <i class="fas fa-chart-line me-2"></i>Handshake Performance Analysis
                                                         </h6>
-                                                        {% for result in handshake_results[:3] %}
-                                                            <!-- DEBUG: result.id={{ result.id }}, analysis="{{ result.tcp_handshake_analysis }}" -->
+                                                        {% for result in handshake_analysis_results[:3] %}
                                                             <p class="mb-1"><strong>Client {{ result.client.hostname }}:</strong> {{ result.tcp_handshake_analysis }}</p>
                                                         {% endfor %}
-                                                        {% if handshake_results | length > 3 %}
-                                                            <small class="text-muted">... and {{ handshake_results | length - 3 }} more results</small>
+                                                        {% if handshake_analysis_results | length > 3 %}
+                                                            <small class="text-muted">... and {{ handshake_analysis_results | length - 3 }} more results</small>
                                                         {% endif %}
                                                     </div>
-                                                {% else %}
-                                                    <!-- DEBUG: No handshake_results found -->
                                                 {% endif %}
                                                 
                                                 <hr class="my-3">

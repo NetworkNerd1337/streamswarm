@@ -285,7 +285,7 @@ def test_results(test_id):
     clients = db.session.query(Client).join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
     # Get results with client information joined for handshake analysis
-    handshake_results = db.session.query(TestResult).join(Client).filter(
+    handshake_analysis_results = db.session.query(TestResult).join(Client).filter(
         TestResult.test_id == test_id,
         TestResult.tcp_handshake_analysis.isnot(None)
     ).order_by(TestResult.timestamp.desc()).all()
@@ -294,7 +294,7 @@ def test_results(test_id):
                          test=test, 
                          results=results, 
                          clients=clients,
-                         handshake_results=handshake_results)
+                         handshake_analysis_results=handshake_analysis_results)
 
 @app.route('/tutorial')
 @web_auth_required
