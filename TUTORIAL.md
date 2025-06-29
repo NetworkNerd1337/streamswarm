@@ -325,7 +325,65 @@ echo "SESSION_SECRET=your-random-session-secret" >> .env
 psql "$DATABASE_URL" -c "SELECT version();"
 ```
 
-**Note:** StreamSwarm automatically creates all necessary database tables (clients, tests, test_results with 45+ metric columns) when the server starts for the first time.
+**Note:** StreamSwarm automatically creates all necessary database tables (clients, tests, test_results with 65+ metric columns, user authentication, and API token management) when the server starts for the first time.
+
+## Web Authentication System
+
+StreamSwarm includes a complete secure authentication system that protects the web GUI while keeping client API access separate.
+
+### Automatic Setup
+
+The authentication system is automatically configured when the server starts for the first time:
+
+**Default Admin Account:**
+- **Username:** `admin`
+- **Password:** `admin123`
+- **Role:** Administrator
+
+**⚠️ Security Notice:** Change the default password immediately after first login!
+
+### Authentication Features
+
+- **Secure password hashing** using Werkzeug
+- **Role-based access control** (Administrator/User roles)
+- **Session-based authentication** with Flask-Login
+- **Self-service password changes** for all users
+- **Admin user management interface** for creating and managing users
+- **Completely separate** from client API token system
+
+### User Management (Admin Only)
+
+Administrators can access the user management interface to:
+- Create new user accounts
+- Assign roles (Admin/User)
+- Activate/deactivate accounts
+- Delete users (with protections)
+- View user activity
+
+**Access via:** Username dropdown → "User Management" (Admin badge required)
+
+### Self-Service Features
+
+All authenticated users can:
+- Change their own password securely
+- View profile information
+- See account activity and login history
+
+**Access via:** Username dropdown → "My Profile"
+
+### Security Architecture
+
+The system uses two separate authentication mechanisms:
+
+1. **Web GUI Authentication (Flask-Login)**
+   - Session-based login for web interface
+   - Role-based page protection
+   - Secure password hashing
+
+2. **Client API Tokens**
+   - Token-based authentication for monitoring clients
+   - Separate from web authentication
+   - No interference with web login sessions
 
 ## Table of Contents
 1. [Understanding the Architecture](#understanding-the-architecture)

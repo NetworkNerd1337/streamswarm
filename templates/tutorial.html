@@ -37,6 +37,7 @@
                             <ul class="list-unstyled">
                                 <li><a href="#dependencies" class="text-decoration-none">System Dependencies</a></li>
                                 <li><a href="#database-setup" class="text-decoration-none">Database Setup</a></li>
+                                <li><a href="#authentication-setup" class="text-decoration-none">Authentication System</a></li>
                                 <li><a href="#architecture" class="text-decoration-none">Understanding the Architecture</a></li>
                                 <li><a href="#server-setup" class="text-decoration-none">Server Setup Guide</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Client Deployment</a></li>
@@ -528,7 +529,168 @@ psql "$DATABASE_URL" -c "SELECT version();"
                                     <i class="fas fa-magic me-2"></i>
                                     Automatic Schema Creation
                                 </h6>
-                                <p class="mb-0">StreamSwarm automatically creates all necessary database tables when the server starts for the first time. The schema includes tables for clients, tests, test results, API tokens, and comprehensive performance monitoring with 65+ advanced metrics covering network performance, system resources, QoS analysis, application profiling, and infrastructure health monitoring.</p>
+                                <p class="mb-0">StreamSwarm automatically creates all necessary database tables when the server starts for the first time. The schema includes tables for clients, tests, test results, API tokens, user authentication, and comprehensive performance monitoring with 65+ advanced metrics covering network performance, system resources, QoS analysis, application profiling, and infrastructure health monitoring.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Authentication System -->
+    <div class="row mb-4" id="authentication-setup">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-lock me-2"></i>
+                        Secure Web Authentication System
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>
+                            <i class="fas fa-info-circle me-2"></i>
+                            Automatic Setup
+                        </h6>
+                        <p class="mb-0">StreamSwarm includes a complete secure authentication system that is automatically configured when the server starts for the first time. No manual setup required!</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user-shield me-2"></i>
+                                Default Admin Account
+                            </h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-sm-4"><strong>Username:</strong></div>
+                                        <div class="col-sm-8"><code>admin</code></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-4"><strong>Password:</strong></div>
+                                        <div class="col-sm-8"><code>admin123</code></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-4"><strong>Role:</strong></div>
+                                        <div class="col-sm-8"><span class="badge bg-danger">Administrator</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning mt-2">
+                                <strong>Security Notice:</strong> Change the default password immediately after first login! Go to "My Profile" to update your password.
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-key me-2"></i>
+                                Authentication Features
+                            </h6>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Secure password hashing (Werkzeug)
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Role-based access control (Admin/User)
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Session-based authentication
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Self-service password changes
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Admin user management interface
+                                </li>
+                                <li class="list-group-item d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Separate from client API tokens
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-users me-2"></i>
+                                User Management (Admin Only)
+                            </h6>
+                            <div class="alert alert-success">
+                                <p class="mb-2"><strong>How to access:</strong></p>
+                                <ol class="mb-2">
+                                    <li>Log in as administrator</li>
+                                    <li>Click on your username in the top navigation</li>
+                                    <li>Look for the "User Management" option (only visible to admins)</li>
+                                </ol>
+                                <p class="mb-0"><strong>Admin capabilities:</strong> Create users, assign roles, activate/deactivate accounts, delete users, reset passwords</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user-cog me-2"></i>
+                                Self-Service Features
+                            </h6>
+                            <div class="alert alert-info">
+                                <p class="mb-2"><strong>All users can:</strong></p>
+                                <ul class="mb-2">
+                                    <li>Change their own password securely</li>
+                                    <li>View their profile information</li>
+                                    <li>See account activity and login history</li>
+                                </ul>
+                                <p class="mb-0"><strong>Access via:</strong> Username dropdown → "My Profile"</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-shield-check me-2"></i>
+                                Security Architecture
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">Web GUI Authentication</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="small mb-0">
+                                                <li>Flask-Login based sessions</li>
+                                                <li>Werkzeug password hashing</li>
+                                                <li>Role-based page protection</li>
+                                                <li>Secure session management</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-primary">
+                                        <div class="card-header bg-primary text-white">
+                                            <h6 class="mb-0">Client API Tokens</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="small mb-0">
+                                                <li>Separate authentication system</li>
+                                                <li>Token-based API access</li>
+                                                <li>No interference with web login</li>
+                                                <li>Dedicated client management</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
