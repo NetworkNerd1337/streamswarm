@@ -1578,7 +1578,8 @@ def login():
                 flash('Username and password are required.', 'danger')
                 return render_template('login.html')
             
-            user = User.query.filter_by(username=username).first()
+            # Case-insensitive username lookup
+            user = User.query.filter(User.username.ilike(username)).first()
             
             if user and user.check_password(password) and user.is_active:
                 login_user(user, remember=True)
@@ -1648,8 +1649,8 @@ def create_user():
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
             return jsonify({'error': 'Invalid email format'}), 400
         
-        # Check if username or email already exists
-        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        # Check if username or email already exists (case-insensitive username check)
+        existing_user = User.query.filter((User.username.ilike(username)) | (User.email == email)).first()
         if existing_user:
             return jsonify({'error': 'Username or email already exists'}), 400
         
@@ -1688,8 +1689,9 @@ def update_user(user_id):
         
         if 'username' in data:
             username = sanitize_string(data['username'].strip(), 80)
-            if username != user.username:
-                existing = User.query.filter_by(username=username).first()
+            if username.lower() != user.username.lower():
+                # Case-insensitive username uniqueness check
+                existing = User.query.filter(User.username.ilike(username)).first()
                 if existing:
                     return jsonify({'error': 'Username already exists'}), 400
                 user.username = username
