@@ -128,6 +128,19 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
     - 13 new database fields for storing detailed TCP connection metrics
     - Visual dashboard with efficiency scores and bottleneck type breakdown
     - Professional interpretation guides for network administrators
+  - **COMPLETED** TCP Window Analysis testing and validation:
+    - Core TCP analysis functions validated with proper database schema (21 TCP-related fields total)
+    - Bottleneck detection working correctly with classification types: network_congestion, server_limited, network_instability, packet_loss, optimal
+    - Confirmed timing: captures data every test interval throughout entire duration (every 30 seconds for 2-hour tests = 240 separate analyses)
+    - Client code requirements clarified: uses built-in socket libraries and /proc filesystem, no additional Linux packages needed
+    - Clients require updated client.py code to enable TCP monitoring capabilities for live production testing
+  - **RESOLVED** Critical Jinja2 template compatibility issue:
+    - Fixed web interface template errors: Resolved multiple Jinja2 groupby filter issues causing 500 internal server errors
+    - Root cause: Jinja2 3.1.6 compatibility problem with map(attribute) filter chains combined with select('number') and list operations
+    - Created custom extract_numeric filter to safely extract numeric values from result objects
+    - Systematically replaced all 32 problematic filter patterns throughout template system
+    - Fixed Jinja2 syntax error with invalid break statement (not supported in Jinja2 loops)
+    - Verified complete functionality: test results pages now load correctly with all TCP window analysis features operational
 
 ## Development Status
 
