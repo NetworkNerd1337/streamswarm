@@ -572,9 +572,9 @@
                             <div class="card bg-primary text-white">
                                 <div class="card-body text-center">
                                     <h6>Network Performance</h6>
-                                    {% set avg_latency = results | map(attribute='ping_latency') | select('number') | list %}
+                                    {% set avg_latency = results | extract_numeric('ping_latency') %}
                                     <p class="mb-1">Latency: {{ "%.1f"|format(avg_latency | average) if avg_latency else 'N/A' }}ms</p>
-                                    {% set avg_bandwidth = results | map(attribute='bandwidth_download') | select('number') | list %}
+                                    {% set avg_bandwidth = results | extract_numeric('bandwidth_download') %}
                                     <p class="mb-0">Bandwidth: {{ "%.1f"|format(avg_bandwidth | average) if avg_bandwidth else 'N/A' }} Mbps</p>
                                 </div>
                             </div>
@@ -583,9 +583,9 @@
                             <div class="card bg-success text-white">
                                 <div class="card-body text-center">
                                     <h6>System Resources</h6>
-                                    {% set avg_cpu = results | map(attribute='cpu_percent') | select('number') | list %}
+                                    {% set avg_cpu = results | extract_numeric('cpu_percent') %}
                                     <p class="mb-1">CPU: {{ "%.1f"|format(avg_cpu | average) if avg_cpu else 'N/A' }}%</p>
-                                    {% set avg_memory = results | map(attribute='memory_percent') | select('number') | list %}
+                                    {% set avg_memory = results | extract_numeric('memory_percent') %}
                                     <p class="mb-0">Memory: {{ "%.1f"|format(avg_memory | average) if avg_memory else 'N/A' }}%</p>
                                 </div>
                             </div>
@@ -594,7 +594,7 @@
                             <div class="card bg-warning text-dark">
                                 <div class="card-body text-center">
                                     <h6>Quality of Service</h6>
-                                    {% set dscp_vals = results | map(attribute='dscp_value') | select('number') | list %}
+                                    {% set dscp_vals = results | extract_numeric('dscp_value') %}
                                     <p class="mb-1">DSCP: {{ dscp_vals | first if dscp_vals else 'N/A' }}</p>
                                     {% set ecn_capable = results | selectattr('ecn_capable', 'equalto', true) | list %}
                                     <p class="mb-0">ECN: {{ 'Yes' if ecn_capable else 'No' }}</p>
@@ -605,7 +605,7 @@
                             <div class="card bg-info text-white">
                                 <div class="card-body text-center">
                                     <h6>Infrastructure</h6>
-                                    {% set power_vals = results | map(attribute='power_consumption_watts') | select('number') | list %}
+                                    {% set power_vals = results | extract_numeric('power_consumption_watts') %}
                                     <p class="mb-1">Power: {{ "%.1f"|format(power_vals | average) if power_vals else 'N/A' }}W</p>
                                     {% set smart_health = results | selectattr('smart_drive_health') | list %}
                                     <p class="mb-0">Drives: {{ 'Healthy' if smart_health else 'N/A' }}</p>
@@ -635,7 +635,7 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Ping Latency (ms)</td>
-                                                            {% set avg_latency = results | map(attribute='ping_latency') | select('number') | list %}
+                                                            {% set avg_latency = results | extract_numeric('ping_latency') %}
                                                             <td>{{ "%.2f"|format(avg_latency | average) if avg_latency else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_latency and (avg_latency | average) < 50 %}
@@ -651,7 +651,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>DNS Resolution (ms)</td>
-                                                            {% set avg_dns = results | map(attribute='dns_resolution_time') | select('number') | list %}
+                                                            {% set avg_dns = results | extract_numeric('dns_resolution_time') %}
                                                             <td>{{ "%.2f"|format(avg_dns | average) if avg_dns else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_dns and (avg_dns | average) < 50 %}
@@ -665,7 +665,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Bandwidth Download (Mbps)</td>
-                                                            {% set avg_down = results | map(attribute='bandwidth_download') | select('number') | list %}
+                                                            {% set avg_down = results | extract_numeric('bandwidth_download') %}
                                                             <td>{{ "%.2f"|format(avg_down | average) if avg_down else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_down and (avg_down | average) > 50 %}
@@ -713,7 +713,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>TCP Retransmission Rate (%)</td>
-                                                            {% set avg_retrans = results | map(attribute='tcp_retransmission_rate') | select('number') | list %}
+                                                            {% set avg_retrans = results | extract_numeric('tcp_retransmission_rate') %}
                                                             <td>{{ "%.3f"|format(avg_retrans | average) if avg_retrans else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_retrans and (avg_retrans | average) < 1 %}
@@ -727,13 +727,13 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Network Packets Sent</td>
-                                                            {% set avg_packets_sent = results | map(attribute='network_packets_sent') | select('number') | list %}
+                                                            {% set avg_packets_sent = results | extract_numeric('network_packets_sent') %}
                                                             <td>{{ "{:,}".format(avg_packets_sent | average | round(0) | int) if avg_packets_sent else 'N/A' }}</td>
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td>Network Packets Received</td>
-                                                            {% set avg_packets_recv = results | map(attribute='network_packets_recv') | select('number') | list %}
+                                                            {% set avg_packets_recv = results | extract_numeric('network_packets_recv') %}
                                                             <td>{{ "{:,}".format(avg_packets_recv | average | round(0) | int) if avg_packets_recv else 'N/A' }}</td>
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
@@ -744,7 +744,7 @@
                                                                 <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                    title="Hardware/driver-level errors while receiving packets (checksum failures, malformed packets, interface issues). Zero errors indicates healthy network hardware."></i>
                                                             </td>
-                                                            {% set avg_errors_in = results | map(attribute='network_errors_in') | select('number') | list %}
+                                                            {% set avg_errors_in = results | extract_numeric('network_errors_in') %}
                                                             <td>{{ "{:,}".format(avg_errors_in | average | round(0) | int) if avg_errors_in else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_errors_in and (avg_errors_in | average) == 0 %}
@@ -764,7 +764,7 @@
                                                                 <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                    title="Hardware/driver-level errors while sending packets. Zero errors indicates healthy network hardware and proper packet transmission."></i>
                                                             </td>
-                                                            {% set avg_errors_out = results | map(attribute='network_errors_out') | select('number') | list %}
+                                                            {% set avg_errors_out = results | extract_numeric('network_errors_out') %}
                                                             <td>{{ "{:,}".format(avg_errors_out | average | round(0) | int) if avg_errors_out else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_errors_out and (avg_errors_out | average) == 0 %}
@@ -784,7 +784,7 @@
                                                                 <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                    title="Incoming packets dropped due to buffer overflows, network congestion, firewalls, or traffic shaping. Normal during high traffic or with security filtering."></i>
                                                             </td>
-                                                            {% set avg_drops_in = results | map(attribute='network_drops_in') | select('number') | list %}
+                                                            {% set avg_drops_in = results | extract_numeric('network_drops_in') %}
                                                             <td>{{ "{:,}".format(avg_drops_in | average | round(0) | int) if avg_drops_in else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_drops_in and (avg_drops_in | average) == 0 %}
@@ -806,7 +806,7 @@
                                                                 <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                    title="Outgoing packets dropped due to buffer overflows or traffic shaping. Often zero on most systems (always 0 on macOS/BSD)."></i>
                                                             </td>
-                                                            {% set avg_drops_out = results | map(attribute='network_drops_out') | select('number') | list %}
+                                                            {% set avg_drops_out = results | extract_numeric('network_drops_out') %}
                                                             <td>{{ "{:,}".format(avg_drops_out | average | round(0) | int) if avg_drops_out else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_drops_out and (avg_drops_out | average) == 0 %}
@@ -871,7 +871,7 @@
                                                     <div class="col-md-6">
                                                         <div class="card bg-primary text-white">
                                                             <div class="card-body text-center">
-                                                                {% set avg_efficiency = tcp_results | map(attribute='tcp_window_efficiency') | select('number') | list %}
+                                                                {% set avg_efficiency = tcp_results | extract_numeric('tcp_window_efficiency') %}
                                                                 <h4 class="mb-2">{{ "%.1f"|format(avg_efficiency | average) if avg_efficiency else 'N/A' }}%</h4>
                                                                 <p class="mb-0">TCP Window Efficiency</p>
                                                                 {% if avg_efficiency %}
@@ -892,7 +892,20 @@
                                                     <div class="col-md-6">
                                                         <div class="card bg-info text-white">
                                                             <div class="card-body text-center">
-                                                                <h4 class="mb-2">TCP Analysis Available</h4>
+                                                                <h4 class="mb-2">
+                                                                    {% set first_bottleneck = None %}
+                                                                    {% for result in tcp_results %}
+                                                                        {% if result.tcp_bottleneck_type %}
+                                                                            {% set first_bottleneck = result.tcp_bottleneck_type %}
+                                                                            {% break %}
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                                    {% if first_bottleneck %}
+                                                                        {{ first_bottleneck.replace('_', ' ').title() }}
+                                                                    {% else %}
+                                                                        N/A
+                                                                    {% endif %}
+                                                                </h4>
                                                                 <p class="mb-0">Primary Bottleneck</p>
                                                                 <small class="text-light">Based on window analysis</small>
                                                             </div>
@@ -913,9 +926,9 @@
                                                                     <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                        title="Network latency measured during TCP connection. Lower is better."></i>
                                                                 </td>
-                                                                {% set avg_rtt = tcp_results | map(attribute='tcp_rtt_avg') | select('number') | list %}
-                                                                {% set min_rtt = tcp_results | map(attribute='tcp_rtt_min') | select('number') | list %}
-                                                                {% set max_rtt = tcp_results | map(attribute='tcp_rtt_max') | select('number') | list %}
+                                                                {% set avg_rtt = tcp_results | extract_numeric('tcp_rtt_avg') %}
+                                                                {% set min_rtt = tcp_results | extract_numeric('tcp_rtt_min') %}
+                                                                {% set max_rtt = tcp_results | extract_numeric('tcp_rtt_max') %}
                                                                 <td>{{ "%.2f"|format(avg_rtt | average) if avg_rtt else 'N/A' }}</td>
                                                                 <td>{{ "%.2f"|format(min_rtt | min) if min_rtt else 'N/A' }}</td>
                                                                 <td>{{ "%.2f"|format(max_rtt | max) if max_rtt else 'N/A' }}</td>
@@ -937,7 +950,7 @@
                                                                     <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                        title="Network instability indicator. High variation suggests network congestion or path changes."></i>
                                                                 </td>
-                                                                {% set rtt_var = tcp_results | map(attribute='tcp_rtt_variation') | select('number') | list %}
+                                                                {% set rtt_var = tcp_results | extract_numeric('tcp_rtt_variation') %}
                                                                 <td>{{ "%.2f"|format(rtt_var | average) if rtt_var else 'N/A' }}</td>
                                                                 <td>-</td>
                                                                 <td>{{ "%.2f"|format(rtt_var | max) if rtt_var else 'N/A' }}</td>
@@ -959,9 +972,9 @@
                                                                     <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                        title="Amount of data TCP can send before receiving acknowledgment. Larger windows = better throughput."></i>
                                                                 </td>
-                                                                {% set avg_cwnd = tcp_results | map(attribute='tcp_cwnd_avg') | select('number') | list %}
-                                                                {% set min_cwnd = tcp_results | map(attribute='tcp_cwnd_min') | select('number') | list %}
-                                                                {% set max_cwnd = tcp_results | map(attribute='tcp_cwnd_max') | select('number') | list %}
+                                                                {% set avg_cwnd = tcp_results | extract_numeric('tcp_cwnd_avg') %}
+                                                                {% set min_cwnd = tcp_results | extract_numeric('tcp_cwnd_min') %}
+                                                                {% set max_cwnd = tcp_results | extract_numeric('tcp_cwnd_max') %}
                                                                 <td>{{ "%.1f"|format((avg_cwnd | average) / 1024) if avg_cwnd else 'N/A' }}</td>
                                                                 <td>{{ "%.1f"|format((min_cwnd | min) / 1024) if min_cwnd else 'N/A' }}</td>
                                                                 <td>{{ "%.1f"|format((max_cwnd | max) / 1024) if max_cwnd else 'N/A' }}</td>
@@ -983,7 +996,7 @@
                                                                     <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                        title="Number of times TCP detected network congestion and reduced sending rate."></i>
                                                                 </td>
-                                                                {% set cong_events = tcp_results | map(attribute='tcp_congestion_events') | select('number') | list %}
+                                                                {% set cong_events = tcp_results | extract_numeric('tcp_congestion_events') %}
                                                                 <td>{{ cong_events | average | round(1) if cong_events else 'N/A' }}</td>
                                                                 <td>{{ cong_events | min if cong_events else 'N/A' }}</td>
                                                                 <td>{{ cong_events | max if cong_events else 'N/A' }}</td>
@@ -1005,7 +1018,7 @@
                                                                     <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
                                                                        title="Packets that had to be resent due to loss or corruption."></i>
                                                                 </td>
-                                                                {% set retrans = tcp_results | map(attribute='tcp_retransmissions') | select('number') | list %}
+                                                                {% set retrans = tcp_results | extract_numeric('tcp_retransmissions') %}
                                                                 <td>{{ retrans | average | round(1) if retrans else 'N/A' }}</td>
                                                                 <td>{{ retrans | min if retrans else 'N/A' }}</td>
                                                                 <td>{{ retrans | max if retrans else 'N/A' }}</td>
@@ -1101,7 +1114,7 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>CPU Usage (%)</td>
-                                                            {% set avg_cpu = results | map(attribute='cpu_percent') | select('number') | list %}
+                                                            {% set avg_cpu = results | extract_numeric('cpu_percent') %}
                                                             <td>{{ "%.1f"|format(avg_cpu | average) if avg_cpu else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_cpu and (avg_cpu | average) < 70 %}
@@ -1117,7 +1130,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Memory Usage (%)</td>
-                                                            {% set avg_memory = results | map(attribute='memory_percent') | select('number') | list %}
+                                                            {% set avg_memory = results | extract_numeric('memory_percent') %}
                                                             <td>{{ "%.1f"|format(avg_memory | average) if avg_memory else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_memory and (avg_memory | average) < 80 %}
@@ -1133,7 +1146,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>CPU Load (1min)</td>
-                                                            {% set avg_load = results | map(attribute='cpu_load_1min') | select('number') | list %}
+                                                            {% set avg_load = results | extract_numeric('cpu_load_1min') %}
                                                             <td>{{ "%.2f"|format(avg_load | average) if avg_load else 'N/A' }}</td>
                                                             <td>
                                                                 {% if avg_load and (avg_load | average) < 1 %}
@@ -1149,7 +1162,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Process Count</td>
-                                                            {% set proc_count = results | map(attribute='process_count') | select('number') | list %}
+                                                            {% set proc_count = results | extract_numeric('process_count') %}
                                                             <td>{{ proc_count | average | round(0) | int if proc_count else 'N/A' }}</td>
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
@@ -1258,7 +1271,7 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Content Download Time (ms)</td>
-                                                            {% set content_time = results | map(attribute='content_download_time') | select('number') | list %}
+                                                            {% set content_time = results | extract_numeric('content_download_time') %}
                                                             <td>{{ "%.2f"|format(content_time | average) if content_time else 'N/A' }}</td>
                                                             <td>
                                                                 {% if content_time and (content_time | average) < 1000 %}
@@ -1272,7 +1285,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Compression Ratio (%)</td>
-                                                            {% set compress_ratio = results | map(attribute='compression_ratio') | select('number') | list %}
+                                                            {% set compress_ratio = results | extract_numeric('compression_ratio') %}
                                                             <td>{{ "%.1f"|format(compress_ratio | average) if compress_ratio else 'N/A' }}</td>
                                                             <td>
                                                                 {% if compress_ratio and (compress_ratio | average) > 30 %}
@@ -1286,7 +1299,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Power Consumption (W)</td>
-                                                            {% set power_watts = results | map(attribute='power_consumption_watts') | select('number') | list %}
+                                                            {% set power_watts = results | extract_numeric('power_consumption_watts') %}
                                                             <td>{{ "%.1f"|format(power_watts | average) if power_watts else 'N/A' }}</td>
                                                             <td>
                                                                 {% if power_watts and (power_watts | average) < 150 %}
@@ -1300,7 +1313,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td>Memory Error Rate (/hr)</td>
-                                                            {% set mem_errors = results | map(attribute='memory_error_rate') | select('number') | list %}
+                                                            {% set mem_errors = results | extract_numeric('memory_error_rate') %}
                                                             <td>{{ "%.3f"|format(mem_errors | average) if mem_errors else 'N/A' }}</td>
                                                             <td>
                                                                 {% if mem_errors and (mem_errors | average) < 0.1 %}

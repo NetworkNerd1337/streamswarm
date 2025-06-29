@@ -100,6 +100,17 @@ with app.app_context():
         logging.info("Created default admin user: username=admin, password=admin123")
 
 # Custom Jinja filters
+@app.template_filter('extract_numeric')
+def extract_numeric_filter(items, attribute_name):
+    """Safely extract numeric values from a list of objects"""
+    result = []
+    for item in items:
+        if hasattr(item, attribute_name):
+            value = getattr(item, attribute_name)
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                result.append(value)
+    return result
+
 @app.template_filter('tojsonfilter')
 def tojson_filter(value):
     """Convert JSON string to Python object"""
