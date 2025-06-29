@@ -711,70 +711,7 @@
                                                             <td>{{ "{:,}".format(avg_packets_recv | average | round(0) | int) if avg_packets_recv else 'N/A' }}</td>
                                                             <td><span class="badge bg-info">Info</span></td>
                                                         </tr>
-                                                        <tr>
-                                                            <td>
-                                                                Total System Traffic Sent
-                                                                <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                                   title="All network traffic sent by client machines during test period - includes OS background traffic, applications, and test traffic. This is NOT test-specific traffic."></i>
-                                                            </td>
-                                                            {% set bytes_sent_by_client = {} %}
-                                                            {% for result in results %}
-                                                                {% if result.network_bytes_sent is not none and result.client_id %}
-                                                                    {% if result.client_id not in bytes_sent_by_client %}
-                                                                        {% set _ = bytes_sent_by_client.update({result.client_id: {'min': result.network_bytes_sent, 'max': result.network_bytes_sent}}) %}
-                                                                    {% else %}
-                                                                        {% if result.network_bytes_sent < bytes_sent_by_client[result.client_id]['min'] %}
-                                                                            {% set _ = bytes_sent_by_client[result.client_id].update({'min': result.network_bytes_sent}) %}
-                                                                        {% endif %}
-                                                                        {% if result.network_bytes_sent > bytes_sent_by_client[result.client_id]['max'] %}
-                                                                            {% set _ = bytes_sent_by_client[result.client_id].update({'max': result.network_bytes_sent}) %}
-                                                                        {% endif %}
-                                                                    {% endif %}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                            {% set client_traffic_sent = [] %}
-                                                            {% for client_id, values in bytes_sent_by_client.items() %}
-                                                                {% set _ = client_traffic_sent.append(values['max'] - values['min']) %}
-                                                            {% endfor %}
-                                                            {% if client_traffic_sent %}
-                                                                <td>{{ (client_traffic_sent | sum / client_traffic_sent | length) | filesizeformat }} avg per client</td>
-                                                            {% else %}
-                                                                <td>N/A</td>
-                                                            {% endif %}
-                                                            <td><span class="badge bg-warning">System-wide</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>
-                                                                Total System Traffic Received
-                                                                <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                                   title="All network traffic received by client machines during test period - includes OS background traffic, applications, and test traffic. This is NOT test-specific traffic."></i>
-                                                            </td>
-                                                            {% set bytes_recv_by_client = {} %}
-                                                            {% for result in results %}
-                                                                {% if result.network_bytes_recv is not none and result.client_id %}
-                                                                    {% if result.client_id not in bytes_recv_by_client %}
-                                                                        {% set _ = bytes_recv_by_client.update({result.client_id: {'min': result.network_bytes_recv, 'max': result.network_bytes_recv}}) %}
-                                                                    {% else %}
-                                                                        {% if result.network_bytes_recv < bytes_recv_by_client[result.client_id]['min'] %}
-                                                                            {% set _ = bytes_recv_by_client[result.client_id].update({'min': result.network_bytes_recv}) %}
-                                                                        {% endif %}
-                                                                        {% if result.network_bytes_recv > bytes_recv_by_client[result.client_id]['max'] %}
-                                                                            {% set _ = bytes_recv_by_client[result.client_id].update({'max': result.network_bytes_recv}) %}
-                                                                        {% endif %}
-                                                                    {% endif %}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                            {% set client_traffic_recv = [] %}
-                                                            {% for client_id, values in bytes_recv_by_client.items() %}
-                                                                {% set _ = client_traffic_recv.append(values['max'] - values['min']) %}
-                                                            {% endfor %}
-                                                            {% if client_traffic_recv %}
-                                                                <td>{{ (client_traffic_recv | sum / client_traffic_recv | length) | filesizeformat }} avg per client</td>
-                                                            {% else %}
-                                                                <td>N/A</td>
-                                                            {% endif %}
-                                                            <td><span class="badge bg-warning">System-wide</span></td>
-                                                        </tr>
+
                                                         <tr>
                                                             <td>
                                                                 Network Errors In
