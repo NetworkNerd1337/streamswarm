@@ -647,7 +647,9 @@ class StreamSwarmClient:
             except:
                 metrics['dns_resolution_time'] = None
             
-            # TCP connection timing
+            # TCP connection timing with window analysis
+            tcp_metrics = self._tcp_connection_analysis(hostname)
+            metrics.update(tcp_metrics)
             try:
                 start_time = time_module.time()
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1095,6 +1097,244 @@ class StreamSwarmClient:
             56: 'class7'           # CS7 - Reserved
         }
         return dscp_classes.get(dscp_value, f'unknown_{dscp_value}')
+    
+    def _tcp_connection_analysis(self, hostname, port=80):
+        """Perform comprehensive TCP window analysis during connection"""
+        metrics = {}
+        tcp_timeline = []
+        
+        try:
+            import socket
+            import time as time_module
+            import select
+            import struct
+            
+            # Establish TCP connection with detailed monitoring
+            start_time = time_module.time()
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            
+            # Enable socket options for detailed monitoring
+            try:
+                # Enable keepalive for connection monitoring
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                # Enable TCP_NODELAY to avoid Nagle algorithm interference
+                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            except:
+                pass  # Continue even if socket options fail
+            
+            # Attempt connection with timing
+            try:
+                sock.connect((hostname, port))
+                tcp_connect_time = (time_module.time() - start_time) * 1000
+                metrics['tcp_connect_time'] = tcp_connect_time
+                
+                # Get initial TCP socket information
+                initial_tcp_info = self._get_tcp_socket_info(sock)
+                if initial_tcp_info:
+                    metrics.update(initial_tcp_info)
+                
+                # Monitor TCP window behavior during data transfer
+                window_timeline = self._monitor_tcp_window_behavior(sock, hostname)
+                if window_timeline:
+                    metrics['tcp_window_timeline'] = window_timeline
+                    metrics.update(self._analyze_tcp_window_patterns(window_timeline))
+                
+                sock.close()
+                
+            except socket.timeout:
+                metrics['tcp_connect_time'] = None
+                metrics['tcp_error'] = 'Connection timeout'
+            except Exception as e:
+                metrics['tcp_connect_time'] = None
+                metrics['tcp_error'] = str(e)
+            
+        except Exception as e:
+            logger.warning(f"TCP analysis failed for {hostname}: {e}")
+            metrics['tcp_analysis_error'] = str(e)
+        
+        return metrics
+    
+    def _get_tcp_socket_info(self, sock):
+        """Extract TCP socket statistics using available system calls"""
+        tcp_info = {}
+        
+        try:
+            # Try to get TCP_INFO (Linux-specific)
+            if hasattr(socket, 'TCP_INFO'):
+                import struct
+                
+                # Get TCP_INFO structure (this is Linux-specific)
+                tcp_info_struct = sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_INFO, 104)
+                
+                # Parse basic TCP info (simplified version)
+                # Full TCP_INFO structure is complex, we'll extract key metrics
+                values = struct.unpack('I' * 26, tcp_info_struct)  # First 26 32-bit integers
+                
+                tcp_info['tcp_state'] = values[0]
+                tcp_info['tcp_rto'] = values[4]  # Retransmission timeout
+                tcp_info['tcp_rtt'] = values[6] / 1000.0  # RTT in milliseconds
+                tcp_info['tcp_rttvar'] = values[7] / 1000.0  # RTT variance
+                tcp_info['tcp_snd_cwnd'] = values[11]  # Send congestion window
+                tcp_info['tcp_snd_ssthresh'] = values[12]  # Slow start threshold
+                tcp_info['tcp_rcv_space'] = values[15]  # Receive window space
+                tcp_info['tcp_retrans'] = values[16]  # Retransmissions
+                
+        except Exception as e:
+            # Fallback to parsing /proc/net/tcp for connection info
+            try:
+                tcp_info.update(self._parse_proc_net_tcp(sock))
+            except:
+                logger.debug(f"Could not extract TCP socket info: {e}")
+        
+        return tcp_info
+    
+    def _parse_proc_net_tcp(self, sock):
+        """Parse /proc/net/tcp for connection information"""
+        tcp_info = {}
+        
+        try:
+            # Get local socket information
+            local_addr = sock.getsockname()
+            remote_addr = sock.getpeername()
+            
+            # Convert addresses to hex format used in /proc/net/tcp
+            local_hex = f"{socket.inet_aton(local_addr[0]).hex().upper()}:{local_addr[1]:04X}"
+            remote_hex = f"{socket.inet_aton(remote_addr[0]).hex().upper()}:{remote_addr[1]:04X}"
+            
+            with open('/proc/net/tcp', 'r') as f:
+                for line in f:
+                    fields = line.strip().split()
+                    if len(fields) >= 10:
+                        local_field = fields[1]
+                        remote_field = fields[2]
+                        
+                        # Match our connection
+                        if local_field.endswith(f":{local_addr[1]:04X}") and remote_field.endswith(f":{remote_addr[1]:04X}"):
+                            # Extract TCP state and window information
+                            tcp_info['tcp_state_proc'] = int(fields[3], 16)
+                            tcp_info['tcp_tx_queue'] = int(fields[4].split(':')[0], 16)
+                            tcp_info['tcp_rx_queue'] = int(fields[4].split(':')[1], 16)
+                            break
+        except Exception as e:
+            logger.debug(f"Could not parse /proc/net/tcp: {e}")
+        
+        return tcp_info
+    
+    def _monitor_tcp_window_behavior(self, sock, hostname):
+        """Monitor TCP window behavior during a controlled data transfer"""
+        timeline = []
+        
+        try:
+            # Send HTTP request to trigger data transfer
+            http_request = f"GET / HTTP/1.1\r\nHost: {hostname}\r\nConnection: close\r\n\r\n"
+            
+            start_time = time.time()
+            sock.send(http_request.encode())
+            
+            # Monitor socket state during data transfer
+            for i in range(10):  # Sample 10 times over ~1 second
+                try:
+                    current_time = time.time() - start_time
+                    tcp_info = self._get_tcp_socket_info(sock)
+                    
+                    if tcp_info:
+                        sample = {
+                            'timestamp': current_time * 1000,  # Convert to milliseconds
+                            'tcp_rtt': tcp_info.get('tcp_rtt'),
+                            'tcp_cwnd': tcp_info.get('tcp_snd_cwnd'),
+                            'tcp_ssthresh': tcp_info.get('tcp_snd_ssthresh'),
+                            'tcp_rcv_space': tcp_info.get('tcp_rcv_space'),
+                            'tcp_retrans': tcp_info.get('tcp_retrans', 0)
+                        }
+                        timeline.append(sample)
+                    
+                    time.sleep(0.1)  # 100ms intervals
+                except:
+                    break
+            
+            # Try to receive some data to complete the monitoring
+            try:
+                sock.settimeout(1.0)
+                data = sock.recv(1024)
+            except:
+                pass
+                
+        except Exception as e:
+            logger.debug(f"TCP window monitoring failed: {e}")
+        
+        return timeline
+    
+    def _analyze_tcp_window_patterns(self, timeline):
+        """Analyze TCP window behavior patterns to determine bottlenecks"""
+        analysis = {}
+        
+        if not timeline or len(timeline) < 2:
+            return analysis
+        
+        try:
+            # Extract time series data
+            rtts = [sample.get('tcp_rtt') for sample in timeline if sample.get('tcp_rtt')]
+            cwnds = [sample.get('tcp_cwnd') for sample in timeline if sample.get('tcp_cwnd')]
+            ssthreshs = [sample.get('tcp_ssthresh') for sample in timeline if sample.get('tcp_ssthresh')]
+            retrans_counts = [sample.get('tcp_retrans', 0) for sample in timeline]
+            
+            # RTT Analysis
+            if rtts:
+                analysis['tcp_rtt_min'] = min(rtts)
+                analysis['tcp_rtt_max'] = max(rtts)
+                analysis['tcp_rtt_avg'] = sum(rtts) / len(rtts)
+                analysis['tcp_rtt_variation'] = max(rtts) - min(rtts)
+            
+            # Congestion Window Analysis
+            if cwnds:
+                analysis['tcp_cwnd_min'] = min(cwnds)
+                analysis['tcp_cwnd_max'] = max(cwnds)
+                analysis['tcp_cwnd_avg'] = sum(cwnds) / len(cwnds)
+                
+                # Check for congestion events (cwnd reductions)
+                cwnd_reductions = 0
+                for i in range(1, len(cwnds)):
+                    if cwnds[i] < cwnds[i-1] * 0.8:  # Significant reduction
+                        cwnd_reductions += 1
+                analysis['tcp_congestion_events'] = cwnd_reductions
+            
+            # Slow Start Threshold Analysis
+            if ssthreshs:
+                analysis['tcp_ssthresh_avg'] = sum(ssthreshs) / len(ssthreshs)
+            
+            # Retransmission Analysis
+            total_retrans = retrans_counts[-1] - retrans_counts[0] if len(retrans_counts) > 1 else 0
+            analysis['tcp_retransmissions'] = total_retrans
+            
+            # Window Efficiency Score (0-100)
+            if cwnds and rtts:
+                # Simple efficiency metric based on window utilization and stability
+                window_stability = 1.0 - (analysis.get('tcp_rtt_variation', 0) / analysis.get('tcp_rtt_avg', 1))
+                congestion_penalty = max(0, 1.0 - (analysis.get('tcp_congestion_events', 0) * 0.2))
+                retrans_penalty = max(0, 1.0 - (total_retrans * 0.1))
+                
+                efficiency = window_stability * congestion_penalty * retrans_penalty * 100
+                analysis['tcp_window_efficiency'] = min(100, max(0, efficiency))
+            
+            # Bottleneck Attribution
+            if analysis.get('tcp_window_efficiency', 0) < 70:
+                if analysis.get('tcp_congestion_events', 0) > 2:
+                    analysis['tcp_bottleneck_type'] = 'network_congestion'
+                elif analysis.get('tcp_rtt_variation', 0) > analysis.get('tcp_rtt_avg', 0) * 0.5:
+                    analysis['tcp_bottleneck_type'] = 'network_instability'
+                elif total_retrans > 0:
+                    analysis['tcp_bottleneck_type'] = 'packet_loss'
+                else:
+                    analysis['tcp_bottleneck_type'] = 'server_limited'
+            else:
+                analysis['tcp_bottleneck_type'] = 'optimal'
+            
+        except Exception as e:
+            logger.debug(f"TCP pattern analysis failed: {e}")
+            analysis['tcp_analysis_error'] = str(e)
+        
+        return analysis
     
     def _is_multimedia_test(self):
         """Check if current test involves multimedia traffic"""

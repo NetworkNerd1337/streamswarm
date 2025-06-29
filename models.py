@@ -317,6 +317,21 @@ class TestResult(db.Model):
     tcp_out_of_order_packets = db.Column(db.Integer)  # Count of out-of-order packets
     tcp_duplicate_acks = db.Column(db.Integer)  # Count of duplicate ACKs
     
+    # TCP Window Analysis Metrics
+    tcp_rtt_min = db.Column(db.Float)  # Minimum RTT during test (ms)
+    tcp_rtt_max = db.Column(db.Float)  # Maximum RTT during test (ms)
+    tcp_rtt_avg = db.Column(db.Float)  # Average RTT during test (ms)
+    tcp_rtt_variation = db.Column(db.Float)  # RTT variation (max - min) (ms)
+    tcp_cwnd_min = db.Column(db.Integer)  # Minimum congestion window size
+    tcp_cwnd_max = db.Column(db.Integer)  # Maximum congestion window size
+    tcp_cwnd_avg = db.Column(db.Float)  # Average congestion window size
+    tcp_ssthresh_avg = db.Column(db.Float)  # Average slow start threshold
+    tcp_congestion_events = db.Column(db.Integer)  # Number of congestion events detected
+    tcp_retransmissions = db.Column(db.Integer)  # Total retransmissions during test
+    tcp_window_efficiency = db.Column(db.Float)  # TCP window efficiency score (0-100)
+    tcp_bottleneck_type = db.Column(db.String(50))  # Bottleneck attribution (network_congestion, server_limited, etc)
+    tcp_window_timeline = db.Column(Text)  # JSON string of window behavior timeline
+    
     # Advanced QoS Metrics
     per_dscp_latency = db.Column(Text)  # JSON string of latency per DSCP class
     traffic_policing_detected = db.Column(db.Boolean)  # Rate limiting/shaping detected
