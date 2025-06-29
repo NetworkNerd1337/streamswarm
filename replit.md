@@ -2,108 +2,102 @@
 
 ## Overview
 
-StreamSwarm is a comprehensive Python-based distributed network monitoring system featuring a Flask web dashboard, AI-powered network diagnostics, and secure client-server architecture. The system enables monitoring of network performance and system metrics from multiple distributed clients with real-time visualization and automated analysis.
+StreamSwarm is a comprehensive Python-based distributed network monitoring system that provides real-time network performance analysis with AI-powered diagnostics. The system features a Flask-based web GUI for management, secure authentication, and collects 65+ performance metrics from distributed client nodes.
 
 ## System Architecture
 
-### Backend Architecture
-- **Framework**: Flask web application with SQLAlchemy ORM
-- **Database**: SQLite for development, PostgreSQL recommended for production
-- **WSGI Server**: Gunicorn for production deployment with multi-worker support
-- **Authentication**: Dual authentication system:
-  - Flask-Login for web GUI users
-  - API tokens for client authentication
-
 ### Frontend Architecture
-- **Templates**: Jinja2 templating with Bootstrap 5 dark theme
-- **Visualization**: Chart.js for real-time charts and data visualization
-- **Responsive Design**: Mobile-friendly interface with progressive enhancement
-- **Static Assets**: Custom CSS and JavaScript for enhanced UX
+- **Web Interface**: Flask-based web application with Bootstrap 5 dark theme
+- **Authentication**: Flask-Login with session management for web GUI users
+- **Real-time Visualization**: Chart.js for interactive performance charts and dashboards
+- **Responsive Design**: Mobile-friendly interface with modern UI components
+
+### Backend Architecture
+- **Web Framework**: Flask with Gunicorn WSGI server for production deployment
+- **Database**: SQLAlchemy ORM with support for SQLite (development) and PostgreSQL (production)
+- **API Design**: RESTful API endpoints for client-server communication
+- **Background Processing**: Threading for concurrent test execution and data collection
 
 ### Client Architecture
-- **Distributed Clients**: Python-based monitoring agents deployable on multiple hosts
-- **Communication**: RESTful API with JSON payloads for data transmission
-- **Metrics Collection**: 65+ performance metrics including network, system, and application layer data
-- **Network Testing**: Comprehensive network analysis including latency, packet loss, jitter, bandwidth, and QoS monitoring
+- **Distributed Clients**: Python-based monitoring agents deployed across network locations
+- **Metric Collection**: 65+ performance metrics including network, system, and application layer data
+- **Network Testing**: Comprehensive testing with ping, traceroute, bandwidth, and QoS analysis
+- **System Monitoring**: CPU, memory, disk, and wireless interface monitoring
 
 ## Key Components
 
 ### Database Models
-1. **Client**: Stores client registration information and system details
-2. **Test**: Defines network monitoring test configurations
-3. **TestResult**: Stores collected metrics (65+ columns of performance data)
-4. **TestClient**: Many-to-many relationship for test assignments
-5. **ApiToken**: Manages client authentication tokens
-6. **User**: Web GUI user accounts with role-based access control
-7. **OAuth**: Session storage for Flask-Login authentication
+- **User**: Web GUI authentication with role-based access (admin/user)
+- **Client**: Client registration and system information storage
+- **Test**: Test configuration and management
+- **TestResult**: Performance metrics storage (65+ columns)
+- **TestClient**: Many-to-many relationship for test assignments
+- **ApiToken**: Client authentication token management
 
 ### Core Services
-1. **Web Dashboard**: Real-time monitoring interface with interactive charts
-2. **Client Management**: Registration, authentication, and assignment system
-3. **Test Management**: Creation, scheduling, and execution of network tests
-4. **Data Collection**: Automated metrics gathering from distributed clients
-5. **AI Diagnostics**: Local machine learning models for anomaly detection
-6. **Report Generation**: PDF report generation with charts and analysis
+- **Authentication System**: Dual authentication (web GUI + API tokens)
+- **Test Management**: Create, schedule, and manage network tests
+- **Metric Collection**: Real-time data gathering from distributed clients
+- **AI Diagnostics**: Local machine learning with Scikit-learn for anomaly detection
+- **Report Generation**: PDF reports with charts and analysis using ReportLab
 
 ### Security Features
-- Input validation and sanitization to prevent injection attacks
-- Role-based access control (user/admin roles)
-- Secure password hashing with Werkzeug
-- API token-based authentication for clients
-- XSS protection with HTML sanitization
+- **Input Validation**: Comprehensive sanitization using Bleach and Marshmallow
+- **SQL Injection Prevention**: SQLAlchemy ORM with parameterized queries
+- **XSS Protection**: HTML sanitization and Content Security Policy
+- **Authentication**: Separate systems for web users and API clients
 
 ## Data Flow
 
 1. **Client Registration**: Clients register with server and receive API tokens
-2. **Test Assignment**: Server assigns network tests to specific clients based on configuration
-3. **Metrics Collection**: Clients perform network tests and collect system metrics locally
-4. **Data Transmission**: Results transmitted to server via HTTP API with JSON payloads
-5. **Data Storage**: Server stores results in database with timestamps and client associations
-6. **Visualization**: Web dashboard displays real-time charts and historical data analysis
-7. **AI Analysis**: Local ML models analyze data for anomaly detection and health classification
+2. **Test Assignment**: Server assigns tests to specific clients based on configuration
+3. **Metric Collection**: Clients perform network tests and collect system metrics
+4. **Data Transmission**: Results sent to server via HTTP API with JSON payload
+5. **Data Storage**: Server stores results in database with timestamp and client association
+6. **Visualization**: Web dashboard displays real-time charts and historical data
+7. **AI Analysis**: ML models analyze data for anomaly detection and health classification
 
 ## External Dependencies
 
 ### Core Python Libraries
-- Flask (>=2.3.0) - Web framework
-- SQLAlchemy (>=2.0.0) - Database ORM
-- Gunicorn (>=21.0.0) - WSGI server
-- Psutil (>=5.9.0) - System metrics collection
-- Requests (>=2.28.0) - HTTP client library
+- **Flask**: Web framework and application structure
+- **SQLAlchemy**: Database ORM and schema management
+- **Psutil**: System and process monitoring
+- **Requests**: HTTP client for API communication
+- **Scapy**: Advanced network packet analysis
+- **Speedtest-cli**: Bandwidth testing capabilities
 
-### Optional Libraries
-- Scapy (>=2.5.0) - Advanced network packet analysis
-- Speedtest-cli - Bandwidth testing
-- Scikit-learn - Machine learning models
-- ReportLab - PDF report generation
-- Matplotlib - Chart generation for reports
+### AI/ML Libraries
+- **Scikit-learn**: Machine learning models for diagnostics
+- **Pandas**: Data manipulation and analysis
+- **NumPy**: Numerical computing support
+- **Joblib**: Model serialization and persistence
 
 ### System Dependencies
-- Python 3.9+ with development headers
-- Network utilities: ping, traceroute, netstat
-- System monitoring tools: lm-sensors, smartmontools
-- Wireless tools: iw, wireless-tools (for wireless monitoring)
+- **Linux**: iputils-ping, traceroute, lm-sensors, smartmontools, ethtool
+- **Network Tools**: iw, wireless-tools, tcpdump, libpcap-dev
+- **Development**: build-essential, python3-dev, gcc
 
 ## Deployment Strategy
 
 ### Development Environment
 - Flask development server on port 5000
-- SQLite database for simplicity and rapid development
-- Debug mode enabled for detailed error reporting
-- Single-threaded execution for easier debugging
+- SQLite database for rapid prototyping
+- Debug mode enabled for development
+- Hot reload for code changes
 
 ### Production Environment
-- Gunicorn WSGI server with multiple workers for scalability
-- PostgreSQL database for improved performance and concurrency
-- Environment variable configuration for sensitive data
-- Reverse proxy (nginx) recommended for static file serving
-- SSL/TLS termination for secure communications
+- Gunicorn WSGI server with multiple workers
+- PostgreSQL database for scalability and performance
+- Environment variable configuration for secrets
+- Reverse proxy setup (Nginx recommended)
+- SSL/TLS termination for secure communication
 
-### Client Deployment
-- Standalone Python scripts deployable on Linux/Windows
-- Automatic registration and token-based authentication
-- Configurable monitoring intervals and test parameters
-- Support for distributed deployment across network segments
+### Docker Deployment
+- Containerized application with multi-stage builds
+- Separate containers for web server and database
+- Docker Compose for orchestration
+- Volume mounting for persistent data
 
 ## Changelog
 

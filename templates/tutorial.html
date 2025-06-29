@@ -71,44 +71,477 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Python Installation by Platform -->
-                    <div class="row mb-4">
+                    
+                    <!-- Server Environment Dependencies -->
+                    <div class="row mb-5">
                         <div class="col-12">
-                            <h6 class="text-primary mb-3">
-                                <i class="fab fa-python me-2"></i>
-                                Python Installation by Platform
-                            </h6>
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-server me-2"></i>
+                                Server Environment Dependencies
+                            </h5>
+                            <p class="text-muted mb-4">Install these on the machine running the StreamSwarm server/dashboard</p>
                         </div>
                     </div>
                     
+                    <!-- Server - Linux -->
                     <div class="row mb-4">
-                        <div class="col-lg-4 mb-3">
+                        <div class="col-lg-6 mb-3">
                             <div class="card h-100">
                                 <div class="card-header bg-primary text-white">
                                     <h6 class="mb-0">
                                         <i class="fab fa-linux me-2"></i>
-                                        Linux (Ubuntu/Debian)
+                                        Linux Server (Ubuntu/Debian)
                                     </h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="bg-dark p-2 rounded mb-2">
+                                    <div class="bg-dark p-3 rounded mb-3">
+                                        <code class="text-light small">
+# Update package repositories<br>
+sudo apt update<br><br>
+# Python 3.9+ and development tools<br>
+sudo apt install python3.9 python3.9-pip python3.9-venv python3.9-dev<br>
+sudo apt install build-essential libffi-dev libssl-dev<br><br>
+# Database support (PostgreSQL recommended)<br>
+sudo apt install postgresql postgresql-contrib libpq-dev<br><br>
+# AI/ML dependencies (server-side analytics)<br>
+sudo apt install python3-numpy python3-scipy python3-sklearn<br>
+sudo apt install libatlas-base-dev liblapack-dev gfortran<br><br>
+# Web server dependencies<br>
+sudo apt install nginx<br><br>
+# Verify installation<br>
+python3.9 --version<br>
+pip3.9 --version
+                                        </code>
+                                    </div>
+                                    <div class="alert alert-info small">
+                                        <strong>Note:</strong> Replace python3.9 with python3.10 or python3.11 for newer Ubuntu versions
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-redhat me-2"></i>
+                                        Linux Server (CentOS/RHEL/Fedora)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-3 rounded mb-3">
+                                        <code class="text-light small">
+# Install Python and development tools<br>
+sudo dnf install python3.9 python3.9-pip python3.9-devel<br>
+sudo dnf install gcc openssl-devel libffi-devel<br><br>
+# Database support (PostgreSQL)<br>
+sudo dnf install postgresql-server postgresql-contrib postgresql-devel<br><br>
+# AI/ML dependencies (server-side analytics)<br>
+sudo dnf install python3-numpy python3-scipy python3-scikit-learn<br>
+sudo dnf install atlas-devel lapack-devel gcc-gfortran<br><br>
+# Web server dependencies<br>
+sudo dnf install nginx<br><br>
+# Initialize PostgreSQL (first time only)<br>
+sudo postgresql-setup --initdb<br>
+sudo systemctl enable postgresql<br>
+sudo systemctl start postgresql
+                                        </code>
+                                    </div>
+                                    <div class="alert alert-warning small">
+                                        <strong>Older systems:</strong> Replace 'dnf' with 'yum' for CentOS 7/RHEL 7
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Server - Windows/macOS -->
+                    <div class="row mb-5">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-windows me-2"></i>
+                                        Windows Server
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Method 1: Official Installer</strong>
+                                        <ol class="small">
+                                            <li>Download Python 3.9+ from <a href="https://www.python.org/downloads/windows/" target="_blank">python.org</a></li>
+                                            <li>Run installer with "Add to PATH" checked</li>
+                                            <li>Select "pip" and "py launcher" options</li>
+                                        </ol>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Method 2: Package Manager</strong>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+# PowerShell as Administrator<br>
+# Chocolatey<br>
+choco install python postgresql<br><br>
+# Or Winget<br>
+winget install Python.Python.3.11<br>
+winget install PostgreSQL.PostgreSQL
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info small">
+                                        <strong>AI/ML Note:</strong> Windows may require Visual Studio Build Tools for some ML packages
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-apple me-2"></i>
+                                        macOS Server
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Homebrew (Recommended):</strong>
+                                        <div class="bg-dark p-2 rounded mb-2">
+                                            <code class="text-light small">
+# Install Homebrew if not present<br>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"<br><br>
+# Install dependencies<br>
+brew install python@3.9 postgresql<br>
+brew install numpy scipy scikit-learn<br><br>
+# Start PostgreSQL service<br>
+brew services start postgresql
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Alternative: Official Installer</strong>
+                                        <p class="small">Download from <a href="https://www.python.org/downloads/mac-osx/" target="_blank">python.org</a> and install PostgreSQL from <a href="https://postgresapp.com/" target="_blank">Postgres.app</a></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Client Environment Dependencies -->
+                    <div class="row mb-5">
+                        <div class="col-12">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-desktop me-2"></i>
+                                Client Environment Dependencies
+                            </h5>
+                            <p class="text-muted mb-4">Install these on each machine you want to monitor (clients)</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Client - Linux -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-linux me-2"></i>
+                                        Linux Client (Ubuntu/Debian)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-3 rounded mb-3">
                                         <code class="text-light small">
 # Update packages<br>
 sudo apt update<br><br>
-# Install Python 3.9+<br>
-sudo apt install python3 python3-pip python3-venv python3-dev<br><br>
-# System dependencies<br>
-sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump build-essential<br><br>
+# Python and basic tools<br>
+sudo apt install python3 python3-pip python3-venv python3-dev<br>
+sudo apt install build-essential libffi-dev<br><br>
+# Network monitoring tools<br>
+sudo apt install iputils-ping traceroute mtr-tiny<br>
+sudo apt install speedtest-cli iperf3<br><br>
+# System monitoring tools<br>
+sudo apt install lm-sensors smartmontools ethtool sysstat<br><br>
+# Network packet analysis<br>
+sudo apt install libpcap-dev tcpdump<br><br>
 # Wireless detection tools<br>
-sudo apt install libiw-dev network-manager iw iproute2<br><br>
+sudo apt install iw wireless-tools libiw-dev network-manager<br><br>
+# Advanced network tools<br>
+sudo apt install net-tools iproute2 dnsutils<br><br>
 # Verify installation<br>
-python3 --version<br>
-pip3 --version
+python3 --version && ping -c 1 google.com
                                         </code>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-redhat me-2"></i>
+                                        Linux Client (CentOS/RHEL/Fedora)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-3 rounded mb-3">
+                                        <code class="text-light small">
+# Python and basic tools<br>
+sudo dnf install python3 python3-pip python3-devel gcc<br><br>
+# Network monitoring tools<br>
+sudo dnf install iputils traceroute mtr speedtest-cli<br>
+sudo dnf install iperf3<br><br>
+# System monitoring tools<br>
+sudo dnf install lm_sensors smartmontools ethtool sysstat<br><br>
+# Network packet analysis<br>
+sudo dnf install libpcap-devel tcpdump<br><br>
+# Wireless detection tools<br>
+sudo dnf install iw wireless-tools NetworkManager<br><br>
+# Advanced network tools<br>
+sudo dnf install net-tools iproute bind-utils<br><br>
+# Initialize sensors (first time)<br>
+sudo sensors-detect --auto
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Client - Windows/macOS -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-windows me-2"></i>
+                                        Windows Client
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Python Installation:</strong>
+                                        <div class="bg-dark p-2 rounded mb-2">
+                                            <code class="text-light small">
+# PowerShell as Administrator<br>
+choco install python<br>
+# Or<br>
+winget install Python.Python.3.11
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Additional Tools:</strong>
+                                        <ul class="small">
+                                            <li><strong>WinPcap/Npcap:</strong> Download from <a href="https://nmap.org/npcap/" target="_blank">nmap.org/npcap</a></li>
+                                            <li><strong>Speedtest CLI:</strong> <code>pip install speedtest-cli</code></li>
+                                            <li><strong>Visual Studio Build Tools:</strong> For compiling some Python packages</li>
+                                        </ul>
+                                    </div>
+                                    <div class="alert alert-warning small">
+                                        <strong>Administrator Rights:</strong> Some monitoring features require running as Administrator
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fab fa-apple me-2"></i>
+                                        macOS Client
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Homebrew Installation:</strong>
+                                        <div class="bg-dark p-2 rounded mb-2">
+                                            <code class="text-light small">
+# Install Homebrew<br>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"<br><br>
+# Install dependencies<br>
+brew install python@3.9<br>
+brew install libpcap speedtest-cli<br>
+brew install mtr nmap<br><br>
+# Command line tools<br>
+xcode-select --install
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info small">
+                                        <strong>Network Access:</strong> Some monitoring features may require granting network access permissions
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Python Package Dependencies -->
+                    <div class="row mb-5">
+                        <div class="col-12">
+                            <h5 class="text-warning mb-3">
+                                <i class="fab fa-python me-2"></i>
+                                Python Package Installation
+                            </h5>
+                            <p class="text-muted mb-4">Install these Python packages on both server and client machines</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Server Python Packages -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-server me-2"></i>
+                                        Server Python Packages
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Complete Server Installation:</strong>
+                                        <div class="bg-dark p-3 rounded mb-2">
+                                            <code class="text-light small">
+# Core web framework packages<br>
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0<br>
+pip install sqlalchemy>=2.0.0 gunicorn>=21.0.0<br>
+pip install werkzeug>=2.3.0 email-validator>=2.0.0<br><br>
+# Database support<br>
+pip install psycopg2-binary>=2.9.0<br><br>
+# System monitoring<br>
+pip install psutil>=5.9.0 requests>=2.28.0<br><br>
+# PDF reporting<br>
+pip install reportlab>=4.4.0 matplotlib>=3.10.0<br><br>
+# AI/ML packages (optional but recommended)<br>
+pip install scikit-learn>=1.0.0 pandas>=1.3.0<br>
+pip install numpy>=1.20.0 joblib>=1.0.0<br><br>
+# Network packet analysis<br>
+pip install scapy>=2.5.0<br><br>
+# All-in-one command:<br>
+pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary werkzeug email-validator scapy reportlab matplotlib scikit-learn pandas numpy joblib
+                                            </code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-desktop me-2"></i>
+                                        Client Python Packages
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Complete Client Installation:</strong>
+                                        <div class="bg-dark p-3 rounded mb-2">
+                                            <code class="text-light small">
+# Core client packages<br>
+pip install requests>=2.28.0 psutil>=5.9.0<br><br>
+# Network testing tools<br>
+pip install speedtest-cli>=2.1.3<br><br>
+# Network packet analysis (optional)<br>
+pip install scapy>=2.5.0<br><br>
+# Wireless detection (Linux only)<br>
+pip install iwlib>=1.7.0<br><br>
+# All-in-one command:<br>
+pip install requests psutil speedtest-cli scapy iwlib<br><br>
+# Minimal installation (without packet analysis):<br>
+pip install requests psutil speedtest-cli
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info small">
+                                        <strong>Note:</strong> Some packages like scapy and iwlib may require system-level dependencies installed first
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Virtual Environment Setup -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-shield-alt me-2"></i>
+                                        Virtual Environment Setup (Recommended)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Linux/macOS:</strong>
+                                            <div class="bg-dark p-2 rounded mt-2">
+                                                <code class="text-light small">
+# Create virtual environment<br>
+python3 -m venv streamswarm-env<br><br>
+# Activate virtual environment<br>
+source streamswarm-env/bin/activate<br><br>
+# Install packages<br>
+pip install --upgrade pip<br>
+pip install flask flask-sqlalchemy psutil requests...
+                                                </code>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Windows:</strong>
+                                            <div class="bg-dark p-2 rounded mt-2">
+                                                <code class="text-light small">
+# Create virtual environment<br>
+python -m venv streamswarm-env<br><br>
+# Activate virtual environment<br>
+streamswarm-env\Scripts\activate<br><br>
+# Install packages<br>
+pip install --upgrade pip<br>
+pip install flask flask-sqlalchemy psutil requests...
+                                                </code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Verification -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Installation Verification
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <strong>Server Verification:</strong>
+                                        <div class="bg-dark p-2 rounded mt-2">
+                                            <code class="text-light small">
+python3 -c "import flask, psutil, scapy, sklearn; print('Server packages OK')"<br>
+python3 main.py --help
+                                            </code>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Client Verification:</strong>
+                                        <div class="bg-dark p-2 rounded mt-2">
+                                            <code class="text-light small">
+python3 -c "import requests, psutil, speedtest; print('Client packages OK')"<br>
+python3 client.py --help<br>
+speedtest-cli --version
+                                            </code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                         
                         <div class="col-lg-4 mb-3">
                             <div class="card h-100">
@@ -1770,7 +2203,7 @@ psql $DATABASE_URL -c "SELECT pg_size_pretty(pg_database_size('streamswarm'));"<
                     
                     <div class="alert alert-info mt-3">
                         <h6><i class="fas fa-info-circle me-2"></i>Additional Resources</h6>
-                        <p class="mb-0">Check <code>DEPENDENCIES.md</code> for complete package requirements and <code>README.md</code> for detailed setup instructions. Visit the <a href="/" class="text-decoration-none">main dashboard</a> to start monitoring.</p>
+                        <p class="mb-0">All dependencies and requirements are covered in this tutorial. Check <code>README.md</code> for additional setup information. Visit the <a href="/" class="text-decoration-none">main dashboard</a> to start monitoring.</p>
                     </div>
                 </div>
             </div>
