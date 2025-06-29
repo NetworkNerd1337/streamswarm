@@ -1465,6 +1465,7 @@ def delete_token(token_id):
         return jsonify({'error': 'Failed to delete token'}), 500
 
 @app.route('/api/tokens/<int:token_id>/regenerate', methods=['POST'])
+@admin_required
 def regenerate_token(token_id):
     """Regenerate an API token"""
     token = ApiToken.query.get_or_404(token_id)
@@ -1525,7 +1526,7 @@ def ml_models():
     return render_template('ml_models.html', model_status=model_status)
 
 @app.route('/api/ml-models/train', methods=['POST'])
-@web_auth_required
+@admin_required
 def train_ml_models():
     """Train ML models with available data"""
     try:
@@ -1545,7 +1546,7 @@ def train_ml_models():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ml-models/status')
-@web_auth_required
+@admin_required
 def ml_models_status():
     """Get ML model status"""
     try:
