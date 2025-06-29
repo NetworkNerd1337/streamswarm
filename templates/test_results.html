@@ -895,8 +895,7 @@
                                                                 {% set bottleneck_types = tcp_results | map(attribute='tcp_bottleneck_type') | select('string') | list %}
                                                                 <h4 class="mb-2">
                                                                     {% if bottleneck_types %}
-                                                                        {% set most_common = bottleneck_types | groupby | list | sort(attribute='1.length', reverse=true) | first %}
-                                                                        {{ most_common.0 | title | replace('_', ' ') }}
+                                                                        {{ bottleneck_types[0] | title | replace('_', ' ') }}
                                                                     {% else %}
                                                                         N/A
                                                                     {% endif %}
