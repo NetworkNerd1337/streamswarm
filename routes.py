@@ -1,7 +1,8 @@
-from flask import render_template, request, jsonify, redirect, url_for, flash, send_file
+from flask import render_template, request, jsonify, redirect, url_for, flash, send_file, Blueprint
 from functools import wraps
+from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db
-from models import Client, Test, TestResult, TestClient, ApiToken
+from models import Client, Test, TestResult, TestClient, ApiToken, User
 from datetime import datetime, timezone, timedelta
 import zoneinfo
 import json
@@ -14,6 +15,29 @@ from ml_diagnostics import diagnostic_engine
 import bleach
 import re
 import ipaddress
+
+# ================================
+# AUTHENTICATION DECORATORS
+# ================================
+
+def admin_required(f):
+    """Decorator to require admin role for access"""
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_admin():
+            flash('Admin access required.', 'danger')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def web_auth_required(f):
+    """Decorator to require web GUI authentication (separate from API tokens)"""
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Input validation functions
 def sanitize_string(text, max_length=255):
@@ -181,6 +205,7 @@ def require_api_token(f):
     return decorated_function
 
 @app.route('/')
+@web_auth_required
 def dashboard():
     """Main dashboard view"""
     # Get summary statistics
@@ -200,6 +225,7 @@ def dashboard():
                          recent_results=recent_results)
 
 @app.route('/clients')
+@web_auth_required
 def clients():
     """Client management view"""
     clients = Client.query.order_by(Client.last_seen.desc()).all()
@@ -216,6 +242,7 @@ def clients():
     return render_template('clients.html', clients=clients)
 
 @app.route('/tests')
+@web_auth_required
 def tests():
     """Test management view"""
     tests = Test.query.order_by(Test.created_at.desc()).all()
@@ -233,6 +260,7 @@ def tests():
     return render_template('tests.html', tests=tests, clients=clients)
 
 @app.route('/test/<int:test_id>')
+@web_auth_required
 def test_results(test_id):
     """Test results view"""
     test = Test.query.get_or_404(test_id)
@@ -1498,3 +1526,189 @@ def ml_models_status():
     except Exception as e:
         logging.error(f"Error getting model status: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# ================================
+# AUTHENTICATION SYSTEM
+# ================================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page for web GUI access"""
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = sanitize_string(request.form.get('username', '').strip(), 80)
+        password = request.form.get('password', '')
+        
+        if not username or not password:
+            flash('Username and password are required.', 'danger')
+            return render_template('login.html')
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password) and user.is_active:
+            login_user(user, remember=True)
+            user.update_last_login()
+            
+            next_page = request.args.get('next')
+            flash(f'Welcome back, {user.username}!', 'success')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+        else:
+            flash('Invalid username or password.', 'danger')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Logout from web GUI"""
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/user-management')
+@admin_required
+def user_management():
+    """Admin-only user management page"""
+    users = User.query.all()
+    return render_template('user_management.html', users=users)
+
+@app.route('/api/users', methods=['POST'])
+@admin_required
+def create_user():
+    """Create a new user - admin only"""
+    try:
+        data = request.get_json()
+        
+        username = sanitize_string(data.get('username', '').strip(), 80)
+        email = sanitize_string(data.get('email', '').strip(), 120)
+        password = data.get('password', '')
+        role = sanitize_string(data.get('role', 'user').strip(), 20)
+        
+        if not username or not email or not password:
+            return jsonify({'error': 'Username, email, and password are required'}), 400
+        
+        if role not in ['user', 'admin']:
+            role = 'user'
+        
+        # Validate email format
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            return jsonify({'error': 'Invalid email format'}), 400
+        
+        # Check if username or email already exists
+        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing_user:
+            return jsonify({'error': 'Username or email already exists'}), 400
+        
+        # Create new user
+        user = User(
+            username=username,
+            email=email,
+            role=role
+        )
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'User created successfully',
+            'user': user.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error creating user: {str(e)}")
+        return jsonify({'error': 'Failed to create user'}), 500
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+@admin_required
+def update_user(user_id):
+    """Update user - admin only"""
+    try:
+        user = User.query.get_or_404(user_id)
+        data = request.get_json()
+        
+        # Don't allow admin to modify themselves
+        if user.id == current_user.id:
+            return jsonify({'error': 'Cannot modify your own account'}), 403
+        
+        if 'username' in data:
+            username = sanitize_string(data['username'].strip(), 80)
+            if username != user.username:
+                existing = User.query.filter_by(username=username).first()
+                if existing:
+                    return jsonify({'error': 'Username already exists'}), 400
+                user.username = username
+        
+        if 'email' in data:
+            email = sanitize_string(data['email'].strip(), 120)
+            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                return jsonify({'error': 'Invalid email format'}), 400
+            if email != user.email:
+                existing = User.query.filter_by(email=email).first()
+                if existing:
+                    return jsonify({'error': 'Email already exists'}), 400
+                user.email = email
+        
+        if 'role' in data:
+            role = sanitize_string(data['role'].strip(), 20)
+            if role in ['user', 'admin']:
+                user.role = role
+        
+        if 'active' in data:
+            user.active = bool(data['active'])
+        
+        if 'password' in data and data['password']:
+            user.set_password(data['password'])
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'User updated successfully',
+            'user': user.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating user: {str(e)}")
+        return jsonify({'error': 'Failed to update user'}), 500
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    """Delete user - admin only"""
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Don't allow admin to delete themselves
+        if user.id == current_user.id:
+            return jsonify({'error': 'Cannot delete your own account'}), 403
+        
+        # Don't delete the last admin
+        if user.role == 'admin':
+            admin_count = User.query.filter_by(role='admin').count()
+            if admin_count <= 1:
+                return jsonify({'error': 'Cannot delete the last admin user'}), 400
+        
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({'message': 'User deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error deleting user: {str(e)}")
+        return jsonify({'error': 'Failed to delete user'}), 500
+
+@app.route('/api/users')
+@admin_required
+def list_users():
+    """List all users - admin only"""
+    try:
+        users = User.query.all()
+        return jsonify([user.to_dict() for user in users])
+    except Exception as e:
+        logging.error(f"Error listing users: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve users'}), 500
