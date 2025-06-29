@@ -1260,7 +1260,7 @@
                                                             <i class="fas fa-chart-line me-2"></i>Handshake Performance Analysis
                                                         </h6>
                                                         {% for result in analysis_data[:3] %}
-                                                            <p class="mb-1"><strong>Client {{ result.client.name }}:</strong> {{ result.tcp_handshake_analysis }}</p>
+                                                            <p class="mb-1"><strong>Client {{ result.client.hostname }}:</strong> {{ result.tcp_handshake_analysis }}</p>
                                                         {% endfor %}
                                                         {% if analysis_data | length > 3 %}
                                                             <small class="text-muted">... and {{ analysis_data | length - 3 }} more clients</small>
