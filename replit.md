@@ -125,6 +125,7 @@ libpcap-dev tcpdump iw wireless-tools network-manager
 ## Changelog
 
 - June 29, 2025. Initial setup
+- June 29, 2025. **COMPLETED**: TCP Handshake Timing Diagnostics - Added comprehensive connection establishment analysis with database schema expansion (8 new fields), web interface enhancements, and sub-millisecond precision timing measurements
 
 ## User Preferences
 
