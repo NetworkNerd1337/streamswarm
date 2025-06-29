@@ -8,7 +8,7 @@ import json
 import secrets
 import string
 
-class User(UserMixin, db.Model):
+class User(db.Model):
     """Web GUI user authentication model - separate from client API tokens"""
     __tablename__ = 'web_users'
     id = db.Column(db.Integer, primary_key=True)
@@ -26,7 +26,17 @@ class User(UserMixin, db.Model):
         if email:
             self.email = email
         self.role = role
-        self.active = True
+        self.is_active = True
+    
+    # Flask-Login integration methods
+    def is_authenticated(self):
+        return True
+    
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        return str(self.id)
     
     def set_password(self, password):
         """Hash and set password"""
@@ -40,10 +50,7 @@ class User(UserMixin, db.Model):
         """Check if user has admin role"""
         return self.role == 'admin'
     
-    @property
-    def is_active(self) -> bool:
-        """Flask-Login requires is_active property"""
-        return bool(self.active)
+
     
     def update_last_login(self):
         """Update last login timestamp"""
@@ -56,7 +63,7 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'email': self.email,
             'role': self.role,
-            'is_active': self.is_active,
+            'is_active': bool(self.is_active),
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None
         }
