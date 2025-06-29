@@ -109,6 +109,12 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 ```
 Changelog:
 - June 29, 2025. Initial setup
+- June 29, 2025. Added packet size configuration feature to network tests
+  - Added packet_size field to Test model with default 64 bytes
+  - Updated test creation form with packet size selector (64-1472 bytes)
+  - Modified client ping test functionality to use variable packet sizes
+  - Enhanced server API validation for packet size parameter (1-65535 bytes)
+  - Successfully tested with 512-byte packets on Test 80
 ```
 
 ## User Preferences
