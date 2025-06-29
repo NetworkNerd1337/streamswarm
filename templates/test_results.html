@@ -1096,6 +1096,198 @@
                                     </div>
                                 </div>
                                 
+                                <!-- TCP Handshake Timing Diagnostics -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tcpHandshakeAnalysis">
+                                            <i class="fas fa-handshake me-2"></i>TCP Handshake Timing Diagnostics
+                                        </button>
+                                    </h2>
+                                    <div id="tcpHandshakeAnalysis" class="accordion-collapse collapse" data-bs-parent="#metricsAccordion">
+                                        <div class="accordion-body">
+                                            {% set handshake_results = results | selectattr('tcp_handshake_total_time', 'defined') | list %}
+                                            {% if handshake_results %}
+                                                <!-- Summary Cards -->
+                                                <div class="row mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card bg-primary bg-gradient text-white">
+                                                            <div class="card-body text-center">
+                                                                {% set avg_total = handshake_results | extract_numeric('tcp_handshake_total_time') %}
+                                                                <h4 class="mb-1">{{ "%.2f"|format(avg_total | average) if avg_total else 'N/A' }}ms</h4>
+                                                                <p class="mb-0">Average Handshake Time</p>
+                                                                <small class="text-light">
+                                                                    {% if avg_total and (avg_total | average) < 50 %}
+                                                                        Excellent Performance
+                                                                    {% elif avg_total and (avg_total | average) < 100 %}
+                                                                        Good Performance
+                                                                    {% elif avg_total and (avg_total | average) < 200 %}
+                                                                        Moderate Performance
+                                                                    {% elif avg_total %}
+                                                                        Needs Investigation
+                                                                    {% else %}
+                                                                        No Data
+                                                                    {% endif %}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card bg-info bg-gradient text-white">
+                                                            <div class="card-body text-center">
+                                                                {% set avg_server = handshake_results | extract_numeric('tcp_handshake_server_processing') %}
+                                                                <h4 class="mb-1">{{ "%.2f"|format(avg_server | average) if avg_server else 'N/A' }}ms</h4>
+                                                                <p class="mb-0">Server Processing Time</p>
+                                                                <small class="text-light">
+                                                                    {% if avg_server and (avg_server | average) < 20 %}
+                                                                        Fast Server Response
+                                                                    {% elif avg_server and (avg_server | average) < 50 %}
+                                                                        Normal Server Response
+                                                                    {% elif avg_server %}
+                                                                        Slow Server Response
+                                                                    {% else %}
+                                                                        No Data
+                                                                    {% endif %}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Detailed Handshake Metrics -->
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr><th>Metric</th><th>Average</th><th>Min</th><th>Max</th><th>Status</th></tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    SYN Packet Time
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Time to send initial SYN packet - measures local network stack processing"></i>
+                                                                </td>
+                                                                {% set syn_times = handshake_results | extract_numeric('tcp_handshake_syn_time') %}
+                                                                <td>{{ "%.3f"|format(syn_times | average) if syn_times else 'N/A' }}ms</td>
+                                                                <td>{{ "%.3f"|format(syn_times | min) if syn_times else 'N/A' }}ms</td>
+                                                                <td>{{ "%.3f"|format(syn_times | max) if syn_times else 'N/A' }}ms</td>
+                                                                <td>
+                                                                    {% if syn_times and (syn_times | average) < 5 %}
+                                                                        <span class="badge bg-success">Fast</span>
+                                                                    {% elif syn_times and (syn_times | average) < 20 %}
+                                                                        <span class="badge bg-warning">Normal</span>
+                                                                    {% elif syn_times %}
+                                                                        <span class="badge bg-danger">Slow</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    SYN-ACK Response Time
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Time to receive SYN-ACK from server - includes network latency and server processing"></i>
+                                                                </td>
+                                                                {% set synack_times = handshake_results | extract_numeric('tcp_handshake_synack_time') %}
+                                                                <td>{{ "%.2f"|format(synack_times | average) if synack_times else 'N/A' }}ms</td>
+                                                                <td>{{ "%.2f"|format(synack_times | min) if synack_times else 'N/A' }}ms</td>
+                                                                <td>{{ "%.2f"|format(synack_times | max) if synack_times else 'N/A' }}ms</td>
+                                                                <td>
+                                                                    {% if synack_times and (synack_times | average) < 50 %}
+                                                                        <span class="badge bg-success">Excellent</span>
+                                                                    {% elif synack_times and (synack_times | average) < 100 %}
+                                                                        <span class="badge bg-warning">Good</span>
+                                                                    {% elif synack_times %}
+                                                                        <span class="badge bg-danger">Poor</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    ACK Completion Time
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Time to send final ACK packet - completes the three-way handshake"></i>
+                                                                </td>
+                                                                {% set ack_times = handshake_results | extract_numeric('tcp_handshake_ack_time') %}
+                                                                <td>{{ "%.3f"|format(ack_times | average) if ack_times else 'N/A' }}ms</td>
+                                                                <td>{{ "%.3f"|format(ack_times | min) if ack_times else 'N/A' }}ms</td>
+                                                                <td>{{ "%.3f"|format(ack_times | max) if ack_times else 'N/A' }}ms</td>
+                                                                <td>
+                                                                    {% if ack_times and (ack_times | average) < 5 %}
+                                                                        <span class="badge bg-success">Fast</span>
+                                                                    {% elif ack_times and (ack_times | average) < 20 %}
+                                                                        <span class="badge bg-warning">Normal</span>
+                                                                    {% elif ack_times %}
+                                                                        <span class="badge bg-danger">Slow</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    Network Delay (Est.)
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Estimated one-way network delay based on handshake timing analysis"></i>
+                                                                </td>
+                                                                {% set network_delays = handshake_results | extract_numeric('tcp_handshake_network_delay') %}
+                                                                <td>{{ "%.2f"|format(network_delays | average) if network_delays else 'N/A' }}ms</td>
+                                                                <td>{{ "%.2f"|format(network_delays | min) if network_delays else 'N/A' }}ms</td>
+                                                                <td>{{ "%.2f"|format(network_delays | max) if network_delays else 'N/A' }}ms</td>
+                                                                <td>
+                                                                    {% if network_delays and (network_delays | average) < 25 %}
+                                                                        <span class="badge bg-success">Low Latency</span>
+                                                                    {% elif network_delays and (network_delays | average) < 75 %}
+                                                                        <span class="badge bg-warning">Moderate</span>
+                                                                    {% elif network_delays %}
+                                                                        <span class="badge bg-danger">High Latency</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                
+                                                <!-- Diagnostic Analysis -->
+                                                {% set analysis_data = handshake_results | selectattr('tcp_handshake_analysis', 'defined') | list %}
+                                                {% if analysis_data %}
+                                                    <div class="alert alert-info mt-3">
+                                                        <h6 class="alert-heading">
+                                                            <i class="fas fa-chart-line me-2"></i>Handshake Performance Analysis
+                                                        </h6>
+                                                        {% for result in analysis_data[:3] %}
+                                                            <p class="mb-1"><strong>Client {{ result.client.name }}:</strong> {{ result.tcp_handshake_analysis }}</p>
+                                                        {% endfor %}
+                                                        {% if analysis_data | length > 3 %}
+                                                            <small class="text-muted">... and {{ analysis_data | length - 3 }} more clients</small>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                <hr class="my-3">
+                                                <small class="text-muted">
+                                                    <strong>Interpretation Guide:</strong>
+                                                    <ul class="mb-1">
+                                                        <li><strong>SYN Time:</strong> High values indicate local network stack issues or CPU overload</li>
+                                                        <li><strong>SYN-ACK Time:</strong> Primary indicator of server response and network latency combined</li>
+                                                        <li><strong>ACK Time:</strong> Usually minimal - high values suggest local processing delays</li>
+                                                        <li><strong>Network vs Server:</strong> Compare network delay with SYN-ACK time to isolate bottlenecks</li>
+                                                    </ul>
+                                                </small>
+                                            {% else %}
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    No TCP handshake timing data available for this test. This advanced feature requires the latest client version with handshake diagnostics.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <!-- System Resources -->
                                 <div class="accordion-item">
                                     <h2 class="accordion-header">

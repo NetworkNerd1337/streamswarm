@@ -332,6 +332,15 @@ class TestResult(db.Model):
     tcp_bottleneck_type = db.Column(db.String(50))  # Bottleneck attribution (network_congestion, server_limited, etc)
     tcp_window_timeline = db.Column(Text)  # JSON string of window behavior timeline
     
+    # TCP Handshake Timing Diagnostics
+    tcp_handshake_syn_time = db.Column(db.Float)  # Time to send SYN packet (ms)
+    tcp_handshake_synack_time = db.Column(db.Float)  # Time to receive SYN-ACK (ms)
+    tcp_handshake_ack_time = db.Column(db.Float)  # Time to send ACK packet (ms)
+    tcp_handshake_total_time = db.Column(db.Float)  # Total handshake completion time (ms)
+    tcp_handshake_network_delay = db.Column(db.Float)  # Estimated one-way network delay (ms)
+    tcp_handshake_server_processing = db.Column(db.Float)  # Estimated server processing time (ms)
+    tcp_handshake_analysis = db.Column(Text)  # Diagnostic analysis text
+    
     # Advanced QoS Metrics
     per_dscp_latency = db.Column(Text)  # JSON string of latency per DSCP class
     traffic_policing_detected = db.Column(db.Boolean)  # Rate limiting/shaping detected

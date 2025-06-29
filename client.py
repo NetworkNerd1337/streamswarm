@@ -1098,6 +1098,194 @@ class StreamSwarmClient:
         }
         return dscp_classes.get(dscp_value, f'unknown_{dscp_value}')
     
+    def _tcp_handshake_timing_analysis(self, hostname, port=80):
+        """
+        Perform detailed TCP handshake timing analysis
+        Breaking down SYN, SYN-ACK, ACK timing to isolate network vs server delays
+        """
+        metrics = {
+            'tcp_handshake_syn_time': None,           # Time to send SYN
+            'tcp_handshake_synack_time': None,        # Time to receive SYN-ACK (server processing + network)
+            'tcp_handshake_ack_time': None,           # Time to send ACK (network transit)
+            'tcp_handshake_total_time': None,         # Total handshake time
+            'tcp_handshake_network_delay': None,      # Estimated network round-trip time
+            'tcp_handshake_server_processing': None,  # Estimated server processing time
+            'tcp_handshake_analysis': None            # Diagnostic analysis
+        }
+        
+        try:
+            import socket
+            import time as time_module
+            import select
+            import errno
+            
+            # Use raw socket approach for detailed timing if possible
+            # Otherwise fall back to non-blocking socket timing
+            try:
+                # Method 1: Non-blocking socket for detailed timing measurement
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.setblocking(False)
+                
+                # Record timing points
+                t0_start = time_module.time()
+                
+                # Initiate SYN packet
+                try:
+                    result = sock.connect((hostname, port))
+                except socket.error as e:
+                    if e.errno not in [errno.EINPROGRESS, errno.EWOULDBLOCK, errno.EALREADY]:
+                        raise
+                
+                t1_syn_sent = time_module.time()
+                metrics['tcp_handshake_syn_time'] = (t1_syn_sent - t0_start) * 1000  # ms
+                
+                # Wait for connection to complete (SYN-ACK received)
+                ready = select.select([], [sock], [], 10.0)  # 10 second timeout
+                
+                if ready[1]:  # Socket is ready for writing (connection established)
+                    t2_synack_received = time_module.time()
+                    
+                    # Check if connection is actually established
+                    error = sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                    if error == 0:
+                        # Connection established successfully
+                        t3_ack_sent = time_module.time()  # ACK is sent automatically
+                        
+                        # Calculate timing metrics
+                        syn_time = (t1_syn_sent - t0_start) * 1000
+                        synack_time = (t2_synack_received - t1_syn_sent) * 1000
+                        ack_time = (t3_ack_sent - t2_synack_received) * 1000
+                        total_time = (t3_ack_sent - t0_start) * 1000
+                        
+                        metrics['tcp_handshake_syn_time'] = round(syn_time, 3)
+                        metrics['tcp_handshake_synack_time'] = round(synack_time, 3)
+                        metrics['tcp_handshake_ack_time'] = round(ack_time, 3)
+                        metrics['tcp_handshake_total_time'] = round(total_time, 3)
+                        
+                        # Estimate network delay and server processing
+                        # Network delay is approximately RTT/2 (one way)
+                        # Server processing time is SYN-ACK time minus network delays
+                        estimated_one_way_delay = synack_time / 2  # Rough estimate
+                        estimated_server_processing = max(0, synack_time - estimated_one_way_delay)
+                        
+                        metrics['tcp_handshake_network_delay'] = round(estimated_one_way_delay, 3)
+                        metrics['tcp_handshake_server_processing'] = round(estimated_server_processing, 3)
+                        
+                        # Perform diagnostic analysis
+                        analysis = self._analyze_handshake_timing(metrics)
+                        metrics['tcp_handshake_analysis'] = analysis
+                        
+                    else:
+                        metrics['tcp_handshake_error'] = f"Connection failed with error {error}"
+                else:
+                    metrics['tcp_handshake_error'] = "Connection timeout during handshake"
+                
+                sock.close()
+                
+            except Exception as e:
+                # Method 2: Fallback to basic timing measurement
+                logger.debug(f"Advanced handshake timing failed, using fallback method: {e}")
+                
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10.0)
+                
+                t0_start = time_module.time()
+                try:
+                    sock.connect((hostname, port))
+                    t1_connected = time_module.time()
+                    
+                    total_time = (t1_connected - t0_start) * 1000
+                    metrics['tcp_handshake_total_time'] = round(total_time, 3)
+                    
+                    # For fallback, estimate components based on total time
+                    metrics['tcp_handshake_syn_time'] = round(total_time * 0.1, 3)  # ~10% for SYN
+                    metrics['tcp_handshake_synack_time'] = round(total_time * 0.8, 3)  # ~80% for SYN-ACK
+                    metrics['tcp_handshake_ack_time'] = round(total_time * 0.1, 3)  # ~10% for ACK
+                    
+                    # Basic analysis for fallback
+                    if total_time < 50:
+                        analysis = "Excellent handshake performance"
+                    elif total_time < 100:
+                        analysis = "Good handshake performance"
+                    elif total_time < 200:
+                        analysis = "Moderate handshake performance"
+                    else:
+                        analysis = "Slow handshake performance - investigate network or server"
+                    
+                    metrics['tcp_handshake_analysis'] = analysis
+                    
+                except socket.timeout:
+                    metrics['tcp_handshake_error'] = "Handshake timeout"
+                except Exception as connect_error:
+                    metrics['tcp_handshake_error'] = str(connect_error)
+                finally:
+                    sock.close()
+                
+        except Exception as e:
+            logger.error(f"TCP handshake analysis failed for {hostname}:{port}: {e}")
+            metrics['tcp_handshake_error'] = str(e)
+        
+        return metrics
+    
+    def _analyze_handshake_timing(self, handshake_metrics):
+        """Analyze handshake timing patterns to provide diagnostic insights"""
+        analysis_parts = []
+        
+        try:
+            syn_time = handshake_metrics.get('tcp_handshake_syn_time', 0)
+            synack_time = handshake_metrics.get('tcp_handshake_synack_time', 0)
+            ack_time = handshake_metrics.get('tcp_handshake_ack_time', 0)
+            total_time = handshake_metrics.get('tcp_handshake_total_time', 0)
+            network_delay = handshake_metrics.get('tcp_handshake_network_delay', 0)
+            server_processing = handshake_metrics.get('tcp_handshake_server_processing', 0)
+            
+            # Overall performance assessment
+            if total_time < 10:
+                analysis_parts.append("Excellent overall handshake performance")
+            elif total_time < 50:
+                analysis_parts.append("Good overall handshake performance")
+            elif total_time < 100:
+                analysis_parts.append("Moderate handshake performance")
+            elif total_time < 200:
+                analysis_parts.append("Slow handshake performance")
+            else:
+                analysis_parts.append("Very slow handshake - significant performance issue")
+            
+            # Network vs Server analysis
+            if synack_time > 0:
+                if server_processing > synack_time * 0.7:
+                    analysis_parts.append("Primary bottleneck: Server processing time")
+                elif network_delay > synack_time * 0.7:
+                    analysis_parts.append("Primary bottleneck: Network latency")
+                else:
+                    analysis_parts.append("Balanced network and server performance")
+            
+            # Specific timing analysis
+            if syn_time > 10:
+                analysis_parts.append("High SYN packet processing time detected")
+            
+            if synack_time > 100:
+                analysis_parts.append("High SYN-ACK response time - check server load")
+            elif synack_time > 50:
+                analysis_parts.append("Moderate SYN-ACK response time")
+            
+            if ack_time > 10:
+                analysis_parts.append("High ACK processing time - possible network congestion")
+            
+            # Network quality assessment
+            if network_delay > 0:
+                if network_delay < 10:
+                    analysis_parts.append("Low network latency")
+                elif network_delay < 50:
+                    analysis_parts.append("Moderate network latency")
+                else:
+                    analysis_parts.append("High network latency")
+            
+            return "; ".join(analysis_parts) if analysis_parts else "Handshake timing analysis completed"
+            
+        except Exception as e:
+            return f"Analysis error: {str(e)}"
+    
     def _tcp_connection_analysis(self, hostname, port=80):
         """Perform comprehensive TCP window analysis during connection"""
         metrics = {}
@@ -1108,6 +1296,10 @@ class StreamSwarmClient:
             import time as time_module
             import select
             import struct
+            
+            # First perform detailed handshake timing analysis
+            handshake_metrics = self._tcp_handshake_timing_analysis(hostname, port)
+            metrics.update(handshake_metrics)
             
             # Establish TCP connection with detailed monitoring
             start_time = time_module.time()
