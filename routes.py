@@ -1537,7 +1537,7 @@ def ml_models_status():
 def login():
     """Login page for web GUI access"""
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
     
     if request.method == 'POST':
         username = sanitize_string(request.form.get('username', '').strip(), 80)
@@ -1714,3 +1714,44 @@ def list_users():
     except Exception as e:
         logging.error(f"Error listing users: {str(e)}")
         return jsonify({'error': 'Failed to retrieve users'}), 500
+
+@app.route('/profile')
+@web_auth_required
+def user_profile():
+    """User profile page for changing own password"""
+    return render_template('user_profile.html')
+
+@app.route('/api/profile/change-password', methods=['POST'])
+@web_auth_required
+def change_own_password():
+    """Allow user to change their own password"""
+    try:
+        data = request.get_json()
+        
+        current_password = data.get('current_password', '')
+        new_password = data.get('new_password', '')
+        confirm_password = data.get('confirm_password', '')
+        
+        if not current_password or not new_password or not confirm_password:
+            return jsonify({'error': 'All password fields are required'}), 400
+        
+        if new_password != confirm_password:
+            return jsonify({'error': 'New passwords do not match'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'error': 'New password must be at least 6 characters long'}), 400
+        
+        # Verify current password
+        if not current_user.check_password(current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 400
+        
+        # Update password
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({'message': 'Password changed successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error changing password: {str(e)}")
+        return jsonify({'error': 'Failed to change password'}), 500

@@ -94,6 +94,12 @@
                             <li><h6 class="dropdown-header">{{ current_user.email }}</h6></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
+                                <a class="dropdown-item" href="{{ url_for('user_profile') }}">
+                                    <i class="fas fa-user-cog me-2"></i>
+                                    My Profile
+                                </a>
+                            </li>
+                            <li>
                                 <a class="dropdown-item" href="{{ url_for('logout') }}">
                                     <i class="fas fa-sign-out-alt me-2"></i>
                                     Logout
