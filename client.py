@@ -1150,7 +1150,8 @@ class StreamSwarmClient:
                 metrics['tcp_error'] = str(e)
             
         except Exception as e:
-            logger.warning(f"TCP analysis failed for {hostname}: {e}")
+            logger.error(f"TCP analysis failed for {hostname}: {e}")
+            logger.error(f"TCP analysis exception details: {type(e).__name__}: {e}")
             metrics['tcp_analysis_error'] = str(e)
         
         return metrics
