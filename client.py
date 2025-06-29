@@ -1113,6 +1113,8 @@ class StreamSwarmClient:
             'tcp_handshake_analysis': None            # Diagnostic analysis
         }
         
+        logger.debug(f"Starting TCP handshake analysis for {hostname}:{port}")
+        
         try:
             import socket
             import time as time_module
@@ -1202,16 +1204,16 @@ class StreamSwarmClient:
                     metrics['tcp_handshake_synack_time'] = round(total_time * 0.8, 3)  # ~80% for SYN-ACK
                     metrics['tcp_handshake_ack_time'] = round(total_time * 0.1, 3)  # ~10% for ACK
                     
-                    # Basic analysis for fallback
-                    if total_time < 50:
-                        analysis = "Excellent handshake performance"
-                    elif total_time < 100:
-                        analysis = "Good handshake performance"
-                    elif total_time < 200:
-                        analysis = "Moderate handshake performance"
-                    else:
-                        analysis = "Slow handshake performance - investigate network or server"
+                    # Calculate estimated network delay and server processing for analysis
+                    estimated_synack_time = metrics['tcp_handshake_synack_time']
+                    estimated_one_way_delay = estimated_synack_time / 2  # Rough estimate
+                    estimated_server_processing = max(0, estimated_synack_time - estimated_one_way_delay)
                     
+                    metrics['tcp_handshake_network_delay'] = round(estimated_one_way_delay, 3)
+                    metrics['tcp_handshake_server_processing'] = round(estimated_server_processing, 3)
+                    
+                    # Use the improved analysis function
+                    analysis = self._analyze_handshake_timing(metrics)
                     metrics['tcp_handshake_analysis'] = analysis
                     
                 except socket.timeout:
