@@ -1229,7 +1229,6 @@ class StreamSwarmClient:
     
     def _analyze_handshake_timing(self, handshake_metrics):
         """Analyze handshake timing patterns to provide diagnostic insights"""
-        analysis_parts = []
         
         try:
             syn_time = handshake_metrics.get('tcp_handshake_syn_time', 0)
@@ -1239,49 +1238,50 @@ class StreamSwarmClient:
             network_delay = handshake_metrics.get('tcp_handshake_network_delay', 0)
             server_processing = handshake_metrics.get('tcp_handshake_server_processing', 0)
             
-            # Overall performance assessment
+            # Create distinctive analysis based on timing patterns and bottlenecks
             if total_time < 10:
-                analysis_parts.append("Excellent overall handshake performance")
-            elif total_time < 50:
-                analysis_parts.append("Good overall handshake performance")
+                # Ultra-fast connections
+                if network_delay < 1 and server_processing < 1:
+                    return "Excellent connection - Ultra-low latency with optimal server response"
+                else:
+                    return "Excellent performance - Very fast handshake completion"
+            
+            elif total_time < 30:
+                # Good performance range - differentiate by bottleneck
+                if server_processing > network_delay * 2:
+                    return f"Server-focused delay - {server_processing:.1f}ms server processing vs {network_delay:.1f}ms network latency"
+                elif network_delay > server_processing * 2:
+                    return f"Network-focused delay - {network_delay:.1f}ms network latency vs {server_processing:.1f}ms server processing"
+                else:
+                    return f"Balanced performance - {total_time:.1f}ms total ({network_delay:.1f}ms network + {server_processing:.1f}ms server)"
+            
             elif total_time < 100:
-                analysis_parts.append("Moderate handshake performance")
+                # Moderate performance - identify primary issue
+                if syn_time > synack_time and syn_time > ack_time:
+                    return f"SYN packet bottleneck - {syn_time:.1f}ms SYN processing indicates local network congestion"
+                elif synack_time > syn_time * 2:
+                    return f"Server response delay - {synack_time:.1f}ms SYN-ACK time suggests server load or distance"
+                elif server_processing > 50:
+                    return f"Server processing bottleneck - {server_processing:.1f}ms server-side delay (check server load)"
+                elif network_delay > 30:
+                    return f"Network latency issue - {network_delay:.1f}ms round-trip delay (check network path)"
+                else:
+                    return f"Moderate handshake timing - {total_time:.1f}ms total connection time"
+            
             elif total_time < 200:
-                analysis_parts.append("Slow handshake performance")
+                # Slow performance - highlight main problem
+                primary_issue = max([
+                    (syn_time, "SYN processing"),
+                    (synack_time, "SYN-ACK response"), 
+                    (ack_time, "ACK processing"),
+                    (server_processing, "server processing"),
+                    (network_delay, "network latency")
+                ])
+                return f"Slow handshake - Primary issue: {primary_issue[1]} ({primary_issue[0]:.1f}ms)"
+            
             else:
-                analysis_parts.append("Very slow handshake - significant performance issue")
-            
-            # Network vs Server analysis
-            if synack_time > 0:
-                if server_processing > synack_time * 0.7:
-                    analysis_parts.append("Primary bottleneck: Server processing time")
-                elif network_delay > synack_time * 0.7:
-                    analysis_parts.append("Primary bottleneck: Network latency")
-                else:
-                    analysis_parts.append("Balanced network and server performance")
-            
-            # Specific timing analysis
-            if syn_time > 10:
-                analysis_parts.append("High SYN packet processing time detected")
-            
-            if synack_time > 100:
-                analysis_parts.append("High SYN-ACK response time - check server load")
-            elif synack_time > 50:
-                analysis_parts.append("Moderate SYN-ACK response time")
-            
-            if ack_time > 10:
-                analysis_parts.append("High ACK processing time - possible network congestion")
-            
-            # Network quality assessment
-            if network_delay > 0:
-                if network_delay < 10:
-                    analysis_parts.append("Low network latency")
-                elif network_delay < 50:
-                    analysis_parts.append("Moderate network latency")
-                else:
-                    analysis_parts.append("High network latency")
-            
-            return "; ".join(analysis_parts) if analysis_parts else "Handshake timing analysis completed"
+                # Very slow - critical performance issue
+                return f"Critical handshake delay - {total_time:.1f}ms total time requires immediate investigation"
             
         except Exception as e:
             return f"Analysis error: {str(e)}"
