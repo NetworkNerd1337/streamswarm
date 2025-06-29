@@ -1557,31 +1557,59 @@ def ml_models_status():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Login page for web GUI access"""
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+    """Login page for web GUI access with robust error handling"""
+    # Handle malformed URL parameters gracefully
+    try:
+        if current_user.is_authenticated:
+            return redirect(url_for('dashboard'))
+    except Exception as e:
+        logging.warning(f"Login page access error: {str(e)}")
+        # Clear any problematic session data and redirect to clean login
+        from flask import session
+        session.clear()
+        return redirect(url_for('login'))
     
-    if request.method == 'POST':
-        username = sanitize_string(request.form.get('username', '').strip(), 80)
-        password = request.form.get('password', '')
-        
-        if not username or not password:
-            flash('Username and password are required.', 'danger')
-            return render_template('login.html')
-        
-        user = User.query.filter_by(username=username).first()
-        
-        if user and user.check_password(password) and user.is_active:
-            login_user(user, remember=True)
-            user.update_last_login()
+    try:
+        if request.method == 'POST':
+            username = sanitize_string(request.form.get('username', '').strip(), 80)
+            password = request.form.get('password', '')
             
-            next_page = request.args.get('next')
-            flash(f'Welcome back, {user.username}!', 'success')
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
-        else:
-            flash('Invalid username or password.', 'danger')
+            if not username or not password:
+                flash('Username and password are required.', 'danger')
+                return render_template('login.html')
+            
+            user = User.query.filter_by(username=username).first()
+            
+            if user and user.check_password(password) and user.is_active:
+                login_user(user, remember=True)
+                user.update_last_login()
+                
+                # Safely handle next parameter
+                next_page = request.args.get('next', '').strip()
+                flash(f'Welcome back, {user.username}!', 'success')
+                
+                # Validate and sanitize next URL
+                if next_page and next_page.startswith('/') and len(next_page) < 200:
+                    try:
+                        # Test if the URL is valid by creating a response (but don't send it)
+                        from urllib.parse import unquote
+                        clean_next = unquote(next_page)
+                        if clean_next.startswith('/') and not clean_next.startswith('//'):
+                            return redirect(clean_next)
+                    except:
+                        pass
+                
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid username or password.', 'danger')
+        
+        return render_template('login.html')
     
-    return render_template('login.html')
+    except Exception as e:
+        logging.error(f"Login function error: {str(e)}")
+        # For any unexpected errors, show a graceful message and render clean login page
+        flash('An error occurred while processing your request. Please try again.', 'warning')
+        return render_template('login.html')
 
 @app.route('/logout')
 @login_required

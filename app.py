@@ -157,3 +157,28 @@ def average_filter(values):
 
 # Import routes
 import routes
+
+# Error handlers for graceful error pages
+from flask import render_template
+
+@app.errorhandler(400)
+def bad_request(error):
+    return render_template('error.html', 
+                         error_code=400,
+                         error_title="Bad Request",
+                         error_message="The request could not be understood due to malformed syntax."), 400
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('error.html', 
+                         error_code=404,
+                         error_title="Page Not Found", 
+                         error_message="The requested page could not be found."), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('error.html', 
+                         error_code=500,
+                         error_title="Internal Server Error",
+                         error_message="An unexpected error occurred. Please try again later."), 500
