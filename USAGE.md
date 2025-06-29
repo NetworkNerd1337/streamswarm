@@ -13,7 +13,19 @@ python main.py
 
 The web dashboard will be available at `http://localhost:5000`
 
-### 2. Connect Clients
+### 2. Login to Web Interface
+
+Navigate to `http://localhost:5000` and log in with the default administrator account:
+
+- **Username:** `admin`
+- **Password:** `admin123`
+
+**⚠️ Important Security Steps:**
+1. Change the default password immediately after first login
+2. Access: Username dropdown → "My Profile" → Change Password
+3. Create additional user accounts as needed (Admin only feature)
+
+### 3. Connect Clients
 
 On each host you want to monitor, run the client:
 ```bash
@@ -29,7 +41,50 @@ Example:
 python client.py --server http://192.168.1.100:5000 --name "Web-Server-01" --verbose
 ```
 
-### 3. Access the Dashboard
+### 4. Access the Dashboard
+
+Open your web browser and navigate to the server URL. You'll see the main dashboard with navigation to all features.
+
+## User Management and Authentication
+
+### User Roles
+
+StreamSwarm has two user roles:
+
+- **Administrator**: Full access to all features including user management
+- **User**: Access to monitoring features but cannot manage other users
+
+### Managing Users (Admin Only)
+
+Administrators can manage user accounts:
+
+1. Click on your username in the top navigation
+2. Select "User Management" (only visible to admins)
+3. Available actions:
+   - **Create User**: Add new accounts with username, email, and role
+   - **Edit User**: Modify user information and roles
+   - **Activate/Deactivate**: Enable or disable user accounts
+   - **Delete User**: Remove users (with safety protections)
+
+### Self-Service Features
+
+All users can manage their own accounts:
+
+1. Click on your username in the top navigation
+2. Select "My Profile"
+3. Available features:
+   - View profile information and account details
+   - Change password securely
+   - View login history and account activity
+
+### Security Features
+
+- **Secure Authentication**: Werkzeug password hashing with session management
+- **Role-Based Access**: Different permissions for admins and regular users
+- **Session Security**: Automatic session management and timeout protection
+- **Separate Systems**: Web authentication is completely separate from client API tokens
+
+### 5. Access the Dashboard
 
 Open your web browser and navigate to the server URL. You'll see three main sections:
 

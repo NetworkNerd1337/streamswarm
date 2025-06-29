@@ -20,6 +20,7 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 - **Multi-Client Architecture**: Distributed testing from multiple network locations with auto-assignment
 - **Professional Reporting**: Executive PDF reports with charts, analysis, and recommendations
 - **Real-Time Visualization**: Web-based interface with comprehensive charts and test scheduling
+- **Secure Web Authentication**: Role-based access control with user management and session security
 
 ## Quick Start
 
@@ -47,6 +48,12 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
    ```bash
    python main.py
    ```
+
+4. **Access the web interface:**
+   - Open browser to `http://localhost:5000`
+   - **Default login:** username=`admin`, password=`admin123`
+   - **⚠️ Important:** Change the default password immediately!
+   - Access via: Username dropdown → "My Profile"
 
 4. **Connect clients:**
    ```bash
