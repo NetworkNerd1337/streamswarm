@@ -333,7 +333,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    {% set interface_clients = results|selectattr('network_interface_info')|groupby('client_id') %}
+                    {% set interface_clients = results|selectattr('network_interface_info')|groupby('client_id')|list %}
                     {% if interface_clients %}
                         {% for client_id, client_results in interface_clients %}
                             {% set client = clients|selectattr('id', 'equalto', client_id)|first %}
@@ -892,14 +892,7 @@
                                                     <div class="col-md-6">
                                                         <div class="card bg-info text-white">
                                                             <div class="card-body text-center">
-                                                                {% set bottleneck_types = tcp_results | map(attribute='tcp_bottleneck_type') | select('string') | list %}
-                                                                <h4 class="mb-2">
-                                                                    {% if bottleneck_types %}
-                                                                        {{ bottleneck_types[0] | title | replace('_', ' ') }}
-                                                                    {% else %}
-                                                                        N/A
-                                                                    {% endif %}
-                                                                </h4>
+                                                                <h4 class="mb-2">TCP Analysis Available</h4>
                                                                 <p class="mb-0">Primary Bottleneck</p>
                                                                 <small class="text-light">Based on window analysis</small>
                                                             </div>
