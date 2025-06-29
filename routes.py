@@ -675,7 +675,15 @@ def submit_test_results():
             signal_strength_max=signal_strength_max,
             signal_strength_avg=signal_strength_avg,
             signal_strength_samples=signal_strength_samples,
-            signal_strength_data=signal_strength_data
+            signal_strength_data=signal_strength_data,
+            # TCP Handshake Timing Analysis
+            tcp_handshake_total_time=safe_float(data.get('tcp_handshake_total_time'), 'tcp_handshake_total_time'),
+            tcp_handshake_syn_time=safe_float(data.get('tcp_handshake_syn_time'), 'tcp_handshake_syn_time'),
+            tcp_handshake_synack_time=safe_float(data.get('tcp_handshake_synack_time'), 'tcp_handshake_synack_time'),
+            tcp_handshake_ack_time=safe_float(data.get('tcp_handshake_ack_time'), 'tcp_handshake_ack_time'),
+            tcp_handshake_network_delay=safe_float(data.get('tcp_handshake_network_delay'), 'tcp_handshake_network_delay'),
+            tcp_handshake_server_processing=safe_float(data.get('tcp_handshake_server_processing'), 'tcp_handshake_server_processing'),
+            tcp_handshake_analysis=sanitize_string(data.get('tcp_handshake_analysis'), 500) if data.get('tcp_handshake_analysis') else None
         )
         
     except ValueError as e:
