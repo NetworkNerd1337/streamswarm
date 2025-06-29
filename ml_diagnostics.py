@@ -147,6 +147,14 @@ class NetworkDiagnosticEngine:
                 'power_consumption_watts': result.power_consumption_watts or 0,
                 'memory_error_rate': result.memory_error_rate or 0,
                 
+                # TCP Handshake Timing Features
+                'tcp_handshake_syn_time': result.tcp_handshake_syn_time or 0,
+                'tcp_handshake_synack_time': result.tcp_handshake_synack_time or 0,
+                'tcp_handshake_ack_time': result.tcp_handshake_ack_time or 0,
+                'tcp_handshake_total_time': result.tcp_handshake_total_time or 0,
+                'tcp_handshake_network_delay': result.tcp_handshake_network_delay or 0,
+                'tcp_handshake_server_processing': result.tcp_handshake_server_processing or 0,
+                
                 # Signal Strength Features (for wireless)
                 'signal_strength_avg': result.signal_strength_avg or 0,
                 'signal_strength_min': result.signal_strength_min or 0,
@@ -169,6 +177,23 @@ class NetworkDiagnosticEngine:
                 ),
                 'total_network_errors': (result.network_errors_in or 0) + (result.network_errors_out or 0),
                 'total_network_drops': (result.network_drops_in or 0) + (result.network_drops_out or 0),
+                
+                # TCP Handshake Derived Features
+                'handshake_efficiency': (
+                    (result.tcp_handshake_network_delay or 0) / (result.tcp_handshake_total_time or 1) 
+                    if result.tcp_handshake_total_time and result.tcp_handshake_total_time > 0 
+                    else 0
+                ),
+                'server_processing_ratio': (
+                    (result.tcp_handshake_server_processing or 0) / (result.tcp_handshake_total_time or 1) 
+                    if result.tcp_handshake_total_time and result.tcp_handshake_total_time > 0 
+                    else 0
+                ),
+                'handshake_overhead': (
+                    (result.tcp_handshake_total_time or 0) - (result.tcp_handshake_network_delay or 0) - (result.tcp_handshake_server_processing or 0)
+                    if all([result.tcp_handshake_total_time, result.tcp_handshake_network_delay, result.tcp_handshake_server_processing])
+                    else 0
+                ),
             }
             
             features_list.append(features)
@@ -184,10 +209,11 @@ class NetworkDiagnosticEngine:
             
         # Define weights for different metric categories
         weights = {
-            'network': 0.4,
-            'system': 0.3,
+            'network': 0.3,
+            'system': 0.25,
             'reliability': 0.2,
-            'efficiency': 0.1
+            'efficiency': 0.1,
+            'handshake': 0.15  # New category for TCP handshake performance
         }
         
         # Network health (lower latency, packet loss, jitter is better)
@@ -198,6 +224,33 @@ class NetworkDiagnosticEngine:
             network_score -= min(features['ping_packet_loss'].mean() * 10, 40)  # Penalize packet loss
         if features['jitter'].mean() > 0:
             network_score -= min(features['jitter'].mean() / 2, 10)  # Penalize high jitter
+        
+        # TCP Handshake Performance (lower times and better efficiency is better)
+        handshake_score = 100
+        if 'tcp_handshake_total_time' in features.columns and features['tcp_handshake_total_time'].mean() > 0:
+            avg_handshake_time = features['tcp_handshake_total_time'].mean()
+            if avg_handshake_time > 200:  # Very slow handshakes
+                handshake_score -= 40
+            elif avg_handshake_time > 100:  # Slow handshakes
+                handshake_score -= 25
+            elif avg_handshake_time > 50:  # Moderate handshakes
+                handshake_score -= 10
+            
+            # Penalize poor handshake efficiency (high server processing ratio)
+            if 'server_processing_ratio' in features.columns:
+                avg_server_ratio = features['server_processing_ratio'].mean()
+                if avg_server_ratio > 0.7:  # Server processing dominates
+                    handshake_score -= 20
+                elif avg_server_ratio > 0.5:
+                    handshake_score -= 10
+            
+            # Penalize high handshake overhead
+            if 'handshake_overhead' in features.columns:
+                avg_overhead = features['handshake_overhead'].mean()
+                if avg_overhead > 20:  # High unexplained overhead
+                    handshake_score -= 15
+                elif avg_overhead > 10:
+                    handshake_score -= 8
         
         # System health (lower CPU, memory usage is better)
         system_score = 100
@@ -231,7 +284,8 @@ class NetworkDiagnosticEngine:
             network_score * weights['network'] +
             system_score * weights['system'] +
             reliability_score * weights['reliability'] +
-            efficiency_score * weights['efficiency']
+            efficiency_score * weights['efficiency'] +
+            handshake_score * weights['handshake']
         )
         
         return max(0, min(100, total_score))
