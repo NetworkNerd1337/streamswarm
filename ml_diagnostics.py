@@ -617,6 +617,47 @@ class NetworkDiagnosticEngine:
                 'recommendation': 'Investigate bandwidth limitations and content delivery'
             })
         
+        # TCP Handshake performance rules
+        if 'tcp_handshake_total_time' in features_df.columns and features_df['tcp_handshake_total_time'].count() > 0:
+            avg_handshake_time = features_df['tcp_handshake_total_time'].mean()
+            avg_server_processing = features_df['server_processing_ratio'].mean() if 'server_processing_ratio' in features_df.columns else 0
+            avg_handshake_overhead = features_df['handshake_overhead'].mean() if 'handshake_overhead' in features_df.columns else 0
+            
+            if avg_handshake_time > 150:  # Slow handshakes
+                issues.append({
+                    'type': 'slow_handshake',
+                    'severity': 'high' if avg_handshake_time > 300 else 'medium',
+                    'description': f'Slow TCP handshake times: {avg_handshake_time:.1f}ms average',
+                    'recommendation': 'Check server responsiveness and network path optimization'
+                })
+            
+            if avg_server_processing > 0.6:  # Server processing dominates
+                issues.append({
+                    'type': 'server_bottleneck',
+                    'severity': 'medium',
+                    'description': f'Server processing consumes {avg_server_processing*100:.1f}% of handshake time',
+                    'recommendation': 'Investigate server load, CPU usage, and application response times'
+                })
+            
+            if avg_handshake_overhead > 15:  # High unexplained overhead
+                issues.append({
+                    'type': 'handshake_overhead',
+                    'severity': 'medium',
+                    'description': f'High handshake overhead: {avg_handshake_overhead:.1f}ms unexplained delay',
+                    'recommendation': 'Review network configuration, firewall rules, and intermediate proxies'
+                })
+            
+            # Handshake efficiency insights
+            if avg_handshake_time > 0:
+                efficiency = (features_df['tcp_handshake_network_delay'].mean() if 'tcp_handshake_network_delay' in features_df.columns else 0) / avg_handshake_time
+                if efficiency < 0.4:  # Poor handshake efficiency
+                    issues.append({
+                        'type': 'poor_handshake_efficiency',
+                        'severity': 'low',
+                        'description': f'Low handshake efficiency: {efficiency*100:.1f}% network vs total time',
+                        'recommendation': 'Optimize server configuration and review network path for unnecessary delays'
+                    })
+        
         # Generate general recommendations
         if not issues:
             recommendations.append('Network performance appears healthy')
