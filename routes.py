@@ -1469,6 +1469,7 @@ def regenerate_token(token_id):
 # ML Diagnostics Routes
 
 @app.route('/diagnose/<int:test_id>')
+@web_auth_required
 def diagnose_test(test_id):
     """ML Diagnostic analysis page for test results"""
     test = Test.query.get_or_404(test_id)
@@ -1485,6 +1486,7 @@ def diagnose_test(test_id):
                          results_count=results_count)
 
 @app.route('/api/test/<int:test_id>/diagnose', methods=['POST'])
+@web_auth_required
 def api_diagnose_test(test_id):
     """API endpoint to run ML diagnosis on test results"""
     try:
@@ -1495,12 +1497,14 @@ def api_diagnose_test(test_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/ml-models')
+@web_auth_required
 def ml_models():
     """ML Model management page"""
     model_status = diagnostic_engine.get_model_status()
     return render_template('ml_models.html', model_status=model_status)
 
 @app.route('/api/ml-models/train', methods=['POST'])
+@web_auth_required
 def train_ml_models():
     """Train ML models with available data"""
     try:
@@ -1520,6 +1524,7 @@ def train_ml_models():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/ml-models/status')
+@web_auth_required
 def ml_models_status():
     """Get ML model status"""
     try:
