@@ -380,7 +380,7 @@ class StreamSwarmClient:
             logger.error(f"Error getting system metrics: {e}")
             return {}
     
-    def _ping_test(self, destination, count=4):
+    def _ping_test(self, destination, count=4, packet_size=64):
         """Perform ping test with jitter calculation"""
         try:
             # Extract hostname from URL if full URL is provided
@@ -396,9 +396,9 @@ class StreamSwarmClient:
                 hostname = destination.split('/')[0]
             
             if platform.system().lower() == 'windows':
-                cmd = ['ping', '-n', str(count), hostname]
+                cmd = ['ping', '-n', str(count), '-l', str(packet_size), hostname]
             else:
-                cmd = ['ping', '-c', str(count), hostname]
+                cmd = ['ping', '-c', str(count), '-s', str(packet_size), hostname]
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             
@@ -503,6 +503,7 @@ class StreamSwarmClient:
         destination = test_config['destination']
         duration = test_config.get('duration', 300)
         interval = test_config.get('interval', 5)
+        packet_size = test_config.get('packet_size', 64)
         
         logger.info(f"Starting test {test_id} to {destination} for {duration}s")
         
