@@ -270,11 +270,13 @@ def test_results(test_id):
     return render_template('test_results.html', test=test, results=results, clients=clients)
 
 @app.route('/tutorial')
+@web_auth_required
 def tutorial():
     """Tutorial and documentation view"""
     return render_template('tutorial.html')
 
 @app.route('/tokens')
+@web_auth_required
 def tokens():
     """API Token management view"""
     tokens = ApiToken.query.order_by(ApiToken.created_at.desc()).all()

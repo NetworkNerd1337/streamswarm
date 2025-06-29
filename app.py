@@ -49,6 +49,18 @@ with app.app_context():
     # Import routes to register them with the app
     import routes
     db.create_all()
+    
+    # Create default admin user if no users exist
+    if models.User.query.count() == 0:
+        admin_user = models.User(
+            username='admin',
+            email='admin@streamswarm.local',
+            role='admin'
+        )
+        admin_user.set_password('admin123')
+        db.session.add(admin_user)
+        db.session.commit()
+        logging.info("Created default admin user: username=admin, password=admin123")
 
 # Custom Jinja filters
 @app.template_filter('tojsonfilter')

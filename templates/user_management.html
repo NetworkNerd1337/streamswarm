@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-people-fill text-primary me-2"></i>
+                        User Management
+                    </h1>
+                    <p class="text-muted mb-0">Manage web GUI user accounts and permissions</p>
+                </div>
+                <button class="btn btn-primary" onclick="showCreateUserModal()">
+                    <i class="bi bi-person-plus me-2"></i>Create User
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-{{ 'exclamation-triangle' if category == 'danger' else 'info-circle' }} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Users Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list me-2"></i>User Accounts
+                        <span class="badge bg-secondary ms-2">{{ users|length }} users</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Last Login</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                        <tr>
+                                            <td>
+                                                <i class="bi bi-person-circle me-2"></i>
+                                                {{ user.username }}
+                                                {% if user.id == current_user.id %}
+                                                    <span class="badge bg-info ms-1">You</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                {% if user.role == 'admin' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-shield-check me-1"></i>Admin
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-person me-1"></i>User
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.is_active %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle me-1"></i>Active
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-pause-circle me-1"></i>Inactive
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</td>
+                                            <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</td>
+                                            <td>
+                                                {% if user.id != current_user.id %}
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-primary" onclick="editUser({{ user.id }}, '{{ user.username }}', '{{ user.email }}', '{{ user.role }}', {{ user.is_active|lower }})">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" onclick="deleteUser({{ user.id }}, '{{ user.username }}')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted small">Cannot modify own account</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">No users found</h5>
+                            <p class="text-muted">Create the first user account to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2"></i>Create New User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createUserForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="createUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="createUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="createEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="createPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="createRole" class="form-label">Role</label>
+                        <select class="form-select" id="createRole">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil me-2"></i>Edit User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="editUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">Password <small class="text-muted">(leave blank to keep current)</small></label>
+                        <input type="password" class="form-control" id="editPassword">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">Role</label>
+                        <select class="form-select" id="editRole">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editActive">
+                            <label class="form-check-label" for="editActive">
+                                Account Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showCreateUserModal() {
+    document.getElementById('createUserForm').reset();
+    new bootstrap.Modal(document.getElementById('createUserModal')).show();
+}
+
+function editUser(id, username, email, role, active) {
+    document.getElementById('editUserId').value = id;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editEmail').value = email;
+    document.getElementById('editRole').value = role;
+    document.getElementById('editActive').checked = active;
+    document.getElementById('editPassword').value = '';
+    
+    new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+function deleteUser(id, username) {
+    if (confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+        fetch(`/api/users/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+            } else {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete user');
+        });
+    }
+}
+
+document.getElementById('createUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        username: document.getElementById('createUsername').value,
+        email: document.getElementById('createEmail').value,
+        password: document.getElementById('createPassword').value,
+        role: document.getElementById('createRole').value
+    };
+    
+    fetch('/api/users', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to create user');
+    });
+});
+
+document.getElementById('editUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('editUserId').value;
+    const formData = {
+        username: document.getElementById('editUsername').value,
+        email: document.getElementById('editEmail').value,
+        role: document.getElementById('editRole').value,
+        active: document.getElementById('editActive').checked
+    };
+    
+    const password = document.getElementById('editPassword').value;
+    if (password) {
+        formData.password = password;
+    }
+    
+    fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update user');
+    });
+});
+</script>
+{% endblock %}
