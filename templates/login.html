@@ -111,6 +111,20 @@
         .text-muted {
             color: #718096 !important;
         }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo-image {
+            max-width: 200px;
+            height: auto;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            transition: transform 0.3s ease;
+        }
+        .logo-image:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -134,7 +148,9 @@
 
     <div class="login-card">
         <div class="login-header">
-            <i class="bi bi-diagram-3-fill text-primary fs-1 mb-3"></i>
+            <div class="logo-container mb-3">
+                <img src="{{ url_for('static', filename='images/swarm-logo.png') }}" alt="SWARM Logo" class="logo-image">
+            </div>
             <h1>StreamSwarm</h1>
             <p>Network Monitoring Platform</p>
         </div>
