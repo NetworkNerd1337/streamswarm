@@ -928,13 +928,13 @@
                                                                 {% set avg_rtt = tcp_results | extract_numeric('tcp_rtt_avg') %}
                                                                 {% set min_rtt = tcp_results | extract_numeric('tcp_rtt_min') %}
                                                                 {% set max_rtt = tcp_results | extract_numeric('tcp_rtt_max') %}
-                                                                <td>{{ "%.2f"|format(avg_rtt | average) if avg_rtt else 'N/A' }}</td>
-                                                                <td>{{ "%.2f"|format(min_rtt | min) if min_rtt else 'N/A' }}</td>
-                                                                <td>{{ "%.2f"|format(max_rtt | max) if max_rtt else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format((avg_rtt | average) * 1000) if avg_rtt else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format((min_rtt | min) * 1000) if min_rtt else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format((max_rtt | max) * 1000) if max_rtt else 'N/A' }}</td>
                                                                 <td>
-                                                                    {% if avg_rtt and (avg_rtt | average) < 50 %}
+                                                                    {% if avg_rtt and ((avg_rtt | average) * 1000) < 50 %}
                                                                         <span class="badge bg-success">Excellent</span>
-                                                                    {% elif avg_rtt and (avg_rtt | average) < 100 %}
+                                                                    {% elif avg_rtt and ((avg_rtt | average) * 1000) < 100 %}
                                                                         <span class="badge bg-warning">Good</span>
                                                                     {% elif avg_rtt %}
                                                                         <span class="badge bg-danger">Poor</span>
@@ -950,13 +950,13 @@
                                                                        title="Network instability indicator. High variation suggests network congestion or path changes."></i>
                                                                 </td>
                                                                 {% set rtt_var = tcp_results | extract_numeric('tcp_rtt_variation') %}
-                                                                <td>{{ "%.2f"|format(rtt_var | average) if rtt_var else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format((rtt_var | average) * 1000) if rtt_var else 'N/A' }}</td>
                                                                 <td>-</td>
-                                                                <td>{{ "%.2f"|format(rtt_var | max) if rtt_var else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format((rtt_var | max) * 1000) if rtt_var else 'N/A' }}</td>
                                                                 <td>
-                                                                    {% if rtt_var and (rtt_var | average) < 20 %}
+                                                                    {% if rtt_var and ((rtt_var | average) * 1000) < 20 %}
                                                                         <span class="badge bg-success">Stable</span>
-                                                                    {% elif rtt_var and (rtt_var | average) < 50 %}
+                                                                    {% elif rtt_var and ((rtt_var | average) * 1000) < 50 %}
                                                                         <span class="badge bg-warning">Moderate</span>
                                                                     {% elif rtt_var %}
                                                                         <span class="badge bg-danger">Unstable</span>
