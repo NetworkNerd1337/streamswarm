@@ -111,6 +111,8 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Authentication system completely separate from client API token system - no interference with existing client connections
   - Added user profile page with self-service password change functionality for all users
   - Styled login page with dark gradient background and proper contrast to match application theme
+  - Integrated SWARM logo into login page with attractive styling and hover animations
+  - Fixed security vulnerability: added authentication protection to all ML-related routes (/ml-models, ML training, diagnosis)
 - June 28, 2025: **COMPLETED** comprehensive AI/ML diagnostic system with zero-trust architecture
   - Added local machine learning capabilities using Scikit-learn for network performance analysis
   - Implemented ensemble approach with Isolation Forest (anomaly detection), Random Forest (health classification), and Gradient Boosting (performance prediction)
