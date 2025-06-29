@@ -100,7 +100,7 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 - June 29, 2025: **COMPLETED** secure web GUI user authentication system with role-based access control
   - Implemented Flask-Login based authentication system separate from client API token system
   - Added comprehensive user management interface accessible only to admin users
-  - Created secure login page with hashed password storage using Werkzeug
+  - Created secure login page with dark theme matching application aesthetics and hashed password storage using Werkzeug
   - Implemented role-based access control with admin and user roles
   - Added user CRUD operations: create, read, update, delete users with security constraints
   - Protected all web GUI routes with authentication decorators (@web_auth_required, @admin_required)
@@ -109,6 +109,8 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - User management features: username/email validation, password hashing, active/inactive status
   - Security features: prevent admin self-modification, preserve last admin user, email format validation
   - Authentication system completely separate from client API token system - no interference with existing client connections
+  - Added user profile page with self-service password change functionality for all users
+  - Styled login page with dark gradient background and proper contrast to match application theme
 - June 28, 2025: **COMPLETED** comprehensive AI/ML diagnostic system with zero-trust architecture
   - Added local machine learning capabilities using Scikit-learn for network performance analysis
   - Implemented ensemble approach with Isolation Forest (anomaly detection), Random Forest (health classification), and Gradient Boosting (performance prediction)
