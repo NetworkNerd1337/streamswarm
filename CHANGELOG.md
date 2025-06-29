@@ -118,6 +118,16 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
     - Moved Development Mode settings from main navigation to System Configuration subsection
     - Added breadcrumb navigation and organized foundation for future system settings
     - Improved intuitive access to admin features through structured configuration dashboard
+  - **ADDED** TCP Window Analysis feature for advanced network bottleneck attribution:
+    - Real-time TCP window behavior monitoring during connection establishment
+    - Comprehensive RTT analysis (min/max/avg/variation) for network stability assessment  
+    - Congestion window tracking to identify throughput limitations
+    - Automated bottleneck classification (network congestion, server limited, optimal, etc.)
+    - TCP window efficiency scoring (0-100%) based on stability and performance
+    - Retransmission and congestion event detection for packet loss attribution
+    - 13 new database fields for storing detailed TCP connection metrics
+    - Visual dashboard with efficiency scores and bottleneck type breakdown
+    - Professional interpretation guides for network administrators
 
 ## Development Status
 

@@ -855,6 +855,243 @@
                                     </div>
                                 </div>
                                 
+                                <!-- TCP Window Analysis -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tcpWindowAnalysis">
+                                            <i class="fas fa-project-diagram me-2"></i>TCP Window Analysis (Bottleneck Attribution)
+                                        </button>
+                                    </h2>
+                                    <div id="tcpWindowAnalysis" class="accordion-collapse collapse" data-bs-parent="#metricsAccordion">
+                                        <div class="accordion-body">
+                                            {% set tcp_results = results | selectattr('tcp_window_efficiency') | list %}
+                                            {% if tcp_results %}
+                                                <!-- TCP Window Efficiency Score -->
+                                                <div class="row mb-4">
+                                                    <div class="col-md-6">
+                                                        <div class="card bg-primary text-white">
+                                                            <div class="card-body text-center">
+                                                                {% set avg_efficiency = tcp_results | map(attribute='tcp_window_efficiency') | select('number') | list %}
+                                                                <h4 class="mb-2">{{ "%.1f"|format(avg_efficiency | average) if avg_efficiency else 'N/A' }}%</h4>
+                                                                <p class="mb-0">TCP Window Efficiency</p>
+                                                                {% if avg_efficiency %}
+                                                                    {% set eff_score = avg_efficiency | average %}
+                                                                    {% if eff_score >= 90 %}
+                                                                        <small class="text-light">Excellent Performance</small>
+                                                                    {% elif eff_score >= 70 %}
+                                                                        <small class="text-light">Good Performance</small>
+                                                                    {% elif eff_score >= 50 %}
+                                                                        <small class="text-light">Fair Performance</small>
+                                                                    {% else %}
+                                                                        <small class="text-light">Poor Performance</small>
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="card bg-info text-white">
+                                                            <div class="card-body text-center">
+                                                                {% set bottleneck_types = tcp_results | map(attribute='tcp_bottleneck_type') | select('string') | list %}
+                                                                <h4 class="mb-2">
+                                                                    {% if bottleneck_types %}
+                                                                        {% set most_common = bottleneck_types | groupby | list | sort(attribute='1.length', reverse=true) | first %}
+                                                                        {{ most_common.0 | title | replace('_', ' ') }}
+                                                                    {% else %}
+                                                                        N/A
+                                                                    {% endif %}
+                                                                </h4>
+                                                                <p class="mb-0">Primary Bottleneck</p>
+                                                                <small class="text-light">Based on window analysis</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Detailed TCP Window Metrics -->
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm">
+                                                        <thead>
+                                                            <tr><th>Metric</th><th>Average</th><th>Min</th><th>Max</th><th>Status</th></tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    Round Trip Time (ms)
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Network latency measured during TCP connection. Lower is better."></i>
+                                                                </td>
+                                                                {% set avg_rtt = tcp_results | map(attribute='tcp_rtt_avg') | select('number') | list %}
+                                                                {% set min_rtt = tcp_results | map(attribute='tcp_rtt_min') | select('number') | list %}
+                                                                {% set max_rtt = tcp_results | map(attribute='tcp_rtt_max') | select('number') | list %}
+                                                                <td>{{ "%.2f"|format(avg_rtt | average) if avg_rtt else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format(min_rtt | min) if min_rtt else 'N/A' }}</td>
+                                                                <td>{{ "%.2f"|format(max_rtt | max) if max_rtt else 'N/A' }}</td>
+                                                                <td>
+                                                                    {% if avg_rtt and (avg_rtt | average) < 50 %}
+                                                                        <span class="badge bg-success">Excellent</span>
+                                                                    {% elif avg_rtt and (avg_rtt | average) < 100 %}
+                                                                        <span class="badge bg-warning">Good</span>
+                                                                    {% elif avg_rtt %}
+                                                                        <span class="badge bg-danger">Poor</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    RTT Variation (ms)
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Network instability indicator. High variation suggests network congestion or path changes."></i>
+                                                                </td>
+                                                                {% set rtt_var = tcp_results | map(attribute='tcp_rtt_variation') | select('number') | list %}
+                                                                <td>{{ "%.2f"|format(rtt_var | average) if rtt_var else 'N/A' }}</td>
+                                                                <td>-</td>
+                                                                <td>{{ "%.2f"|format(rtt_var | max) if rtt_var else 'N/A' }}</td>
+                                                                <td>
+                                                                    {% if rtt_var and (rtt_var | average) < 20 %}
+                                                                        <span class="badge bg-success">Stable</span>
+                                                                    {% elif rtt_var and (rtt_var | average) < 50 %}
+                                                                        <span class="badge bg-warning">Moderate</span>
+                                                                    {% elif rtt_var %}
+                                                                        <span class="badge bg-danger">Unstable</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    Congestion Window (KB)
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Amount of data TCP can send before receiving acknowledgment. Larger windows = better throughput."></i>
+                                                                </td>
+                                                                {% set avg_cwnd = tcp_results | map(attribute='tcp_cwnd_avg') | select('number') | list %}
+                                                                {% set min_cwnd = tcp_results | map(attribute='tcp_cwnd_min') | select('number') | list %}
+                                                                {% set max_cwnd = tcp_results | map(attribute='tcp_cwnd_max') | select('number') | list %}
+                                                                <td>{{ "%.1f"|format((avg_cwnd | average) / 1024) if avg_cwnd else 'N/A' }}</td>
+                                                                <td>{{ "%.1f"|format((min_cwnd | min) / 1024) if min_cwnd else 'N/A' }}</td>
+                                                                <td>{{ "%.1f"|format((max_cwnd | max) / 1024) if max_cwnd else 'N/A' }}</td>
+                                                                <td>
+                                                                    {% if avg_cwnd and (avg_cwnd | average) > 65536 %}
+                                                                        <span class="badge bg-success">Large</span>
+                                                                    {% elif avg_cwnd and (avg_cwnd | average) > 32768 %}
+                                                                        <span class="badge bg-warning">Medium</span>
+                                                                    {% elif avg_cwnd %}
+                                                                        <span class="badge bg-danger">Small</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    Congestion Events
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Number of times TCP detected network congestion and reduced sending rate."></i>
+                                                                </td>
+                                                                {% set cong_events = tcp_results | map(attribute='tcp_congestion_events') | select('number') | list %}
+                                                                <td>{{ cong_events | average | round(1) if cong_events else 'N/A' }}</td>
+                                                                <td>{{ cong_events | min if cong_events else 'N/A' }}</td>
+                                                                <td>{{ cong_events | max if cong_events else 'N/A' }}</td>
+                                                                <td>
+                                                                    {% if cong_events and (cong_events | average) == 0 %}
+                                                                        <span class="badge bg-success">None</span>
+                                                                    {% elif cong_events and (cong_events | average) < 3 %}
+                                                                        <span class="badge bg-warning">Few</span>
+                                                                    {% elif cong_events %}
+                                                                        <span class="badge bg-danger">Many</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    Retransmissions
+                                                                    <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                       title="Packets that had to be resent due to loss or corruption."></i>
+                                                                </td>
+                                                                {% set retrans = tcp_results | map(attribute='tcp_retransmissions') | select('number') | list %}
+                                                                <td>{{ retrans | average | round(1) if retrans else 'N/A' }}</td>
+                                                                <td>{{ retrans | min if retrans else 'N/A' }}</td>
+                                                                <td>{{ retrans | max if retrans else 'N/A' }}</td>
+                                                                <td>
+                                                                    {% if retrans and (retrans | average) == 0 %}
+                                                                        <span class="badge bg-success">None</span>
+                                                                    {% elif retrans and (retrans | average) < 5 %}
+                                                                        <span class="badge bg-warning">Few</span>
+                                                                    {% elif retrans %}
+                                                                        <span class="badge bg-danger">Many</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary">N/A</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                
+                                                <!-- Bottleneck Attribution Analysis -->
+                                                <div class="alert alert-info mt-3">
+                                                    <h6><i class="fas fa-search me-2"></i>Bottleneck Attribution Analysis</h6>
+                                                    {% if bottleneck_types %}
+                                                        {% set bottleneck_counts = {} %}
+                                                        {% for type in bottleneck_types %}
+                                                            {% set _ = bottleneck_counts.update({type: bottleneck_counts.get(type, 0) + 1}) %}
+                                                        {% endfor %}
+                                                        
+                                                        <div class="row">
+                                                            {% for type, count in bottleneck_counts.items() %}
+                                                                <div class="col-md-6 mb-2">
+                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                        <span>
+                                                                            {% if type == 'network_congestion' %}
+                                                                                <i class="fas fa-exclamation-triangle text-danger me-2"></i>Network Congestion
+                                                                            {% elif type == 'server_limited' %}
+                                                                                <i class="fas fa-server text-warning me-2"></i>Server Limited
+                                                                            {% elif type == 'network_instability' %}
+                                                                                <i class="fas fa-wifi text-danger me-2"></i>Network Instability
+                                                                            {% elif type == 'packet_loss' %}
+                                                                                <i class="fas fa-times-circle text-danger me-2"></i>Packet Loss
+                                                                            {% elif type == 'optimal' %}
+                                                                                <i class="fas fa-check-circle text-success me-2"></i>Optimal
+                                                                            {% else %}
+                                                                                <i class="fas fa-question-circle text-muted me-2"></i>{{ type | title | replace('_', ' ') }}
+                                                                            {% endif %}
+                                                                        </span>
+                                                                        <span class="badge bg-primary">{{ count }} clients</span>
+                                                                    </div>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                        
+                                                        <hr class="my-3">
+                                                        <small class="text-muted">
+                                                            <strong>Interpretation:</strong>
+                                                            <ul class="mb-1">
+                                                                <li><strong>Network Congestion:</strong> Multiple congestion events detected - network path is overloaded</li>
+                                                                <li><strong>Server Limited:</strong> Server processing is the bottleneck rather than network</li>
+                                                                <li><strong>Network Instability:</strong> High RTT variation suggests unstable network conditions</li>
+                                                                <li><strong>Packet Loss:</strong> Retransmissions detected - may indicate network issues</li>
+                                                                <li><strong>Optimal:</strong> TCP performance is operating efficiently</li>
+                                                            </ul>
+                                                        </small>
+                                                    {% else %}
+                                                        <p class="mb-0">No bottleneck analysis data available for this test.</p>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    No TCP window analysis data available for this test. This advanced feature requires client version with TCP monitoring capabilities.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
                                 <!-- System Resources -->
                                 <div class="accordion-item">
                                     <h2 class="accordion-header">

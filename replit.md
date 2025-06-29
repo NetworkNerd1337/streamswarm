@@ -112,6 +112,7 @@ The system follows a distributed client-server model with the following key comp
 - June 29, 2025. Enhanced error handling for malformed URLs and graceful error pages
 - June 29, 2025. Implemented case-insensitive username authentication for better user experience
 - June 29, 2025. Restructured system configuration: moved Dev Mode to organized System Configuration page in user dropdown
+- June 29, 2025. Implemented comprehensive TCP Window Analysis feature for advanced network bottleneck attribution with real-time monitoring and efficiency scoring
 
 ## User Preferences
 
