@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}System Configuration - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-cogs me-2 text-primary"></i>
+                        System Configuration
+                    </h1>
+                    <p class="text-muted mb-0">Manage system-wide settings and configuration options</p>
+                </div>
+                <div>
+                    <span class="badge bg-danger">
+                        <i class="fas fa-user-shield me-1"></i>
+                        Admin Only
+                    </span>
+                </div>
+            </div>
+
+            <!-- Configuration Sections -->
+            <div class="row">
+                <!-- Development & Testing Settings -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-code me-2 text-warning"></i>
+                                Development & Testing
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="mb-1">Development Mode</h6>
+                                    <small class="text-muted">{{ configurations.development_mode.description }}</small>
+                                </div>
+                                <div>
+                                    {% if configurations.development_mode.current_value %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Enabled
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-shield-alt me-1"></i>
+                                            Disabled
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if configurations.development_mode.current_value %}
+                            <div class="alert alert-warning alert-sm">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Warning:</strong> Authentication is currently disabled. All users can access the system without logging in.
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-grid">
+                                <a href="{{ url_for('dev_mode_settings') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Configure Development Mode
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Authentication & Security Settings -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-shield-alt me-2 text-success"></i>
+                                Authentication & Security
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="mb-1">User Authentication</h6>
+                                <small class="text-muted">Manage user accounts and authentication settings</small>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('user_management') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-users-cog me-2"></i>
+                                    User Management
+                                </a>
+                                <a href="{{ url_for('tokens') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-key me-2"></i>
+                                    API Token Management
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Monitoring -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2 text-info"></i>
+                                System Monitoring
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="mb-1">AI & Analytics</h6>
+                                <small class="text-muted">Machine learning models and performance analytics</small>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <a href="{{ url_for('ml_models') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-robot me-2"></i>
+                                    AI Model Configuration
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-2 text-secondary"></i>
+                                System Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h5 class="text-primary mb-1">{{ configurations|length }}</h5>
+                                        <small class="text-muted">Config Options</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h5 class="text-success mb-1">
+                                        {% if configurations.development_mode.current_value %}
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        {% else %}
+                                            <i class="fas fa-check-circle"></i>
+                                        {% endif %}
+                                    </h5>
+                                    <small class="text-muted">Security Status</small>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-3">
+                            
+                            <div class="text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-server me-1"></i>
+                                    StreamSwarm System Configuration
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Configuration Guidelines
+                        </h6>
+                        <ul class="mb-0">
+                            <li><strong>Development Mode:</strong> Only enable during development or troubleshooting. Always disable in production.</li>
+                            <li><strong>User Management:</strong> Regularly review user accounts and remove inactive users.</li>
+                            <li><strong>API Tokens:</strong> Rotate client API tokens periodically for security.</li>
+                            <li><strong>AI Models:</strong> Monitor model performance and retrain when accuracy decreases.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

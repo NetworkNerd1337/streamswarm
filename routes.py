@@ -1809,6 +1809,27 @@ def change_own_password():
         return jsonify({'error': 'Failed to change password'}), 500
 
 # ================================
+# SYSTEM CONFIGURATION
+# ================================
+
+@app.route('/system-configuration')
+@admin_required
+def system_configuration():
+    """System configuration dashboard - admin only"""
+    from models import SystemConfig
+    
+    # Get all system configuration settings
+    configurations = {
+        'development_mode': {
+            'current_value': SystemConfig.is_development_mode(),
+            'description': 'Temporarily disable authentication for development',
+            'type': 'boolean'
+        }
+    }
+    
+    return render_template('system_configuration.html', configurations=configurations)
+
+# ================================
 # DEVELOPMENT MODE CONTROLS
 # ================================
 
