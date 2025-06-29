@@ -107,7 +107,12 @@ The system follows a distributed client-server model with the following key comp
 ## Changelog
 
 - June 29, 2025. Initial setup
+- June 29, 2025. Fixed MTU Size display bug in Network Performance Metrics
+- June 29, 2025. Implemented Development Mode feature for admin users to temporarily disable authentication
+- June 29, 2025. Enhanced error handling for malformed URLs and graceful error pages
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language
+- Development workflow: User finds authentication systems make development/troubleshooting more difficult and prefers bypass capability for faster iteration
+- Error handling: User expects graceful error pages instead of white "Internal Server Error" screens for better user experience

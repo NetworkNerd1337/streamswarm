@@ -100,6 +100,15 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
     - Removed misleading Network Bytes Sent/Received metrics (showed system-wide traffic like 26.8GB instead of test-specific data)
     - Fixed MTU Size metric that always showed "N/A bytes" - now properly extracts MTU from JSON network interface data
     - MTU Size now displays actual values (e.g., "1500 bytes" with "Standard" badge) from collected network interface information
+  - **IMPLEMENTED** Development Mode feature for easier troubleshooting and development:
+    - Added SystemConfig model to store development mode setting in database
+    - Created admin-only toggle to temporarily disable authentication while preserving user accounts
+    - Updated authentication decorators to respect development mode bypass
+    - Added "Dev Mode" navigation link and control page for admin users
+  - **ENHANCED** Error handling and user experience:
+    - Fixed login page internal server errors caused by malformed URL parameters (e.g., /login%3Fnext=%)
+    - Added comprehensive error handlers for 400, 404, and 500 errors with styled error pages
+    - Implemented graceful error recovery with user-friendly messages instead of white error screens
 
 ## Development Status
 
