@@ -1,46 +1,27 @@
-# StreamSwarm - Distributed Network Monitoring System
+# StreamSwarm - Technical Architecture & Development Notes
 
 ## Overview
 
-StreamSwarm is a comprehensive Python-based distributed network monitoring system that provides real-time network performance testing and system resource monitoring across multiple client hosts. The system follows a client-server architecture where a central Flask server manages tests and collects data from distributed Python clients that perform network monitoring tasks.
+StreamSwarm is a comprehensive Python-based distributed network monitoring system with Flask-based web GUI, AI/ML diagnostics, and secure authentication. This file contains technical architecture details and development changelog for internal reference.
 
-## System Architecture
+## Key Design Decisions
 
-### Overall Architecture
-- **Frontend**: Flask-based web application with Bootstrap UI framework
-- **Backend**: Python Flask server with SQLAlchemy ORM
-- **Database**: SQLite (with PostgreSQL support via configuration)
-- **Client Architecture**: Standalone Python clients that connect to the central server
-- **Deployment**: Gunicorn WSGI server with autoscaling support
-
-### Key Design Decisions
-1. **Client-Server Model**: Chosen to enable distributed monitoring from multiple network locations
-2. **Web-based Dashboard**: Provides real-time visualization and test management
+1. **Client-Server Model**: Enables distributed monitoring from multiple network locations
+2. **Web-based Dashboard**: Provides real-time visualization and test management  
 3. **SQLAlchemy ORM**: Enables database flexibility and easy schema management
-4. **Token-based Authentication**: Secures client-server communication
-5. **Modular Design**: Separate client and server components for flexible deployment
+4. **Dual Authentication**: Separate systems for web GUI (Flask-Login) and client API (tokens)
+5. **Zero-Trust ML**: Local Scikit-learn processing with no external dependencies
+6. **Modular Design**: Separate client and server components for flexible deployment
 
-## Key Components
+## Database Schema
 
-### Server Components
-- **Flask Application** (`app.py`): Core application setup with database configuration
-- **Models** (`models.py`): Database schema definitions using SQLAlchemy
-- **Routes** (`routes.py`): API endpoints and web interface handlers
-- **PDF Generator** (`pdf_generator.py`): Executive reporting functionality
-- **Templates**: HTML templates for web dashboard interface
-
-### Client Components
-- **Client Application** (`client.py`): Standalone monitoring client with 65+ metrics collection
-- **Network Testing**: Ping, traceroute, bandwidth, and QoS analysis
-- **System Monitoring**: CPU, memory, disk, and network interface tracking
-- **Wireless Detection**: Signal strength and wireless network analysis
-
-### Database Schema
 - **Client**: Stores client information and system details
 - **Test**: Defines network monitoring tests with configuration
-- **TestResult**: Stores collected metrics and performance data
+- **TestResult**: Stores collected metrics and performance data (65+ columns)
 - **TestClient**: Many-to-many relationship for test assignments
 - **ApiToken**: Manages client authentication tokens
+- **User**: Web GUI user accounts with role-based access
+- **OAuth**: Session storage for Flask-Login authentication
 
 ## Data Flow
 
@@ -50,54 +31,39 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 4. **Data Transmission**: Results sent to server via HTTP API with JSON payload
 5. **Data Storage**: Server stores results in database with timestamp and client association
 6. **Visualization**: Web dashboard displays real-time charts and historical data
-7. **Reporting**: PDF reports generated on-demand with comprehensive analysis
+7. **AI Analysis**: ML models analyze data for anomaly detection and health classification
+
+## Deployment Strategy
+
+### Development
+- Flask development server on port 5000
+- SQLite database for simplicity
+- Debug mode enabled
+
+### Production  
+- Gunicorn WSGI server with multiple workers
+- PostgreSQL database for scalability
+- Environment variable configuration for secrets
 
 ## External Dependencies
 
 ### Python Libraries
-- **Flask**: Web framework and API server
-- **SQLAlchemy**: Database ORM and schema management
+- **Flask/SQLAlchemy**: Web framework and database ORM
 - **psutil**: System resource monitoring
 - **requests**: HTTP client for API communication
 - **speedtest-cli**: Internet bandwidth testing
 - **scapy**: Advanced network packet analysis
-- **matplotlib**: Chart generation for reports
-- **reportlab**: PDF report generation
+- **matplotlib/reportlab**: Chart generation and PDF reports
+- **scikit-learn/pandas/numpy**: AI/ML diagnostic capabilities
 
 ### System Dependencies
 - **Network Tools**: ping, traceroute, iw for network testing
 - **System Tools**: lm-sensors, smartmontools for hardware monitoring
 - **Database**: PostgreSQL support via psycopg2-binary
 
-### Optional Dependencies
-- **iwlib**: Wireless interface monitoring (graceful fallback if unavailable)
-- **libpcap**: Advanced packet capture capabilities
-
-### Deprecated Dependencies (No Longer Used)
-- **wireless-tools**: Replaced by modern iw package for wireless interface management
-
-## Deployment Strategy
-
-### Development Deployment
-- Flask development server on port 5000
-- SQLite database for simplicity
-- Debug mode enabled for development
-
-### Production Deployment
-- Gunicorn WSGI server with multiple workers
-- PostgreSQL database for scalability
-- Autoscaling deployment target configured
-- Environment variable configuration for secrets
-
-### Client Deployment
-- Standalone Python script deployment
-- Command-line arguments for server connection
-- Automatic reconnection and error handling
-- Cross-platform support (Linux/Windows)
-
 ## Changelog
 
-- June 29, 2025: **COMPLETED** secure web GUI user authentication system with role-based access control
+- **June 29, 2025: COMPLETED** secure web GUI authentication system with role-based access control
   - Implemented Flask-Login based authentication system separate from client API token system
   - Added comprehensive user management interface accessible only to admin users
   - Created secure login page with dark theme matching application aesthetics and hashed password storage using Werkzeug
@@ -116,7 +82,9 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Updated all documentation (README.md, USAGE.md, TUTORIAL.md, in-app tutorial) to reflect authentication system
   - Verified comprehensive authentication protection across all web GUI routes and features
   - Database initialization automatically creates authentication tables and default admin account on first startup
-- June 28, 2025: **COMPLETED** comprehensive AI/ML diagnostic system with zero-trust architecture
+  - **CONSOLIDATED DOCUMENTATION**: Merged README.md, TUTORIAL.md, USAGE.md, and replit.md into single comprehensive README.md
+
+- **June 28, 2025: COMPLETED** comprehensive AI/ML diagnostic system with zero-trust architecture
   - Added local machine learning capabilities using Scikit-learn for network performance analysis
   - Implemented ensemble approach with Isolation Forest (anomaly detection), Random Forest (health classification), and Gradient Boosting (performance prediction)
   - Created "Diagnose Results" button functionality for AI-powered test analysis with health scoring and issue detection
@@ -128,68 +96,13 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Models provide intelligent recommendations, issue categorization, and troubleshooting guidance for network administrators
   - **RESOLVED** all ML training issues: division by None errors, datetime comparison bugs, and feature extraction problems
   - **VERIFIED** full functionality: 769 test results → 99% classification accuracy → successful model persistence and loading
-- June 28, 2025: Enhanced wireless interface detection for mixed network environments
-  - Updated template logic to display wireless details for secondary wireless interfaces when primary is Ethernet
-  - Enhanced interface type badges to show both "Ethernet (Primary)" and "Wireless (Secondary)" when both are present
-  - Modified wireless detection to properly identify and display secondary wireless interface name (e.g., wlan0)
-  - Improved user experience by showing complete wireless information regardless of primary interface type
-  - Fixed wireless details section header to clearly indicate secondary interface status with interface name
-  - Template now correctly displays comprehensive wireless details (SSID, signal strength, frequency, channel, MAC, TX power) for all wireless interfaces
-  - Fixed signal strength measurement count display to show actual sample count instead of hardcoded "2 measurements"
-  - Updated template logic to select result with maximum signal strength samples using sort(attribute='signal_strength_samples', reverse=true)
-  - Enhanced client deletion error messages to clearly indicate when API tokens must be deleted first
-  - Added specific check for API token foreign key constraints with user-friendly guidance to delete tokens in Token Management section
-  - Fixed Network Bytes Sent/Received calculations to show actual traffic during test period instead of meaningless averages
-  - Changed from averaging cumulative interface counters to calculating difference (max - min) for accurate network traffic measurement
-  - Network byte metrics now display realistic values representing actual data transferred during test execution
-- June 28, 2025: Implemented Application & Infrastructure metrics collection
-  - Added comprehensive application-layer metrics collection including content download time and compression ratio analysis
-  - Implemented infrastructure monitoring for power consumption, memory error rates, fan speeds, and drive health
-  - Enhanced client to collect HTTP performance metrics including certificate validation timing and connection reuse
-  - Added automatic detection of gzip/deflate compression effectiveness and response code tracking
-  - Implemented Linux-specific infrastructure monitoring using /sys filesystem and system commands
-  - Application metrics include content download timing, compression analysis, and SSL certificate validation
-  - Infrastructure metrics cover power consumption monitoring, ECC memory error detection, and basic drive health checks
-  - Application & Infrastructure Metrics accordion section now correctly displays real data when clients submit comprehensive test results
-  - Verified Application metrics display: Content Download Time (150.75ms), Compression Ratio (35.5%), Power Consumption (15.2W)
-  - Metrics collection occurs during actual client test execution in first 1-2 intervals for optimal performance measurement
-  - Enhanced client logging to diagnose Application & Infrastructure metrics collection issues in real environments
-  - External clients (SWARMSTREAM, SWARMSTREAM01) updated to latest client code version with enhanced metrics support
-  - Test 53 running with updated client to verify Application & Infrastructure metrics collection functionality
-- June 27, 2025: Implemented TCP retransmission rate collection and fixed metrics display
-  - Added comprehensive TCP retransmission statistics collection from /proc/net/snmp on Linux systems
-  - Implemented TCP retransmission rate calculation as percentage of total segments sent
-  - Enhanced client to collect tcp_retransmission_rate, tcp_out_of_order_packets, and tcp_duplicate_acks
-  - Fixed missing Network Performance Metrics section display issue
-  - Resolved template variable reference error preventing comprehensive metrics from showing
-  - Added missing 'average' template filter to Flask application for metrics calculations
-  - Fixed network interface data display with proper JSON formatting and tooltips
-  - Enhanced user interface with explanatory tooltips for network errors vs drops metrics
-  - All 65+ network and system metrics now display correctly in test results
-- June 27, 2025: Comprehensive security enhancements and input validation system
-  - Implemented robust input validation across all API endpoints to prevent injection attacks
-  - Added rate limiting to all API endpoints (registration, test creation, token management)
-  - Enhanced URL destination validation supporting paths and parameters while maintaining security
-  - Comprehensive sanitization of all user inputs with proper field validation
-  - Validated numeric fields with appropriate ranges and type checking
-  - Added JSON field validation with safe parsing for complex data structures
-  - Signal strength data validation with proper statistical field handling
-  - Test creation endpoint now supports complex URLs (e.g., video URLs with parameters)
-  - Token management endpoints with enhanced validation and duplicate prevention
-  - Fixed network interface data display issue by correcting JSON validation and storage format
-  - Cleaned up 24 malformed network interface records from database
-  - Fixed network packet metrics display issue by adding missing data population in API endpoint
-  - Added comprehensive network interface metrics to test results tables (packets, bytes, errors, drops)
-  - Maintained backward compatibility while strengthening security posture
-- June 26, 2025: Enhanced wireless detection with comprehensive `iw` command integration
-  - Replaced deprecated `iwconfig` calls with modern `iw dev <interface> info` and `iw dev <interface> link`
-  - Added parsing for MAC address, channel number, frequency, and transmission power data
-  - Enhanced signal strength monitoring during tests with multiple sample collection
-  - Updated web interface to display additional wireless details (MAC, channel, TX power)
-  - Improved wireless interface detection for compatibility with modern Linux distributions
-  - Updated troubleshooting messages and documentation to reference `iw` package
-- June 26, 2025: Initial setup
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+Preferred communication style: Simple, everyday language. Avoid technical jargon when possible.
+
+## Development Status
+
+**Current State**: Production-ready distributed network monitoring system with complete authentication, AI/ML diagnostics, and comprehensive documentation.
+
+**Next Priorities**: User feedback and feature requests from production deployment.
