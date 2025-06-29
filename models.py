@@ -8,6 +8,55 @@ import json
 import secrets
 import string
 
+class SystemConfig(db.Model):
+    """System configuration settings"""
+    __tablename__ = 'system_config'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None), onupdate=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    
+    @classmethod
+    def get_setting(cls, key, default=None):
+        """Get a configuration setting value"""
+        config = cls.query.filter_by(key=key).first()
+        return config.value if config else default
+    
+    @classmethod
+    def set_setting(cls, key, value, description=None):
+        """Set a configuration setting value"""
+        config = cls.query.filter_by(key=key).first()
+        if config:
+            config.value = str(value)
+            config.updated_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+            if description:
+                config.description = description
+        else:
+            config = cls(key=key, value=str(value), description=description)
+            db.session.add(config)
+        db.session.commit()
+        return config
+    
+    @classmethod
+    def is_development_mode(cls):
+        """Check if development mode is enabled"""
+        setting_value = cls.get_setting('development_mode', 'false')
+        if setting_value is None:
+            return False
+        return str(setting_value).lower() == 'true'
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'key': self.key,
+            'value': self.value,
+            'description': self.description,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
 class User(db.Model):
     """Web GUI user authentication model - separate from client API tokens"""
     __tablename__ = 'web_users'

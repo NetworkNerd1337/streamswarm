@@ -1,8 +1,8 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, send_file, Blueprint
 from functools import wraps
 from flask_login import login_user, logout_user, login_required, current_user
-from app import app, db
-from models import Client, Test, TestResult, TestClient, ApiToken, User
+from app import app, db, login_required_with_dev_bypass, require_admin_or_dev_mode
+from models import Client, Test, TestResult, TestClient, ApiToken, User, SystemConfig
 from datetime import datetime, timezone, timedelta
 import zoneinfo
 import json
@@ -1760,3 +1760,54 @@ def change_own_password():
         db.session.rollback()
         logging.error(f"Error changing password: {str(e)}")
         return jsonify({'error': 'Failed to change password'}), 500
+
+# ================================
+# DEVELOPMENT MODE CONTROLS
+# ================================
+
+@app.route('/dev-mode')
+@admin_required
+def dev_mode_settings():
+    """Development mode settings page - admin only"""
+    from models import SystemConfig
+    current_mode = SystemConfig.is_development_mode()
+    return render_template('dev_mode.html', dev_mode_enabled=current_mode)
+
+@app.route('/api/dev-mode/toggle', methods=['POST'])
+@admin_required
+def toggle_dev_mode():
+    """Toggle development mode - admin only"""
+    try:
+        from models import SystemConfig
+        current_mode = SystemConfig.is_development_mode()
+        new_mode = not current_mode
+        
+        SystemConfig.set_setting(
+            'development_mode', 
+            'true' if new_mode else 'false',
+            'Temporarily disable authentication for development purposes'
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Development mode {"enabled" if new_mode else "disabled"}',
+            'dev_mode_enabled': new_mode
+        })
+        
+    except Exception as e:
+        logging.error(f"Error toggling development mode: {str(e)}")
+        return jsonify({'error': 'Failed to toggle development mode'}), 500
+
+@app.route('/api/dev-mode/status')
+def dev_mode_status():
+    """Get development mode status - available to all"""
+    try:
+        from models import SystemConfig
+        is_enabled = SystemConfig.is_development_mode()
+        return jsonify({
+            'dev_mode_enabled': is_enabled,
+            'message': 'Development mode is ' + ('enabled' if is_enabled else 'disabled')
+        })
+    except Exception as e:
+        logging.error(f"Error getting dev mode status: {str(e)}")
+        return jsonify({'error': 'Failed to get development mode status'}), 500

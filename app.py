@@ -43,6 +43,43 @@ def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
 
+# Development mode bypass decorator
+from functools import wraps
+from flask import session, request, g
+from flask_login import current_user
+
+def login_required_with_dev_bypass(f):
+    """Custom login_required decorator that respects development mode"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from models import SystemConfig
+        
+        # Check if development mode is enabled
+        if SystemConfig.is_development_mode():
+            # In development mode, bypass authentication
+            # Set a mock user for templates that might need current_user
+            g.dev_mode_active = True
+            return f(*args, **kwargs)
+        
+        # Normal authentication check
+        from flask_login import login_required
+        return login_required(f)(*args, **kwargs)
+    
+    return decorated_function
+
+# Helper function to check if user is admin or dev mode is active
+def require_admin_or_dev_mode():
+    """Check if current user is admin or development mode is active"""
+    from models import SystemConfig
+    
+    if SystemConfig.is_development_mode():
+        return True
+    
+    if current_user.is_authenticated and current_user.is_admin():
+        return True
+    
+    return False
+
 with app.app_context():
     # Import models to ensure tables are created
     import models
