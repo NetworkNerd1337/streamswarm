@@ -293,7 +293,7 @@ def tutorial():
     return render_template('tutorial.html')
 
 @app.route('/tokens')
-@web_auth_required
+@admin_required
 def tokens():
     """API Token management view"""
     tokens = ApiToken.query.order_by(ApiToken.created_at.desc()).all()
@@ -1324,6 +1324,7 @@ def delete_client(client_id):
 
 # API Token Management Endpoints
 @app.route('/api/tokens', methods=['GET'])
+@admin_required
 def get_tokens():
     """Get all API tokens with optional filtering"""
     # Validate query parameters
@@ -1341,6 +1342,7 @@ def get_tokens():
     })
 
 @app.route('/api/tokens', methods=['POST'])
+@admin_required
 def create_token():
     """Create a new API token"""
     # Rate limiting
@@ -1386,6 +1388,7 @@ def create_token():
         return jsonify({'error': 'Failed to create token'}), 500
 
 @app.route('/api/tokens/<int:token_id>', methods=['PUT'])
+@admin_required
 def update_token(token_id):
     """Update an API token"""
     # Rate limiting
@@ -1442,6 +1445,7 @@ def update_token(token_id):
         return jsonify({'error': 'Failed to update token'}), 500
 
 @app.route('/api/tokens/<int:token_id>', methods=['DELETE'])
+@admin_required
 def delete_token(token_id):
     """Delete an API token"""
     token = ApiToken.query.get_or_404(token_id)
@@ -1514,7 +1518,7 @@ def api_diagnose_test(test_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/ml-models')
-@web_auth_required
+@admin_required
 def ml_models():
     """ML Model management page"""
     model_status = diagnostic_engine.get_model_status()
