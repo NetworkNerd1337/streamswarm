@@ -148,6 +148,8 @@ class Test(db.Model):
     scheduled_time = db.Column(db.DateTime)
     duration = db.Column(db.Integer, default=300)  # Test duration in seconds
     interval = db.Column(db.Integer, default=5)  # Measurement interval in seconds
+    packet_size = db.Column(db.Integer, default=64)  # Packet size in bytes for ping/network tests
+    test_config = db.Column(Text)  # JSON string for additional test configuration
     status = db.Column(db.String(20), default='pending')  # pending, running, completed, failed
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     started_at = db.Column(db.DateTime)
@@ -166,6 +168,8 @@ class Test(db.Model):
             'scheduled_time': self.scheduled_time.isoformat() if self.scheduled_time else None,
             'duration': self.duration,
             'interval': self.interval,
+            'packet_size': self.packet_size,
+            'test_config': json.loads(self.test_config) if self.test_config else {},
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'started_at': self.started_at.isoformat() if self.started_at else None,
