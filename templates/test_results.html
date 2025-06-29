@@ -1115,7 +1115,7 @@
                                                                 {% set avg_total = handshake_results | extract_numeric('tcp_handshake_total_time') %}
                                                                 <h4 class="mb-1">{{ "%.2f"|format(avg_total | average) if avg_total else 'N/A' }}ms</h4>
                                                                 <p class="mb-0">Average Handshake Time</p>
-                                                                <small class="text-light">
+                                                                <small class="text-white-50">
                                                                     {% if avg_total and (avg_total | average) < 50 %}
                                                                         Excellent Performance
                                                                     {% elif avg_total and (avg_total | average) < 100 %}
@@ -1137,7 +1137,7 @@
                                                                 {% set avg_server = handshake_results | extract_numeric('tcp_handshake_server_processing') %}
                                                                 <h4 class="mb-1">{{ "%.2f"|format(avg_server | average) if avg_server else 'N/A' }}ms</h4>
                                                                 <p class="mb-0">Server Processing Time</p>
-                                                                <small class="text-light">
+                                                                <small class="text-white-50">
                                                                     {% if avg_server and (avg_server | average) < 20 %}
                                                                         Fast Server Response
                                                                     {% elif avg_server and (avg_server | average) < 50 %}
@@ -1268,7 +1268,7 @@
                                                 {% endif %}
                                                 
                                                 <hr class="my-3">
-                                                <small class="text-muted">
+                                                <small class="text-dark">
                                                     <strong>Interpretation Guide:</strong>
                                                     <ul class="mb-1">
                                                         <li><strong>SYN Time:</strong> High values indicate local network stack issues or CPU overload</li>
