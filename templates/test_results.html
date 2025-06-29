@@ -713,9 +713,9 @@
                                                         </tr>
                                                         <tr>
                                                             <td>
-                                                                Network Bytes Sent
+                                                                Total System Traffic Sent
                                                                 <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                                   title="Traffic generated during test period. Calculated as difference between final and initial counter values per client, then averaged."></i>
+                                                                   title="All network traffic sent by client machines during test period - includes OS background traffic, applications, and test traffic. This is NOT test-specific traffic."></i>
                                                             </td>
                                                             {% set bytes_sent_by_client = {} %}
                                                             {% for result in results %}
@@ -741,13 +741,13 @@
                                                             {% else %}
                                                                 <td>N/A</td>
                                                             {% endif %}
-                                                            <td><span class="badge bg-info">Info</span></td>
+                                                            <td><span class="badge bg-warning">System-wide</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td>
-                                                                Network Bytes Received
+                                                                Total System Traffic Received
                                                                 <i class="fas fa-question-circle text-muted ms-1" data-bs-toggle="tooltip" data-bs-placement="top" 
-                                                                   title="Traffic received during test period. Calculated as difference between final and initial counter values per client, then averaged."></i>
+                                                                   title="All network traffic received by client machines during test period - includes OS background traffic, applications, and test traffic. This is NOT test-specific traffic."></i>
                                                             </td>
                                                             {% set bytes_recv_by_client = {} %}
                                                             {% for result in results %}
@@ -773,7 +773,7 @@
                                                             {% else %}
                                                                 <td>N/A</td>
                                                             {% endif %}
-                                                            <td><span class="badge bg-info">Info</span></td>
+                                                            <td><span class="badge bg-warning">System-wide</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td>
