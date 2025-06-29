@@ -201,15 +201,29 @@
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
                                 <label for="testDuration" class="form-label">Duration (seconds)</label>
                                 <input type="number" class="form-control" id="testDuration" value="300" min="60">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
                                 <label for="testInterval" class="form-label">Interval (seconds)</label>
                                 <input type="number" class="form-control" id="testInterval" value="5" min="1">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3">
+                                <label for="packetSize" class="form-label">Packet Size (bytes)</label>
+                                <select class="form-control" id="packetSize">
+                                    <option value="64">64 bytes (default)</option>
+                                    <option value="128">128 bytes</option>
+                                    <option value="256">256 bytes</option>
+                                    <option value="512">512 bytes</option>
+                                    <option value="1024">1024 bytes (1KB)</option>
+                                    <option value="1472">1472 bytes (max Ethernet)</option>
+                                </select>
+                                <div class="form-text">
+                                    <small class="text-muted">Larger packets help test MTU and fragmentation behavior</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
                                 <label for="scheduledTime" class="form-label">Schedule (Optional)</label>
                                 <input type="datetime-local" class="form-control" id="scheduledTime">
                             </div>
@@ -293,6 +307,7 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
         destination: destination,
         duration: parseInt(document.getElementById('testDuration').value),
         interval: parseInt(document.getElementById('testInterval').value),
+        packet_size: parseInt(document.getElementById('packetSize').value),
         scheduled_time: document.getElementById('scheduledTime').value || null,
         client_ids: selectedClients
     };

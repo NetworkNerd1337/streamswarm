@@ -529,7 +529,7 @@ class StreamSwarmClient:
                     logger.debug("No wireless signal strength detected in this measurement interval")
                 
                 # Perform network tests
-                ping_result = self._ping_test(destination)
+                ping_result = self._ping_test(destination, packet_size=packet_size)
                 traceroute_result = self._traceroute_test(destination)
                 advanced_network = self._advanced_network_test(destination)
                 qos_metrics = self._qos_test(destination)

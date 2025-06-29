@@ -758,6 +758,13 @@ def create_test():
     except (ValueError, TypeError):
         return jsonify({'error': 'Invalid interval format'}), 400
     
+    try:
+        packet_size = int(data.get('packet_size', 64))
+        if packet_size <= 0 or packet_size > 65535:  # Max UDP packet size
+            return jsonify({'error': 'Packet size must be between 1 and 65535 bytes'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid packet size format'}), 400
+    
     # Validate client IDs
     client_ids = data.get('client_ids', [])
     if not isinstance(client_ids, list):
@@ -798,7 +805,8 @@ def create_test():
             destination=destination,
             scheduled_time=datetime.fromisoformat(data['scheduled_time']).replace(tzinfo=None) if data.get('scheduled_time') else None,
             duration=duration,
-            interval=interval
+            interval=interval,
+            packet_size=packet_size
         )
         
         db.session.add(test)
