@@ -44,7 +44,7 @@ class NetworkDiagnosticEngine:
     def _load_models(self):
         """Load pre-trained models from disk"""
         model_files = {
-            'anomaly_detector': 'anomaly_model.joblib',
+            'anomaly_detector': 'anomaly_detector.joblib',
             'health_classifier': 'health_classifier.joblib',
             'performance_predictor': 'performance_predictor.joblib',
             'scaler': 'feature_scaler.joblib',
