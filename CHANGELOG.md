@@ -97,10 +97,6 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - **RESOLVED** all ML training issues: division by None errors, datetime comparison bugs, and feature extraction problems
   - **VERIFIED** full functionality: 769 test results → 99% classification accuracy → successful model persistence and loading
 
-## User Preferences
-
-Preferred communication style: Simple, everyday language. Avoid technical jargon when possible.
-
 ## Development Status
 
 **Current State**: Production-ready distributed network monitoring system with complete authentication, AI/ML diagnostics, and comprehensive documentation.
