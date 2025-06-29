@@ -1660,7 +1660,7 @@ def update_user(user_id):
                 user.role = role
         
         if 'active' in data:
-            user.active = bool(data['active'])
+            user.is_active = bool(data['active'])
         
         if 'password' in data and data['password']:
             user.set_password(data['password'])
