@@ -1307,8 +1307,25 @@ class StreamSwarmClient:
             import struct
             
             # First perform detailed handshake timing analysis
-            handshake_metrics = self._tcp_handshake_timing_analysis(hostname, port)
-            metrics.update(handshake_metrics)
+            try:
+                handshake_metrics = self._tcp_handshake_timing_analysis(hostname, port)
+                if handshake_metrics:
+                    metrics.update(handshake_metrics)
+                    logger.debug(f"TCP handshake metrics collected: {handshake_metrics}")
+                else:
+                    logger.warning("TCP handshake analysis returned empty metrics")
+            except Exception as handshake_error:
+                logger.error(f"TCP handshake timing analysis failed: {handshake_error}")
+                # Set default values to avoid None in database
+                metrics.update({
+                    'tcp_handshake_total_time': 0,
+                    'tcp_handshake_syn_time': 0,
+                    'tcp_handshake_synack_time': 0,
+                    'tcp_handshake_ack_time': 0,
+                    'tcp_handshake_network_delay': 0,
+                    'tcp_handshake_server_processing': 0,
+                    'tcp_handshake_analysis': f"TCP handshake analysis failed: {str(handshake_error)}"
+                })
             
             # Establish TCP connection with detailed monitoring
             start_time = time_module.time()

@@ -129,6 +129,7 @@ libpcap-dev tcpdump iw wireless-tools network-manager
 - June 29, 2025. **FIXED**: TCP Handshake Performance Analysis Display - Resolved template variable name collision that prevented diagnostic messages from displaying correctly. Analysis text now shows proper diagnostic insights instead of "None"
 - June 29, 2025. **ENHANCED**: TCP Handshake Analysis Messages - Replaced generic "good performance" messages with distinctive bottleneck identification, specific timing breakdowns, and actionable insights for improved user experience
 - June 29, 2025. **FIXED**: TCP Handshake Data Collection - Resolved issue where newer tests weren't collecting TCP handshake timing data due to fallback method using outdated hardcoded analysis logic. Updated fallback method to use improved analysis function
+- June 29, 2025. **FIXED**: TCP Handshake Exception Handling - Resolved critical issue where exceptions in TCP handshake analysis caused complete data loss (showing "N/Ams"). Added comprehensive error handling, safe null value processing, and fixed max() function comparison errors. Tests now collect timing data even when advanced analysis fails
 
 ## User Preferences
 
