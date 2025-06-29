@@ -284,7 +284,17 @@ def test_results(test_id):
     results = TestResult.query.filter_by(test_id=test_id).order_by(TestResult.timestamp.asc()).all()
     clients = db.session.query(Client).join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
-    return render_template('test_results.html', test=test, results=results, clients=clients)
+    # Get results with client information joined for handshake analysis
+    handshake_results = db.session.query(TestResult).join(Client).filter(
+        TestResult.test_id == test_id,
+        TestResult.tcp_handshake_analysis.isnot(None)
+    ).order_by(TestResult.timestamp.desc()).all()
+    
+    return render_template('test_results.html', 
+                         test=test, 
+                         results=results, 
+                         clients=clients,
+                         handshake_results=handshake_results)
 
 @app.route('/tutorial')
 @web_auth_required

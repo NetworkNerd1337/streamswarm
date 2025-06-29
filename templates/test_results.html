@@ -1253,17 +1253,18 @@
                                                 </div>
                                                 
                                                 <!-- Diagnostic Analysis -->
-                                                {% set analysis_data = handshake_results | selectattr('tcp_handshake_analysis', 'defined') | list %}
-                                                {% if analysis_data %}
+                                                {% if handshake_results %}
                                                     <div class="alert alert-info mt-3">
                                                         <h6 class="alert-heading">
                                                             <i class="fas fa-chart-line me-2"></i>Handshake Performance Analysis
                                                         </h6>
-                                                        {% for result in analysis_data[:3] %}
-                                                            <p class="mb-1"><strong>Client {{ result.client.hostname }}:</strong> {{ result.tcp_handshake_analysis }}</p>
+                                                        {% for result in handshake_results[:3] %}
+                                                            {% if result.tcp_handshake_analysis %}
+                                                                <p class="mb-1"><strong>Client {{ result.client.hostname }}:</strong> {{ result.tcp_handshake_analysis }}</p>
+                                                            {% endif %}
                                                         {% endfor %}
-                                                        {% if analysis_data | length > 3 %}
-                                                            <small class="text-muted">... and {{ analysis_data | length - 3 }} more clients</small>
+                                                        {% if handshake_results | length > 3 %}
+                                                            <small class="text-muted">... and {{ handshake_results | length - 3 }} more results</small>
                                                         {% endif %}
                                                     </div>
                                                 {% endif %}
