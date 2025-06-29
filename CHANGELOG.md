@@ -96,8 +96,10 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
   - Models provide intelligent recommendations, issue categorization, and troubleshooting guidance for network administrators
   - **RESOLVED** all ML training issues: division by None errors, datetime comparison bugs, and feature extraction problems
   - **VERIFIED** full functionality: 769 test results → 99% classification accuracy → successful model persistence and loading
-  - **FIXED** Network Performance Metrics display bug: removed misleading Network Bytes Sent/Received from test results accordion
-  - These metrics showed system-wide traffic (26.8GB+) instead of test-specific data, causing user confusion
+  - **FIXED** Network Performance Metrics display bugs in test results accordion:
+    - Removed misleading Network Bytes Sent/Received metrics (showed system-wide traffic like 26.8GB instead of test-specific data)
+    - Fixed MTU Size metric that always showed "N/A bytes" - now properly extracts MTU from JSON network interface data
+    - MTU Size now displays actual values (e.g., "1500 bytes" with "Standard" badge) from collected network interface information
 
 ## Development Status
 
