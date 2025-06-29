@@ -1212,9 +1212,13 @@ class StreamSwarmClient:
                     metrics['tcp_handshake_network_delay'] = round(estimated_one_way_delay, 3)
                     metrics['tcp_handshake_server_processing'] = round(estimated_server_processing, 3)
                     
-                    # Use the improved analysis function
-                    analysis = self._analyze_handshake_timing(metrics)
-                    metrics['tcp_handshake_analysis'] = analysis
+                    # Use the improved analysis function with error handling
+                    try:
+                        analysis = self._analyze_handshake_timing(metrics)
+                        metrics['tcp_handshake_analysis'] = analysis
+                    except Exception as analysis_error:
+                        logger.warning(f"TCP handshake analysis failed: {analysis_error}")
+                        metrics['tcp_handshake_analysis'] = f"Analysis completed - {total_time:.1f}ms total handshake time"
                     
                 except socket.timeout:
                     metrics['tcp_handshake_error'] = "Handshake timeout"
@@ -1233,12 +1237,13 @@ class StreamSwarmClient:
         """Analyze handshake timing patterns to provide diagnostic insights"""
         
         try:
-            syn_time = handshake_metrics.get('tcp_handshake_syn_time', 0)
-            synack_time = handshake_metrics.get('tcp_handshake_synack_time', 0)
-            ack_time = handshake_metrics.get('tcp_handshake_ack_time', 0)
-            total_time = handshake_metrics.get('tcp_handshake_total_time', 0)
-            network_delay = handshake_metrics.get('tcp_handshake_network_delay', 0)
-            server_processing = handshake_metrics.get('tcp_handshake_server_processing', 0)
+            # Safely extract timing values, handling None values
+            syn_time = handshake_metrics.get('tcp_handshake_syn_time') or 0
+            synack_time = handshake_metrics.get('tcp_handshake_synack_time') or 0
+            ack_time = handshake_metrics.get('tcp_handshake_ack_time') or 0
+            total_time = handshake_metrics.get('tcp_handshake_total_time') or 0
+            network_delay = handshake_metrics.get('tcp_handshake_network_delay') or 0
+            server_processing = handshake_metrics.get('tcp_handshake_server_processing') or 0
             
             # Create distinctive analysis based on timing patterns and bottlenecks
             if total_time < 10:
@@ -1272,13 +1277,15 @@ class StreamSwarmClient:
             
             elif total_time < 200:
                 # Slow performance - highlight main problem
-                primary_issue = max([
-                    (syn_time, "SYN processing"),
-                    (synack_time, "SYN-ACK response"), 
-                    (ack_time, "ACK processing"),
-                    (server_processing, "server processing"),
-                    (network_delay, "network latency")
-                ])
+                # Safely find the primary issue, handling None values
+                timing_values = [
+                    (syn_time or 0, "SYN processing"),
+                    (synack_time or 0, "SYN-ACK response"), 
+                    (ack_time or 0, "ACK processing"),
+                    (server_processing or 0, "server processing"),
+                    (network_delay or 0, "network latency")
+                ]
+                primary_issue = max(timing_values, key=lambda x: x[0])
                 return f"Slow handshake - Primary issue: {primary_issue[1]} ({primary_issue[0]:.1f}ms)"
             
             else:
