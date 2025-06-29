@@ -1555,7 +1555,7 @@ def login():
             
             next_page = request.args.get('next')
             flash(f'Welcome back, {user.username}!', 'success')
-            return redirect(next_page) if next_page else redirect(url_for('index'))
+            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
         else:
             flash('Invalid username or password.', 'danger')
     
