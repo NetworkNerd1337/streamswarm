@@ -121,6 +121,8 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 - June 29, 2025. Initial setup
+- June 29, 2025. Fixed ML model loading bug: Anomaly Detection model filename inconsistency resolved
+- June 30, 2025. Enhanced anomaly detection with detailed breakdown showing specific issues, timestamps, and actionable recommendations
 
 ## User Preferences
 
