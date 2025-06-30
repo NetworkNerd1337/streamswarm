@@ -888,7 +888,10 @@ def get_test_data(test_id):
             'dscp_value': {},
             'cos_value': {},
             'qos_policy_compliant': {},
-            'traceroute_data': {}
+            'traceroute_data': {},
+            'path_map_html': {},
+            'path_total_distance_km': {},
+            'path_geographic_efficiency': {}
         }
     }
     

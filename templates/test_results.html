@@ -250,6 +250,54 @@
         </div>
     </div>
     
+    <!-- Network Path Geolocation Visualization -->
+    <div class="row mt-4" id="geolocationSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-globe-americas me-2"></i>
+                        Network Path Geolocation Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-route text-primary fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">Total Geographic Distance</h6>
+                                    <p class="mb-0 text-muted" id="pathDistance">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-chart-line text-success fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">Geographic Efficiency</h6>
+                                    <p class="mb-0 text-muted" id="pathEfficiency">--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This map shows the geographic path your network traffic takes to reach the destination. 
+                        Each marker represents a network hop with latency information. Red markers indicate potential performance bottlenecks.
+                    </div>
+                    <div id="geolocationMap" style="height: 500px; border-radius: 0.375rem;">
+                        <!-- Interactive map will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Detailed Process Monitoring -->
     <div class="row mt-4">
         <div class="col-12">
@@ -1574,6 +1622,7 @@ async function loadTestData() {
             initializeCharts();
             updateSummaryStats();
             updateClientSummary();
+            displayGeolocationData();
             console.log('All components initialized successfully');
         } catch (error) {
             console.error('Error during component initialization:', error);
@@ -2565,6 +2614,94 @@ function exportDataPoint(clientId, dataIndex) {
     a.download = `datapoint_${clientName}_${timestamp.replace(/[:.]/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
+}
+
+function displayGeolocationData() {
+    // Check if we have geolocation data in any of the test results
+    let hasGeolocationData = false;
+    let mapHtml = null;
+    let totalDistance = null;
+    let efficiency = null;
+    
+    // Look through test data for geolocation information
+    if (testData && testData.metrics) {
+        // Check for path_map_html in the metrics
+        if (testData.metrics.path_map_html) {
+            for (const clientId in testData.metrics.path_map_html) {
+                const clientData = testData.metrics.path_map_html[clientId];
+                if (clientData && clientData.length > 0) {
+                    // Get the most recent map data
+                    const recentMap = clientData[clientData.length - 1];
+                    if (recentMap && recentMap.y) {
+                        mapHtml = recentMap.y;
+                        hasGeolocationData = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Get distance and efficiency data
+        if (testData.metrics.path_total_distance_km) {
+            for (const clientId in testData.metrics.path_total_distance_km) {
+                const distanceData = testData.metrics.path_total_distance_km[clientId];
+                if (distanceData && distanceData.length > 0) {
+                    const recentDistance = distanceData[distanceData.length - 1];
+                    if (recentDistance && recentDistance.y !== null) {
+                        totalDistance = recentDistance.y;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (testData.metrics.path_geographic_efficiency) {
+            for (const clientId in testData.metrics.path_geographic_efficiency) {
+                const efficiencyData = testData.metrics.path_geographic_efficiency[clientId];
+                if (efficiencyData && efficiencyData.length > 0) {
+                    const recentEfficiency = efficiencyData[efficiencyData.length - 1];
+                    if (recentEfficiency && recentEfficiency.y !== null) {
+                        efficiency = recentEfficiency.y;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    if (hasGeolocationData) {
+        // Show the geolocation section
+        document.getElementById('geolocationSection').style.display = 'block';
+        
+        // Update summary stats
+        if (totalDistance !== null) {
+            document.getElementById('pathDistance').textContent = `${totalDistance.toFixed(1)} km`;
+        }
+        
+        if (efficiency !== null) {
+            const efficiencyPercent = (efficiency * 100).toFixed(1);
+            document.getElementById('pathEfficiency').textContent = `${efficiencyPercent}%`;
+            
+            // Update text color based on efficiency
+            const efficiencyElement = document.getElementById('pathEfficiency');
+            if (efficiency >= 0.8) {
+                efficiencyElement.className = 'mb-0 text-success';
+            } else if (efficiency >= 0.6) {
+                efficiencyElement.className = 'mb-0 text-warning';
+            } else {
+                efficiencyElement.className = 'mb-0 text-danger';
+            }
+        }
+        
+        // Inject the map HTML
+        if (mapHtml) {
+            document.getElementById('geolocationMap').innerHTML = mapHtml;
+        }
+        
+        console.log('Geolocation data displayed successfully');
+    } else {
+        console.log('No geolocation data available for this test');
+    }
 }
 </script>
 {% endblock %}
