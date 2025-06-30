@@ -1952,7 +1952,7 @@ def update_session_timeout():
         data = request.get_json()
         
         timeout_minutes = data.get('timeout_minutes')
-        if not timeout_minutes:
+        if timeout_minutes is None:
             return jsonify({'error': 'Timeout value is required'}), 400
         
         try:
