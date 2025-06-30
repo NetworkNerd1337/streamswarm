@@ -57,39 +57,53 @@ class ServerGeolocationProcessor:
         Returns True if processing was successful
         """
         try:
+            logger.debug(f"Starting geolocation processing for result {result.id}")
+            
             # Parse traceroute data
             if not result.traceroute_data:
+                logger.debug(f"Result {result.id} has no traceroute data")
                 return False
                 
             traceroute_lines = json.loads(result.traceroute_data)
             if not traceroute_lines:
+                logger.debug(f"Result {result.id} has empty traceroute data")
                 return False
+            
+            logger.debug(f"Result {result.id} has {len(traceroute_lines)} traceroute lines")
             
             # Get the test destination
             from models import Test
             test = Test.query.get(result.test_id)
             if not test:
+                logger.debug(f"No test found for result {result.id}")
                 return False
                 
             destination = test.destination
+            logger.debug(f"Processing result {result.id} for destination: {destination}")
             
             # Perform geolocation analysis
             path_analysis = self.geo_service.analyze_traceroute_path(traceroute_lines, destination)
+            logger.debug(f"Path analysis completed for result {result.id}")
             
             if path_analysis and path_analysis.get('hops'):
+                logger.debug(f"Result {result.id} has {len(path_analysis.get('hops', []))} hops")
+                
                 # Generate map
                 map_html = self.geo_service.create_path_map(path_analysis, destination)
+                logger.debug(f"Generated map HTML for result {result.id}, size: {len(map_html) if map_html else 0} chars")
                 
                 # Update the result with geolocation data
                 result.path_map_html = map_html
                 result.path_total_distance_km = path_analysis.get('total_distance_km')
                 result.path_geographic_efficiency = path_analysis.get('geographic_efficiency')
                 
-                logger.debug(f"Enhanced result {result.id} with geolocation data")
+                logger.info(f"Enhanced result {result.id} with geolocation data - map size: {len(map_html) if map_html else 0}")
                 return True
+            else:
+                logger.debug(f"Result {result.id} path analysis failed or has no hops")
             
         except Exception as e:
-            logger.error(f"Error processing geolocation for result {result.id}: {str(e)}")
+            logger.error(f"Error processing geolocation for result {result.id}: {str(e)}", exc_info=True)
             return False
         
         return False
