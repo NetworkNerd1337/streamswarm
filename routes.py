@@ -16,6 +16,13 @@ import bleach
 import re
 import ipaddress
 
+# Import server-side geolocation processor for enhanced path analysis
+try:
+    from server_geo_processor import geo_processor
+    GEO_PROCESSOR_AVAILABLE = True
+except ImportError:
+    GEO_PROCESSOR_AVAILABLE = False
+
 # ================================
 # AUTHENTICATION DECORATORS
 # ================================
