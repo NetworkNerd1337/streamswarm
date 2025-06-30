@@ -2158,7 +2158,7 @@ def process_test_geolocation(test_id):
         pending_results = TestResult.query.filter(
             TestResult.test_id == test_id,
             TestResult.traceroute_data.isnot(None),
-            TestResult.path_map_html.is_(None)
+            TestResult.path_geolocation_data.is_(None)
         ).all()
         
         if not pending_results:

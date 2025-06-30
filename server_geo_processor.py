@@ -31,7 +31,7 @@ class ServerGeolocationProcessor:
         # Find results with traceroute data but no geolocation data
         pending_results = TestResult.query.filter(
             TestResult.traceroute_data.isnot(None),
-            TestResult.path_map_html.is_(None)
+            TestResult.path_geolocation_data.is_(None)
         ).limit(50).all()  # Process in batches to avoid overwhelming the system
         
         for result in pending_results:
