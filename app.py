@@ -58,16 +58,17 @@ def check_session_timeout():
     # Get session timeout setting
     timeout_minutes = SystemConfig.get_session_timeout_minutes()
     
-    # Check if user has been idle too long
-    last_activity = session.get('last_activity')
-    if last_activity:
-        last_activity_time = datetime.fromisoformat(last_activity)
-        now = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
-        
-        if now - last_activity_time > timedelta(minutes=timeout_minutes):
-            logout_user()
-            session.clear()
-            return redirect(url_for('login', timeout='1'))
+    # Check if user has been idle too long (only if timeout is enabled)
+    if timeout_minutes > 0:
+        last_activity = session.get('last_activity')
+        if last_activity:
+            last_activity_time = datetime.fromisoformat(last_activity)
+            now = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+            
+            if now - last_activity_time > timedelta(minutes=timeout_minutes):
+                logout_user()
+                session.clear()
+                return redirect(url_for('login', timeout='1'))
     
     # Update last activity for navigation requests (not AJAX/auto-refresh)
     # Only track activity for main pages to avoid auto-refresh interference

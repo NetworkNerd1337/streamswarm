@@ -1637,6 +1637,7 @@ def login():
                 # Initialize session activity tracking
                 from datetime import datetime
                 import zoneinfo
+                from flask import session
                 session['last_activity'] = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat()
                 
                 # Safely handle next parameter
@@ -1882,9 +1883,10 @@ def system_configuration():
         'session_timeout': {
             'current_value': SystemConfig.get_session_timeout_minutes(),
             'description': 'Automatically log out users after inactive period (minutes)',
-            'type': 'number',
-            'min': 5,
-            'max': 480
+            'type': 'slider',
+            'min': 0,
+            'max': 60,
+            'options': ['Disabled', '10min', '15min', '30min', '45min', '60min']
         }
     }
     
@@ -1958,8 +1960,8 @@ def update_session_timeout():
         except (ValueError, TypeError):
             return jsonify({'error': 'Timeout must be a valid number'}), 400
         
-        if timeout_value < 5 or timeout_value > 480:
-            return jsonify({'error': 'Timeout must be between 5 and 480 minutes'}), 400
+        if timeout_value < 0 or (timeout_value > 0 and timeout_value < 5) or timeout_value > 480:
+            return jsonify({'error': 'Timeout must be 0 (disabled) or between 5 and 480 minutes'}), 400
         
         SystemConfig.set_setting(
             'session_timeout_minutes', 
@@ -1967,9 +1969,11 @@ def update_session_timeout():
             'Automatically log out users after inactive period (minutes)'
         )
         
+        message = 'Session timeout disabled' if timeout_value == 0 else f'Session timeout updated to {timeout_value} minutes'
+        
         return jsonify({
             'status': 'success',
-            'message': f'Session timeout updated to {timeout_value} minutes',
+            'message': message,
             'timeout_minutes': timeout_value
         })
         

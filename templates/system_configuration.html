@@ -94,29 +94,38 @@
                                         <h6 class="mb-0">Session Timeout</h6>
                                         <small class="text-muted">{{ configurations.session_timeout.description }}</small>
                                     </div>
-                                    <span class="badge bg-info">
-                                        {{ configurations.session_timeout.current_value }} min
+                                    <span class="badge bg-info" id="sessionTimeoutBadge">
+                                        {% if configurations.session_timeout.current_value == 0 %}
+                                            Disabled
+                                        {% else %}
+                                            {{ configurations.session_timeout.current_value }} min
+                                        {% endif %}
                                     </span>
                                 </div>
                                 
-                                <div class="input-group input-group-sm">
-                                    <input type="number" 
-                                           class="form-control" 
-                                           id="sessionTimeoutInput"
-                                           value="{{ configurations.session_timeout.current_value }}"
-                                           min="{{ configurations.session_timeout.min }}"
-                                           max="{{ configurations.session_timeout.max }}"
-                                           placeholder="Minutes">
-                                    <button class="btn btn-outline-primary" 
-                                            type="button" 
-                                            onclick="updateSessionTimeout()">
-                                        <i class="fas fa-save me-1"></i>
-                                        Update
-                                    </button>
+                                <div class="mb-3">
+                                    <input type="range" 
+                                           class="form-range" 
+                                           id="sessionTimeoutSlider"
+                                           min="0" 
+                                           max="5" 
+                                           step="1"
+                                           value="{% if configurations.session_timeout.current_value == 0 %}0{% elif configurations.session_timeout.current_value <= 10 %}1{% elif configurations.session_timeout.current_value <= 15 %}2{% elif configurations.session_timeout.current_value <= 30 %}3{% elif configurations.session_timeout.current_value <= 45 %}4{% else %}5{% endif %}"
+                                           onchange="updateSessionTimeoutFromSlider(this.value)">
+                                    
+                                    <div class="d-flex justify-content-between text-muted small mt-1">
+                                        <span>Disabled</span>
+                                        <span>10min</span>
+                                        <span>15min</span>
+                                        <span>30min</span>
+                                        <span>45min</span>
+                                        <span>60min</span>
+                                    </div>
                                 </div>
+                                
                                 <div class="form-text">
-                                    Range: {{ configurations.session_timeout.min }}-{{ configurations.session_timeout.max }} minutes. 
-                                    Users will be logged out after being inactive for this duration.
+                                    Select session timeout duration. "Disabled" means users stay logged in indefinitely. 
+                                    Otherwise, users will be logged out after being inactive for the selected duration.
                                 </div>
                             </div>
                             
@@ -224,19 +233,24 @@
 </div>
 
 <script>
-function updateSessionTimeout() {
-    const input = document.getElementById('sessionTimeoutInput');
-    const timeoutValue = parseInt(input.value);
+function updateSessionTimeoutFromSlider(sliderValue) {
+    // Map slider values to timeout minutes
+    const timeoutMap = {
+        '0': 0,    // Disabled
+        '1': 10,   // 10 minutes
+        '2': 15,   // 15 minutes
+        '3': 30,   // 30 minutes
+        '4': 45,   // 45 minutes
+        '5': 60    // 60 minutes
+    };
     
-    if (isNaN(timeoutValue) || timeoutValue < 5 || timeoutValue > 480) {
-        alert('Please enter a valid timeout value between 5 and 480 minutes.');
-        return;
-    }
+    const timeoutValue = timeoutMap[sliderValue];
+    const badge = document.getElementById('sessionTimeoutBadge');
     
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
-    button.disabled = true;
+    // Show loading state
+    const originalBadgeText = badge.textContent;
+    badge.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    badge.className = 'badge bg-warning';
     
     fetch('/api/session-timeout', {
         method: 'POST',
@@ -251,21 +265,25 @@ function updateSessionTimeout() {
     .then(data => {
         if (data.status === 'success') {
             // Update the badge
-            const badge = document.querySelector('.badge.bg-info');
-            badge.textContent = timeoutValue + ' min';
+            badge.className = 'badge bg-info';
+            if (timeoutValue === 0) {
+                badge.textContent = 'Disabled';
+            } else {
+                badge.textContent = timeoutValue + ' min';
+            }
             
             // Show success message
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
             alertDiv.innerHTML = `
                 <i class="fas fa-check-circle me-2"></i>
-                ${data.message}
+                Session timeout ${timeoutValue === 0 ? 'disabled' : 'set to ' + timeoutValue + ' minutes'}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             
-            // Insert after the input group
-            const inputGroup = document.querySelector('.input-group');
-            inputGroup.parentNode.insertBefore(alertDiv, inputGroup.nextSibling);
+            // Insert after the slider container
+            const sliderContainer = document.querySelector('.mb-3');
+            sliderContainer.parentNode.insertBefore(alertDiv, sliderContainer.nextSibling);
             
             // Auto-dismiss after 3 seconds
             setTimeout(() => {
@@ -274,16 +292,18 @@ function updateSessionTimeout() {
                 }
             }, 3000);
         } else {
+            // Restore original state on error
+            badge.className = 'badge bg-info';
+            badge.textContent = originalBadgeText;
             alert('Error: ' + (data.error || 'Failed to update session timeout'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        // Restore original state on error
+        badge.className = 'badge bg-info';
+        badge.textContent = originalBadgeText;
         alert('Failed to update session timeout. Please try again.');
-    })
-    .finally(() => {
-        button.innerHTML = originalText;
-        button.disabled = false;
     });
 }
 </script>
