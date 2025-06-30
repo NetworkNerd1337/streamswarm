@@ -262,7 +262,8 @@ def clients():
 @web_auth_required
 def tests():
     """Test management view"""
-    tests = Test.query.order_by(Test.created_at.desc()).all()
+    # Load initial batch of tests (most recent 20)
+    tests = Test.query.order_by(Test.created_at.desc()).limit(20).all()
     clients = Client.query.filter_by(status='online').all()
     
     # Mark clients as available/busy for test assignment
@@ -1980,3 +1981,53 @@ def update_session_timeout():
     except Exception as e:
         logging.error(f"Error updating session timeout: {str(e)}")
         return jsonify({'error': 'Failed to update session timeout'}), 500
+
+# ================================
+# Tests API Routes for Infinite Scroll
+# ================================
+
+@app.route('/api/tests', methods=['GET'])
+@web_auth_required
+def api_tests():
+    """Get paginated tests for infinite scroll"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+    
+    tests = Test.query.order_by(Test.created_at.desc()).offset(offset).limit(per_page).all()
+    
+    test_data = []
+    for test in tests:
+        # Calculate progress for running tests
+        progress = 0
+        if test.status == 'running' and test.started_at:
+            if test.started_at.tzinfo is None:
+                test_start_time = test.started_at
+            else:
+                test_start_time = test.started_at.replace(tzinfo=None)
+            
+            elapsed_time = (datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None) - test_start_time).total_seconds()
+            progress = min((elapsed_time / test.duration) * 100, 100)
+        elif test.status == 'completed':
+            progress = 100
+            
+        test_data.append({
+            'id': test.id,
+            'name': test.name,
+            'description': test.description,
+            'destination': test.destination,
+            'duration': test.duration,
+            'interval': test.interval,
+            'status': test.status,
+            'progress': round(progress, 1),
+            'scheduled_time': test.scheduled_time.strftime('%Y-%m-%d %H:%M') if test.scheduled_time else None,
+            'created_at': test.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+    
+    has_more = len(tests) == per_page
+    
+    return jsonify({
+        'tests': test_data,
+        'has_more': has_more,
+        'page': page
+    })

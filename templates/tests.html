@@ -392,6 +392,194 @@ if (preSelectedClient) {
     }
 }
 
+// Infinite scroll variables
+let currentPage = 1;
+let isLoading = false;
+let hasMoreTests = true;
+let testsTableBody = null;
+
+// Initialize infinite scroll
+document.addEventListener('DOMContentLoaded', function() {
+    testsTableBody = document.querySelector('tbody');
+    setupInfiniteScroll();
+});
+
+// Setup infinite scroll functionality
+function setupInfiniteScroll() {
+    window.addEventListener('scroll', function() {
+        if (isLoading || !hasMoreTests) return;
+        
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const documentHeight = document.documentElement.offsetHeight;
+        
+        // Load more when user is 200px from bottom
+        if (scrollPosition >= documentHeight - 200) {
+            loadMoreTests();
+        }
+    });
+}
+
+// Load more tests via API
+function loadMoreTests() {
+    if (isLoading || !hasMoreTests) return;
+    
+    isLoading = true;
+    showLoadingIndicator();
+    
+    const nextPage = currentPage + 1;
+    
+    fetch(`/api/tests?page=${nextPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.tests && data.tests.length > 0) {
+                appendTestsToTable(data.tests);
+                currentPage = nextPage;
+                hasMoreTests = data.has_more;
+            } else {
+                hasMoreTests = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading more tests:', error);
+        })
+        .finally(() => {
+            isLoading = false;
+            hideLoadingIndicator();
+        });
+}
+
+// Show loading indicator
+function showLoadingIndicator() {
+    const existingIndicator = document.getElementById('loading-indicator');
+    if (existingIndicator) return;
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'loading-indicator';
+    indicator.className = 'text-center py-3';
+    indicator.innerHTML = `
+        <div class="spinner-border spinner-border-sm me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        Loading more tests...
+    `;
+    
+    const tableContainer = document.querySelector('.table-responsive');
+    tableContainer.parentNode.appendChild(indicator);
+}
+
+// Hide loading indicator
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+// Append new tests to table
+function appendTestsToTable(tests) {
+    if (!testsTableBody) return;
+    
+    tests.forEach(test => {
+        const row = createTestRow(test);
+        testsTableBody.appendChild(row);
+    });
+}
+
+// Create test table row
+function createTestRow(test) {
+    const row = document.createElement('tr');
+    
+    // Status badge
+    let statusBadge = '';
+    if (test.status === 'running') {
+        statusBadge = '<span class="badge bg-success"><i class="fas fa-play-circle me-1"></i>Running</span>';
+    } else if (test.status === 'completed') {
+        statusBadge = '<span class="badge bg-info"><i class="fas fa-check-circle me-1"></i>Completed</span>';
+    } else if (test.status === 'failed') {
+        statusBadge = '<span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i>Failed</span>';
+    } else {
+        statusBadge = '<span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Pending</span>';
+    }
+    
+    // Progress bar
+    let progressHtml = '';
+    if (test.status === 'running') {
+        progressHtml = `
+            <div class="progress" style="height: 20px;" id="progress-${test.id}">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: ${test.progress}%">
+                    ${test.progress}%
+                </div>
+            </div>
+        `;
+    } else if (test.status === 'completed') {
+        progressHtml = `
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 100%">
+                    Complete
+                </div>
+            </div>
+        `;
+    } else {
+        progressHtml = '<span class="text-muted">Not started</span>';
+    }
+    
+    // Action buttons
+    let actionButtons = `
+        <div class="btn-group btn-group-sm">
+            <a href="/test/${test.id}" class="btn btn-outline-info">
+                <i class="fas fa-chart-line"></i>
+            </a>
+    `;
+    
+    if (test.status === 'completed' || test.status === 'failed') {
+        actionButtons += `
+            <a href="/api/test/${test.id}/export/pdf" class="btn btn-outline-success" target="_blank">
+                <i class="fas fa-file-pdf"></i>
+            </a>
+        `;
+    }
+    
+    if (test.status === 'pending' || test.status === 'running') {
+        actionButtons += `
+            <button class="btn btn-outline-warning" onclick="stopTest(${test.id})">
+                <i class="fas fa-stop"></i>
+            </button>
+        `;
+    }
+    
+    actionButtons += `
+            <button class="btn btn-outline-danger" onclick="deleteTest(${test.id})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    const duration_minutes = Math.floor(test.duration / 60);
+    const duration_seconds = test.duration % 60;
+    const scheduled_display = test.scheduled_time || 'Immediate';
+    
+    row.innerHTML = `
+        <td>${statusBadge}</td>
+        <td>
+            <strong>${test.name}</strong>
+            ${test.description ? `<br><small class="text-muted">${test.description}</small>` : ''}
+        </td>
+        <td><code>${test.destination}</code></td>
+        <td>
+            ${duration_minutes}m ${duration_seconds}s
+            <br><small class="text-muted">${test.interval}s intervals</small>
+        </td>
+        <td>
+            ${scheduled_display === 'Immediate' ? '<span class="text-muted">Immediate</span>' : `<small>${scheduled_display}</small>`}
+        </td>
+        <td>${progressHtml}</td>
+        <td>${actionButtons}</td>
+    `;
+    
+    return row;
+}
+
 // Update progress bars for running tests
 function updateTestProgress() {
     document.querySelectorAll('[id^="progress-"]').forEach(progressContainer => {
