@@ -47,6 +47,15 @@ class SystemConfig(db.Model):
             return False
         return str(setting_value).lower() == 'true'
     
+    @classmethod
+    def get_session_timeout_minutes(cls):
+        """Get session timeout in minutes (default: 30 minutes)"""
+        timeout_str = cls.get_setting('session_timeout_minutes', '30')
+        try:
+            return int(timeout_str)
+        except (ValueError, TypeError):
+            return 30
+    
     def to_dict(self):
         return {
             'id': self.id,

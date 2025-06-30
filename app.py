@@ -1,7 +1,7 @@
 import os
 import logging
 import json
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
@@ -43,10 +43,52 @@ def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
 
+# Session timeout and activity tracking
+@app.before_request
+def check_session_timeout():
+    """Check for session timeout and track user activity"""
+    from models import SystemConfig
+    
+    # Skip timeout check for static files, login, and logout routes
+    if (request.endpoint in ['static', 'login', 'logout'] or 
+        request.path.startswith('/static/') or
+        not current_user.is_authenticated):
+        return
+    
+    # Get session timeout setting
+    timeout_minutes = SystemConfig.get_session_timeout_minutes()
+    
+    # Check if user has been idle too long
+    last_activity = session.get('last_activity')
+    if last_activity:
+        last_activity_time = datetime.fromisoformat(last_activity)
+        now = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        
+        if now - last_activity_time > timedelta(minutes=timeout_minutes):
+            logout_user()
+            session.clear()
+            return redirect(url_for('login', timeout='1'))
+    
+    # Update last activity for navigation requests (not AJAX/auto-refresh)
+    # Only track activity for main pages to avoid auto-refresh interference
+    main_pages = [
+        'dashboard', 'tutorial', 'clients', 'tests', 'profile', 
+        'system_configuration', 'user_management', 'tokens',
+        'ml_models', 'test_results', 'create_test', 'edit_test'
+    ]
+    
+    if (request.endpoint in main_pages and 
+        request.method == 'GET' and 
+        not request.is_xhr and
+        'XMLHttpRequest' not in request.headers.get('X-Requested-With', '')):
+        session['last_activity'] = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat()
+
 # Development mode bypass decorator
 from functools import wraps
 from flask import session, request, g
-from flask_login import current_user
+from flask_login import current_user, logout_user
+from datetime import datetime, timedelta
+import zoneinfo
 
 def login_required_with_dev_bypass(f):
     """Custom login_required decorator that respects development mode"""

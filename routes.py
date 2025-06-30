@@ -1869,6 +1869,13 @@ def system_configuration():
             'current_value': SystemConfig.is_development_mode(),
             'description': 'Temporarily disable authentication for development',
             'type': 'boolean'
+        },
+        'session_timeout': {
+            'current_value': SystemConfig.get_session_timeout_minutes(),
+            'description': 'Automatically log out users after inactive period (minutes)',
+            'type': 'number',
+            'min': 5,
+            'max': 480
         }
     }
     
