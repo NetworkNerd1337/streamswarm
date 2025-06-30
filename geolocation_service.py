@@ -499,7 +499,7 @@ class GeolocationService:
             
             summary_html = f"""
             <div style="position: fixed; 
-                        top: 10px; right: 10px; width: 250px; height: 150px; 
+                        top: 10px; right: 10px; width: 280px; height: 170px; 
                         background-color: white; border:2px solid grey; z-index:9999; 
                         font-size:12px; padding: 10px">
                 <h4>Path Summary</h4>
