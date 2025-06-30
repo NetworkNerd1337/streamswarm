@@ -483,7 +483,20 @@ class GeolocationService:
                     opacity=0.7
                 ).add_to(m)
             
-            # Add summary information
+            # Add summary information with color-coded efficiency
+            efficiency = path_analysis.get('geographic_efficiency', 0)
+            
+            # Determine efficiency color based on percentage
+            if efficiency >= 75:
+                efficiency_color = '#28a745'  # Green
+                efficiency_status = 'Excellent'
+            elif efficiency >= 50:
+                efficiency_color = '#ffc107'  # Yellow
+                efficiency_status = 'Moderate'
+            else:
+                efficiency_color = '#dc3545'  # Red
+                efficiency_status = 'Poor'
+            
             summary_html = f"""
             <div style="position: fixed; 
                         top: 10px; right: 10px; width: 250px; height: 150px; 
@@ -494,7 +507,7 @@ class GeolocationService:
                 <b>Total Hops:</b> {path_analysis.get('total_hops', 0)}<br>
                 <b>Total Distance:</b> {path_analysis.get('total_distance_km', 0):.1f} km<br>
                 <b>Countries:</b> {len(path_analysis.get('countries_traversed', []))}<br>
-                <b>Efficiency:</b> {path_analysis.get('geographic_efficiency', 0):.1f}%
+                <b>Efficiency:</b> <span style="color: {efficiency_color}; font-weight: bold;">{efficiency:.1f}% ({efficiency_status})</span>
             </div>
             """
             
