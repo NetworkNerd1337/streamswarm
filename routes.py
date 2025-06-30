@@ -553,6 +553,12 @@ def submit_test_results():
         signal_strength_samples = safe_int(data.get('signal_strength_samples'), 'signal_strength_samples', 0)
         signal_strength_data = data.get('signal_strength_data') if data.get('signal_strength_data') else None
         
+        # Validate geolocation path analysis fields
+        path_geolocation_data = safe_json_string(data.get('path_geolocation_data'), 'path_geolocation_data')
+        path_map_html = data.get('path_map_html') if data.get('path_map_html') else None
+        path_total_distance_km = safe_float(data.get('path_total_distance_km'), 'path_total_distance_km')
+        path_geographic_efficiency = safe_float(data.get('path_geographic_efficiency'), 'path_geographic_efficiency')
+        
         result = TestResult(
             test_id=test_id,
             client_id=client_id,
@@ -685,7 +691,12 @@ def submit_test_results():
             tcp_handshake_ack_time=safe_float(data.get('tcp_handshake_ack_time'), 'tcp_handshake_ack_time'),
             tcp_handshake_network_delay=safe_float(data.get('tcp_handshake_network_delay'), 'tcp_handshake_network_delay'),
             tcp_handshake_server_processing=safe_float(data.get('tcp_handshake_server_processing'), 'tcp_handshake_server_processing'),
-            tcp_handshake_analysis=sanitize_string(data.get('tcp_handshake_analysis'), 500) if data.get('tcp_handshake_analysis') else None
+            tcp_handshake_analysis=sanitize_string(data.get('tcp_handshake_analysis'), 500) if data.get('tcp_handshake_analysis') else None,
+            # Geolocation path analysis for enhanced traceroute visualization
+            path_geolocation_data=path_geolocation_data,
+            path_map_html=path_map_html,
+            path_total_distance_km=path_total_distance_km,
+            path_geographic_efficiency=path_geographic_efficiency
         )
         
     except ValueError as e:

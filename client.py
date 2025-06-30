@@ -608,6 +608,15 @@ class StreamSwarmClient:
                         'signal_strength_data': sig_data
                     }
                 
+                # Prepare geolocation path analysis data
+                path_analysis = traceroute_result.get('path_analysis', {})
+                geolocation_data = {
+                    'path_geolocation_data': json.dumps(path_analysis) if path_analysis else None,
+                    'path_map_html': traceroute_result.get('map_html', ''),
+                    'path_total_distance_km': path_analysis.get('total_distance_km'),
+                    'path_geographic_efficiency': path_analysis.get('geographic_efficiency')
+                }
+                
                 # Prepare test result data
                 result_data = {
                     'client_id': self.client_id,
@@ -624,7 +633,8 @@ class StreamSwarmClient:
                     **bandwidth_metrics,
                     **signal_strength_data,
                     **application_metrics,
-                    **infrastructure_metrics
+                    **infrastructure_metrics,
+                    **geolocation_data
                 }
                 
                 # Submit results to server
