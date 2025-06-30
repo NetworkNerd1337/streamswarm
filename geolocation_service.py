@@ -254,9 +254,8 @@ class GeolocationService:
         }
         
         try:
-            # Get MTR analysis for detailed statistics
-            mtr_data = self.perform_mtr_analysis(destination)
-            mtr_hops = {hop['count']: hop for hop in mtr_data.get('hubs', [])}
+            # Skip MTR analysis to avoid timeouts - we already have traceroute data
+            mtr_hops = {}
             
             # Parse each traceroute line
             prev_lat, prev_lon = None, None
