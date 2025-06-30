@@ -36,6 +36,7 @@
                             <h6>Getting Started</h6>
                             <ul class="list-unstyled">
                                 <li><a href="#dependencies" class="text-decoration-none">System Dependencies</a></li>
+                                <li><a href="#firewall-requirements" class="text-decoration-none">Firewall Requirements</a></li>
                                 <li><a href="#database-setup" class="text-decoration-none">Database Setup</a></li>
                                 <li><a href="#authentication-setup" class="text-decoration-none">Authentication System</a></li>
                                 <li><a href="#architecture" class="text-decoration-none">Understanding the Architecture</a></li>
@@ -48,6 +49,7 @@
                             <h6>Advanced Topics</h6>
                             <ul class="list-unstyled">
                                 <li><a href="#ai-ml-setup" class="text-decoration-none">AI/ML Diagnostic Setup</a></li>
+                                <li><a href="#geolocation-features" class="text-decoration-none">Geolocation Mapping</a></li>
                                 <li><a href="#metrics-definition" class="text-decoration-none">Metrics Definition Guide</a></li>
                                 <li><a href="#use-cases" class="text-decoration-none">Real-World Use Cases</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Multi-Client Setup</a></li>
@@ -830,6 +832,259 @@ except ImportError as e:<br>
             </div>
         </div>
     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firewall Requirements -->
+    <div class="row mb-4" id="firewall-requirements">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Firewall Requirements & External Dependencies
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Important for Corporate Environments</h6>
+                        <p class="mb-0">StreamSwarm requires specific network access for various features. Configure firewalls and proxy settings according to these requirements.</p>
+                    </div>
+                    
+                    <!-- Feature Overview Table -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary">Feature-Specific Network Requirements</h6>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Feature</th>
+                                            <th>External Access Required</th>
+                                            <th>Ports/Protocols</th>
+                                            <th>Impact if Blocked</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Core Monitoring</strong></td>
+                                            <td>StreamSwarm Server</td>
+                                            <td>HTTP/HTTPS (80/443)</td>
+                                            <td><span class="badge bg-danger">Complete loss of functionality</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Bandwidth Testing</strong></td>
+                                            <td>Speed test servers</td>
+                                            <td>HTTP/HTTPS (80/443)</td>
+                                            <td><span class="badge bg-warning text-dark">No bandwidth measurements</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Geolocation Maps</strong></td>
+                                            <td>ip-api.com</td>
+                                            <td>HTTP (80)</td>
+                                            <td><span class="badge bg-warning text-dark">No network path visualization</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>DNS Tests</strong></td>
+                                            <td>DNS servers</td>
+                                            <td>UDP (53)</td>
+                                            <td><span class="badge bg-warning text-dark">Hostname-based tests fail</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>System Monitoring</strong></td>
+                                            <td>None</td>
+                                            <td>Local only</td>
+                                            <td><span class="badge bg-success">Always works offline</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>AI/ML Diagnostics</strong></td>
+                                            <td>None</td>
+                                            <td>Local only</td>
+                                            <td><span class="badge bg-success">Zero-trust architecture</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Server-Side Requirements -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-server me-2"></i>
+                                        Server-Side External Dependencies
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6 class="text-success">Required Internet Access</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Geolocation Services:</strong> <code>ip-api.com</code> (HTTP port 80)</li>
+                                            <li><strong>Purpose:</strong> IP geolocation lookup for network path visualization</li>
+                                            <li><strong>Impact:</strong> Without access, geolocation maps will not generate</li>
+                                            <li><strong>Alternative:</strong> Disable geolocation features for air-gapped environments</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6 class="text-info">System Package Dependencies</h6>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+# Network tools (required for core functionality)<br>
+ping, traceroute, mtr<br><br>
+# Wireless monitoring (optional)<br>
+iw, wireless-tools, iwconfig<br><br>
+# System monitoring (optional advanced features)<br>
+lm-sensors, smartmontools, ethtool
+                                            </code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-desktop me-2"></i>
+                                        Client-Side External Dependencies
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6 class="text-danger">Required Internet Access</h6>
+                                        <ul class="list-unstyled">
+                                            <li><strong>StreamSwarm Server:</strong> HTTP/HTTPS connection to your server</li>
+                                            <li><strong>Ports:</strong> 80/443 (default) or custom port configured</li>
+                                            <li><strong>Impact:</strong> Core functionality requires server connectivity</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6 class="text-warning">Optional Internet Access</h6>
+                                        <ul class="list-unstyled small">
+                                            <li><strong>Speed Test Servers:</strong> Various HTTP/HTTPS endpoints</li>
+                                            <li><strong>Examples:</strong> speedtest.net, fast.com, Google speed test servers</li>
+                                            <li><strong>DNS Resolution:</strong> UDP port 53 to DNS servers</li>
+                                            <li><strong>Purpose:</strong> Hostname resolution for network targets</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div>
+                                        <h6 class="text-info">Network Tools Required</h6>
+                                        <div class="bg-dark p-2 rounded">
+                                            <code class="text-light small">
+# Core network tools (usually pre-installed)<br>
+ping, traceroute<br><br>
+# Advanced network analysis (optional)<br>
+mtr, tcpdump
+                                            </code>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Firewall Configuration Examples -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary">Firewall Configuration Examples</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-terminal me-2"></i>
+                                        Server Firewall (iptables)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-3 rounded">
+                                        <code class="text-light small">
+# Allow inbound connections to StreamSwarm server<br>
+iptables -A INPUT -p tcp --dport 5000 -j ACCEPT<br><br>
+# Allow outbound for geolocation services<br>
+iptables -A OUTPUT -p tcp --dport 80 -d ip-api.com -j ACCEPT<br><br>
+# Allow outbound DNS<br>
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-building me-2"></i>
+                                        Corporate Firewall Rules
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="bg-dark p-3 rounded">
+                                        <code class="text-light small">
+# Required: Client to Server communication<br>
+ALLOW TCP 80/443 FROM client_subnets TO streamswarm_server<br><br>
+# Optional: Speed test access (if bandwidth testing needed)<br>
+ALLOW TCP 80/443 FROM client_subnets TO speedtest_servers<br><br>
+# Optional: Geolocation services (server-side)<br>
+ALLOW TCP 80 FROM streamswarm_server TO ip-api.com<br><br>
+# Required: DNS resolution<br>
+ALLOW UDP 53 FROM any TO dns_servers
+                                        </code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Air-Gapped Environments -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-lock me-2"></i>
+                                        Air-Gapped/Isolated Environments
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Fully Offline Capabilities</h6>
+                                            <ul class="small">
+                                                <li>System resource monitoring (CPU, memory, disk)</li>
+                                                <li>Local network interface statistics</li>
+                                                <li>Ping tests to internal IP addresses</li>
+                                                <li>Basic network connectivity tests</li>
+                                                <li>AI/ML diagnostics (local processing only)</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-info">Recommendations for Restricted Environments</h6>
+                                            <ol class="small">
+                                                <li><strong>Disable geolocation features</strong> if ip-api.com access unavailable</li>
+                                                <li><strong>Use IP addresses</strong> instead of hostnames for network targets</li>
+                                                <li><strong>Configure internal speed test servers</strong> for bandwidth testing</li>
+                                                <li><strong>Use SQLite database</strong> to avoid external database dependencies</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

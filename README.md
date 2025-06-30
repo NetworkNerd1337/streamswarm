@@ -311,6 +311,111 @@ gunicorn --bind 0.0.0.0:5000 --workers 4 main:app
 5. Use firewall to restrict access to necessary ports
 6. Regular security updates for all dependencies
 
+## Firewall Requirements and External Dependencies
+
+StreamSwarm requires specific network access for various features. Understanding these requirements helps configure firewalls and plan deployments.
+
+### Server-Side External Dependencies
+
+#### Required Internet Access
+- **Geolocation Services**: `ip-api.com` (HTTP port 80)
+  - **Purpose**: IP geolocation lookup for network path visualization  
+  - **Feature Impact**: Without access, geolocation maps will not generate
+  - **Alternative**: Disable geolocation features for air-gapped environments
+
+#### System Package Dependencies
+```bash
+# Network tools (required for core functionality)
+ping, traceroute, mtr
+
+# Wireless monitoring (optional)
+iw, wireless-tools, iwconfig
+
+# System monitoring (optional advanced features)
+lm-sensors, smartmontools, ethtool
+```
+
+### Client-Side External Dependencies
+
+#### Required Internet Access
+- **StreamSwarm Server**: HTTP/HTTPS connection to your server
+  - **Ports**: 80/443 (default) or custom port configured
+  - **Feature Impact**: Core functionality requires server connectivity
+
+#### Optional Internet Access
+- **Speed Test Servers**: Various HTTP/HTTPS endpoints
+  - **Ports**: 80/443 to multiple speed test providers
+  - **Feature Impact**: Bandwidth testing requires access to speed test endpoints
+  - **Examples**: speedtest.net, fast.com, Google speed test servers
+
+- **DNS Resolution**: UDP port 53 to DNS servers
+  - **Purpose**: Hostname resolution for network targets
+  - **Feature Impact**: Tests using hostnames instead of IP addresses
+
+#### Network Tools Required
+```bash
+# Core network tools (usually pre-installed)
+ping, traceroute
+
+# Advanced network analysis (optional)
+mtr, tcpdump
+```
+
+### Feature-Specific Requirements
+
+| Feature | External Access Required | Ports/Protocols | Impact if Blocked |
+|---------|-------------------------|------------------|-------------------|
+| **Core Monitoring** | StreamSwarm Server | HTTP/HTTPS | Complete loss of functionality |
+| **Bandwidth Testing** | Speed test servers | HTTP/HTTPS (80/443) | No bandwidth measurements |
+| **Geolocation Maps** | ip-api.com | HTTP (80) | No network path visualization |
+| **DNS Tests** | DNS servers | UDP (53) | Hostname-based tests fail |
+| **System Monitoring** | None | Local only | Always works offline |
+
+### Air-Gapped/Isolated Environments
+
+StreamSwarm supports restricted environments with limited internet access:
+
+#### Fully Offline Capabilities
+- System resource monitoring (CPU, memory, disk)
+- Local network interface statistics  
+- Ping tests to internal IP addresses
+- Basic network connectivity tests
+
+#### Recommendations for Restricted Environments
+1. **Disable geolocation features** if ip-api.com access unavailable
+2. **Use IP addresses** instead of hostnames for network targets
+3. **Configure internal speed test servers** for bandwidth testing
+4. **Use SQLite database** to avoid external database dependencies
+
+### Firewall Configuration Examples
+
+#### Server Firewall (iptables)
+```bash
+# Allow inbound connections to StreamSwarm server
+iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+
+# Allow outbound for geolocation services
+iptables -A OUTPUT -p tcp --dport 80 -d ip-api.com -j ACCEPT
+
+# Allow outbound DNS
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+```
+
+#### Corporate Firewall Rules
+```
+# Required: Client to Server communication
+ALLOW TCP 80/443 FROM client_subnets TO streamswarm_server
+
+# Optional: Speed test access (if bandwidth testing needed)
+ALLOW TCP 80/443 FROM client_subnets TO speedtest_servers
+
+# Optional: Geolocation services (server-side)
+ALLOW TCP 80 FROM streamswarm_server TO ip-api.com
+
+# Required: DNS resolution
+ALLOW UDP 53 FROM any TO dns_servers
+```
+
 ## Troubleshooting
 
 ### Common Issues

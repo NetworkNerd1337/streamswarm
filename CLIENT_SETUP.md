@@ -6,44 +6,67 @@ The basic client functionality works with just:
 1. Copy `client.py` to your client machine
 2. Run: `python client.py --server-url http://your-server:5000 --api-token your-token`
 
-## Enhanced Features (Optional)
+## Required Python Packages
 
-### Geolocation Path Analysis (Interactive Maps)
-
-To enable the interactive world map feature that shows the geographic path of network traffic:
-
-**Required Files:**
-- Copy `geolocation_service.py` to the same directory as `client.py`
-
-**Required Python Packages:**
+### Core Dependencies
 ```bash
-pip install folium requests
+pip install requests psutil
 ```
 
-**System Requirements:**
-- `traceroute` command available (usually pre-installed on Linux/macOS)
-- Internet connection for geolocation API lookups
-
-### Advanced Network Testing
-
-For full network analysis capabilities:
-
+### Advanced Network Testing (Optional)
 ```bash
-pip install speedtest-cli scapy psutil
+pip install speedtest-cli scapy
 ```
 
-**System Requirements:**
+### System Requirements
+- `ping` and `traceroute` commands (usually pre-installed on Linux/macOS)
 - Root/admin privileges may be needed for some advanced network tests
-- Network tools: `ping`, `traceroute`, `mtr` (optional)
+- Network tools: `mtr` (optional for enhanced traceroute analysis)
+
+## Geolocation Path Analysis
+
+Interactive network path visualization is now handled entirely by the server. Clients only need to:
+1. Have `traceroute` command available
+2. Send traceroute data to the server
+
+**No additional client packages required** - all map generation and geolocation processing happens server-side.
+
+## Firewall and Network Requirements
+
+### Required External Access
+The client needs outbound access to:
+- **StreamSwarm Server**: HTTP/HTTPS (ports 80/443 or custom port)
+- **Speed Test Servers**: Various HTTP/HTTPS endpoints for bandwidth testing
+- **DNS Servers**: UDP port 53 for hostname resolution
+
+### Features Requiring Internet Access
+- **Bandwidth Testing**: Requires access to speed test endpoints
+- **Network Path Analysis**: Traceroute data collection (local network tools)
+- **Server Communication**: API calls to StreamSwarm server
+
+### Offline Capabilities
+The following features work without internet access:
+- System monitoring (CPU, memory, disk)
+- Local network interface statistics
+- Basic ping tests to local/configured destinations
 
 ## Troubleshooting
 
-If geolocation maps don't appear:
-1. Check that `geolocation_service.py` is in the same directory as `client.py`
-2. Verify `folium` package is installed: `python -c "import folium"`
-3. Check client logs for import errors
-4. Ensure client has internet access for geolocation lookups
+### Common Issues
+1. **Permission Errors**: Some network tests require root/admin privileges
+2. **Missing Commands**: Install `traceroute` if not available: `apt install traceroute` (Ubuntu/Debian)
+3. **Firewall Blocking**: Ensure outbound access to server and speed test endpoints
+4. **API Token Issues**: Verify token with server administrator
 
-## Alternative: Server-Side Processing
+### Verification Commands
+```bash
+# Test basic connectivity
+python -c "import requests, psutil; print('Core packages OK')"
 
-If you prefer not to install additional packages on clients, the system can process traceroute data on the server side. Contact your administrator to enable server-side geolocation processing.
+# Test network tools
+ping -c 1 8.8.8.8
+traceroute google.com
+
+# Test advanced packages (if installed)
+python -c "import speedtest; print('speedtest-cli OK')"
+```
