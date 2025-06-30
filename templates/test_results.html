@@ -2740,14 +2740,15 @@ function displayGeolocationData() {
         }
         
         if (efficiency !== null) {
-            const efficiencyPercent = (efficiency * 100).toFixed(1);
+            // Efficiency is already stored as percentage in database, no need to multiply by 100
+            const efficiencyPercent = efficiency.toFixed(1);
             document.getElementById('pathEfficiency').textContent = `${efficiencyPercent}%`;
             
-            // Update text color based on efficiency
+            // Update text color based on efficiency (using percentage values)
             const efficiencyElement = document.getElementById('pathEfficiency');
-            if (efficiency >= 0.8) {
+            if (efficiency >= 80) {
                 efficiencyElement.className = 'mb-0 text-success';
-            } else if (efficiency >= 0.6) {
+            } else if (efficiency >= 60) {
                 efficiencyElement.className = 'mb-0 text-warning';
             } else {
                 efficiencyElement.className = 'mb-0 text-danger';
