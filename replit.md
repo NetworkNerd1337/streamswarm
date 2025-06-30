@@ -101,7 +101,33 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
-- June 30, 2025. Initial setup
+### Recent Updates (June 30, 2025)
+
+- **✅ Comprehensive Firewall Documentation**: Added detailed firewall requirements and external dependencies documentation
+  - Complete feature-specific network requirements table showing impact of blocked access
+  - Server-side vs client-side external dependency breakdown with clear explanations
+  - Corporate firewall configuration examples (iptables, enterprise rules)
+  - Air-gapped/isolated environment recommendations with offline capabilities
+  - Zero-trust AI/ML architecture confirmation (local processing only)
+
+- **✅ Geolocation Architecture Enhancement**: Documented server-side geolocation processing improvements
+  - Complete transition from client-side to server-side geolocation processing
+  - Background thread processing with proper Flask app context and database session handling
+  - Interactive map generation using Folium library on server with database storage
+  - Hover-enabled map popups with detailed hop information (IP, location, latency, ISP)
+  - Zero client-side dependencies for geolocation features (no Folium required on clients)
+
+- **✅ Enhanced Documentation Coverage**: Updated README.md, CLIENT_SETUP.md, and tutorial page
+  - Complete network access requirements for each feature with port specifications
+  - Real-world firewall configuration examples for corporate environments
+  - Air-gapped deployment guidance with feature impact analysis
+  - Interactive geolocation mapping usage instructions with technical implementation details
+
+### Previous Updates
+- June 30, 2025. Initial setup with distributed network monitoring system
+- Complete AI/ML diagnostic system with zero-trust architecture using local Scikit-learn processing
+- Secure web authentication with role-based access control and session management
+- Advanced TCP handshake analysis and comprehensive network performance metrics
 
 ## User Preferences
 

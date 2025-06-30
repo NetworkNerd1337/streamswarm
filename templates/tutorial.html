@@ -2243,6 +2243,159 @@ nssm install StreamSwarmClient</code></pre>
         </div>
     </div>
 
+    <!-- Geolocation Features -->
+    <div class="row mb-4" id="geolocation-features">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-globe me-2"></i>
+                        Geolocation Mapping & Network Path Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Server-Side Processing Architecture</h6>
+                        <p class="mb-0">StreamSwarm uses server-side geolocation processing for enhanced security and simplified client deployment. All geolocation analysis is performed on the server with no client-side dependencies.</p>
+                    </div>
+                    
+                    <!-- Architecture Overview -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        How It Works
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <ol class="small">
+                                        <li><strong>Client Collection:</strong> Clients perform traceroute tests and send raw data to server</li>
+                                        <li><strong>Server Processing:</strong> Background thread analyzes traceroute data and extracts IP addresses</li>
+                                        <li><strong>Geolocation Lookup:</strong> Server queries ip-api.com for geographical coordinates of each hop</li>
+                                        <li><strong>Map Generation:</strong> Interactive world map created using Folium library on server</li>
+                                        <li><strong>Database Storage:</strong> Generated maps stored in database for instant viewing</li>
+                                        <li><strong>Web Display:</strong> Maps displayed in test results with hover popups showing hop details</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        Benefits & Features
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled small">
+                                        <li><strong>📍 Interactive Maps:</strong> Hover over route markers to see detailed hop information</li>
+                                        <li><strong>🌐 Global Coverage:</strong> Accurate geolocation data from ip-api.com service</li>
+                                        <li><strong>📊 Performance Insights:</strong> Latency analysis at geographical level</li>
+                                        <li><strong>🔒 Secure Processing:</strong> All analysis performed server-side with proper session handling</li>
+                                        <li><strong>🚀 Zero Client Dependencies:</strong> Clients don't need Folium or geolocation packages</li>
+                                        <li><strong>💾 Efficient Storage:</strong> Maps cached in database for fast retrieval</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Technical Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary">Technical Implementation</h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0 small">Background Processing</h6>
+                                        </div>
+                                        <div class="card-body small">
+                                            <p><strong>Automatic:</strong> Maps generated automatically in background threads after test completion</p>
+                                            <p><strong>Efficient:</strong> Uses proper Flask app context and database session handling</p>
+                                            <p class="mb-0"><strong>Reliable:</strong> Error handling for failed geolocation lookups</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0 small">External Dependencies</h6>
+                                        </div>
+                                        <div class="card-body small">
+                                            <p><strong>Required:</strong> ip-api.com access (HTTP port 80)</p>
+                                            <p><strong>Impact:</strong> Maps won't generate if blocked by firewall</p>
+                                            <p class="mb-0"><strong>Alternative:</strong> Disable feature for air-gapped environments</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0 small">User Experience</h6>
+                                        </div>
+                                        <div class="card-body small">
+                                            <p><strong>Interactive:</strong> Hover over markers for hop details</p>
+                                            <p><strong>Fast Loading:</strong> Maps stored in database for instant access</p>
+                                            <p class="mb-0"><strong>Integrated:</strong> Seamlessly embedded in test results page</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Using Geolocation Features -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-map-marked-alt me-2"></i>
+                                        Using Geolocation Features
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Viewing Network Maps</h6>
+                                            <ol class="small">
+                                                <li>Run any network test that includes traceroute data</li>
+                                                <li>Navigate to Tests page and click chart icon for your test</li>
+                                                <li>Scroll down to find the "Network Path Geolocation" section</li>
+                                                <li>Hover over map markers to see detailed hop information</li>
+                                                <li>Use mouse controls to zoom and pan the interactive map</li>
+                                            </ol>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-info">Map Information Display</h6>
+                                            <div class="bg-dark p-2 rounded">
+                                                <code class="text-light small">
+• Hop number and IP address<br>
+• Geographic location (city, country)<br>
+• Round-trip latency measurements<br>
+• ISP/organization information<br>
+• Distance calculations between hops
+                                                </code>
+                                            </div>
+                                            <p class="small mt-2 mb-0"><strong>Note:</strong> Geolocation processing occurs automatically in the background. Maps may take a few moments to appear for new test results.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- First Test Tutorial -->
     <div class="row mb-4" id="first-test">
         <div class="col-12">
