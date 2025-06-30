@@ -281,8 +281,9 @@ function updateSessionTimeoutFromSlider(sliderValue) {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             
-            // Insert after the slider container
-            const sliderContainer = document.querySelector('.mb-3');
+            // Insert after the slider container in the Authentication & Security card
+            const slider = document.getElementById('sessionTimeoutSlider');
+            const sliderContainer = slider.closest('.mb-3');
             sliderContainer.parentNode.insertBefore(alertDiv, sliderContainer.nextSibling);
             
             // Auto-dismiss after 3 seconds
