@@ -38,14 +38,16 @@ class ServerGeolocationProcessor:
             try:
                 if self._process_single_result(result):
                     processed_count += 1
+                    # Commit each result individually to ensure it's saved
+                    db.session.commit()
+                    logger.info(f"Successfully processed and saved geolocation for result {result.id}")
                     
             except Exception as e:
                 logger.error(f"Error processing result {result.id}: {str(e)}")
+                db.session.rollback()  # Rollback failed transaction
                 continue
         
-        if processed_count > 0:
-            db.session.commit()
-            logger.info(f"Processed geolocation data for {processed_count} test results")
+        logger.info(f"Completed processing: {processed_count} geolocation results processed")
         
         return processed_count
     
