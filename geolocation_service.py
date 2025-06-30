@@ -451,23 +451,26 @@ class GeolocationService:
                 else:
                     color = 'red'
                 
-                # Add marker
+                # Add marker with hop number and popup
                 folium.CircleMarker(
                     location=[lat, lon],
-                    radius=8,
+                    radius=10,
                     popup=folium.Popup(popup_text, max_width=300),
                     color='black',
                     fillColor=color,
-                    fillOpacity=0.7,
+                    fillOpacity=0.8,
                     weight=2
                 ).add_to(m)
                 
-                # Add hop number label
+                # Add hop number as a clickable marker with popup
                 folium.Marker(
                     location=[lat, lon],
+                    popup=folium.Popup(popup_text, max_width=300),
                     icon=folium.DivIcon(
-                        html=f'<div style="font-size: 12px; font-weight: bold; color: white; text-shadow: 1px 1px 1px black;">{hop["hop_number"]}</div>',
-                        class_name="custom-div-icon"
+                        html=f'<div style="font-size: 12px; font-weight: bold; color: white; text-shadow: 1px 1px 1px black; cursor: pointer; text-align: center; line-height: 20px; width: 20px; height: 20px; border-radius: 50%; background-color: rgba(0,0,0,0.3);">{hop["hop_number"]}</div>',
+                        class_name="custom-div-icon",
+                        icon_size=(20, 20),
+                        icon_anchor=(10, 10)
                     )
                 ).add_to(m)
             
