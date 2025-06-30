@@ -2142,3 +2142,85 @@ def api_clients():
         'page': page,
         'search': search
     })
+
+@app.route('/api/test/<int:test_id>/process-geolocation', methods=['POST'])
+@web_auth_required
+def process_test_geolocation(test_id):
+    """Process geolocation data for test results that don't have map data yet"""
+    if not GEO_PROCESSOR_AVAILABLE:
+        return jsonify({'error': 'Server-side geolocation processor not available'}), 503
+    
+    try:
+        # Check if test exists
+        test = Test.query.get_or_404(test_id)
+        
+        # Find results with traceroute data but no geolocation data
+        pending_results = TestResult.query.filter(
+            TestResult.test_id == test_id,
+            TestResult.traceroute_data.isnot(None),
+            TestResult.path_map_html.is_(None)
+        ).all()
+        
+        if not pending_results:
+            return jsonify({
+                'status': 'success',
+                'message': 'No results require geolocation processing',
+                'processed_count': 0
+            })
+        
+        # Process results in a background thread to avoid timeout
+        def process_async():
+            with app.app_context():
+                processed_count = 0
+                for result in pending_results:
+                    try:
+                        if geo_processor._process_single_result(result):
+                            processed_count += 1
+                    except Exception as e:
+                        logging.error(f"Error processing result {result.id}: {str(e)}")
+                        continue
+                
+                if processed_count > 0:
+                    db.session.commit()
+                    logging.info(f"Processed geolocation data for {processed_count} results in test {test_id}")
+        
+        # Start background processing
+        thread = threading.Thread(target=process_async)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'processing',
+            'message': f'Started processing geolocation data for {len(pending_results)} results',
+            'pending_count': len(pending_results)
+        })
+        
+    except Exception as e:
+        logging.error(f"Error processing geolocation for test {test_id}: {str(e)}")
+        return jsonify({'error': 'Failed to process geolocation data'}), 500
+
+@app.route('/api/process-all-geolocation', methods=['POST'])
+@admin_required
+def process_all_geolocation():
+    """Process geolocation data for all test results that don't have map data yet"""
+    if not GEO_PROCESSOR_AVAILABLE:
+        return jsonify({'error': 'Server-side geolocation processor not available'}), 503
+    
+    try:
+        # Start background processing
+        def process_async():
+            processed_count = geo_processor.process_pending_results()
+            logging.info(f"Completed batch geolocation processing: {processed_count} results processed")
+        
+        thread = threading.Thread(target=process_async)
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'status': 'processing',
+            'message': 'Started batch geolocation processing for all pending results'
+        })
+        
+    except Exception as e:
+        logging.error(f"Error starting batch geolocation processing: {str(e)}")
+        return jsonify({'error': 'Failed to start geolocation processing'}), 500

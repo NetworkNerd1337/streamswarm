@@ -290,6 +290,17 @@
                         This map shows the geographic path your network traffic takes to reach the destination. 
                         Each marker represents a network hop with latency information. Red markers indicate potential performance bottlenecks.
                     </div>
+                    
+                    <!-- Process Geolocation Button -->
+                    <div class="mb-3" id="geolocationProcessingContainer" style="display: none;">
+                        <button type="button" class="btn btn-primary" id="processGeolocationBtn" onclick="processGeolocation()">
+                            <i class="fas fa-map-marked-alt me-2"></i>
+                            Generate Map from Traceroute Data
+                        </button>
+                        <small class="text-muted ms-2">
+                            No map data available - click to process traceroute results and generate the interactive map
+                        </small>
+                    </div>
                     <div id="geolocationMap" style="height: 500px; border-radius: 0.375rem;">
                         <!-- Interactive map will be injected here -->
                     </div>
@@ -2699,8 +2710,81 @@ function displayGeolocationData() {
         }
         
         console.log('Geolocation data displayed successfully');
+        
+        // Hide the processing button since we have map data
+        document.getElementById('geolocationProcessingContainer').style.display = 'none';
     } else {
         console.log('No geolocation data available for this test');
+        
+        // Check if we have traceroute data that could be processed
+        let hasTracerouteData = false;
+        if (testData && testData.metrics && testData.metrics.traceroute_data) {
+            for (const clientId in testData.metrics.traceroute_data) {
+                const tracerouteData = testData.metrics.traceroute_data[clientId];
+                if (tracerouteData && tracerouteData.length > 0) {
+                    for (const dataPoint of tracerouteData) {
+                        if (dataPoint && dataPoint.y && Array.isArray(JSON.parse(dataPoint.y)) && JSON.parse(dataPoint.y).length > 0) {
+                            hasTracerouteData = true;
+                            break;
+                        }
+                    }
+                    if (hasTracerouteData) break;
+                }
+            }
+        }
+        
+        if (hasTracerouteData) {
+            // Show the geolocation section with processing button
+            document.getElementById('geolocationSection').style.display = 'block';
+            document.getElementById('geolocationProcessingContainer').style.display = 'block';
+            console.log('Traceroute data available - showing geolocation processing option');
+        }
+    }
+}
+
+// Function to process geolocation data using server-side processing
+async function processGeolocation() {
+    const button = document.getElementById('processGeolocationBtn');
+    const originalText = button.innerHTML;
+    
+    // Update button to show processing state
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    
+    try {
+        const response = await fetch(`/api/test/{{ test.id }}/process-geolocation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'processing') {
+            // Show success message and hide the button
+            button.innerHTML = '<i class="fas fa-check me-2"></i>Processing Started';
+            button.className = 'btn btn-success';
+            
+            // Refresh the page data after a short delay to show the results
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+        } else {
+            button.innerHTML = originalText;
+            button.disabled = false;
+            console.log('Processing response:', result);
+        }
+        
+    } catch (error) {
+        console.error('Error processing geolocation:', error);
+        button.innerHTML = originalText;
+        button.disabled = false;
+        alert('Failed to process geolocation data. Please try again.');
     }
 }
 </script>
