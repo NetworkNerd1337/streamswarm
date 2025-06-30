@@ -22,6 +22,13 @@ import psutil
 import requests
 from urllib.parse import urljoin, urlparse
 
+# Import geolocation service for enhanced path analysis
+try:
+    from geolocation_service import GeolocationService
+    GEOLOCATION_AVAILABLE = True
+except ImportError:
+    GEOLOCATION_AVAILABLE = False
+
 # Try to import speedtest and scapy, fall back gracefully if not available
 try:
     import speedtest
@@ -56,6 +63,14 @@ class StreamSwarmClient:
         self.heartbeat_thread = None
         self.test_threads = {}
         self.signal_strength_tracker = {}
+        
+        # Initialize geolocation service for enhanced path analysis
+        if GEOLOCATION_AVAILABLE:
+            self.geo_service = GeolocationService()
+            logger.info("Geolocation service initialized for enhanced network path analysis")
+        else:
+            self.geo_service = None
+            logger.warning("Geolocation service not available - using basic traceroute only")
         
         # Get system information
         self.system_info = self._get_system_info()
@@ -454,7 +469,7 @@ class StreamSwarmClient:
             return {'latency': None, 'packet_loss': 100, 'jitter': None}
     
     def _traceroute_test(self, destination):
-        """Perform traceroute test"""
+        """Perform enhanced traceroute test with geolocation analysis"""
         try:
             # Extract hostname from URL if full URL is provided
             if destination.startswith(('http://', 'https://')):
@@ -477,6 +492,8 @@ class StreamSwarmClient:
             
             hops = 0
             hop_data = []
+            path_analysis = {}
+            map_html = ""
             
             if result.returncode == 0:
                 lines = result.stdout.split('\n')
@@ -486,16 +503,40 @@ class StreamSwarmClient:
                         if line.strip()[0].isdigit():
                             hops += 1
                             hop_data.append(line.strip())
+                
+                # Perform geolocation analysis if service is available
+                if self.geo_service and hop_data:
+                    try:
+                        logger.info(f"Performing geolocation analysis for {len(hop_data)} hops")
+                        path_analysis = self.geo_service.analyze_traceroute_path(hop_data, hostname)
+                        
+                        # Generate interactive map
+                        if path_analysis:
+                            map_html = self.geo_service.create_path_map(path_analysis, hostname)
+                            logger.debug(f"Generated map HTML for {len(path_analysis.get('hops', []))} geolocated hops")
+                        
+                    except Exception as e:
+                        logger.warning(f"Geolocation analysis failed: {e}")
+                        path_analysis = {}
+                        map_html = ""
             
             return {
                 'hops': hops,
                 'data': hop_data,
-                'raw_output': result.stdout
+                'raw_output': result.stdout,
+                'path_analysis': path_analysis,
+                'map_html': map_html
             }
             
         except Exception as e:
             logger.error(f"Error performing traceroute: {e}")
-            return {'hops': 0, 'data': [], 'raw_output': ''}
+            return {
+                'hops': 0, 
+                'data': [], 
+                'raw_output': '',
+                'path_analysis': {},
+                'map_html': ''
+            }
     
     def _run_test(self, test_config):
         """Run a single test"""

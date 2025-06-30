@@ -394,6 +394,12 @@ class TestResult(db.Model):
     signal_strength_samples = db.Column(db.Integer)  # Number of signal strength samples collected
     signal_strength_data = db.Column(Text)  # Comma-delimited raw signal strength readings
     
+    # Geolocation path analysis for traceroute visualization
+    path_geolocation_data = db.Column(Text)  # JSON string of hop geolocation and latency data
+    path_map_html = db.Column(Text)  # Generated HTML for interactive world map visualization
+    path_total_distance_km = db.Column(db.Float)  # Total geographic distance of network path
+    path_geographic_efficiency = db.Column(db.Float)  # Network path efficiency vs. great circle distance (percentage)
+    
     def to_dict(self):
         return {
             'id': self.id,
