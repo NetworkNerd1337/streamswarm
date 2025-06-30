@@ -20,6 +20,36 @@
         </div>
     </div>
 
+    <!-- Search and Clients Table -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search clients by hostname, IP address, or status..." autocomplete="off">
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                            <small class="text-muted me-3" id="searchResults" style="display: none;"></small>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshClients()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Clients Table -->
     <div class="row">
         <div class="col-12">
@@ -30,10 +60,7 @@
                             <i class="fas fa-list me-2"></i>
                             Client List
                         </h5>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshClients()">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            Refresh
-                        </button>
+                        <span class="badge bg-secondary" id="clientCount">{{ clients|length }} clients</span>
                     </div>
                 </div>
                 <div class="card-body">
@@ -170,6 +197,268 @@
 
 {% block scripts %}
 <script>
+// Infinite scroll and search variables
+let currentPage = 1;
+let isLoading = false;
+let hasMoreClients = true;
+let clientsTableBody = null;
+let currentSearch = '';
+let searchTimeout = null;
+let totalClientsLoaded = 0;
+
+// Initialize functionality
+document.addEventListener('DOMContentLoaded', function() {
+    clientsTableBody = document.querySelector('tbody');
+    setupInfiniteScroll();
+    setupSearch();
+    updateClientCount();
+});
+
+// Setup infinite scroll functionality
+function setupInfiniteScroll() {
+    window.addEventListener('scroll', function() {
+        if (isLoading || !hasMoreClients) return;
+        
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const documentHeight = document.documentElement.offsetHeight;
+        
+        // Load more when user is 200px from bottom
+        if (scrollPosition >= documentHeight - 200) {
+            loadMoreClients();
+        }
+    });
+}
+
+// Setup search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const searchValue = this.value.trim();
+        
+        // Show/hide clear button
+        if (searchValue) {
+            clearSearch.style.display = 'block';
+        } else {
+            clearSearch.style.display = 'none';
+        }
+        
+        // Debounce search with 300ms delay
+        searchTimeout = setTimeout(() => {
+            performSearch(searchValue);
+        }, 300);
+    });
+    
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        clearSearch.style.display = 'none';
+        performSearch('');
+    });
+    
+    // Handle enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchTimeout);
+            performSearch(this.value.trim());
+        }
+    });
+}
+
+// Perform search and reset pagination
+function performSearch(searchValue) {
+    currentSearch = searchValue;
+    currentPage = 1;
+    hasMoreClients = true;
+    totalClientsLoaded = 0;
+    
+    // Clear existing clients
+    if (clientsTableBody) {
+        clientsTableBody.innerHTML = '';
+    }
+    
+    // Load first page of search results
+    loadClients(true);
+    
+    // Update search results display
+    updateSearchResults();
+}
+
+// Load clients (either search results or regular pagination)
+function loadClients(isNewSearch = false) {
+    if (isLoading || (!hasMoreClients && !isNewSearch)) return;
+    
+    isLoading = true;
+    showLoadingIndicator();
+    
+    const page = isNewSearch ? 1 : currentPage + 1;
+    const searchParam = currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : '';
+    
+    fetch(`/api/clients?page=${page}${searchParam}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.clients && data.clients.length > 0) {
+                appendClientsToTable(data.clients);
+                currentPage = page;
+                hasMoreClients = data.has_more;
+                totalClientsLoaded += data.clients.length;
+            } else {
+                hasMoreClients = false;
+            }
+            updateClientCount();
+        })
+        .catch(error => {
+            console.error('Error loading clients:', error);
+        })
+        .finally(() => {
+            isLoading = false;
+            hideLoadingIndicator();
+        });
+}
+
+// Load more clients via API
+function loadMoreClients() {
+    loadClients(false);
+}
+
+// Show loading indicator
+function showLoadingIndicator() {
+    const existingIndicator = document.getElementById('loading-indicator');
+    if (existingIndicator) return;
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'loading-indicator';
+    indicator.className = 'text-center py-3';
+    indicator.innerHTML = `
+        <div class="spinner-border spinner-border-sm me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        Loading more clients...
+    `;
+    
+    const tableContainer = document.querySelector('.table-responsive');
+    tableContainer.parentNode.appendChild(indicator);
+}
+
+// Hide loading indicator
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
+
+// Append new clients to table
+function appendClientsToTable(clients) {
+    if (!clientsTableBody) return;
+    
+    clients.forEach(client => {
+        const row = createClientRow(client);
+        clientsTableBody.appendChild(row);
+    });
+}
+
+// Create client table row
+function createClientRow(client) {
+    const row = document.createElement('tr');
+    
+    // Status badge
+    let statusBadge = '';
+    if (client.status === 'online') {
+        statusBadge = '<span class="badge bg-success"><i class="fas fa-circle me-1"></i>Online</span>';
+    } else if (client.status === 'testing') {
+        statusBadge = '<span class="badge bg-warning"><i class="fas fa-play-circle me-1"></i>Testing</span>';
+    } else {
+        statusBadge = '<span class="badge bg-secondary"><i class="fas fa-circle me-1"></i>Offline</span>';
+    }
+    
+    // System info
+    let systemInfo = '<span class="text-muted">No info available</span>';
+    if (client.system_info && Object.keys(client.system_info).length > 0) {
+        const info = client.system_info;
+        let infoLines = [];
+        if (info.platform) infoLines.push(info.platform);
+        if (info.cpu_count) infoLines.push(`${info.cpu_count} CPUs`);
+        if (info.memory_total) infoLines.push(`${(info.memory_total / 1024 / 1024 / 1024).toFixed(1)} GB RAM`);
+        systemInfo = `<small class="text-muted">${infoLines.join('<br>')}</small>`;
+    }
+    
+    // Last seen
+    const lastSeen = client.last_seen ? 
+        `<small class="text-muted">${client.last_seen}</small>` : 
+        '<span class="text-muted">Never</span>';
+    
+    // Action buttons
+    let actionButtons = `
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-info" onclick="viewClientDetails(${client.id})">
+                <i class="fas fa-info-circle"></i>
+            </button>
+    `;
+    
+    if (client.status === 'online') {
+        actionButtons += `
+            <button class="btn btn-outline-primary" onclick="assignToTest(${client.id})">
+                <i class="fas fa-flask"></i>
+            </button>
+        `;
+    }
+    
+    if (client.status === 'offline') {
+        actionButtons += `
+            <button class="btn btn-outline-danger delete-client-btn" 
+                    data-client-id="${client.id}" 
+                    data-client-hostname="${client.hostname}">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+    }
+    
+    actionButtons += '</div>';
+    
+    row.innerHTML = `
+        <td>${statusBadge}</td>
+        <td><strong>${client.hostname}</strong></td>
+        <td><code>${client.ip_address}</code></td>
+        <td>${systemInfo}</td>
+        <td>${lastSeen}</td>
+        <td>${actionButtons}</td>
+    `;
+    
+    return row;
+}
+
+// Update search results display
+function updateSearchResults() {
+    const searchResults = document.getElementById('searchResults');
+    if (currentSearch) {
+        searchResults.style.display = 'inline';
+        searchResults.textContent = `Searching for "${currentSearch}"`;
+    } else {
+        searchResults.style.display = 'none';
+    }
+}
+
+// Update client count display
+function updateClientCount() {
+    const clientCount = document.getElementById('clientCount');
+    if (clientCount) {
+        // If no search active, use totalClientsLoaded or count existing rows
+        if (!currentSearch && totalClientsLoaded === 0) {
+            totalClientsLoaded = clientsTableBody ? clientsTableBody.children.length : 0;
+        }
+        
+        if (currentSearch) {
+            clientCount.textContent = `${totalClientsLoaded} results`;
+            clientCount.className = 'badge bg-info';
+        } else {
+            clientCount.textContent = `${totalClientsLoaded} clients`;
+            clientCount.className = 'badge bg-secondary';
+        }
+    }
+}
+
 function refreshClients() {
     location.reload();
 }

@@ -245,7 +245,8 @@ def dashboard():
 @web_auth_required
 def clients():
     """Client management view"""
-    clients = Client.query.order_by(Client.last_seen.desc()).all()
+    # Load initial batch of clients (most recent 20)
+    clients = Client.query.order_by(Client.last_seen.desc()).limit(20).all()
     
     # Mark clients as busy if they're assigned to running tests
     for client in clients:
@@ -2042,6 +2043,68 @@ def api_tests():
     
     return jsonify({
         'tests': test_data,
+        'has_more': has_more,
+        'page': page,
+        'search': search
+    })
+
+@app.route('/api/clients', methods=['GET'])
+@web_auth_required
+def api_clients():
+    """Get paginated clients for infinite scroll with optional search"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '').strip()
+    per_page = 20
+    offset = (page - 1) * per_page
+    
+    # Build query with optional search filter
+    query = Client.query
+    
+    if search:
+        # Search across multiple fields using case-insensitive LIKE
+        search_filter = f"%{search}%"
+        query = query.filter(
+            Client.hostname.ilike(search_filter) |
+            Client.ip_address.ilike(search_filter) |
+            Client.status.ilike(search_filter) |
+            Client.system_info.ilike(search_filter)
+        )
+    
+    clients = query.order_by(Client.last_seen.desc()).offset(offset).limit(per_page).all()
+    
+    client_data = []
+    for client in clients:
+        # Mark clients as busy if they're assigned to running tests
+        busy_tests = db.session.query(Test).join(TestClient).filter(
+            TestClient.client_id == client.id,
+            Test.status.in_(['running', 'pending'])
+        ).all()
+        
+        # Parse system info if available
+        system_info = {}
+        if client.system_info:
+            try:
+                import json
+                system_info = json.loads(client.system_info)
+            except:
+                system_info = {}
+        
+        client_data.append({
+            'id': client.id,
+            'hostname': client.hostname,
+            'ip_address': client.ip_address,
+            'status': client.status,
+            'system_info': system_info,
+            'last_seen': client.last_seen.strftime('%Y-%m-%d %H:%M:%S') if client.last_seen else None,
+            'is_busy': len(busy_tests) > 0,
+            'active_tests': [test.name for test in busy_tests],
+            'created_at': client.created_at.strftime('%Y-%m-%d %H:%M:%S') if client.created_at else None
+        })
+    
+    has_more = len(clients) == per_page
+    
+    return jsonify({
+        'clients': client_data,
         'has_more': has_more,
         'page': page,
         'search': search
