@@ -79,7 +79,6 @@ def check_session_timeout():
     
     if (request.endpoint in main_pages and 
         request.method == 'GET' and 
-        not request.is_xhr and
         'XMLHttpRequest' not in request.headers.get('X-Requested-With', '')):
         session['last_activity'] = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat()
 

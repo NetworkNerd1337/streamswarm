@@ -1614,6 +1614,10 @@ def login():
         session.clear()
         return redirect(url_for('login'))
     
+    # Check for session timeout message
+    if request.args.get('timeout') == '1':
+        flash('Your session has expired due to inactivity. Please log in again.', 'warning')
+    
     try:
         if request.method == 'POST':
             username = sanitize_string(request.form.get('username', '').strip(), 80)
@@ -1629,6 +1633,11 @@ def login():
             if user and user.check_password(password) and user.is_active:
                 login_user(user, remember=True)
                 user.update_last_login()
+                
+                # Initialize session activity tracking
+                from datetime import datetime
+                import zoneinfo
+                session['last_activity'] = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat()
                 
                 # Safely handle next parameter
                 next_page = request.args.get('next', '').strip()
@@ -1931,3 +1940,39 @@ def dev_mode_status():
     except Exception as e:
         logging.error(f"Error getting dev mode status: {str(e)}")
         return jsonify({'error': 'Failed to get development mode status'}), 500
+
+@app.route('/api/session-timeout', methods=['POST'])
+@admin_required
+def update_session_timeout():
+    """Update session timeout setting - admin only"""
+    try:
+        from models import SystemConfig
+        data = request.get_json()
+        
+        timeout_minutes = data.get('timeout_minutes')
+        if not timeout_minutes:
+            return jsonify({'error': 'Timeout value is required'}), 400
+        
+        try:
+            timeout_value = int(timeout_minutes)
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Timeout must be a valid number'}), 400
+        
+        if timeout_value < 5 or timeout_value > 480:
+            return jsonify({'error': 'Timeout must be between 5 and 480 minutes'}), 400
+        
+        SystemConfig.set_setting(
+            'session_timeout_minutes', 
+            str(timeout_value),
+            'Automatically log out users after inactive period (minutes)'
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'Session timeout updated to {timeout_value} minutes',
+            'timeout_minutes': timeout_value
+        })
+        
+    except Exception as e:
+        logging.error(f"Error updating session timeout: {str(e)}")
+        return jsonify({'error': 'Failed to update session timeout'}), 500

@@ -87,6 +87,39 @@
                                 <small class="text-muted">Manage user accounts and authentication settings</small>
                             </div>
                             
+                            <!-- Session Timeout Configuration -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <h6 class="mb-0">Session Timeout</h6>
+                                        <small class="text-muted">{{ configurations.session_timeout.description }}</small>
+                                    </div>
+                                    <span class="badge bg-info">
+                                        {{ configurations.session_timeout.current_value }} min
+                                    </span>
+                                </div>
+                                
+                                <div class="input-group input-group-sm">
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="sessionTimeoutInput"
+                                           value="{{ configurations.session_timeout.current_value }}"
+                                           min="{{ configurations.session_timeout.min }}"
+                                           max="{{ configurations.session_timeout.max }}"
+                                           placeholder="Minutes">
+                                    <button class="btn btn-outline-primary" 
+                                            type="button" 
+                                            onclick="updateSessionTimeout()">
+                                        <i class="fas fa-save me-1"></i>
+                                        Update
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    Range: {{ configurations.session_timeout.min }}-{{ configurations.session_timeout.max }} minutes. 
+                                    Users will be logged out after being inactive for this duration.
+                                </div>
+                            </div>
+                            
                             <div class="d-grid gap-2">
                                 <a href="{{ url_for('user_management') }}" class="btn btn-outline-primary">
                                     <i class="fas fa-users-cog me-2"></i>
@@ -181,6 +214,7 @@
                             <li><strong>User Management:</strong> Regularly review user accounts and remove inactive users.</li>
                             <li><strong>API Tokens:</strong> Rotate client API tokens periodically for security.</li>
                             <li><strong>AI Models:</strong> Monitor model performance and retrain when accuracy decreases.</li>
+                            <li><strong>Session Timeout:</strong> Set appropriate timeout values for your environment. Shorter timeouts improve security but may impact user experience.</li>
                         </ul>
                     </div>
                 </div>
@@ -188,4 +222,69 @@
         </div>
     </div>
 </div>
+
+<script>
+function updateSessionTimeout() {
+    const input = document.getElementById('sessionTimeoutInput');
+    const timeoutValue = parseInt(input.value);
+    
+    if (isNaN(timeoutValue) || timeoutValue < 5 || timeoutValue > 480) {
+        alert('Please enter a valid timeout value between 5 and 480 minutes.');
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+    button.disabled = true;
+    
+    fetch('/api/session-timeout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            timeout_minutes: timeoutValue
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Update the badge
+            const badge = document.querySelector('.badge.bg-info');
+            badge.textContent = timeoutValue + ' min';
+            
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert after the input group
+            const inputGroup = document.querySelector('.input-group');
+            inputGroup.parentNode.insertBefore(alertDiv, inputGroup.nextSibling);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(() => {
+                if (alertDiv && alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update session timeout'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update session timeout. Please try again.');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>
 {% endblock %}
