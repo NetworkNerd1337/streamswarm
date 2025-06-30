@@ -493,12 +493,18 @@ class NetworkDiagnosticEngine:
                     anomaly_count = np.sum(anomalies == -1)
                     diagnosis['anomalies_detected'] = int(anomaly_count)
                     
+                    # Detailed anomaly analysis
+                    anomaly_details = self._analyze_specific_anomalies(
+                        anomalies, anomaly_scores, X_model, results, features_df
+                    )
+                    diagnosis['anomaly_details'] = anomaly_details
+                    
                     if anomaly_count > 0:
                         diagnosis['issues_detected'].append({
                             'type': 'anomaly',
                             'severity': 'high' if anomaly_count > len(results) * 0.2 else 'medium',
-                            'description': f'Detected {anomaly_count} anomalous measurements out of {len(results)} total',
-                            'recommendation': 'Review network configuration and system health during anomalous periods'
+                            'description': f'Detected {anomaly_count} anomalous measurements with specific issues identified',
+                            'recommendation': 'Review detailed anomaly breakdown for targeted troubleshooting'
                         })
                 
                 # Health classification
@@ -670,6 +676,163 @@ class NetworkDiagnosticEngine:
             'issues_detected': issues,
             'recommendations': recommendations
         }
+    
+    def _analyze_specific_anomalies(self, anomalies, anomaly_scores, features_df, results, original_features_df):
+        """
+        Analyze specific anomalies to provide detailed, actionable insights
+        """
+        anomaly_details = []
+        
+        # Find anomalous measurements (where prediction == -1)
+        anomalous_indices = np.where(anomalies == -1)[0]
+        
+        if len(anomalous_indices) == 0:
+            return []
+        
+        # Calculate feature statistics for comparison
+        feature_stats = {}
+        for col in features_df.columns:
+            if col in original_features_df.columns:
+                feature_stats[col] = {
+                    'mean': original_features_df[col].mean(),
+                    'std': original_features_df[col].std(),
+                    'median': original_features_df[col].median(),
+                    'p95': original_features_df[col].quantile(0.95)
+                }
+        
+        # Key metrics to focus on for anomaly identification
+        critical_metrics = {
+            'ping_packet_loss': {'threshold': 1.0, 'unit': '%', 'type': 'network'},
+            'ping_latency': {'threshold': 100.0, 'unit': 'ms', 'type': 'network'},
+            'jitter': {'threshold': 20.0, 'unit': 'ms', 'type': 'network'},
+            'cpu_percent': {'threshold': 80.0, 'unit': '%', 'type': 'system'},
+            'memory_percent': {'threshold': 85.0, 'unit': '%', 'type': 'system'},
+            'tcp_handshake_total_time': {'threshold': 150.0, 'unit': 'ms', 'type': 'tcp'},
+            'tcp_retransmission_rate': {'threshold': 3.0, 'unit': '%', 'type': 'tcp'},
+            'bandwidth_download': {'threshold': 100.0, 'unit': 'Mbps', 'type': 'bandwidth', 'direction': 'low'},
+            'content_download_time': {'threshold': 5000.0, 'unit': 'ms', 'type': 'application'}
+        }
+        
+        # Analyze each anomalous measurement
+        for idx in anomalous_indices:
+            if idx >= len(results):
+                continue
+                
+            result = results[idx]
+            anomaly_score = anomaly_scores[idx]
+            timestamp = result.timestamp.strftime('%H:%M:%S') if result.timestamp else f"Measurement {idx+1}"
+            
+            # Find which metrics are problematic in this measurement
+            issues_found = []
+            
+            for metric, config in critical_metrics.items():
+                if hasattr(result, metric):
+                    value = getattr(result, metric)
+                    if value is not None:
+                        # Check if value exceeds threshold
+                        is_anomalous = False
+                        severity = 'medium'
+                        
+                        if config.get('direction') == 'low':
+                            # For bandwidth, low values are bad
+                            if value < config['threshold']:
+                                is_anomalous = True
+                                severity = 'high' if value < config['threshold'] * 0.5 else 'medium'
+                        else:
+                            # For most metrics, high values are bad
+                            if value > config['threshold']:
+                                is_anomalous = True
+                                severity = 'high' if value > config['threshold'] * 2 else 'medium'
+                        
+                        # Also check against statistical deviation
+                        if metric in feature_stats and not is_anomalous:
+                            stats = feature_stats[metric]
+                            if not pd.isna(stats['mean']) and not pd.isna(stats['std']):
+                                # More than 3 standard deviations from mean
+                                if abs(value - stats['mean']) > 3 * stats['std']:
+                                    is_anomalous = True
+                                    severity = 'medium'
+                        
+                        if is_anomalous:
+                            # Format value appropriately
+                            if metric in ['ping_packet_loss', 'cpu_percent', 'memory_percent', 'tcp_retransmission_rate']:
+                                formatted_value = f"{value:.1f}{config['unit']}"
+                            elif metric in ['bandwidth_download', 'bandwidth_upload']:
+                                formatted_value = f"{value:.0f} {config['unit']}"
+                            else:
+                                formatted_value = f"{value:.1f}{config['unit']}"
+                            
+                            issues_found.append({
+                                'metric': metric,
+                                'value': formatted_value,
+                                'type': config['type'],
+                                'severity': severity,
+                                'raw_value': value
+                            })
+            
+            # Special checks for missing data
+            if not hasattr(result, 'bandwidth_download') or result.bandwidth_download is None:
+                issues_found.append({
+                    'metric': 'bandwidth_download',
+                    'value': 'Missing',
+                    'type': 'connectivity',
+                    'severity': 'medium',
+                    'raw_value': None
+                })
+            
+            # Create anomaly detail entry if issues found
+            if issues_found:
+                # Sort by severity and type
+                issues_found.sort(key=lambda x: (x['severity'] == 'high', x['type']))
+                
+                # Create description based on most severe issues
+                primary_issues = [issue for issue in issues_found if issue['severity'] == 'high']
+                if not primary_issues:
+                    primary_issues = issues_found[:2]  # Take top 2 if no high severity
+                
+                descriptions = []
+                for issue in primary_issues:
+                    metric_name = issue['metric'].replace('_', ' ').title()
+                    if issue['raw_value'] is None:
+                        descriptions.append(f"{metric_name}: {issue['value']}")
+                    else:
+                        descriptions.append(f"{metric_name}: {issue['value']}")
+                
+                anomaly_details.append({
+                    'timestamp': timestamp,
+                    'measurement_id': result.id if hasattr(result, 'id') else None,
+                    'anomaly_score': round(abs(anomaly_score), 3),
+                    'severity': 'high' if any(i['severity'] == 'high' for i in issues_found) else 'medium',
+                    'description': '; '.join(descriptions),
+                    'issues': issues_found,
+                    'recommendations': self._get_anomaly_recommendations(issues_found)
+                })
+        
+        # Sort by severity and anomaly score
+        anomaly_details.sort(key=lambda x: (x['severity'] == 'high', x['anomaly_score']), reverse=True)
+        
+        # Limit to top 15 most significant anomalies to avoid overwhelming the UI
+        return anomaly_details[:15]
+    
+    def _get_anomaly_recommendations(self, issues):
+        """Generate specific recommendations based on anomaly types"""
+        recommendations = []
+        issue_types = set(issue['type'] for issue in issues)
+        
+        if 'network' in issue_types:
+            recommendations.append("Check network routing and bandwidth utilization")
+        if 'system' in issue_types:
+            recommendations.append("Review system resource usage and running processes")
+        if 'tcp' in issue_types:
+            recommendations.append("Investigate TCP configuration and server responsiveness")
+        if 'bandwidth' in issue_types:
+            recommendations.append("Verify internet connection and ISP performance")
+        if 'connectivity' in issue_types:
+            recommendations.append("Check network connectivity and firewall rules")
+        if 'application' in issue_types:
+            recommendations.append("Review application server performance and content delivery")
+        
+        return recommendations
     
     def get_model_status(self) -> Dict[str, Any]:
         """

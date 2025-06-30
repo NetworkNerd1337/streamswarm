@@ -99,6 +99,27 @@
             </div>
         </div>
 
+        <!-- Detailed Anomaly Breakdown -->
+        <div class="row mb-4" id="anomaly-details-section" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-search me-2"></i>
+                            Detailed Anomaly Analysis
+                        </h5>
+                        <span class="badge bg-warning" id="anomaly-count-badge">0 anomalies</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Specific measurements that deviated from normal patterns:</p>
+                        <div id="anomaly-details-list" class="row">
+                            <!-- Anomaly details will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Issues Detected -->
         <div class="row mb-4">
             <div class="col-12">
@@ -247,6 +268,9 @@ function displayResults(diagnosis) {
         document.getElementById('analysis-time').textContent = timestamp.toLocaleTimeString();
     }
     
+    // Detailed Anomaly Analysis
+    displayAnomalyDetails(diagnosis.anomaly_details || [], diagnosis.anomalies_detected || 0);
+    
     // Issues
     displayIssues(diagnosis.issues_detected || []);
     
@@ -354,6 +378,97 @@ function displayFeatureImportance(importance) {
     });
     
     importanceContainer.innerHTML = importanceHtml;
+}
+
+function displayAnomalyDetails(anomalyDetails, totalAnomalies) {
+    const anomalySection = document.getElementById('anomaly-details-section');
+    const anomalyContainer = document.getElementById('anomaly-details-list');
+    const anomalyBadge = document.getElementById('anomaly-count-badge');
+    
+    // Update badge count
+    anomalyBadge.textContent = `${totalAnomalies} anomalies`;
+    
+    if (totalAnomalies === 0 || anomalyDetails.length === 0) {
+        anomalySection.style.display = 'none';
+        return;
+    }
+    
+    // Show the section
+    anomalySection.style.display = 'block';
+    
+    let anomalyHtml = '';
+    anomalyDetails.forEach((anomaly, index) => {
+        const severityClass = anomaly.severity === 'high' ? 'danger' : 'warning';
+        const severityIcon = anomaly.severity === 'high' ? 'exclamation-triangle' : 'exclamation-circle';
+        const severityBadge = anomaly.severity === 'high' ? 'bg-danger' : 'bg-warning';
+        
+        // Format recommendations
+        let recommendationsHtml = '';
+        if (anomaly.recommendations && anomaly.recommendations.length > 0) {
+            recommendationsHtml = anomaly.recommendations.map(rec => 
+                `<small class="text-muted d-block"><i class="fas fa-lightbulb me-1"></i>${rec}</small>`
+            ).join('');
+        }
+        
+        // Format issues details
+        let issuesHtml = '';
+        if (anomaly.issues && anomaly.issues.length > 0) {
+            issuesHtml = anomaly.issues.map(issue => {
+                const typeIcon = {
+                    'network': 'wifi',
+                    'system': 'desktop',
+                    'tcp': 'handshake',
+                    'bandwidth': 'tachometer-alt',
+                    'connectivity': 'plug',
+                    'application': 'globe'
+                }[issue.type] || 'exclamation-circle';
+                
+                return `<span class="badge bg-light text-dark me-1 mb-1">
+                    <i class="fas fa-${typeIcon} me-1"></i>${issue.value}
+                </span>`;
+            }).join('');
+        }
+        
+        anomalyHtml += `
+            <div class="col-lg-6 mb-3">
+                <div class="card border-${severityClass}">
+                    <div class="card-header bg-${severityClass} bg-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-${severityIcon} me-2"></i>
+                                ${anomaly.timestamp}
+                            </h6>
+                            <div>
+                                <span class="badge ${severityBadge}">${anomaly.severity.toUpperCase()}</span>
+                                <small class="text-muted ms-2">Score: ${anomaly.anomaly_score}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>${anomaly.description}</strong></p>
+                        ${issuesHtml ? `<div class="mb-2">${issuesHtml}</div>` : ''}
+                        ${recommendationsHtml}
+                        ${anomaly.measurement_id ? `<small class="text-muted d-block mt-1">Measurement ID: ${anomaly.measurement_id}</small>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Add summary if there are more anomalies than displayed
+    if (totalAnomalies > anomalyDetails.length) {
+        anomalyHtml += `
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Showing top ${anomalyDetails.length} most significant anomalies out of ${totalAnomalies} total detected.
+                    Additional minor anomalies may require further investigation.
+                </div>
+            </div>
+        `;
+    }
+    
+    anomalyContainer.innerHTML = anomalyHtml;
 }
 
 function showError(message) {
