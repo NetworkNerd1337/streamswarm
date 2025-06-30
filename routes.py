@@ -2174,15 +2174,18 @@ def process_test_geolocation(test_id):
                 processed_count = 0
                 for result in pending_results:
                     try:
+                        # Refresh the result object in the current session
+                        result = db.session.merge(result)
                         if geo_processor._process_single_result(result):
                             processed_count += 1
+                            # Commit after each successful result to ensure data is saved
+                            db.session.commit()
                     except Exception as e:
                         logging.error(f"Error processing result {result.id}: {str(e)}")
+                        db.session.rollback()
                         continue
                 
-                if processed_count > 0:
-                    db.session.commit()
-                    logging.info(f"Processed geolocation data for {processed_count} results in test {test_id}")
+                logging.info(f"Processed geolocation data for {processed_count} results in test {test_id}")
         
         # Start background processing
         thread = threading.Thread(target=process_async)
