@@ -2209,8 +2209,9 @@ def process_all_geolocation():
     try:
         # Start background processing
         def process_async():
-            processed_count = geo_processor.process_pending_results()
-            logging.info(f"Completed batch geolocation processing: {processed_count} results processed")
+            with app.app_context():
+                processed_count = geo_processor.process_pending_results()
+                logging.info(f"Completed batch geolocation processing: {processed_count} results processed")
         
         thread = threading.Thread(target=process_async)
         thread.daemon = True
