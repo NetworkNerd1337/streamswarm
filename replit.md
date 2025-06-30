@@ -126,6 +126,7 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 - June 30, 2025. Implemented configurable session timeout with slider interface (10min-60min or Disabled) and smart activity tracking
 - June 30, 2025. Added infinite scroll for tests page with real-time progress updates and smooth loading experience
 - June 30, 2025. Implemented identical infinite scroll and search system for clients page with hostname, IP, and status filtering
+- June 30, 2025. Improved tutorial page layout by making Windows/macOS installation cards display horizontally using responsive Bootstrap columns (col-md-6 instead of col-lg-6)
 
 ## User Preferences
 
