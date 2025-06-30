@@ -1989,12 +1989,26 @@ def update_session_timeout():
 @app.route('/api/tests', methods=['GET'])
 @web_auth_required
 def api_tests():
-    """Get paginated tests for infinite scroll"""
+    """Get paginated tests for infinite scroll with optional search"""
     page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '').strip()
     per_page = 20
     offset = (page - 1) * per_page
     
-    tests = Test.query.order_by(Test.created_at.desc()).offset(offset).limit(per_page).all()
+    # Build query with optional search filter
+    query = Test.query
+    
+    if search:
+        # Search across multiple fields using case-insensitive LIKE
+        search_filter = f"%{search}%"
+        query = query.filter(
+            Test.name.ilike(search_filter) |
+            Test.description.ilike(search_filter) |
+            Test.destination.ilike(search_filter) |
+            Test.status.ilike(search_filter)
+        )
+    
+    tests = query.order_by(Test.created_at.desc()).offset(offset).limit(per_page).all()
     
     test_data = []
     for test in tests:
@@ -2029,5 +2043,6 @@ def api_tests():
     return jsonify({
         'tests': test_data,
         'has_more': has_more,
-        'page': page
+        'page': page,
+        'search': search
     })

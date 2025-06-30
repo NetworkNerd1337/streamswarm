@@ -26,6 +26,36 @@
         </div>
     </div>
 
+    <!-- Search and Tests Table -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search tests by name, description, destination, or status..." autocomplete="off">
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                            <small class="text-muted me-3" id="searchResults" style="display: none;"></small>
+                            <button id="refreshButton" class="btn btn-sm btn-outline-primary" onclick="refreshPage()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tests Table -->
     <div class="row">
         <div class="col-12">
@@ -36,10 +66,7 @@
                             <i class="fas fa-list me-2"></i>
                             Test List
                         </h5>
-                        <button id="refreshButton" class="btn btn-sm btn-outline-primary" onclick="refreshPage()">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            Refresh
-                        </button>
+                        <span class="badge bg-secondary" id="testCount">{{ tests|length }} tests</span>
                     </div>
                 </div>
                 <div class="card-body">
@@ -392,16 +419,21 @@ if (preSelectedClient) {
     }
 }
 
-// Infinite scroll variables
+// Infinite scroll and search variables
 let currentPage = 1;
 let isLoading = false;
 let hasMoreTests = true;
 let testsTableBody = null;
+let currentSearch = '';
+let searchTimeout = null;
+let totalTestsLoaded = 0;
 
-// Initialize infinite scroll
+// Initialize functionality
 document.addEventListener('DOMContentLoaded', function() {
     testsTableBody = document.querySelector('tbody');
     setupInfiniteScroll();
+    setupSearch();
+    updateTestCount();
 });
 
 // Setup infinite scroll functionality
@@ -419,33 +451,108 @@ function setupInfiniteScroll() {
     });
 }
 
-// Load more tests via API
-function loadMoreTests() {
-    if (isLoading || !hasMoreTests) return;
+// Setup search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const searchValue = this.value.trim();
+        
+        // Show/hide clear button
+        if (searchValue) {
+            clearSearch.style.display = 'block';
+        } else {
+            clearSearch.style.display = 'none';
+        }
+        
+        // Debounce search with 300ms delay
+        searchTimeout = setTimeout(() => {
+            performSearch(searchValue);
+        }, 300);
+    });
+    
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        clearSearch.style.display = 'none';
+        performSearch('');
+    });
+    
+    // Handle enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            clearTimeout(searchTimeout);
+            performSearch(this.value.trim());
+        }
+    });
+}
+
+// Perform search and reset pagination
+function performSearch(searchValue) {
+    currentSearch = searchValue;
+    currentPage = 1;
+    hasMoreTests = true;
+    totalTestsLoaded = 0;
+    
+    // Clear existing tests
+    if (testsTableBody) {
+        testsTableBody.innerHTML = '';
+    }
+    
+    // Load first page of search results
+    loadTests(true);
+    
+    // Update search results display
+    updateSearchResults();
+}
+
+// Load tests (either search results or regular pagination)
+function loadTests(isNewSearch = false) {
+    if (isLoading || (!hasMoreTests && !isNewSearch)) return;
     
     isLoading = true;
     showLoadingIndicator();
     
-    const nextPage = currentPage + 1;
+    const page = isNewSearch ? 1 : currentPage + 1;
+    const searchParam = currentSearch ? `&search=${encodeURIComponent(currentSearch)}` : '';
     
-    fetch(`/api/tests?page=${nextPage}`)
+    fetch(`/api/tests?page=${page}${searchParam}`)
         .then(response => response.json())
         .then(data => {
             if (data.tests && data.tests.length > 0) {
                 appendTestsToTable(data.tests);
-                currentPage = nextPage;
+                currentPage = page;
                 hasMoreTests = data.has_more;
+                totalTestsLoaded += data.tests.length;
             } else {
                 hasMoreTests = false;
             }
+            updateTestCount();
         })
         .catch(error => {
-            console.error('Error loading more tests:', error);
+            console.error('Error loading tests:', error);
         })
         .finally(() => {
             isLoading = false;
             hideLoadingIndicator();
         });
+}
+
+// Load more tests via API (updated to use new loadTests function)
+function loadMoreTests() {
+    loadTests(false);
+}
+
+// Update search results display
+function updateSearchResults() {
+    const searchResults = document.getElementById('searchResults');
+    if (currentSearch) {
+        searchResults.style.display = 'inline';
+        searchResults.textContent = `Searching for "${currentSearch}"`;
+    } else {
+        searchResults.style.display = 'none';
+    }
 }
 
 // Show loading indicator
@@ -483,6 +590,25 @@ function appendTestsToTable(tests) {
         const row = createTestRow(test);
         testsTableBody.appendChild(row);
     });
+}
+
+// Initialize test count from server-rendered tests
+function updateTestCount() {
+    const testCount = document.getElementById('testCount');
+    if (testCount) {
+        // If no search active, use totalTestsLoaded or count existing rows
+        if (!currentSearch && totalTestsLoaded === 0) {
+            totalTestsLoaded = testsTableBody ? testsTableBody.children.length : 0;
+        }
+        
+        if (currentSearch) {
+            testCount.textContent = `${totalTestsLoaded} results`;
+            testCount.className = 'badge bg-info';
+        } else {
+            testCount.textContent = `${totalTestsLoaded} tests`;
+            testCount.className = 'badge bg-secondary';
+        }
+    }
 }
 
 // Create test table row
