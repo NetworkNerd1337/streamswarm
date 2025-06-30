@@ -1028,6 +1028,18 @@ def get_test_data(test_id):
             'x': timestamp,
             'y': result.traceroute_data
         })
+        data['metrics']['path_map_html'][client_id].append({
+            'x': timestamp,
+            'y': result.path_map_html
+        })
+        data['metrics']['path_total_distance_km'][client_id].append({
+            'x': timestamp,
+            'y': result.path_total_distance_km
+        })
+        data['metrics']['path_geographic_efficiency'][client_id].append({
+            'x': timestamp,
+            'y': result.path_geographic_efficiency
+        })
         data['metrics']['bandwidth_upload'][client_id].append({
             'x': timestamp,
             'y': result.bandwidth_upload
