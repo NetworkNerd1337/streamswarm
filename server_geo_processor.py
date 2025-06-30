@@ -93,6 +93,7 @@ class ServerGeolocationProcessor:
                 logger.debug(f"Generated map HTML for result {result.id}, size: {len(map_html) if map_html else 0} chars")
                 
                 # Update the result with geolocation data
+                result.path_geolocation_data = json.dumps(path_analysis)
                 result.path_map_html = map_html
                 result.path_total_distance_km = path_analysis.get('total_distance_km')
                 result.path_geographic_efficiency = path_analysis.get('geographic_efficiency')
