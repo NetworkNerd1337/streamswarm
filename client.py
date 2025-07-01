@@ -648,6 +648,23 @@ class StreamSwarmClient:
                     'path_geographic_efficiency': path_analysis.get('geographic_efficiency')
                 }
                 
+                # Perform GNMI network path analysis for managed infrastructure
+                gnmi_path_data = {}
+                if self.gnmi_analyzer:
+                    try:
+                        logger.info("Performing GNMI network path analysis...")
+                        gnmi_analysis = self.gnmi_analyzer.analyze_network_path(destination, test_id)
+                        if gnmi_analysis and gnmi_analysis.get('managed_hops'):
+                            gnmi_path_data = {
+                                'gnmi_path_analysis': json.dumps(gnmi_analysis)
+                            }
+                            logger.info(f"GNMI analysis completed: {len(gnmi_analysis.get('managed_hops', []))} managed hops analyzed")
+                        else:
+                            logger.info("No managed infrastructure detected in network path")
+                    except Exception as e:
+                        logger.warning(f"GNMI network path analysis failed: {e}")
+                        logger.debug("GNMI analysis error details:", exc_info=True)
+                
                 # Prepare test result data
                 result_data = {
                     'client_id': self.client_id,
@@ -665,7 +682,8 @@ class StreamSwarmClient:
                     **signal_strength_data,
                     **application_metrics,
                     **infrastructure_metrics,
-                    **geolocation_data
+                    **geolocation_data,
+                    **gnmi_path_data
                 }
                 
                 # Submit results to server

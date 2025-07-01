@@ -18,6 +18,12 @@ pip install requests psutil
 pip install speedtest-cli scapy
 ```
 
+### GNMI Network Path Analysis (Optional)
+For managed network infrastructure analysis:
+```bash
+pip install pygnmi
+```
+
 ### System Requirements
 - `ping` and `traceroute` commands (usually pre-installed on Linux/macOS)
 - Root/admin privileges may be needed for some advanced network tests
@@ -30,6 +36,33 @@ Interactive network path visualization is now handled entirely by the server. Cl
 2. Send traceroute data to the server
 
 **No additional client packages required** - all map generation and geolocation processing happens server-side.
+
+## GNMI Network Path Analysis
+
+Advanced managed infrastructure analysis using GNMI (gNMI Network Management Interface) protocol.
+
+### What is GNMI?
+GNMI provides hop-by-hop latency analysis within managed network infrastructure by:
+- Connecting to GNMI-enabled network devices (routers, switches)
+- Collecting real-time telemetry data from device interfaces
+- Analyzing processing latency, queue depth, CPU utilization
+- Providing detailed bottleneck attribution for network performance issues
+
+### Setup Requirements
+1. **Install pygnmi**: `pip install pygnmi`
+2. **Network device access**: Credentials for GNMI-enabled devices in your network path
+3. **Device configuration**: Network devices must support GNMI protocol (most modern enterprise equipment)
+
+### How it Works
+- Client performs normal traceroute to discover network path
+- For each hop, attempts GNMI connection to collect device telemetry
+- Analyzes interface statistics, queue metrics, CPU utilization
+- Results displayed in web interface as "GNMI Network Path Analysis" card
+
+### Graceful Fallback
+- GNMI analysis runs alongside standard network tests
+- If GNMI unavailable (no devices configured, connection fails), tests continue normally
+- GNMI card only appears when actual managed infrastructure data is collected
 
 ## Firewall and Network Requirements
 
