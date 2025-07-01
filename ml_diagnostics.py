@@ -1066,6 +1066,107 @@ class NetworkDiagnosticEngine:
             logger.error(f"Error enhancing ML prediction: {str(e)}")
             return ml_prediction  # Return original prediction if enhancement fails
     
+    def _generate_synthetic_training_data(self, num_samples: int = 500) -> List:
+        """
+        Generate synthetic training data to improve model coverage of different scenarios
+        """
+        import random
+        from datetime import datetime, timedelta
+        
+        synthetic_results = []
+        destinations = ['google.com', 'cloudflare.com', 'github.com', 'microsoft.com', 'spiegel.de', 
+                       'bbc.co.uk', 'amazon.com', 'facebook.com', 'twitter.com', 'youtube.com',
+                       'reddit.com', 'wikipedia.org', 'example.com']
+        
+        for i in range(num_samples):
+            # Create a mock TestResult object with realistic values
+            class MockTestResult:
+                def __init__(self):
+                    destination = random.choice(destinations)
+                    
+                    # Base latency varies by destination
+                    if destination in ['google.com', 'cloudflare.com']:
+                        base_latency = random.uniform(8, 20)
+                    elif destination in ['github.com', 'microsoft.com', 'amazon.com']:
+                        base_latency = random.uniform(15, 35)
+                    elif destination in ['spiegel.de', 'bbc.co.uk']:
+                        base_latency = random.uniform(25, 50)
+                    else:
+                        base_latency = random.uniform(18, 40)
+                    
+                    # Add some noise and packet size impact
+                    packet_size = random.choice([64, 128, 256, 512, 1024])
+                    size_factor = 1.0 + ((packet_size - 64) / 1000)
+                    
+                    self.destination = destination
+                    self.ping_latency = base_latency * size_factor
+                    self.ping_packet_loss = random.uniform(0, 3)  # 0-3% loss
+                    self.jitter = random.uniform(0.5, self.ping_latency * 0.2)
+                    self.bandwidth_download = random.uniform(50, 500)
+                    self.bandwidth_upload = random.uniform(20, 100)
+                    self.dns_resolution_time = random.uniform(1, 15)
+                    self.tcp_connect_time = random.uniform(2, 25)
+                    self.ssl_handshake_time = random.uniform(5, 50)
+                    self.ttfb = random.uniform(10, 100)
+                    
+                    # System metrics
+                    self.cpu_percent = random.uniform(10, 80)
+                    self.memory_percent = random.uniform(30, 90)
+                    self.disk_percent = random.uniform(20, 85)
+                    self.network_bytes_sent = random.randint(1000, 100000)
+                    self.network_bytes_recv = random.randint(1000, 100000)
+                    
+                    # QoS metrics
+                    self.dscp = random.choice([0, 8, 16, 24, 32, 40, 46])
+                    self.cos = random.choice([0, 1, 2, 3, 4, 5, 6, 7])
+                    
+                    # Test configuration
+                    self.test_type = random.choice(['ping', 'comprehensive', 'bandwidth'])
+                    self.packet_size = packet_size
+                    self.test_count = random.choice([10, 20, 50, 100])
+                    
+                    # Network interface
+                    self.interface_name = random.choice(['eth0', 'wlan0', 'enp0s3'])
+                    self.mtu = random.choice([1500, 9000])
+                    
+                    # Default other fields to avoid attribute errors
+                    for attr in ['signal_strength', 'connection_quality', 'tcp_retransmissions',
+                               'compression_ratio', 'error_rate', 'timestamp']:
+                        if not hasattr(self, attr):
+                            if attr == 'timestamp':
+                                setattr(self, attr, datetime.now() - timedelta(days=random.randint(0, 30)))
+                            elif attr in ['signal_strength', 'connection_quality']:
+                                setattr(self, attr, random.uniform(-80, -20) if attr == 'signal_strength' else random.uniform(50, 100))
+                            else:
+                                setattr(self, attr, random.uniform(0, 10))
+            
+            synthetic_results.append(MockTestResult())
+        
+        return synthetic_results
+    
+    def _create_performance_features(self, X):
+        """
+        Create enhanced features for performance prediction
+        """
+        # Start with original features excluding ping_latency
+        feature_cols = [col for col in X.columns if col != 'ping_latency']
+        X_perf = X[feature_cols].copy()
+        
+        # Add engineered features that could influence latency
+        if 'bandwidth_download' in X_perf.columns and 'bandwidth_upload' in X_perf.columns:
+            X_perf['bandwidth_ratio'] = X_perf['bandwidth_download'] / (X_perf['bandwidth_upload'] + 1)
+        
+        if 'cpu_percent' in X_perf.columns and 'memory_percent' in X_perf.columns:
+            X_perf['system_load'] = (X_perf['cpu_percent'] + X_perf['memory_percent']) / 2
+        
+        if 'packet_size' in X_perf.columns:
+            X_perf['packet_size_normalized'] = X_perf['packet_size'] / 1500  # Normalize by MTU
+        
+        if 'dns_resolution_time' in X_perf.columns and 'tcp_connect_time' in X_perf.columns:
+            X_perf['connection_overhead'] = X_perf['dns_resolution_time'] + X_perf['tcp_connect_time']
+        
+        return X_perf.fillna(0)
+    
     def _create_prediction_features(self, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> List[float]:
         """
         Create feature vector for performance prediction based on test configuration and current conditions
