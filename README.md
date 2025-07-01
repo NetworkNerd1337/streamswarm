@@ -11,6 +11,7 @@ StreamSwarm provides distributed network performance testing and system resource
 - **🤖 AI-Powered Network Diagnostics**: Local machine learning models for anomaly detection, health classification, and intelligent troubleshooting recommendations
 - **🔒 Zero-Trust ML Architecture**: All AI processing runs locally using Scikit-learn with no external dependencies or cloud connections
 - **🌐 Comprehensive Network Analysis**: Latency, packet loss, jitter, bandwidth, MTU discovery, TCP analysis, QoS monitoring
+- **🔧 GNMI Managed Infrastructure Analysis**: Hop-by-hop telemetry from GNMI-enabled network devices for enterprise infrastructure
 - **📊 Advanced Metrics Collection**: 65+ performance metrics including application layer, infrastructure health, and system resources
 - **🏢 Multi-Client Architecture**: Distributed testing from multiple network locations with automatic client assignment
 - **📈 Real-Time Visualization**: Web-based interface with interactive charts and comprehensive dashboards
@@ -31,7 +32,7 @@ cd Swarm
 Install Python dependencies:
 ```bash
 # All dependencies (single command)
-pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 scikit-learn>=1.0.0 pandas>=1.3.0 numpy>=1.20.0 joblib>=1.0.0
+pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 psutil>=5.9.0 requests>=2.28.0 gunicorn>=21.0.0 werkzeug>=2.3.0 email-validator>=2.0.0 scapy>=2.5.0 speedtest-cli>=2.1.3 reportlab>=4.4.0 matplotlib>=3.10.0 scikit-learn>=1.0.0 pandas>=1.3.0 numpy>=1.20.0 joblib>=1.0.0 pygnmi>=0.8.15
 
 # Or step-by-step:
 pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary werkzeug email-validator
@@ -269,6 +270,44 @@ Test Type: Bandwidth Focus → Predicted: ~46ms
 3. **Monitor Confidence Scores**: Higher confidence (>80%) indicates more reliable predictions
 4. **Use for Planning**: Make infrastructure decisions based on predicted performance
 5. **Regular Retraining**: Allow system to learn from new network conditions
+
+## GNMI Network Path Analysis
+
+StreamSwarm provides advanced network infrastructure analysis using GNMI (gRPC Network Management Interface) for managed enterprise network equipment.
+
+### What is GNMI?
+GNMI enables direct telemetry collection from network devices (routers, switches, firewalls) to provide hop-by-hop analysis within managed infrastructure:
+
+- **Device-Level Metrics**: CPU utilization, memory usage, interface statistics
+- **Processing Latency**: Packet forwarding delays within network devices
+- **Queue Analysis**: Buffer utilization, queue depth, drop rates
+- **Interface Performance**: Bandwidth utilization, error rates, packet rates
+
+### Enterprise Benefits
+- **Bottleneck Attribution**: Identify which specific network device causes performance issues
+- **Proactive Monitoring**: Detect infrastructure problems before they impact users
+- **Capacity Planning**: Understand device utilization for upgrade planning
+- **Troubleshooting**: Precise problem isolation within managed network infrastructure
+
+### Setup Requirements
+1. **GNMI-Enabled Devices**: Modern enterprise network equipment with GNMI support
+2. **Network Access**: Client must reach device management interfaces
+3. **Authentication**: Device credentials configured in GNMI analyzer
+4. **Python Package**: `pip install pygnmi` on client systems
+
+### How It Works
+1. Client performs standard traceroute to discover network path
+2. For each hop with GNMI access, connects to collect real-time telemetry
+3. Analyzes device performance metrics and interface statistics
+4. Results displayed as "GNMI Managed Infrastructure Analysis" in test results
+5. Graceful fallback when GNMI unavailable (tests continue normally)
+
+### Supported Device Types
+- Enterprise routers (Cisco, Juniper, Arista)
+- Layer 3 switches with GNMI capabilities
+- Next-generation firewalls
+- SD-WAN appliances
+- Any GNMI-compliant network device
 
 ## Web Dashboard Features
 

@@ -7,7 +7,7 @@ import logging
 import json
 import time
 from typing import Dict, List, Optional, Any
-from pygnmi import gNMIclient
+from pygnmi.client import gNMIclient
 import ipaddress
 
 logger = logging.getLogger(__name__)
