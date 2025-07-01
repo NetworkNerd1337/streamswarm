@@ -2455,7 +2455,18 @@ nssm install StreamSwarmClient</code></pre>
                                     <div class="bg-dark p-2 rounded mb-2">
                                         <code class="text-light">pip install pygnmi>=0.8.15</code>
                                     </div>
-                                    <p class="mb-0"><strong>Device Credentials:</strong> Configure in client's GNMI analyzer</p>
+                                    <p class="mb-2"><strong>Device Credentials:</strong> Configure in client code</p>
+                                    <div class="bg-dark p-2 rounded">
+                                        <code class="text-light small">
+# In client.py, add device credentials:<br>
+gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"192.168.1.1",  # device IP<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"admin",        # username<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"password",     # password<br>
+&nbsp;&nbsp;&nbsp;&nbsp;830             # GNMI port<br>
+)
+                                        </code>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2505,6 +2516,85 @@ nssm install StreamSwarmClient</code></pre>
                                                     <p class="mb-0"><strong class="text-primary">🔧 Precise Troubleshooting:</strong><br>
                                                     Isolate problems within managed infrastructure</p>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Client Configuration Steps -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-wrench me-2"></i>
+                                        Client Configuration Steps
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Step 1: Install Dependencies</h6>
+                                            <div class="bg-dark p-2 rounded mb-3">
+                                                <code class="text-light small">pip install pygnmi>=0.8.15</code>
+                                            </div>
+                                            
+                                            <h6 class="text-primary">Step 2: Configure Device Credentials</h6>
+                                            <p class="small">Add this code to your client.py initialization:</p>
+                                            <div class="bg-dark p-3 rounded mb-3">
+                                                <code class="text-light small">
+# Add after creating gnmi_analyzer instance<br>
+<br>
+# Example: Cisco router<br>
+self.gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"192.168.1.1",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"admin",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"cisco123",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;830<br>
+)<br>
+<br>
+# Example: Juniper switch<br>
+self.gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"10.0.1.5",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"netconf",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"juniper456",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;32768<br>
+)
+                                                </code>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Step 3: Network Device Setup</h6>
+                                            <div class="alert alert-info">
+                                                <p class="mb-2 small"><strong>Device Requirements:</strong></p>
+                                                <ul class="small mb-0">
+                                                    <li>GNMI service enabled on device</li>
+                                                    <li>Network connectivity from client to device management IP</li>
+                                                    <li>Valid authentication credentials</li>
+                                                    <li>Firewall rules allowing GNMI port access</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <h6 class="text-primary">Step 4: Test Configuration</h6>
+                                            <p class="small">Run a test to verify GNMI connectivity:</p>
+                                            <div class="bg-dark p-2 rounded mb-2">
+                                                <code class="text-light small">
+python client.py --server http://yourserver:5000
+                                                </code>
+                                            </div>
+                                            <p class="small mb-0">Check server logs for GNMI connection status and device discovery messages.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <div class="alert alert-warning">
+                                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Security Note</h6>
+                                                <p class="mb-0 small">Store device credentials securely using environment variables or encrypted configuration files. Never hard-code credentials in production deployments.</p>
                                             </div>
                                         </div>
                                     </div>
