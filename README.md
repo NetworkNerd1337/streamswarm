@@ -153,25 +153,122 @@ All users can:
 
 ## AI/ML Diagnostic System
 
-StreamSwarm includes local machine learning capabilities for intelligent network analysis.
+StreamSwarm includes comprehensive local machine learning capabilities for intelligent network analysis and performance prediction.
 
-### Features
+### Core AI Features
+
+#### 🔮 Performance Prediction System
+- **Pre-Test Forecasting**: Predict network latency before running tests
+- **Configuration Analysis**: Evaluate impact of packet size, test type, and destination
+- **Capacity Planning**: Compare multiple scenarios for network planning
+- **Real-Time Integration**: Built into test creation workflow for immediate insights
+
+#### 🔍 Diagnostic Analysis
 - **Anomaly Detection**: Isolation Forest algorithm identifies unusual network patterns
 - **Health Classification**: Random Forest algorithm categorizes network health status
-- **Performance Prediction**: Gradient Boosting predicts network performance trends
-- **Feature Engineering**: Analyzes 25+ metrics including network performance, system resources, and QoS data
+- **Trend Analysis**: Gradient Boosting predicts network performance trends
+- **Feature Engineering**: Analyzes 40+ metrics including network performance, system resources, and QoS data
 
 ### Zero-Trust Architecture
-- All ML processing runs locally
-- No external dependencies or cloud connections
-- Uses Scikit-learn for reliable, offline analysis
-- Models are trained on your own network data
+- All ML processing runs locally using Scikit-learn
+- No external dependencies or cloud connections required
+- Models trained exclusively on your network's historical data
+- Fallback rule-based predictions ensure reliability
 
-### Usage
-1. Collect test data (minimum 50 samples for training)
-2. Navigate to "AI Models" section
-3. Click "Train Models" to build custom models
-4. Use "Diagnose Results" on completed tests for AI analysis
+### Performance Prediction Usage
+
+#### Quick Prediction (Test Creation)
+1. Navigate to **Tests** page and click **"New Test"**
+2. Configure test parameters (destination, packet size, test type)
+3. Click **"Predict Performance"** button
+4. Review latency forecast and confidence score
+5. Create test with informed expectations
+
+#### Advanced Analytics
+1. Visit **Predictive Analytics** page from navigation menu
+2. Configure multiple test scenarios for comparison
+3. Analyze capacity trends and network health forecasts
+4. Generate performance reports for network planning
+
+#### Understanding Prediction Results
+```
+< 30ms     = Excellent (gaming, video calls work perfectly)
+30-60ms    = Good      (most applications work well)
+60-150ms   = Fair      (web browsing fine, gaming may lag)
+> 150ms    = Poor      (noticeable delays in interactive apps)
+```
+
+#### Test Type Impact on Predictions
+- **Basic Ping**: Pure network latency measurement
+- **Comprehensive**: Includes DNS, TCP, SSL analysis overhead (+10-20%)
+- **Bandwidth Focus**: Latency during data transfer congestion (+15-30%)
+
+### Model Training and Management
+1. System automatically trains models as test data accumulates
+2. Manual training available in **AI Models** section (Admin only)
+3. Models require minimum 50 samples for initial training
+4. Synthetic data generation ensures comprehensive scenario coverage
+5. Models continuously improve with more real network data
+
+### Prediction Enhancement System
+- **ML Model**: Primary prediction using Gradient Boosting Regressor
+- **Parameter Analysis**: Destination-specific adjustments (CDNs vs international)
+- **Packet Size Impact**: Larger packets increase predicted latency
+- **Fallback Protection**: Rule-based predictions if ML model unavailable
+
+### Diagnostic Analysis Usage
+1. Run network tests to collect performance data
+2. Navigate to test results and click **"Diagnose Results"**
+3. Review AI-generated health assessment and anomaly detection
+4. Follow recommended actions for network optimization
+
+### Performance Prediction Examples
+
+#### Example 1: Comparing CDN vs Direct Server
+```bash
+# Prediction for CDN (CloudFlare)
+Destination: cloudflare.com
+Packet Size: 64 bytes
+Test Type: Basic Ping
+→ Predicted: ~22ms (Excellent)
+→ Insight: "Excellent connectivity to major CDN"
+
+# Prediction for International Server
+Destination: spiegel.de  
+Packet Size: 64 bytes
+Test Type: Basic Ping
+→ Predicted: ~42ms (Good)
+→ Insight: "International destination - expect higher latency"
+```
+
+#### Example 2: Packet Size Impact Analysis
+```bash
+# Small packets
+Packet Size: 64 bytes → Predicted: ~26ms
+# Medium packets  
+Packet Size: 512 bytes → Predicted: ~35ms
+# Large packets
+Packet Size: 1472 bytes → Predicted: ~105ms
+→ Insight: "Larger packet size (1472B) adds ~79ms due to processing overhead"
+```
+
+#### Example 3: Test Type Comparison
+```bash
+# Basic latency test
+Test Type: Basic Ping → Predicted: ~26ms
+# Comprehensive analysis
+Test Type: Comprehensive → Predicted: ~42ms  
+# Bandwidth-focused test
+Test Type: Bandwidth Focus → Predicted: ~46ms
+→ Insight: "Comprehensive testing provides thorough analysis with additional overhead"
+```
+
+### Best Practices for Performance Prediction
+1. **Test Multiple Scenarios**: Compare different packet sizes and destinations
+2. **Validate Predictions**: Run actual tests to verify prediction accuracy
+3. **Monitor Confidence Scores**: Higher confidence (>80%) indicates more reliable predictions
+4. **Use for Planning**: Make infrastructure decisions based on predicted performance
+5. **Regular Retraining**: Allow system to learn from new network conditions
 
 ## Web Dashboard Features
 

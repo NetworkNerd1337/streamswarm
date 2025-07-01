@@ -113,6 +113,8 @@ The system operates on a distributed client-server architecture where:
   - ML model now provides realistic varying predictions (26-105ms range based on configuration)
   - Added fallback rule-based prediction system for robustness when ML model fails
   - Model automatically retrains with improved algorithms and wider training data coverage
+  - Added comprehensive documentation to tutorial page and README with usage examples and best practices
+  - Enhanced tutorial with performance prediction explanation, test type differences, and real-world impact tables
 - July 1, 2025: Fixed performance prediction functionality and UI improvements
   - Resolved constant 6ms prediction bug by implementing rule-based prediction system
   - Added destination-specific latency calculations (CDNs vs international destinations)

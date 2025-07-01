@@ -2396,6 +2396,150 @@ nssm install StreamSwarmClient</code></pre>
         </div>
     </div>
 
+    <!-- AI Performance Prediction Tutorial -->
+    <div class="row mb-4" id="ai-prediction">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-brain me-2"></i>
+                        AI Performance Prediction System
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>What is Performance Prediction?</h6>
+                            <p>StreamSwarm's AI system predicts network performance <strong>before running tests</strong>, helping you:</p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-clock text-info me-2"></i>Estimate test duration and resource usage</li>
+                                <li><i class="fas fa-chart-line text-success me-2"></i>Plan network capacity and upgrades</li>
+                                <li><i class="fas fa-exclamation-triangle text-warning me-2"></i>Identify potential performance issues early</li>
+                                <li><i class="fas fa-route text-primary me-2"></i>Compare different destinations and configurations</li>
+                            </ul>
+                            
+                            <h6 class="text-primary mt-4"><i class="fas fa-cogs me-2"></i>How It Works</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-2"><strong>1. Machine Learning Model:</strong> Uses Gradient Boosting trained on historical network data</p>
+                                <p class="mb-2"><strong>2. Parameter Analysis:</strong> Considers destination, packet size, test type, and current conditions</p>
+                                <p class="mb-2"><strong>3. Smart Enhancement:</strong> Applies destination-specific adjustments (CDNs vs international)</p>
+                                <p class="mb-0"><strong>4. Fallback System:</strong> Rule-based predictions if ML model unavailable</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-stopwatch me-2"></i>Understanding Prediction Results</h6>
+                            <p>The prediction gives you a <strong>round-trip latency</strong> forecast in milliseconds:</p>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Latency Range</th>
+                                            <th>Performance</th>
+                                            <th>Real-World Impact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="table-success">
+                                            <td><strong>&lt; 30ms</strong></td>
+                                            <td>Excellent</td>
+                                            <td>Gaming, video calls work perfectly</td>
+                                        </tr>
+                                        <tr class="table-info">
+                                            <td><strong>30-60ms</strong></td>
+                                            <td>Good</td>
+                                            <td>Most applications work well</td>
+                                        </tr>
+                                        <tr class="table-warning">
+                                            <td><strong>60-150ms</strong></td>
+                                            <td>Fair</td>
+                                            <td>Web browsing fine, gaming may lag</td>
+                                        </tr>
+                                        <tr class="table-danger">
+                                            <td><strong>&gt; 150ms</strong></td>
+                                            <td>Poor</td>
+                                            <td>Noticeable delays in interactive apps</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <h6 class="text-primary mt-3"><i class="fas fa-question-circle me-2"></i>Test Type Differences</h6>
+                            <div class="bg-dark p-2 rounded">
+                                <code class="text-light small">
+<strong class="text-info">Basic Ping:</strong> Pure network latency measurement<br>
+<strong class="text-warning">Comprehensive:</strong> Includes DNS, TCP, SSL analysis overhead<br>
+<strong class="text-danger">Bandwidth Focus:</strong> Latency during data transfer congestion
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-primary"><i class="fas fa-play me-2"></i>Using Performance Prediction</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-plus text-primary me-2"></i>In Test Creation</h6>
+                                            <p class="card-text small">
+                                                1. Navigate to <strong>Tests</strong> page<br>
+                                                2. Click <strong>"New Test"</strong><br>
+                                                3. Enter test configuration<br>
+                                                4. Click <strong>"Predict Performance"</strong><br>
+                                                5. Review prediction before creating test
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-info h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-chart-area text-info me-2"></i>Dedicated Analytics</h6>
+                                            <p class="card-text small">
+                                                1. Visit <strong>Predictive Analytics</strong> page<br>
+                                                2. Configure multiple test scenarios<br>
+                                                3. Compare predictions side-by-side<br>
+                                                4. Analyze capacity trends<br>
+                                                5. Plan network upgrades
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-success h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title"><i class="fas fa-graduation-cap text-success me-2"></i>Best Practices</h6>
+                                            <p class="card-text small">
+                                                • Test different packet sizes for complete analysis<br>
+                                                • Compare CDN vs direct server destinations<br>
+                                                • Run predictions during different times of day<br>
+                                                • Use confidence scores to assess reliability
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>AI Model Information</h6>
+                                <p class="mb-2"><strong>Zero-Trust Architecture:</strong> All ML processing runs locally with no external dependencies</p>
+                                <p class="mb-2"><strong>Training Data:</strong> Models learn from your network's actual performance history</p>
+                                <p class="mb-2"><strong>Automatic Training:</strong> System continuously improves predictions as more test data is collected</p>
+                                <p class="mb-0"><strong>Fallback Protection:</strong> Rule-based predictions ensure reliability even without ML model</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- First Test Tutorial -->
     <div class="row mb-4" id="first-test">
         <div class="col-12">
