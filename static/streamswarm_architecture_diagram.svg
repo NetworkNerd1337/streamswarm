@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; fill: #34495e; }
+      .label { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-label { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .server-box { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
+      .client-box { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
+      .internet-box { fill: #f39c12; stroke: #e67e22; stroke-width: 2; }
+      .network-box { fill: #2ecc71; stroke: #27ae60; stroke-width: 2; }
+      .database-box { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; }
+      .connection-line { stroke: #7f8c8d; stroke-width: 2; fill: none; }
+      .data-flow { stroke: #e74c3c; stroke-width: 3; fill: none; stroke-dasharray: 5,5; }
+      .internet-flow { stroke: #f39c12; stroke-width: 2; fill: none; }
+      .white-text { fill: white; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; }
+      .dependency-text { fill: #e67e22; font-family: Arial, sans-serif; font-size: 10px; }
+    </style>
+    
+    <!-- Arrow marker -->
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7f8c8d" />
+    </marker>
+    
+    <!-- Data flow arrow -->
+    <marker id="dataflow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+    </marker>
+    
+    <!-- Internet flow arrow -->
+    <marker id="internetflow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f39c12" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" class="title">StreamSwarm Distributed Network Monitoring Architecture</text>
+  <text x="600" y="55" text-anchor="middle" class="subtitle">Enterprise Network Performance Management Platform</text>
+
+  <!-- Central Server Section -->
+  <rect x="450" y="100" width="300" height="180" rx="10" class="server-box"/>
+  <text x="600" y="125" text-anchor="middle" class="white-text">STREAMSWARM SERVER</text>
+  <text x="600" y="140" text-anchor="middle" class="white-text">Flask Web Application</text>
+  
+  <!-- Server Components -->
+  <rect x="465" y="150" width="80" height="40" rx="5" fill="rgba(255,255,255,0.2)"/>
+  <text x="505" y="165" text-anchor="middle" class="white-text" font-size="9">Web GUI</text>
+  <text x="505" y="177" text-anchor="middle" class="white-text" font-size="9">Dashboard</text>
+  
+  <rect x="555" y="150" width="80" height="40" rx="5" fill="rgba(255,255,255,0.2)"/>
+  <text x="595" y="165" text-anchor="middle" class="white-text" font-size="9">REST API</text>
+  <text x="595" y="177" text-anchor="middle" class="white-text" font-size="9">Client Mgmt</text>
+  
+  <rect x="645" y="150" width="80" height="40" rx="5" fill="rgba(255,255,255,0.2)"/>
+  <text x="685" y="165" text-anchor="middle" class="white-text" font-size="9">AI/ML Engine</text>
+  <text x="685" y="177" text-anchor="middle" class="white-text" font-size="9">Analytics</text>
+  
+  <rect x="465" y="200" width="80" height="40" rx="5" fill="rgba(255,255,255,0.2)"/>
+  <text x="505" y="215" text-anchor="middle" class="white-text" font-size="9">Geo Processing</text>
+  <text x="505" y="227" text-anchor="middle" class="white-text" font-size="9">Path Analysis</text>
+  
+  <rect x="555" y="200" width="80" height="40" rx="5" fill="rgba(255,255,255,0.2)"/>
+  <text x="595" y="215" text-anchor="middle" class="white-text" font-size="9">Test Scheduler</text>
+  <text x="595" y="227" text-anchor="middle" class="white-text" font-size="9">Job Queue</text>
+  
+  <rect x="645" y="200" width="80" height="40" rx="5" fill="rgba(255,255,255,0.2)"/>
+  <text x="685" y="215" text-anchor="middle" class="white-text" font-size="9">GNMI Analysis</text>
+  <text x="685" y="227" text-anchor="middle" class="white-text" font-size="9">Telemetry</text>
+
+  <!-- Database -->
+  <rect x="480" y="300" width="240" height="60" rx="10" class="database-box"/>
+  <text x="600" y="325" text-anchor="middle" class="white-text">PostgreSQL Database</text>
+  <text x="600" y="340" text-anchor="middle" class="white-text">Test Results • Client Data • Performance Metrics</text>
+  <text x="600" y="355" text-anchor="middle" class="white-text">65+ Advanced Network Metrics per Test</text>
+
+  <!-- Database connection -->
+  <line x1="600" y1="280" x2="600" y2="300" class="connection-line" marker-end="url(#arrowhead)"/>
+
+  <!-- External Internet Dependencies -->
+  <rect x="800" y="100" width="180" height="120" rx="10" class="internet-box"/>
+  <text x="890" y="125" text-anchor="middle" class="white-text">EXTERNAL DEPENDENCIES</text>
+  
+  <rect x="815" y="140" width="150" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <text x="890" y="157" text-anchor="middle" class="white-text" font-size="10">ip-api.com (HTTP:80)</text>
+  
+  <rect x="815" y="170" width="150" height="25" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <text x="890" y="187" text-anchor="middle" class="white-text" font-size="10">Geolocation Services</text>
+  
+  <rect x="815" y="200" width="150" height="15" rx="3" fill="rgba(255,255,255,0.2)"/>
+  <text x="890" y="210" text-anchor="middle" class="white-text" font-size="9">Map Generation</text>
+
+  <!-- Internet connection -->
+  <line x1="750" y1="160" x2="800" y2="160" class="internet-flow" marker-end="url(#internetflow)"/>
+  <text x="775" y="155" text-anchor="middle" class="dependency-text" font-size="9">HTTP</text>
+
+  <!-- Distributed Clients Section -->
+  
+  <!-- Branch Office 1 -->
+  <g id="branch1">
+    <rect x="50" y="150" width="140" height="100" rx="10" class="network-box"/>
+    <text x="120" y="175" text-anchor="middle" class="white-text">BRANCH OFFICE 1</text>
+    <text x="120" y="190" text-anchor="middle" class="white-text">New York</text>
+    
+    <rect x="65" y="200" width="110" height="40" rx="5" class="client-box"/>
+    <text x="120" y="217" text-anchor="middle" class="white-text" font-size="10">StreamSwarm Client</text>
+    <text x="120" y="230" text-anchor="middle" class="white-text" font-size="10">Network Testing Agent</text>
+  </g>
+
+  <!-- Branch Office 2 -->
+  <g id="branch2">
+    <rect x="50" y="300" width="140" height="100" rx="10" class="network-box"/>
+    <text x="120" y="325" text-anchor="middle" class="white-text">BRANCH OFFICE 2</text>
+    <text x="120" y="340" text-anchor="middle" class="white-text">London</text>
+    
+    <rect x="65" y="350" width="110" height="40" rx="5" class="client-box"/>
+    <text x="120" y="367" text-anchor="middle" class="white-text" font-size="10">StreamSwarm Client</text>
+    <text x="120" y="380" text-anchor="middle" class="white-text" font-size="10">Network Testing Agent</text>
+  </g>
+
+  <!-- Data Center -->
+  <g id="datacenter">
+    <rect x="50" y="450" width="140" height="100" rx="10" class="network-box"/>
+    <text x="120" y="475" text-anchor="middle" class="white-text">DATA CENTER</text>
+    <text x="120" y="490" text-anchor="middle" class="white-text">Tokyo</text>
+    
+    <rect x="65" y="500" width="110" height="40" rx="5" class="client-box"/>
+    <text x="120" y="517" text-anchor="middle" class="white-text" font-size="10">StreamSwarm Client</text>
+    <text x="120" y="530" text-anchor="middle" class="white-text" font-size="10">Network Testing Agent</text>
+  </g>
+
+  <!-- Remote Office -->
+  <g id="remote">
+    <rect x="50" y="600" width="140" height="100" rx="10" class="network-box"/>
+    <text x="120" y="625" text-anchor="middle" class="white-text">REMOTE OFFICE</text>
+    <text x="120" y="640" text-anchor="middle" class="white-text">Singapore</text>
+    
+    <rect x="65" y="650" width="110" height="40" rx="5" class="client-box"/>
+    <text x="120" y="667" text-anchor="middle" class="white-text" font-size="10">StreamSwarm Client</text>
+    <text x="120" y="680" text-anchor="middle" class="white-text" font-size="10">Network Testing Agent</text>
+  </g>
+
+  <!-- Cloud Clients -->
+  <g id="cloud1">
+    <rect x="1010" y="150" width="140" height="100" rx="10" class="network-box"/>
+    <text x="1080" y="175" text-anchor="middle" class="white-text">AWS CLOUD</text>
+    <text x="1080" y="190" text-anchor="middle" class="white-text">US-East-1</text>
+    
+    <rect x="1025" y="200" width="110" height="40" rx="5" class="client-box"/>
+    <text x="1080" y="217" text-anchor="middle" class="white-text" font-size="10">StreamSwarm Client</text>
+    <text x="1080" y="230" text-anchor="middle" class="white-text" font-size="10">Cloud Instance</text>
+  </g>
+
+  <g id="cloud2">
+    <rect x="1010" y="300" width="140" height="100" rx="10" class="network-box"/>
+    <text x="1080" y="325" text-anchor="middle" class="white-text">AZURE CLOUD</text>
+    <text x="1080" y="340" text-anchor="middle" class="white-text">Europe-West</text>
+    
+    <rect x="1025" y="350" width="110" height="40" rx="5" class="client-box"/>
+    <text x="1080" y="367" text-anchor="middle" class="white-text" font-size="10">StreamSwarm Client</text>
+    <text x="1080" y="380" text-anchor="middle" class="white-text" font-size="10">Cloud Instance</text>
+  </g>
+
+  <!-- Enterprise Network Infrastructure -->
+  <g id="infrastructure">
+    <rect x="250" y="450" width="140" height="100" rx="10" class="network-box"/>
+    <text x="320" y="475" text-anchor="middle" class="white-text">ENTERPRISE NETWORK</text>
+    <text x="320" y="490" text-anchor="middle" class="white-text">GNMI-Enabled Devices</text>
+    
+    <rect x="265" y="500" width="110" height="15" rx="3" fill="rgba(255,255,255,0.2)"/>
+    <text x="320" y="510" text-anchor="middle" class="white-text" font-size="9">Cisco Routers</text>
+    
+    <rect x="265" y="520" width="110" height="15" rx="3" fill="rgba(255,255,255,0.2)"/>
+    <text x="320" y="530" text-anchor="middle" class="white-text" font-size="9">Juniper Switches</text>
+    
+    <rect x="265" y="540" width="110" height="15" rx="3" fill="rgba(255,255,255,0.2)"/>
+    <text x="320" y="550" text-anchor="middle" class="white-text" font-size="9">Enterprise Firewalls</text>
+  </g>
+
+  <!-- Data Flow Connections -->
+  <!-- From clients to server -->
+  <line x1="190" y1="220" x2="450" y2="190" class="data-flow" marker-end="url(#dataflow)"/>
+  <line x1="190" y1="370" x2="450" y2="220" class="data-flow" marker-end="url(#dataflow)"/>
+  <line x1="190" y1="520" x2="450" y2="250" class="data-flow" marker-end="url(#dataflow)"/>
+  <line x1="190" y1="670" x2="450" y2="270" class="data-flow" marker-end="url(#dataflow)"/>
+  <line x1="1010" y1="220" x2="750" y2="190" class="data-flow" marker-end="url(#dataflow)"/>
+  <line x1="1010" y1="370" x2="750" y2="220" class="data-flow" marker-end="url(#dataflow)"/>
+
+  <!-- GNMI Telemetry -->
+  <line x1="390" y1="500" x2="450" y2="230" class="data-flow" marker-end="url(#dataflow)"/>
+
+  <!-- Connection Labels -->
+  <text x="320" y="200" class="small-label">HTTPS/REST API</text>
+  <text x="320" y="350" class="small-label">Test Results</text>
+  <text x="320" y="500" class="small-label">Performance Data</text>
+  <text x="320" y="650" class="small-label">System Metrics</text>
+  <text x="880" y="200" class="small-label">HTTPS</text>
+  <text x="880" y="350" class="small-label">Cloud Monitoring</text>
+  <text x="420" y="480" class="small-label">GNMI Telemetry</text>
+
+  <!-- Legend -->
+  <rect x="250" y="600" width="300" height="120" rx="5" fill="rgba(52, 73, 94, 0.1)" stroke="#34495e" stroke-width="1"/>
+  <text x="400" y="620" text-anchor="middle" class="label" font-weight="bold">LEGEND</text>
+  
+  <rect x="260" y="630" width="15" height="10" class="server-box"/>
+  <text x="285" y="640" class="small-label">Central Server & Database</text>
+  
+  <rect x="260" y="650" width="15" height="10" class="client-box"/>
+  <text x="285" y="660" class="small-label">Distributed Monitoring Clients</text>
+  
+  <rect x="260" y="670" width="15" height="10" class="network-box"/>
+  <text x="285" y="680" class="small-label">Network Locations & Infrastructure</text>
+  
+  <rect x="260" y="690" width="15" height="10" class="internet-box"/>
+  <text x="285" y="700" class="small-label">External Internet Dependencies</text>
+  
+  <line x1="410" y1="635" x2="440" y2="635" class="data-flow"/>
+  <text x="450" y="640" class="small-label">Performance Data Flow</text>
+  
+  <line x1="410" y1="655" x2="440" y2="655" class="internet-flow"/>
+  <text x="450" y="660" class="small-label">Internet Access Required</text>
+
+  <!-- Key Features Box -->
+  <rect x="800" y="250" width="180" height="120" rx="10" fill="rgba(44, 62, 80, 0.1)" stroke="#2c3e50" stroke-width="2"/>
+  <text x="890" y="275" text-anchor="middle" class="label" font-weight="bold">KEY CAPABILITIES</text>
+  
+  <text x="810" y="295" class="small-label">• 65+ Network Performance Metrics</text>
+  <text x="810" y="310" class="small-label">• AI/ML Anomaly Detection</text>
+  <text x="810" y="325" class="small-label">• Geolocation Path Visualization</text>
+  <text x="810" y="340" class="small-label">• GNMI Enterprise Telemetry</text>
+  <text x="810" y="355" class="small-label">• Zero-Trust Local ML Processing</text>
+
+  <!-- Network Requirements Box -->
+  <rect x="800" y="400" width="180" height="100" rx="10" fill="rgba(231, 76, 60, 0.1)" stroke="#e74c3c" stroke-width="2"/>
+  <text x="890" y="425" text-anchor="middle" class="label" font-weight="bold">NETWORK REQUIREMENTS</text>
+  
+  <text x="810" y="445" class="small-label">• Outbound HTTPS (443) to Server</text>
+  <text x="810" y="460" class="small-label">• Outbound HTTP (80) for Geolocation</text>
+  <text x="810" y="475" class="small-label">• GNMI Access (830/32768) to Devices</text>
+  <text x="810" y="490" class="small-label">• Standard Network Tools (ping, traceroute)</text>
+
+</svg>
