@@ -967,8 +967,12 @@ class NetworkDiagnosticEngine:
                 feature_vector['ping_count'] = test_config['test_count']
             
             # Create ordered feature list matching training features
+            if not hasattr(self, 'feature_columns') or not self.feature_columns:
+                logger.warning("Feature columns not available for prediction")
+                return [0.0] * 41  # Return default feature vector with expected length
+            
             ordered_features = []
-            for col in self.performance_feature_columns:
+            for col in self.feature_columns:
                 if col in feature_vector:
                     ordered_features.append(feature_vector[col])
                 else:
