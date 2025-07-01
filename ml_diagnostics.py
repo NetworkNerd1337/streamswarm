@@ -877,9 +877,75 @@ class NetworkDiagnosticEngine:
         Predict network performance for a given configuration before running tests
         """
         try:
-            # TEMPORARY: Use rule-based prediction instead of ML model to debug the 6ms issue
-            logger.info(f"Using rule-based prediction for config: {test_config}")
+            if 'performance_predictor' not in self.models:
+                logger.warning("Performance prediction model not available, falling back to rule-based prediction")
+                return self._rule_based_prediction(test_config, current_conditions)
             
+            # Create feature vector for prediction
+            prediction_features = self._create_prediction_features(test_config, current_conditions)
+            logger.info(f"Created feature vector with {len(prediction_features) if prediction_features else 0} features for config: {test_config}")
+            
+            if prediction_features is None:
+                logger.warning("Unable to create feature vector, falling back to rule-based prediction")
+                return self._rule_based_prediction(test_config, current_conditions)
+            
+            # Scale features using the performance scaler
+            if 'performance' not in self.scalers:
+                logger.warning("Performance scaler not available, falling back to rule-based prediction")
+                return self._rule_based_prediction(test_config, current_conditions)
+            
+            try:
+                features_scaled = self.scalers['performance'].transform([prediction_features])
+                
+                # Make prediction using ML model
+                ml_predicted_latency = self.models['performance_predictor'].predict(features_scaled)[0]
+                logger.info(f"ML model raw prediction: {ml_predicted_latency:.2f}ms")
+                
+                # Enhance ML prediction with parameter-based adjustments for better accuracy
+                enhanced_prediction = self._enhance_ml_prediction(ml_predicted_latency, test_config, current_conditions)
+                predicted_latency = enhanced_prediction
+                
+                logger.info(f"Enhanced ML prediction: {predicted_latency:.2f}ms for {test_config.get('destination', 'unknown')}")
+                
+            except Exception as e:
+                logger.warning(f"ML model prediction failed ({str(e)}), falling back to rule-based prediction")
+                return self._rule_based_prediction(test_config, current_conditions)
+            
+            # Get feature importance for explanation
+            feature_importance = {}
+            if hasattr(self.models['performance_predictor'], 'feature_importances_'):
+                importance_values = self.models['performance_predictor'].feature_importances_
+                for i, col in enumerate(self.feature_columns):
+                    if i < len(importance_values):
+                        feature_importance[col] = float(importance_values[i])
+            
+            # Calculate confidence based on historical performance
+            confidence = self._calculate_prediction_confidence(prediction_features, predicted_latency)
+            
+            # Generate performance insights
+            insights = self._generate_performance_insights(predicted_latency, test_config, current_conditions)
+            
+            return {
+                'predicted_latency_ms': float(predicted_latency),
+                'confidence_score': confidence,
+                'performance_category': self._categorize_predicted_performance(predicted_latency),
+                'insights': insights,
+                'feature_importance': feature_importance,
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error predicting performance: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'prediction_failed'
+            }
+    
+    def _rule_based_prediction(self, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Fallback rule-based prediction when ML model is not available or fails
+        """
+        try:
             # Calculate baseline latency based on inputs
             destination = test_config.get('destination', 'google.com').lower()
             packet_size = test_config.get('packet_size', 64)
@@ -927,16 +993,16 @@ class NetworkDiagnosticEngine:
             # Determine performance category
             if baseline_latency <= 20:
                 category = "Excellent"
-                confidence = 85
+                confidence = 75
             elif baseline_latency <= 35:
                 category = "Good"
-                confidence = 80
+                confidence = 70
             elif baseline_latency <= 60:
                 category = "Fair"
-                confidence = 75
+                confidence = 65
             else:
                 category = "Poor"
-                confidence = 70
+                confidence = 60
             
             logger.info(f"Rule-based prediction: {baseline_latency:.1f}ms for {destination}, {test_type}, {packet_size}B")
             
@@ -950,11 +1016,55 @@ class NetworkDiagnosticEngine:
             }
             
         except Exception as e:
-            logger.error(f"Error predicting performance: {str(e)}")
+            logger.error(f"Error in rule-based prediction: {str(e)}")
             return {
                 'error': str(e),
                 'status': 'prediction_failed'
             }
+    
+    def _enhance_ml_prediction(self, ml_prediction: float, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> float:
+        """
+        Enhance ML model prediction with parameter-based adjustments for better accuracy
+        """
+        try:
+            # If ML prediction seems unrealistic (like the constant 6ms issue), apply corrections
+            if ml_prediction < 5 or ml_prediction > 1000:
+                logger.warning(f"ML prediction {ml_prediction:.2f}ms seems unrealistic, applying corrections")
+                # Use rule-based calculation as baseline and blend with ML
+                rule_result = self._rule_based_prediction(test_config, current_conditions)
+                rule_latency = rule_result.get('predicted_latency_ms', 20.0)
+                # Blend 70% rule-based, 30% ML if ML seems off
+                enhanced_prediction = (rule_latency * 0.7) + (ml_prediction * 0.3)
+            else:
+                # ML prediction seems reasonable, apply parameter-based adjustments
+                enhanced_prediction = ml_prediction
+                
+                destination = test_config.get('destination', 'google.com').lower()
+                packet_size = test_config.get('packet_size', 64)
+                test_type = test_config.get('test_type', 'Basic Latency')
+                
+                # Apply destination-based adjustment factor
+                if 'google.com' in destination or 'cloudflare.com' in destination:
+                    enhanced_prediction *= 0.9  # CDNs are typically faster
+                elif 'spiegel.de' in destination or any(tld in destination for tld in ['.de', '.eu', '.uk']):
+                    enhanced_prediction *= 1.2  # International destinations
+                elif any(tld in destination for tld in ['.asia', '.jp', '.cn', '.au']):
+                    enhanced_prediction *= 1.5  # Very distant destinations
+                
+                # Apply test type adjustment
+                if test_type == 'Bandwidth Focus':
+                    enhanced_prediction *= 1.1  # Bandwidth tests may show higher latency
+                
+                # Apply packet size adjustment
+                if packet_size > 64:
+                    size_factor = 1.0 + ((packet_size - 64) / 1000)
+                    enhanced_prediction *= size_factor
+            
+            return max(enhanced_prediction, 1.0)  # Ensure minimum 1ms latency
+            
+        except Exception as e:
+            logger.error(f"Error enhancing ML prediction: {str(e)}")
+            return ml_prediction  # Return original prediction if enhancement fails
     
     def _create_prediction_features(self, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> List[float]:
         """

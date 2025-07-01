@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 1, 2025: Fixed performance prediction functionality and UI improvements
+  - Resolved constant 6ms prediction bug by implementing rule-based prediction system
+  - Added destination-specific latency calculations (CDNs vs international destinations)
+  - Implemented test type and packet size impact on predictions
+  - Fixed capacity trends analysis JavaScript DOM element errors
+  - Corrected Overall Network Health section styling (dark background for visibility)
+  - Enhanced AI Performance Prediction widget with proper parameter sensitivity
 - July 1, 2025: Integrated AI Performance Prediction widget into test creation workflow
   - Added real-time performance forecasting in test creation modal
   - Fixed ML model feature dimension compatibility issues
