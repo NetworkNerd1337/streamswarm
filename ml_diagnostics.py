@@ -418,7 +418,7 @@ class NetworkDiagnosticEngine:
                     self.models['performance_predictor'] = performance_predictor
                     self.scalers['performance'] = perf_scaler
                     # Store the feature columns used for performance prediction
-                    self.performance_feature_columns = feature_cols
+                    # Note: Using self.feature_columns which is already loaded from saved model
             
             # Save trained models
             self._save_models()
@@ -908,7 +908,7 @@ class NetworkDiagnosticEngine:
             feature_importance = {}
             if hasattr(self.models['performance_predictor'], 'feature_importances_'):
                 importance_values = self.models['performance_predictor'].feature_importances_
-                for i, col in enumerate(self.performance_feature_columns):
+                for i, col in enumerate(self.feature_columns):
                     if i < len(importance_values):
                         feature_importance[col] = float(importance_values[i])
             
