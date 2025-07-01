@@ -969,7 +969,7 @@ class NetworkDiagnosticEngine:
             # Create ordered feature list matching training features
             if not hasattr(self, 'feature_columns') or not self.feature_columns:
                 logger.warning("Feature columns not available for prediction")
-                return [0.0] * 41  # Return default feature vector with expected length
+                return [0.0] * 40  # Return default feature vector with expected length
             
             ordered_features = []
             for col in self.feature_columns:
@@ -977,6 +977,12 @@ class NetworkDiagnosticEngine:
                     ordered_features.append(feature_vector[col])
                 else:
                     ordered_features.append(0.0)  # Default value for missing features
+            
+            # Ensure feature vector has exactly 40 features (expected by trained model)
+            if len(ordered_features) > 40:
+                ordered_features = ordered_features[:40]  # Truncate to 40
+            elif len(ordered_features) < 40:
+                ordered_features.extend([0.0] * (40 - len(ordered_features)))  # Pad to 40
             
             return ordered_features
             
