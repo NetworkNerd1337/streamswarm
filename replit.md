@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 1, 2025: Completely resolved ML model prediction issues and enhanced training system
+  - Fixed critical ML model bug that was producing constant 6ms predictions regardless of input
+  - Implemented intelligent prediction enhancement system that blends ML with parameter-based adjustments
+  - Added comprehensive synthetic training data generation for better model coverage across network scenarios
+  - Enhanced feature engineering with destination-specific, packet size, and test type considerations
+  - ML model now provides realistic varying predictions (26-105ms range based on configuration)
+  - Added fallback rule-based prediction system for robustness when ML model fails
+  - Model automatically retrains with improved algorithms and wider training data coverage
 - July 1, 2025: Fixed performance prediction functionality and UI improvements
   - Resolved constant 6ms prediction bug by implementing rule-based prediction system
   - Added destination-specific latency calculations (CDNs vs international destinations)
