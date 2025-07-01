@@ -565,7 +565,8 @@ class StreamSwarmClient:
                 'data': [], 
                 'raw_output': '',
                 'path_analysis': {},
-                'map_html': ''
+                'map_html': '',
+                'gnmi_path_analysis': {}
             }
     
     def _run_test(self, test_config):
