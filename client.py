@@ -29,6 +29,15 @@ try:
 except ImportError:
     GEOLOCATION_AVAILABLE = False
 
+# Import GNMI client for network path analysis
+try:
+    from gnmi_client import GNMINetworkAnalyzer
+    GNMI_AVAILABLE = True
+except ImportError as e:
+    GNMI_AVAILABLE = False
+    logging.warning(f"GNMI functionality not available: {e}")
+    logging.info("Install pygnmi to enable advanced network path analysis: pip install pygnmi")
+
 # Try to import speedtest and scapy, fall back gracefully if not available
 try:
     import speedtest
@@ -71,6 +80,14 @@ class StreamSwarmClient:
         else:
             self.geo_service = None
             logger.warning("Geolocation service not available - using basic traceroute only")
+        
+        # Initialize GNMI network analyzer for managed infrastructure analysis
+        if GNMI_AVAILABLE:
+            self.gnmi_analyzer = GNMINetworkAnalyzer()
+            logger.info("GNMI network analyzer initialized for managed infrastructure analysis")
+        else:
+            self.gnmi_analyzer = None
+            logger.warning("GNMI functionality not available - install pygnmi for network path analysis")
         
         # Get system information
         self.system_info = self._get_system_info()
@@ -520,12 +537,25 @@ class StreamSwarmClient:
                         path_analysis = {}
                         map_html = ""
             
+            # Perform GNMI network path analysis for managed infrastructure
+            gnmi_path_analysis = {}
+            if self.gnmi_analyzer:
+                try:
+                    logger.info(f"Performing GNMI network path analysis for {hostname}")
+                    gnmi_path_analysis = self.gnmi_analyzer.analyze_network_path(hostname)
+                    logger.debug(f"GNMI analysis completed: {len(gnmi_path_analysis.get('managed_hops', []))} managed hops")
+                    
+                except Exception as e:
+                    logger.warning(f"GNMI network path analysis failed: {e}")
+                    gnmi_path_analysis = {}
+            
             return {
                 'hops': hops,
                 'data': hop_data,
                 'raw_output': result.stdout,
                 'path_analysis': path_analysis,
-                'map_html': map_html
+                'map_html': map_html,
+                'gnmi_path_analysis': gnmi_path_analysis
             }
             
         except Exception as e:
