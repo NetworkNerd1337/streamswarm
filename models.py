@@ -399,6 +399,7 @@ class TestResult(db.Model):
     path_map_html = db.Column(Text)  # Generated HTML for interactive world map visualization
     path_total_distance_km = db.Column(db.Float)  # Total geographic distance of network path
     path_geographic_efficiency = db.Column(db.Float)  # Network path efficiency vs. great circle distance (percentage)
+    gnmi_path_analysis = db.Column(Text)  # JSON string of GNMI-based network path analysis data
     
     def to_dict(self):
         return {
