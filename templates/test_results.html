@@ -1772,7 +1772,6 @@ async function loadTestData() {
             updateSummaryStats();
             updateClientSummary();
             displayGeolocationData();
-            displayGNMIPathData();
             console.log('All components initialized successfully');
         } catch (error) {
             console.error('Error during component initialization:', error);
@@ -2846,7 +2845,35 @@ function displayGeolocationData() {
         
         // Inject the map HTML
         if (mapHtml) {
-            document.getElementById('geolocationMap').innerHTML = mapHtml;
+            // Extract iframe content if present to avoid security restrictions
+            if (mapHtml.includes('srcdoc=')) {
+                // Extract the srcdoc content from the iframe
+                const srcdocMatch = mapHtml.match(/srcdoc="([^"]+)"/);
+                if (srcdocMatch) {
+                    // Decode HTML entities in the srcdoc content
+                    const decodedContent = srcdocMatch[1]
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&quot;/g, '"')
+                        .replace(/&amp;/g, '&');
+                    
+                    // Create an iframe with the decoded content
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '500px';
+                    iframe.style.border = 'none';
+                    iframe.style.borderRadius = '0.375rem';
+                    iframe.srcdoc = decodedContent;
+                    
+                    const mapContainer = document.getElementById('geolocationMap');
+                    mapContainer.innerHTML = '';
+                    mapContainer.appendChild(iframe);
+                } else {
+                    document.getElementById('geolocationMap').innerHTML = mapHtml;
+                }
+            } else {
+                document.getElementById('geolocationMap').innerHTML = mapHtml;
+            }
         }
         
         console.log('Geolocation data displayed successfully');
