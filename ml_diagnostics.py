@@ -959,17 +959,82 @@ class NetworkDiagnosticEngine:
                     if key in feature_vector:
                         feature_vector[key] = value
             
-            # Override with test-specific parameters
+            # Override with test-specific parameters and map test type to expected performance
             if 'packet_size' in test_config:
                 feature_vector['packet_size'] = test_config['packet_size']
             
             if 'test_count' in test_config:
                 feature_vector['ping_count'] = test_config['test_count']
             
+            # Apply destination-based adjustments
+            destination = test_config.get('destination', 'google.com').lower()
+            base_latency_adjustment = 1.0
+            
+            # Estimate latency based on destination
+            if 'google.com' in destination or 'cloudflare.com' in destination:
+                base_latency_adjustment = 0.8  # Lower latency for major CDNs
+            elif 'github.com' in destination or 'microsoft.com' in destination:
+                base_latency_adjustment = 0.9  # Good connectivity
+            elif 'spiegel.de' in destination or any(tld in destination for tld in ['.de', '.eu', '.uk']):
+                base_latency_adjustment = 1.3  # International destinations typically higher
+            elif any(tld in destination for tld in ['.asia', '.jp', '.cn', '.au']):
+                base_latency_adjustment = 1.8  # Very distant destinations
+            else:
+                base_latency_adjustment = 1.1  # Default slight increase for unknown destinations
+            
+            # Apply destination adjustment to baseline latency
+            current_latency = feature_vector.get('ping_latency', 25)
+            feature_vector['ping_latency'] = current_latency * base_latency_adjustment
+            
+            # Apply test type influence on prediction features
+            test_type = test_config.get('test_type', 'Basic Latency')
+            if test_type == 'Bandwidth Focus':
+                # Bandwidth tests typically show different latency characteristics
+                feature_vector['bandwidth_download'] = feature_vector.get('bandwidth_download', 100) * 1.2
+                feature_vector['bandwidth_upload'] = feature_vector.get('bandwidth_upload', 50) * 1.2
+                # Bandwidth tests might have slightly higher latency due to congestion
+                feature_vector['ping_latency'] = feature_vector.get('ping_latency', 20) * 1.15
+            elif test_type == 'Comprehensive':
+                # Comprehensive tests are more thorough, might show more realistic latency
+                feature_vector['ping_latency'] = feature_vector.get('ping_latency', 20) * 1.08
+            
+            # Apply packet size influence
+            packet_size = test_config.get('packet_size', 64)
+            if packet_size > 64:
+                # Larger packets typically increase latency slightly
+                size_factor = 1.0 + ((packet_size - 64) / 1000)  # Small increase per extra byte
+                feature_vector['ping_latency'] = feature_vector.get('ping_latency', 20) * size_factor
+            
             # Create ordered feature list matching training features
             if not hasattr(self, 'feature_columns') or not self.feature_columns:
                 logger.warning("Feature columns not available for prediction")
-                return [0.0] * 40  # Return default feature vector with expected length
+                # Instead of returning all zeros, create a more realistic baseline
+                destination = test_config.get('destination', 'google.com').lower()
+                packet_size = test_config.get('packet_size', 64)
+                test_type = test_config.get('test_type', 'Basic Latency')
+                
+                # Calculate baseline latency based on inputs
+                baseline_latency = 20.0  # Start with reasonable baseline
+                
+                # Destination-based adjustment
+                if 'google.com' in destination or 'cloudflare.com' in destination:
+                    baseline_latency *= 0.8
+                elif 'spiegel.de' in destination or any(tld in destination for tld in ['.de', '.eu', '.uk']):
+                    baseline_latency *= 1.4
+                elif any(tld in destination for tld in ['.asia', '.jp', '.cn', '.au']):
+                    baseline_latency *= 2.0
+                
+                # Test type adjustment
+                if test_type == 'Bandwidth Focus':
+                    baseline_latency *= 1.2
+                elif test_type == 'Comprehensive':
+                    baseline_latency *= 1.1
+                
+                # Packet size adjustment
+                baseline_latency += (packet_size - 64) * 0.05
+                
+                logger.info(f"Using fallback prediction: {baseline_latency:.1f}ms for {destination}, {test_type}, {packet_size}B")
+                return [baseline_latency] + [0.0] * 39
             
             ordered_features = []
             for col in self.feature_columns:
