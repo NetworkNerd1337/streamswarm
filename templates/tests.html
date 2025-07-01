@@ -256,6 +256,55 @@
                             </div>
                         </div>
                         
+                        <!-- Performance Prediction Section -->
+                        <div class="mb-4">
+                            <div class="card bg-light border-primary">
+                                <div class="card-header bg-primary text-white py-2">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-crystal-ball me-2"></i>
+                                        AI Performance Prediction
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div id="predictionWidget">
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <small>Configure test parameters above to get performance predictions</small>
+                                        </div>
+                                    </div>
+                                    <div id="predictionResults" style="display: none;">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-4 text-center">
+                                                <div id="predictedCategory" class="h5 text-success mb-1">Excellent</div>
+                                                <div id="predictedLatency" class="text-muted">~25ms expected</div>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <div class="mb-2">
+                                                    <small class="text-muted">Confidence: <span id="predictionConfidence">85%</span></small>
+                                                    <div class="progress" style="height: 4px;">
+                                                        <div id="confidenceBar" class="progress-bar bg-success" style="width: 85%"></div>
+                                                    </div>
+                                                </div>
+                                                <div id="predictionInsight" class="small text-info">
+                                                    Excellent performance predicted - ideal time for testing
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="updatePrediction()">
+                                                    <i class="fas fa-sync-alt me-1"></i>
+                                                    Update
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="predictionError" class="text-warning small" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        <span id="predictionErrorMsg">Prediction model not available</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="mb-3">
                             <label class="form-label">Select Clients</label>
                             <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
@@ -746,5 +795,134 @@ function refreshPage() {
 // Update progress every 5 seconds for running tests only
 setInterval(updateTestProgress, 5000);
 updateTestProgress(); // Initial call
+
+// ================================
+// PERFORMANCE PREDICTION FUNCTIONS
+// ================================
+
+// Auto-update prediction when form fields change
+document.addEventListener('DOMContentLoaded', function() {
+    const formFields = ['testDestination', 'packetSize', 'testDuration', 'testInterval'];
+    
+    formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('change', debounce(updatePrediction, 1000));
+            field.addEventListener('input', debounce(updatePrediction, 2000));
+        }
+    });
+});
+
+// Debounce function to limit API calls
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Update performance prediction
+function updatePrediction() {
+    const destination = document.getElementById('testDestination').value.trim();
+    
+    if (!destination) {
+        // Show placeholder message
+        showPredictionPlaceholder();
+        return;
+    }
+    
+    // Get test configuration
+    const testConfig = {
+        destination: destination,
+        packet_size: parseInt(document.getElementById('packetSize').value),
+        test_count: Math.ceil(parseInt(document.getElementById('testDuration').value) / parseInt(document.getElementById('testInterval').value)),
+        test_type: 'comprehensive'
+    };
+    
+    // Make prediction request
+    fetch('/api/predict-performance', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            test_config: testConfig,
+            current_conditions: {}
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            displayPrediction(data);
+        } else {
+            showPredictionError(data.error || 'Prediction failed');
+        }
+    })
+    .catch(error => {
+        console.error('Prediction error:', error);
+        showPredictionError('Unable to get prediction');
+    });
+}
+
+// Show prediction placeholder
+function showPredictionPlaceholder() {
+    document.getElementById('predictionWidget').style.display = 'block';
+    document.getElementById('predictionResults').style.display = 'none';
+    document.getElementById('predictionError').style.display = 'none';
+}
+
+// Display prediction results
+function displayPrediction(data) {
+    document.getElementById('predictionWidget').style.display = 'none';
+    document.getElementById('predictionError').style.display = 'none';
+    document.getElementById('predictionResults').style.display = 'block';
+    
+    // Performance category
+    const categoryElement = document.getElementById('predictedCategory');
+    const latencyElement = document.getElementById('predictedLatency');
+    
+    const categoryColors = {
+        'excellent': 'text-success',
+        'good': 'text-info',
+        'fair': 'text-warning',
+        'poor': 'text-warning',
+        'critical': 'text-danger'
+    };
+    
+    categoryElement.className = `h5 mb-1 ${categoryColors[data.performance_category] || 'text-secondary'}`;
+    categoryElement.textContent = data.performance_category.charAt(0).toUpperCase() + data.performance_category.slice(1);
+    latencyElement.textContent = `~${Math.round(data.predicted_latency_ms)}ms expected`;
+    
+    // Confidence
+    const confidencePercent = Math.round(data.confidence_score * 100);
+    document.getElementById('predictionConfidence').textContent = `${confidencePercent}%`;
+    
+    const confidenceBar = document.getElementById('confidenceBar');
+    confidenceBar.style.width = `${confidencePercent}%`;
+    confidenceBar.className = `progress-bar ${confidencePercent >= 80 ? 'bg-success' : confidencePercent >= 60 ? 'bg-warning' : 'bg-danger'}`;
+    
+    // Primary insight
+    const insightElement = document.getElementById('predictionInsight');
+    if (data.insights && data.insights.length > 0) {
+        insightElement.textContent = data.insights[0];
+        insightElement.className = `small ${categoryColors[data.performance_category] || 'text-info'}`;
+    } else {
+        insightElement.textContent = 'Performance prediction completed';
+        insightElement.className = 'small text-info';
+    }
+}
+
+// Show prediction error
+function showPredictionError(errorMsg) {
+    document.getElementById('predictionWidget').style.display = 'none';
+    document.getElementById('predictionResults').style.display = 'none';
+    document.getElementById('predictionError').style.display = 'block';
+    document.getElementById('predictionErrorMsg').textContent = errorMsg;
+}
 </script>
 {% endblock %}
