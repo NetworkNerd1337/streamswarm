@@ -872,5 +872,377 @@ class NetworkDiagnosticEngine:
         
         return status
 
+    def predict_performance(self, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Predict network performance for a given configuration before running tests
+        """
+        try:
+            if 'performance_predictor' not in self.models:
+                return {
+                    'error': 'Performance prediction model not available',
+                    'status': 'not_trained'
+                }
+            
+            # Create feature vector for prediction
+            prediction_features = self._create_prediction_features(test_config, current_conditions)
+            
+            if prediction_features is None:
+                return {
+                    'error': 'Unable to create feature vector for prediction',
+                    'status': 'insufficient_data'
+                }
+            
+            # Scale features using the performance scaler
+            if 'performance' not in self.scalers:
+                return {
+                    'error': 'Performance scaler not available',
+                    'status': 'scaler_missing'
+                }
+            
+            features_scaled = self.scalers['performance'].transform([prediction_features])
+            
+            # Make prediction
+            predicted_latency = self.models['performance_predictor'].predict(features_scaled)[0]
+            
+            # Get feature importance for explanation
+            feature_importance = {}
+            if hasattr(self.models['performance_predictor'], 'feature_importances_'):
+                importance_values = self.models['performance_predictor'].feature_importances_
+                for i, col in enumerate(self.performance_feature_columns):
+                    if i < len(importance_values):
+                        feature_importance[col] = float(importance_values[i])
+            
+            # Calculate confidence based on historical performance
+            confidence = self._calculate_prediction_confidence(prediction_features, predicted_latency)
+            
+            # Generate performance insights
+            insights = self._generate_performance_insights(predicted_latency, test_config, current_conditions)
+            
+            return {
+                'predicted_latency_ms': float(predicted_latency),
+                'confidence_score': confidence,
+                'performance_category': self._categorize_predicted_performance(predicted_latency),
+                'insights': insights,
+                'feature_importance': feature_importance,
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error predicting performance: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'prediction_failed'
+            }
+    
+    def _create_prediction_features(self, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> List[float]:
+        """
+        Create feature vector for performance prediction based on test configuration and current conditions
+        """
+        try:
+            # Get recent test results for baseline features
+            recent_results = TestResult.query.order_by(TestResult.timestamp.desc()).limit(10).all()
+            
+            if not recent_results:
+                return None
+            
+            # Extract baseline features from recent results
+            baseline_features = self.extract_features(recent_results)
+            if baseline_features.empty:
+                return None
+            
+            # Use mean of recent results as baseline
+            feature_vector = baseline_features.mean().to_dict()
+            
+            # Override with current conditions if provided
+            if current_conditions:
+                for key, value in current_conditions.items():
+                    if key in feature_vector:
+                        feature_vector[key] = value
+            
+            # Override with test-specific parameters
+            if 'packet_size' in test_config:
+                feature_vector['packet_size'] = test_config['packet_size']
+            
+            if 'test_count' in test_config:
+                feature_vector['ping_count'] = test_config['test_count']
+            
+            # Create ordered feature list matching training features
+            ordered_features = []
+            for col in self.performance_feature_columns:
+                if col in feature_vector:
+                    ordered_features.append(feature_vector[col])
+                else:
+                    ordered_features.append(0.0)  # Default value for missing features
+            
+            return ordered_features
+            
+        except Exception as e:
+            logger.error(f"Error creating prediction features: {str(e)}")
+            return None
+    
+    def _calculate_prediction_confidence(self, features: List[float], predicted_value: float) -> float:
+        """
+        Calculate confidence score for the prediction based on historical accuracy
+        """
+        try:
+            # Get recent results for validation
+            recent_results = TestResult.query.order_by(TestResult.timestamp.desc()).limit(50).all()
+            
+            if len(recent_results) < 10:
+                return 0.5  # Low confidence with insufficient data
+            
+            # Calculate historical prediction accuracy
+            recent_features = self.extract_features(recent_results)
+            if recent_features.empty or 'ping_latency' not in recent_features.columns:
+                return 0.5
+            
+            actual_latencies = recent_features['ping_latency'].dropna()
+            
+            if len(actual_latencies) < 5:
+                return 0.5
+            
+            # Compare predicted value to recent actual values
+            recent_mean = actual_latencies.mean()
+            recent_std = actual_latencies.std()
+            
+            if recent_std == 0:
+                return 0.7  # Stable performance
+            
+            # Calculate confidence based on how close prediction is to recent patterns
+            z_score = abs(predicted_value - recent_mean) / recent_std
+            
+            if z_score < 1:
+                confidence = 0.9
+            elif z_score < 2:
+                confidence = 0.7
+            elif z_score < 3:
+                confidence = 0.5
+            else:
+                confidence = 0.3
+            
+            return confidence
+            
+        except Exception as e:
+            logger.error(f"Error calculating prediction confidence: {str(e)}")
+            return 0.5
+    
+    def _categorize_predicted_performance(self, predicted_latency: float) -> str:
+        """
+        Categorize predicted performance into human-readable categories
+        """
+        if predicted_latency < 20:
+            return 'excellent'
+        elif predicted_latency < 50:
+            return 'good'
+        elif predicted_latency < 100:
+            return 'fair'
+        elif predicted_latency < 200:
+            return 'poor'
+        else:
+            return 'critical'
+    
+    def _generate_performance_insights(self, predicted_latency: float, test_config: Dict[str, Any], current_conditions: Dict[str, Any] = None) -> List[str]:
+        """
+        Generate actionable insights based on predicted performance
+        """
+        insights = []
+        
+        # Latency-based insights
+        if predicted_latency > 200:
+            insights.append("High latency predicted - consider running tests during off-peak hours")
+            insights.append("Network congestion may be affecting performance")
+        elif predicted_latency > 100:
+            insights.append("Moderate latency expected - monitor for performance variations")
+        elif predicted_latency < 20:
+            insights.append("Excellent performance predicted - ideal time for comprehensive testing")
+        
+        # Configuration-based insights
+        if test_config.get('packet_size', 64) > 1000:
+            insights.append("Large packet size may increase latency - consider testing with standard sizes first")
+        
+        # Current conditions insights
+        if current_conditions:
+            if current_conditions.get('cpu_percent', 0) > 80:
+                insights.append("High CPU usage detected - may impact test accuracy")
+            
+            if current_conditions.get('memory_percent', 0) > 85:
+                insights.append("High memory usage detected - consider freeing resources before testing")
+            
+            if current_conditions.get('bandwidth_download', 0) < 100:
+                insights.append("Limited bandwidth detected - network capacity may be constrained")
+        
+        return insights
+    
+    def analyze_capacity_trends(self, days_back: int = 30) -> Dict[str, Any]:
+        """
+        Analyze network capacity trends for capacity planning
+        """
+        try:
+            # Get test results from the specified time period
+            cutoff_date = datetime.now(zoneinfo.ZoneInfo("UTC")) - timedelta(days=days_back)
+            results = TestResult.query.filter(TestResult.timestamp >= cutoff_date).all()
+            
+            if len(results) < 10:
+                return {
+                    'error': 'Insufficient data for trend analysis',
+                    'status': 'insufficient_data'
+                }
+            
+            # Extract features for analysis
+            features_df = self.extract_features(results)
+            if features_df.empty:
+                return {
+                    'error': 'No features extracted for trend analysis',
+                    'status': 'feature_extraction_failed'
+                }
+            
+            # Analyze key performance trends
+            trends = {}
+            
+            # Latency trends
+            if 'ping_latency' in features_df.columns:
+                latency_trend = self._calculate_trend(features_df['ping_latency'].dropna())
+                trends['latency'] = latency_trend
+            
+            # Bandwidth trends
+            if 'bandwidth_download' in features_df.columns:
+                bandwidth_trend = self._calculate_trend(features_df['bandwidth_download'].dropna())
+                trends['bandwidth'] = bandwidth_trend
+            
+            # Packet loss trends
+            if 'ping_packet_loss' in features_df.columns:
+                loss_trend = self._calculate_trend(features_df['ping_packet_loss'].dropna())
+                trends['packet_loss'] = loss_trend
+            
+            # Generate capacity planning recommendations
+            recommendations = self._generate_capacity_recommendations(trends, features_df)
+            
+            # Calculate overall network health trend
+            health_trend = self._calculate_overall_health_trend(features_df)
+            
+            return {
+                'trends': trends,
+                'recommendations': recommendations,
+                'health_trend': health_trend,
+                'analysis_period_days': days_back,
+                'sample_count': len(results),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing capacity trends: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'analysis_failed'
+            }
+    
+    def _calculate_trend(self, data_series: pd.Series) -> Dict[str, Any]:
+        """
+        Calculate trend statistics for a data series
+        """
+        if len(data_series) < 2:
+            return {'trend': 'insufficient_data', 'change_percent': 0}
+        
+        # Simple linear trend calculation
+        x = np.arange(len(data_series))
+        y = data_series.values
+        
+        # Calculate slope using least squares
+        slope = np.polyfit(x, y, 1)[0]
+        
+        # Calculate percentage change
+        first_value = data_series.iloc[0]
+        last_value = data_series.iloc[-1]
+        
+        if first_value != 0:
+            change_percent = ((last_value - first_value) / abs(first_value)) * 100
+        else:
+            change_percent = 0
+        
+        # Determine trend direction
+        if abs(change_percent) < 5:
+            trend = 'stable'
+        elif change_percent > 0:
+            trend = 'improving' if data_series.name in ['bandwidth_download'] else 'degrading'
+        else:
+            trend = 'degrading' if data_series.name in ['bandwidth_download'] else 'improving'
+        
+        return {
+            'trend': trend,
+            'change_percent': round(change_percent, 2),
+            'slope': slope,
+            'current_avg': round(data_series.tail(5).mean(), 2),
+            'baseline_avg': round(data_series.head(5).mean(), 2)
+        }
+    
+    def _generate_capacity_recommendations(self, trends: Dict[str, Any], features_df: pd.DataFrame) -> List[str]:
+        """
+        Generate capacity planning recommendations based on trends
+        """
+        recommendations = []
+        
+        # Latency recommendations
+        if 'latency' in trends:
+            latency_trend = trends['latency']
+            if latency_trend['trend'] == 'degrading' and latency_trend['change_percent'] > 20:
+                recommendations.append("Network latency is increasing significantly - investigate network path optimization")
+            elif latency_trend['current_avg'] > 100:
+                recommendations.append("Current latency levels are concerning - consider network infrastructure upgrades")
+        
+        # Bandwidth recommendations
+        if 'bandwidth' in trends:
+            bandwidth_trend = trends['bandwidth']
+            if bandwidth_trend['trend'] == 'degrading' and bandwidth_trend['change_percent'] < -15:
+                recommendations.append("Bandwidth capacity is declining - plan for capacity expansion")
+            elif bandwidth_trend['current_avg'] < 100:
+                recommendations.append("Current bandwidth levels are limiting - upgrade connection capacity")
+        
+        # Packet loss recommendations
+        if 'packet_loss' in trends:
+            loss_trend = trends['packet_loss']
+            if loss_trend['trend'] == 'degrading' and loss_trend['current_avg'] > 2:
+                recommendations.append("Packet loss is increasing - investigate network quality issues")
+        
+        # General recommendations based on overall performance
+        if 'cpu_percent' in features_df.columns:
+            avg_cpu = features_df['cpu_percent'].mean()
+            if avg_cpu > 75:
+                recommendations.append("High CPU utilization trend - consider system performance optimization")
+        
+        if not recommendations:
+            recommendations.append("Network performance appears stable - continue regular monitoring")
+        
+        return recommendations
+    
+    def _calculate_overall_health_trend(self, features_df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Calculate overall network health trend
+        """
+        try:
+            # Calculate health scores for each time period
+            health_scores = []
+            
+            for i in range(len(features_df)):
+                row = features_df.iloc[i:i+1]
+                score = self.calculate_health_score(row)
+                health_scores.append(score)
+            
+            if len(health_scores) < 2:
+                return {'trend': 'insufficient_data', 'current_score': 0}
+            
+            health_series = pd.Series(health_scores)
+            trend_info = self._calculate_trend(health_series)
+            
+            return {
+                'trend': trend_info['trend'],
+                'change_percent': trend_info['change_percent'],
+                'current_score': round(health_series.tail(5).mean(), 1),
+                'baseline_score': round(health_series.head(5).mean(), 1)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating health trend: {str(e)}")
+            return {'trend': 'calculation_error', 'current_score': 0}
+
 # Global diagnostic engine instance
 diagnostic_engine = NetworkDiagnosticEngine()

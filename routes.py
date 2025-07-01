@@ -1632,6 +1632,53 @@ def ml_models_status():
         return jsonify({'error': str(e)}), 500
 
 # ================================
+# PREDICTIVE ANALYTICS API
+# ================================
+
+@app.route('/api/predict-performance', methods=['POST'])
+@web_auth_required
+def predict_performance():
+    """Predict network performance before running tests"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No configuration provided'}), 400
+        
+        test_config = data.get('test_config', {})
+        current_conditions = data.get('current_conditions', {})
+        
+        prediction = diagnostic_engine.predict_performance(test_config, current_conditions)
+        return jsonify(prediction)
+        
+    except Exception as e:
+        logging.error(f"Error predicting performance: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/capacity-trends')
+@web_auth_required
+def capacity_trends():
+    """Get network capacity trends for planning"""
+    try:
+        days_back = request.args.get('days', 30, type=int)
+        
+        if days_back < 1 or days_back > 365:
+            return jsonify({'error': 'Days must be between 1 and 365'}), 400
+        
+        trends = diagnostic_engine.analyze_capacity_trends(days_back)
+        return jsonify(trends)
+        
+    except Exception as e:
+        logging.error(f"Error analyzing capacity trends: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/predictive-analytics')
+@web_auth_required
+def predictive_analytics():
+    """Predictive Analytics dashboard page"""
+    return render_template('predictive_analytics.html')
+
+# ================================
 # AUTHENTICATION SYSTEM
 # ================================
 

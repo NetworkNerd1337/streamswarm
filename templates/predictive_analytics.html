@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}Predictive Analytics - StreamSwarm{% endblock %}
+
+{% block extra_head %}
+<style>
+.prediction-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.prediction-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.performance-indicator {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.confidence-bar {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.insight-item {
+    border-left: 4px solid #007bff;
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+.trend-arrow {
+    font-size: 1.2rem;
+    margin-left: 8px;
+}
+
+.capacity-metric {
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.loading-spinner {
+    display: none;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2 mb-3">
+                <i class="fas fa-crystal-ball me-2"></i>
+                Predictive Analytics
+            </h1>
+            <p class="text-muted">AI-powered performance forecasting and capacity planning</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Performance Prediction Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card prediction-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Performance Prediction
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Test Configuration</h6>
+                            <form id="predictionForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="destination" class="form-label">Destination</label>
+                                        <input type="text" class="form-control" id="destination" value="google.com" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="packetSize" class="form-label">Packet Size (bytes)</label>
+                                        <select class="form-select" id="packetSize">
+                                            <option value="64">64 (Standard)</option>
+                                            <option value="128">128</option>
+                                            <option value="256">256</option>
+                                            <option value="512">512</option>
+                                            <option value="1024">1024</option>
+                                            <option value="1472">1472 (MTU)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="testCount" class="form-label">Test Count</label>
+                                        <select class="form-select" id="testCount">
+                                            <option value="4">4 (Quick)</option>
+                                            <option value="10" selected>10 (Standard)</option>
+                                            <option value="20">20 (Detailed)</option>
+                                            <option value="50">50 (Comprehensive)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="testType" class="form-label">Test Type</label>
+                                        <select class="form-select" id="testType">
+                                            <option value="basic">Basic Ping</option>
+                                            <option value="comprehensive" selected>Comprehensive</option>
+                                            <option value="bandwidth">Bandwidth Focus</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Predict Performance
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div id="predictionResults" style="display: none;">
+                                <h6 class="mb-3">Prediction Results</h6>
+                                
+                                <!-- Performance Category -->
+                                <div class="text-center mb-4">
+                                    <div id="performanceCategory" class="performance-indicator text-success">
+                                        Excellent
+                                    </div>
+                                    <div id="predictedLatency" class="h4 text-muted">
+                                        ~25ms
+                                    </div>
+                                </div>
+                                
+                                <!-- Confidence Score -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="small">Confidence Score</span>
+                                        <span id="confidenceScore" class="small fw-bold">85%</span>
+                                    </div>
+                                    <div class="confidence-bar bg-light">
+                                        <div id="confidenceBar" class="bg-success" style="width: 85%; height: 100%;"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Insights -->
+                                <div id="predictionInsights">
+                                    <h6 class="mb-2">AI Insights</h6>
+                                    <div id="insightsList">
+                                        <!-- Insights will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="predictionLoading" class="loading-spinner"></div>
+                            
+                            <div id="predictionError" class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <span id="errorMessage">Prediction model not available</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capacity Planning Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-area me-2"></i>
+                        Capacity Planning & Trends
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="analysisPeriod" class="form-label">Analysis Period</label>
+                            <select class="form-select" id="analysisPeriod">
+                                <option value="7">Last 7 days</option>
+                                <option value="14">Last 2 weeks</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="60">Last 60 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button id="analyzeTrends" class="btn btn-info">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Analyze Trends
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="trendsResults" style="display: none;">
+                        <!-- Network Health Trend -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div id="healthTrend" class="capacity-metric bg-light">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-heartbeat me-2"></i>
+                                        Overall Network Health
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="text-center">
+                                                <div id="currentHealthScore" class="h3 text-success">85.2</div>
+                                                <small class="text-muted">Current Score</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center">
+                                                <div id="healthTrendDirection" class="h5">
+                                                    Stable <span class="trend-arrow text-warning">↔</span>
+                                                </div>
+                                                <small class="text-muted">Trend</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="text-center">
+                                                <div id="healthChange" class="h5 text-success">+2.1%</div>
+                                                <small class="text-muted">Change</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Individual Metrics -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div id="latencyTrend" class="capacity-metric">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-clock me-2"></i>
+                                        Latency Trend
+                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span id="latencyStatus" class="badge bg-success">Improving</span>
+                                        <span id="latencyChange" class="fw-bold">-5.2%</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Avg: <span id="latencyAvg">42ms</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div id="bandwidthTrend" class="capacity-metric">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-download me-2"></i>
+                                        Bandwidth Trend
+                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span id="bandwidthStatus" class="badge bg-warning">Stable</span>
+                                        <span id="bandwidthChange" class="fw-bold">+1.1%</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Avg: <span id="bandwidthAvg">245 Mbps</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <div id="packetLossTrend" class="capacity-metric">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Packet Loss Trend
+                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span id="packetLossStatus" class="badge bg-success">Improving</span>
+                                        <span id="packetLossChange" class="fw-bold">-0.3%</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Avg: <span id="packetLossAvg">0.8%</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommendations -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-lightbulb me-2"></i>
+                                            Capacity Planning Recommendations
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recommendationsList">
+                                            <!-- Recommendations will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="trendsLoading" class="loading-spinner"></div>
+                    
+                    <div id="trendsError" class="alert alert-warning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="trendsErrorMessage">Insufficient data for trend analysis</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Performance Prediction
+document.getElementById('predictionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const predictionResults = document.getElementById('predictionResults');
+    const predictionLoading = document.getElementById('predictionLoading');
+    const predictionError = document.getElementById('predictionError');
+    
+    // Hide previous results
+    predictionResults.style.display = 'none';
+    predictionError.style.display = 'none';
+    predictionLoading.style.display = 'block';
+    
+    const formData = {
+        test_config: {
+            destination: document.getElementById('destination').value,
+            packet_size: parseInt(document.getElementById('packetSize').value),
+            test_count: parseInt(document.getElementById('testCount').value),
+            test_type: document.getElementById('testType').value
+        },
+        current_conditions: {
+            // Add current system conditions if available
+        }
+    };
+    
+    fetch('/api/predict-performance', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        predictionLoading.style.display = 'none';
+        
+        if (data.status === 'success') {
+            displayPredictionResults(data);
+            predictionResults.style.display = 'block';
+        } else {
+            document.getElementById('errorMessage').textContent = data.error || 'Prediction failed';
+            predictionError.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        predictionLoading.style.display = 'none';
+        document.getElementById('errorMessage').textContent = 'Network error: ' + error.message;
+        predictionError.style.display = 'block';
+    });
+});
+
+function displayPredictionResults(data) {
+    // Performance Category
+    const categoryElement = document.getElementById('performanceCategory');
+    const latencyElement = document.getElementById('predictedLatency');
+    
+    const categoryColors = {
+        'excellent': 'text-success',
+        'good': 'text-info',
+        'fair': 'text-warning',
+        'poor': 'text-warning',
+        'critical': 'text-danger'
+    };
+    
+    categoryElement.className = `performance-indicator ${categoryColors[data.performance_category] || 'text-secondary'}`;
+    categoryElement.textContent = data.performance_category.charAt(0).toUpperCase() + data.performance_category.slice(1);
+    latencyElement.textContent = `~${Math.round(data.predicted_latency_ms)}ms`;
+    
+    // Confidence Score
+    const confidencePercent = Math.round(data.confidence_score * 100);
+    document.getElementById('confidenceScore').textContent = `${confidencePercent}%`;
+    document.getElementById('confidenceBar').style.width = `${confidencePercent}%`;
+    
+    const confidenceColors = confidencePercent >= 80 ? 'bg-success' : confidencePercent >= 60 ? 'bg-warning' : 'bg-danger';
+    document.getElementById('confidenceBar').className = confidenceColors;
+    
+    // Insights
+    const insightsList = document.getElementById('insightsList');
+    insightsList.innerHTML = '';
+    
+    if (data.insights && data.insights.length > 0) {
+        data.insights.forEach(insight => {
+            const insightDiv = document.createElement('div');
+            insightDiv.className = 'insight-item';
+            insightDiv.innerHTML = `<small>${insight}</small>`;
+            insightsList.appendChild(insightDiv);
+        });
+    } else {
+        insightsList.innerHTML = '<small class="text-muted">No specific insights available</small>';
+    }
+}
+
+// Capacity Trends Analysis
+document.getElementById('analyzeTrends').addEventListener('click', function() {
+    const days = document.getElementById('analysisPeriod').value;
+    const trendsResults = document.getElementById('trendsResults');
+    const trendsLoading = document.getElementById('trendsLoading');
+    const trendsError = document.getElementById('trendsError');
+    
+    // Hide previous results
+    trendsResults.style.display = 'none';
+    trendsError.style.display = 'none';
+    trendsLoading.style.display = 'block';
+    
+    fetch(`/api/capacity-trends?days=${days}`)
+    .then(response => response.json())
+    .then(data => {
+        trendsLoading.style.display = 'none';
+        
+        if (data.status === 'success') {
+            displayTrendsResults(data);
+            trendsResults.style.display = 'block';
+        } else {
+            document.getElementById('trendsErrorMessage').textContent = data.error || 'Trends analysis failed';
+            trendsError.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        trendsLoading.style.display = 'none';
+        document.getElementById('trendsErrorMessage').textContent = 'Network error: ' + error.message;
+        trendsError.style.display = 'block';
+    });
+});
+
+function displayTrendsResults(data) {
+    // Health Trend
+    if (data.health_trend) {
+        document.getElementById('currentHealthScore').textContent = data.health_trend.current_score || '0';
+        
+        const trendDirection = data.health_trend.trend || 'stable';
+        const trendSymbols = {
+            'improving': '↗',
+            'degrading': '↘',
+            'stable': '↔'
+        };
+        const trendColors = {
+            'improving': 'text-success',
+            'degrading': 'text-danger',
+            'stable': 'text-warning'
+        };
+        
+        const trendElement = document.getElementById('healthTrendDirection');
+        trendElement.innerHTML = `${trendDirection.charAt(0).toUpperCase() + trendDirection.slice(1)} <span class="trend-arrow ${trendColors[trendDirection]}">${trendSymbols[trendDirection]}</span>`;
+        
+        const changePercent = data.health_trend.change_percent || 0;
+        document.getElementById('healthChange').textContent = `${changePercent > 0 ? '+' : ''}${changePercent}%`;
+        document.getElementById('healthChange').className = `h5 ${changePercent > 0 ? 'text-success' : changePercent < 0 ? 'text-danger' : 'text-muted'}`;
+    }
+    
+    // Individual Metrics
+    if (data.trends) {
+        updateMetricTrend('latency', data.trends.latency);
+        updateMetricTrend('bandwidth', data.trends.bandwidth);
+        updateMetricTrend('packet_loss', data.trends.packet_loss);
+    }
+    
+    // Recommendations
+    const recommendationsList = document.getElementById('recommendationsList');
+    recommendationsList.innerHTML = '';
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+        data.recommendations.forEach(recommendation => {
+            const recDiv = document.createElement('div');
+            recDiv.className = 'alert alert-info mb-2';
+            recDiv.innerHTML = `<i class="fas fa-info-circle me-2"></i>${recommendation}`;
+            recommendationsList.appendChild(recDiv);
+        });
+    } else {
+        recommendationsList.innerHTML = '<div class="text-muted">No specific recommendations at this time</div>';
+    }
+}
+
+function updateMetricTrend(metricName, trendData) {
+    if (!trendData) return;
+    
+    const statusElement = document.getElementById(`${metricName}Status`);
+    const changeElement = document.getElementById(`${metricName}Change`);
+    const avgElement = document.getElementById(`${metricName}Avg`);
+    
+    const trend = trendData.trend || 'stable';
+    const trendColors = {
+        'improving': 'bg-success',
+        'degrading': 'bg-danger',
+        'stable': 'bg-warning'
+    };
+    
+    statusElement.textContent = trend.charAt(0).toUpperCase() + trend.slice(1);
+    statusElement.className = `badge ${trendColors[trend]}`;
+    
+    const changePercent = trendData.change_percent || 0;
+    changeElement.textContent = `${changePercent > 0 ? '+' : ''}${changePercent}%`;
+    
+    if (trendData.current_avg !== undefined) {
+        let avgText = trendData.current_avg;
+        if (metricName === 'latency') {
+            avgText += 'ms';
+        } else if (metricName === 'bandwidth') {
+            avgText += ' Mbps';
+        } else if (metricName === 'packet_loss') {
+            avgText += '%';
+        }
+        avgElement.textContent = avgText;
+    }
+}
+</script>
+{% endblock %}
