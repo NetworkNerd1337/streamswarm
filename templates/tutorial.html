@@ -50,6 +50,7 @@
                             <ul class="list-unstyled">
                                 <li><a href="#ai-ml-setup" class="text-decoration-none">AI/ML Diagnostic Setup</a></li>
                                 <li><a href="#geolocation-features" class="text-decoration-none">Geolocation Mapping</a></li>
+                                <li><a href="#gnmi-analysis" class="text-decoration-none">GNMI Network Analysis</a></li>
                                 <li><a href="#metrics-definition" class="text-decoration-none">Metrics Definition Guide</a></li>
                                 <li><a href="#use-cases" class="text-decoration-none">Real-World Use Cases</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Multi-Client Setup</a></li>
@@ -449,8 +450,10 @@ pip install speedtest-cli>=2.1.3<br><br>
 pip install scapy>=2.5.0<br><br>
 # Wireless detection (Linux only)<br>
 pip install iwlib>=1.7.0<br><br>
+# GNMI network telemetry (enterprise)<br>
+pip install pygnmi>=0.8.15<br><br>
 # All-in-one command:<br>
-pip install requests psutil speedtest-cli scapy iwlib<br><br>
+pip install requests psutil speedtest-cli scapy iwlib pygnmi<br><br>
 # Minimal installation (without packet analysis):<br>
 pip install requests psutil speedtest-cli
                                             </code>
@@ -2385,6 +2388,170 @@ nssm install StreamSwarmClient</code></pre>
                                                 </code>
                                             </div>
                                             <p class="small mt-2 mb-0"><strong>Note:</strong> Geolocation processing occurs automatically in the background. Maps may take a few moments to appear for new test results.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GNMI Network Path Analysis Tutorial -->
+    <div class="row mb-4" id="gnmi-analysis">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-network-wired me-2"></i>
+                        GNMI Managed Infrastructure Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-info-circle me-2"></i>What is GNMI?</h6>
+                            <p><strong>GNMI (gRPC Network Management Interface)</strong> enables direct telemetry collection from enterprise network equipment for hop-by-hop infrastructure analysis.</p>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-lightbulb me-2"></i>Enterprise Feature</h6>
+                                <p class="mb-0">GNMI analysis provides detailed performance insights for managed network infrastructure, complementing standard traceroute data with device-level metrics.</p>
+                            </div>
+                            
+                            <h6 class="text-success mt-3"><i class="fas fa-chart-bar me-2"></i>Telemetry Data Collected</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-microchip text-info me-2"></i><strong>Processing Latency:</strong> Packet forwarding delays within devices</li>
+                                <li><i class="fas fa-memory text-warning me-2"></i><strong>Queue Analysis:</strong> Buffer utilization and queue depth statistics</li>
+                                <li><i class="fas fa-tachometer-alt text-danger me-2"></i><strong>CPU Utilization:</strong> Device processing load and capacity</li>
+                                <li><i class="fas fa-exchange-alt text-primary me-2"></i><strong>Interface Performance:</strong> Bandwidth, error rates, packet statistics</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-tools me-2"></i>Setup Requirements</h6>
+                            
+                            <div class="card border-primary mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 small">Infrastructure Requirements</h6>
+                                </div>
+                                <div class="card-body small">
+                                    <ul class="mb-0">
+                                        <li><strong>GNMI-Enabled Devices:</strong> Modern enterprise routers, switches, firewalls</li>
+                                        <li><strong>Network Access:</strong> Client must reach device management interfaces</li>
+                                        <li><strong>Authentication:</strong> Device credentials configured in client</li>
+                                        <li><strong>Supported Vendors:</strong> Cisco, Juniper, Arista, etc.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="card border-warning mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 small">Client Configuration</h6>
+                                </div>
+                                <div class="card-body small">
+                                    <p class="mb-2"><strong>Python Package:</strong></p>
+                                    <div class="bg-dark p-2 rounded mb-2">
+                                        <code class="text-light">pip install pygnmi>=0.8.15</code>
+                                    </div>
+                                    <p class="mb-0"><strong>Device Credentials:</strong> Configure in client's GNMI analyzer</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- How GNMI Analysis Works -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        How GNMI Analysis Works
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-info">Analysis Process</h6>
+                                            <ol class="small">
+                                                <li><strong>Path Discovery:</strong> Client performs standard traceroute to destination</li>
+                                                <li><strong>Device Detection:</strong> Identifies which hops have GNMI capabilities</li>
+                                                <li><strong>Telemetry Collection:</strong> Connects to each GNMI device for real-time metrics</li>
+                                                <li><strong>Performance Analysis:</strong> Analyzes device metrics and interface statistics</li>
+                                                <li><strong>Results Display:</strong> Server displays infrastructure insights in test results</li>
+                                            </ol>
+                                            
+                                            <div class="alert alert-success">
+                                                <h6><i class="fas fa-shield-alt me-2"></i>Graceful Fallback</h6>
+                                                <p class="mb-0 small">Tests continue normally even when GNMI is unavailable. GNMI data is supplementary to standard network testing.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <h6 class="text-info">Benefits for Enterprise</h6>
+                                            <div class="bg-dark p-3 rounded">
+                                                <div class="text-light small">
+                                                    <p class="mb-2"><strong class="text-success">🎯 Bottleneck Attribution:</strong><br>
+                                                    Identify which specific device causes performance issues</p>
+                                                    
+                                                    <p class="mb-2"><strong class="text-warning">📊 Proactive Monitoring:</strong><br>
+                                                    Detect infrastructure problems before user impact</p>
+                                                    
+                                                    <p class="mb-2"><strong class="text-info">📈 Capacity Planning:</strong><br>
+                                                    Understand device utilization for upgrade decisions</p>
+                                                    
+                                                    <p class="mb-0"><strong class="text-primary">🔧 Precise Troubleshooting:</strong><br>
+                                                    Isolate problems within managed infrastructure</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Viewing GNMI Results -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-eye me-2"></i>
+                                        Viewing GNMI Results
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Finding GNMI Data</h6>
+                                            <ol class="small">
+                                                <li>Run tests from clients with GNMI-enabled network paths</li>
+                                                <li>View test results page for the completed test</li>
+                                                <li>Look for "GNMI Managed Infrastructure Analysis" card</li>
+                                                <li>Card only appears when GNMI data is available</li>
+                                            </ol>
+                                            
+                                            <div class="alert alert-warning">
+                                                <h6><i class="fas fa-info-circle me-2"></i>Conditional Display</h6>
+                                                <p class="mb-0 small">GNMI cards only appear for tests with actual GNMI data. Older tests or tests without GNMI infrastructure won't show the card.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Understanding GNMI Metrics</h6>
+                                            <div class="bg-dark p-2 rounded">
+                                                <code class="text-light small">
+• Device performance table with status indicators<br>
+• Processing latency for each network device<br>
+• Queue latency and buffer utilization<br>
+• CPU usage and interface performance<br>
+• Infrastructure insights and recommendations
+                                                </code>
+                                            </div>
+                                            <p class="small mt-2 mb-0"><strong>Note:</strong> GNMI analysis occurs automatically when devices are available. Results integrate seamlessly with standard test data.</p>
                                         </div>
                                     </div>
                                 </div>

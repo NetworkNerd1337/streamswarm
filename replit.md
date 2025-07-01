@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 1, 2025: Added comprehensive GNMI documentation to README and tutorial pages
+  - Updated README.md with GNMI feature description, installation instructions, and enterprise benefits
+  - Added complete GNMI Network Path Analysis tutorial section to application tutorial page
+  - Included GNMI setup requirements, client configuration, and usage instructions
+  - Added pygnmi>=0.8.15 dependency to client Python packages documentation
+  - Added GNMI navigation link to tutorial page for easy access
+  - Documentation covers enterprise features, supported devices, and conditional display behavior
 - July 1, 2025: Implemented GNMI Network Path Analysis display system
   - Added comprehensive test results visualization for GNMI managed infrastructure analysis
   - Created new database field `gnmi_path_analysis` in TestResult model for storing GNMI data
