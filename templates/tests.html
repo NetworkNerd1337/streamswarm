@@ -811,6 +811,16 @@ document.addEventListener('DOMContentLoaded', function() {
             field.addEventListener('input', debounce(updatePrediction, 2000));
         }
     });
+    
+    // Auto-open create test modal if URL has create=true parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('create') === 'true') {
+        const createModal = new bootstrap.Modal(document.getElementById('createTestModal'));
+        createModal.show();
+        // Clean up URL parameter after opening modal
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
 });
 
 // Debounce function to limit API calls
