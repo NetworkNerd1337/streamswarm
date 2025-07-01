@@ -486,7 +486,7 @@ function displayTrendsResults(data) {
     if (data.trends) {
         updateMetricTrend('latency', data.trends.latency);
         updateMetricTrend('bandwidth', data.trends.bandwidth);
-        updateMetricTrend('packet_loss', data.trends.packet_loss);
+        updateMetricTrend('packetLoss', data.trends.packet_loss);
     }
     
     // Recommendations
@@ -512,6 +512,12 @@ function updateMetricTrend(metricName, trendData) {
     const changeElement = document.getElementById(`${metricName}Change`);
     const avgElement = document.getElementById(`${metricName}Avg`);
     
+    // Check if required elements exist before proceeding
+    if (!statusElement || !changeElement || !avgElement) {
+        console.warn(`Missing DOM elements for metric: ${metricName}`);
+        return;
+    }
+    
     const trend = trendData.trend || 'stable';
     const trendColors = {
         'improving': 'bg-success',
@@ -519,8 +525,14 @@ function updateMetricTrend(metricName, trendData) {
         'stable': 'bg-warning'
     };
     
-    statusElement.textContent = trend.charAt(0).toUpperCase() + trend.slice(1);
-    statusElement.className = `badge ${trendColors[trend]}`;
+    // Ensure trend is a string before calling string methods
+    if (trend && typeof trend === 'string') {
+        statusElement.textContent = trend.charAt(0).toUpperCase() + trend.slice(1);
+        statusElement.className = `badge ${trendColors[trend] || 'bg-secondary'}`;
+    } else {
+        statusElement.textContent = 'Stable';
+        statusElement.className = 'badge bg-warning';
+    }
     
     const changePercent = trendData.change_percent || 0;
     changeElement.textContent = `${changePercent > 0 ? '+' : ''}${changePercent}%`;
@@ -531,7 +543,7 @@ function updateMetricTrend(metricName, trendData) {
             avgText += 'ms';
         } else if (metricName === 'bandwidth') {
             avgText += ' Mbps';
-        } else if (metricName === 'packet_loss') {
+        } else if (metricName === 'packetLoss') {
             avgText += '%';
         }
         avgElement.textContent = avgText;

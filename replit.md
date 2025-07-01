@@ -105,7 +105,12 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- June 30, 2025. Initial setup
+- July 1, 2025: Integrated AI Performance Prediction widget into test creation workflow
+  - Added real-time performance forecasting in test creation modal
+  - Fixed ML model feature dimension compatibility issues
+  - Enhanced user experience with automatic prediction updates
+  - Seamless integration with existing test workflow via dashboard "New Test" button
+- June 30, 2025: Initial setup
 
 ## User Preferences
 
