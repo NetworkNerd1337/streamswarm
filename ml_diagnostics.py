@@ -47,8 +47,10 @@ class NetworkDiagnosticEngine:
             'anomaly_detector': 'anomaly_detector.joblib',
             'health_classifier': 'health_classifier.joblib',
             'performance_predictor': 'performance_predictor.joblib',
+            'failure_predictor': 'failure_predictor.joblib',
             'scaler': 'feature_scaler.joblib',
             'performance_scaler': 'performance_scaler.joblib',
+            'failure_scaler': 'failure_scaler.joblib',
             'health_encoder': 'health_encoder.joblib'
         }
         
@@ -60,6 +62,8 @@ class NetworkDiagnosticEngine:
                         self.scalers['main'] = joblib.load(filepath)
                     elif model_name == 'performance_scaler':
                         self.scalers['performance'] = joblib.load(filepath)
+                    elif model_name == 'failure_scaler':
+                        self.scalers['failure'] = joblib.load(filepath)
                     elif model_name == 'health_encoder':
                         self.encoders['health'] = joblib.load(filepath)
                     else:
@@ -420,6 +424,51 @@ class NetworkDiagnosticEngine:
                     # Store the feature columns used for performance prediction
                     # Note: Using self.feature_columns which is already loaded from saved model
             
+            # Train network failure predictor
+            failure_risk_scores = self._calculate_failure_risk_scores(X)
+            if len(failure_risk_scores) > 10:  # Minimum samples for training
+                # Use time series features and network health indicators to predict failure risk
+                failure_features = [
+                    'tcp_retransmission_rate', 'total_network_errors', 'ping_packet_loss',
+                    'jitter', 'cpu_percent', 'memory_percent', 'disk_usage_percent',
+                    'bandwidth_utilization', 'network_interface_errors', 'ping_latency'
+                ]
+                
+                # Filter features that exist in the data
+                available_failure_features = [f for f in failure_features if f in X.columns]
+                
+                if available_failure_features:
+                    X_failure = X[available_failure_features].fillna(0)
+                    y_failure = np.array(failure_risk_scores)
+                    
+                    # Use separate scaler for failure prediction
+                    failure_scaler = StandardScaler()
+                    X_failure_scaled = failure_scaler.fit_transform(X_failure)
+                    
+                    # Train GradientBoostingRegressor for failure probability prediction
+                    failure_predictor = GradientBoostingRegressor(
+                        n_estimators=150, 
+                        learning_rate=0.1,
+                        max_depth=6,
+                        random_state=42
+                    )
+                    failure_predictor.fit(X_failure_scaled, y_failure)
+                    
+                    self.models['failure_predictor'] = failure_predictor
+                    self.scalers['failure'] = failure_scaler
+                    
+                    # Evaluate failure predictor
+                    if len(X_failure_scaled) > 20:
+                        X_fail_train, X_fail_test, y_fail_train, y_fail_test = train_test_split(
+                            X_failure_scaled, y_failure, test_size=0.2, random_state=42
+                        )
+                        failure_predictor.fit(X_fail_train, y_fail_train)
+                        y_fail_pred = failure_predictor.predict(X_fail_test)
+                        fail_mse = mean_squared_error(y_fail_test, y_fail_pred)
+                        logger.info(f"Network Failure Predictor MSE: {fail_mse:.4f}")
+                    
+                    logger.info("Network failure predictor trained successfully")
+            
             # Save trained models
             self._save_models()
             
@@ -431,6 +480,166 @@ class NetworkDiagnosticEngine:
             import traceback
             logger.error(traceback.format_exc())
             return False
+    
+    def _calculate_failure_risk_scores(self, features_df: pd.DataFrame) -> List[float]:
+        """
+        Calculate failure risk scores for training the failure prediction model
+        Higher scores indicate higher probability of network failure
+        """
+        risk_scores = []
+        
+        for i in range(len(features_df)):
+            row = features_df.iloc[i]
+            risk_score = 0.0
+            
+            # TCP retransmission rate risk (major indicator)
+            tcp_retrans = row.get('tcp_retransmission_rate', 0)
+            if tcp_retrans > 10:
+                risk_score += 0.3
+            elif tcp_retrans > 5:
+                risk_score += 0.2
+            elif tcp_retrans > 2:
+                risk_score += 0.1
+                
+            # Network errors risk (interface level)
+            net_errors = row.get('total_network_errors', 0)
+            if net_errors > 100:
+                risk_score += 0.25
+            elif net_errors > 50:
+                risk_score += 0.15
+            elif net_errors > 10:
+                risk_score += 0.1
+                
+            # Packet loss risk
+            packet_loss = row.get('ping_packet_loss', 0)
+            if packet_loss > 10:
+                risk_score += 0.2
+            elif packet_loss > 5:
+                risk_score += 0.15
+            elif packet_loss > 1:
+                risk_score += 0.1
+                
+            # Buffer utilization and memory pressure
+            cpu_usage = row.get('cpu_percent', 0)
+            memory_usage = row.get('memory_percent', 0)
+            if cpu_usage > 95 or memory_usage > 95:
+                risk_score += 0.15
+            elif cpu_usage > 85 or memory_usage > 85:
+                risk_score += 0.1
+                
+            # Latency degradation risk
+            latency = row.get('ping_latency', 0)
+            if latency > 1000:  # 1 second
+                risk_score += 0.1
+            elif latency > 500:  # 500ms
+                risk_score += 0.05
+                
+            # Jitter instability
+            jitter = row.get('jitter', 0)
+            if jitter > 100:
+                risk_score += 0.1
+            elif jitter > 50:
+                risk_score += 0.05
+                
+            # Bandwidth utilization stress
+            bandwidth_util = row.get('bandwidth_utilization', 0)
+            if bandwidth_util > 95:
+                risk_score += 0.1
+            elif bandwidth_util > 80:
+                risk_score += 0.05
+                
+            # Interface errors
+            interface_errors = row.get('network_interface_errors', 0)
+            if interface_errors > 50:
+                risk_score += 0.1
+            elif interface_errors > 10:
+                risk_score += 0.05
+                
+            # Disk usage can affect logging and system stability
+            disk_usage = row.get('disk_usage_percent', 0)
+            if disk_usage > 95:
+                risk_score += 0.05
+                
+            # Normalize to 0-1 range and cap at 1.0
+            risk_score = min(1.0, max(0.0, risk_score))
+            risk_scores.append(risk_score)
+            
+        return risk_scores
+    
+    def predict_network_failure(self, current_metrics: Dict[str, Any], time_horizon_hours: int = 24) -> Dict[str, Any]:
+        """
+        Predict network failure probability based on current metrics and trends
+        
+        Args:
+            current_metrics: Current network performance and system metrics
+            time_horizon_hours: Prediction time horizon in hours (default: 24 hours)
+            
+        Returns:
+            Dict containing failure probability, risk level, contributing factors, and recommendations
+        """
+        try:
+            if 'failure_predictor' not in self.models:
+                logger.warning("Failure prediction model not available, falling back to rule-based analysis")
+                return self._rule_based_failure_prediction(current_metrics, time_horizon_hours)
+            
+            # Extract relevant features for failure prediction
+            failure_features = self._extract_failure_prediction_features(current_metrics)
+            
+            if not failure_features:
+                return {
+                    'error': 'Insufficient metrics for failure prediction',
+                    'status': 'failed'
+                }
+            
+            # Scale features using failure scaler
+            if 'failure' not in self.scalers:
+                logger.warning("Failure scaler not available, falling back to rule-based analysis")
+                return self._rule_based_failure_prediction(current_metrics, time_horizon_hours)
+            
+            # Make prediction
+            features_scaled = self.scalers['failure'].transform([failure_features])
+            failure_probability = self.models['failure_predictor'].predict(features_scaled)[0]
+            
+            # Adjust probability based on time horizon
+            time_adjusted_probability = self._adjust_failure_probability_for_time(
+                failure_probability, time_horizon_hours
+            )
+            
+            # Determine risk level
+            risk_level = self._determine_failure_risk_level(time_adjusted_probability)
+            
+            # Identify contributing factors
+            contributing_factors = self._identify_failure_contributing_factors(
+                current_metrics, failure_features
+            )
+            
+            # Generate proactive recommendations
+            recommendations = self._generate_failure_prevention_recommendations(
+                time_adjusted_probability, contributing_factors, time_horizon_hours
+            )
+            
+            # Calculate confidence based on feature quality and historical accuracy
+            confidence = self._calculate_failure_prediction_confidence(failure_features)
+            
+            return {
+                'failure_probability': float(time_adjusted_probability),
+                'risk_level': risk_level,
+                'time_horizon_hours': time_horizon_hours,
+                'confidence_score': confidence,
+                'contributing_factors': contributing_factors,
+                'recommendations': recommendations,
+                'predicted_failure_time': self._estimate_failure_time(
+                    time_adjusted_probability, time_horizon_hours
+                ),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error predicting network failure: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'prediction_failed'
+            }
     
     def diagnose_test(self, test_id: int) -> Dict[str, Any]:
         """
@@ -1991,6 +2200,217 @@ class NetworkDiagnosticEngine:
                 insights.append("Limited bandwidth detected - network capacity may be constrained")
         
         return insights
+    
+    def _extract_failure_prediction_features(self, current_metrics: Dict[str, Any]) -> List[float]:
+        """Extract features for failure prediction from current metrics"""
+        failure_feature_names = [
+            'tcp_retransmission_rate', 'total_network_errors', 'ping_packet_loss',
+            'jitter', 'cpu_percent', 'memory_percent', 'disk_usage_percent',
+            'bandwidth_utilization', 'network_interface_errors', 'ping_latency'
+        ]
+        
+        features = []
+        for feature_name in failure_feature_names:
+            value = current_metrics.get(feature_name, 0)
+            features.append(float(value))
+        
+        return features
+    
+    def _adjust_failure_probability_for_time(self, base_probability: float, hours: int) -> float:
+        """Adjust failure probability based on time horizon"""
+        # Exponential decay model - longer time horizons have higher cumulative failure probability
+        time_factor = 1 - np.exp(-hours / 168.0)  # 168 = hours in a week
+        adjusted_probability = base_probability * (1 + time_factor)
+        return min(1.0, adjusted_probability)
+    
+    def _determine_failure_risk_level(self, probability: float) -> str:
+        """Determine risk level based on failure probability"""
+        if probability >= 0.7:
+            return 'critical'
+        elif probability >= 0.4:
+            return 'high'
+        elif probability >= 0.2:
+            return 'medium'
+        else:
+            return 'low'
+    
+    def _identify_failure_contributing_factors(self, metrics: Dict[str, Any], features: List[float]) -> List[Dict[str, Any]]:
+        """Identify the primary factors contributing to failure risk"""
+        factors = []
+        
+        feature_names = [
+            'tcp_retransmission_rate', 'total_network_errors', 'ping_packet_loss',
+            'jitter', 'cpu_percent', 'memory_percent', 'disk_usage_percent',
+            'bandwidth_utilization', 'network_interface_errors', 'ping_latency'
+        ]
+        
+        for i, feature_name in enumerate(feature_names):
+            if i < len(features):
+                value = features[i]
+                impact = self._calculate_feature_impact(feature_name, value)
+                
+                if impact['severity'] != 'low':
+                    factors.append({
+                        'factor': feature_name,
+                        'value': value,
+                        'impact': impact['severity'],
+                        'description': impact['description']
+                    })
+        
+        # Sort by impact severity
+        severity_order = {'critical': 4, 'high': 3, 'medium': 2, 'low': 1}
+        factors.sort(key=lambda x: severity_order.get(x['impact'], 0), reverse=True)
+        
+        return factors[:5]  # Return top 5 contributing factors
+    
+    def _calculate_feature_impact(self, feature_name: str, value: float) -> Dict[str, str]:
+        """Calculate the impact severity of a specific feature value"""
+        if feature_name == 'tcp_retransmission_rate':
+            if value > 10:
+                return {'severity': 'critical', 'description': 'Excessive TCP retransmissions indicate network instability'}
+            elif value > 5:
+                return {'severity': 'high', 'description': 'High TCP retransmission rate may lead to connection failures'}
+            elif value > 2:
+                return {'severity': 'medium', 'description': 'Elevated TCP retransmissions detected'}
+        
+        elif feature_name == 'total_network_errors':
+            if value > 100:
+                return {'severity': 'critical', 'description': 'Critical network error count indicates hardware/driver issues'}
+            elif value > 50:
+                return {'severity': 'high', 'description': 'High network error rate requires investigation'}
+            elif value > 10:
+                return {'severity': 'medium', 'description': 'Network errors detected'}
+        
+        elif feature_name == 'ping_packet_loss':
+            if value > 10:
+                return {'severity': 'critical', 'description': 'Severe packet loss indicates network path issues'}
+            elif value > 5:
+                return {'severity': 'high', 'description': 'High packet loss affecting connectivity'}
+            elif value > 1:
+                return {'severity': 'medium', 'description': 'Packet loss detected'}
+        
+        elif feature_name in ['cpu_percent', 'memory_percent']:
+            if value > 95:
+                return {'severity': 'critical', 'description': f'Critical {feature_name.replace("_percent", "")} utilization'}
+            elif value > 85:
+                return {'severity': 'high', 'description': f'High {feature_name.replace("_percent", "")} utilization'}
+            elif value > 75:
+                return {'severity': 'medium', 'description': f'Elevated {feature_name.replace("_percent", "")} usage'}
+        
+        elif feature_name == 'ping_latency':
+            if value > 1000:
+                return {'severity': 'high', 'description': 'Very high latency indicates network congestion'}
+            elif value > 500:
+                return {'severity': 'medium', 'description': 'Elevated latency detected'}
+        
+        return {'severity': 'low', 'description': 'Normal range'}
+    
+    def _generate_failure_prevention_recommendations(self, probability: float, factors: List[Dict], hours: int) -> List[str]:
+        """Generate proactive recommendations to prevent network failures"""
+        recommendations = []
+        
+        if probability >= 0.7:
+            recommendations.append("URGENT: Immediate intervention required - network failure highly likely")
+            recommendations.append("Schedule emergency maintenance window within 4 hours")
+        elif probability >= 0.4:
+            recommendations.append("Schedule maintenance within next 24 hours")
+            recommendations.append("Implement backup connectivity solutions")
+        
+        # Factor-specific recommendations
+        for factor in factors:
+            factor_name = factor['factor']
+            
+            if factor_name == 'tcp_retransmission_rate' and factor['impact'] != 'low':
+                recommendations.append("Investigate network congestion and bandwidth utilization")
+                recommendations.append("Check for faulty network equipment or cables")
+            
+            elif factor_name == 'total_network_errors' and factor['impact'] != 'low':
+                recommendations.append("Update network drivers and firmware")
+                recommendations.append("Perform hardware diagnostics on network interfaces")
+            
+            elif factor_name == 'ping_packet_loss' and factor['impact'] != 'low':
+                recommendations.append("Analyze network routing and switch configurations")
+                recommendations.append("Monitor for intermittent hardware failures")
+            
+            elif factor_name in ['cpu_percent', 'memory_percent'] and factor['impact'] != 'low':
+                recommendations.append("Scale system resources or redistribute workloads")
+                recommendations.append("Identify and terminate resource-intensive processes")
+        
+        # Time-sensitive recommendations
+        if hours <= 4:
+            recommendations.append("Monitor network continuously for next 4 hours")
+        elif hours <= 24:
+            recommendations.append("Implement automated failure detection and alerting")
+        
+        return list(set(recommendations))  # Remove duplicates
+    
+    def _calculate_failure_prediction_confidence(self, features: List[float]) -> float:
+        """Calculate confidence score for failure prediction"""
+        # Base confidence on feature completeness and quality
+        completeness = len([f for f in features if f > 0]) / len(features)
+        
+        # Adjust for feature value reasonableness
+        reasonable_values = 0
+        for i, value in enumerate(features):
+            if i < len(features):
+                # Check if values are within reasonable ranges
+                if 0 <= value <= 100 or value == 0:  # Most metrics are percentages or zero
+                    reasonable_values += 1
+        
+        reasonableness = reasonable_values / len(features)
+        confidence = (completeness * 0.6 + reasonableness * 0.4) * 0.9  # Max 90% confidence
+        
+        return max(0.1, min(0.9, confidence))
+    
+    def _estimate_failure_time(self, probability: float, hours: int) -> str:
+        """Estimate when failure might occur based on probability and time horizon"""
+        if probability >= 0.8:
+            return f"Within {hours//4} hours"
+        elif probability >= 0.6:
+            return f"Within {hours//2} hours"
+        elif probability >= 0.4:
+            return f"Within {int(hours*0.8)} hours"
+        else:
+            return f"Beyond {hours} hour window"
+    
+    def _rule_based_failure_prediction(self, current_metrics: Dict[str, Any], time_horizon_hours: int) -> Dict[str, Any]:
+        """Fallback rule-based failure prediction when ML model is unavailable"""
+        risk_score = 0.0
+        factors = []
+        
+        # Evaluate critical metrics
+        tcp_retrans = current_metrics.get('tcp_retransmission_rate', 0)
+        if tcp_retrans > 10:
+            risk_score += 0.3
+            factors.append({'factor': 'tcp_retransmission_rate', 'impact': 'critical'})
+        
+        packet_loss = current_metrics.get('ping_packet_loss', 0)
+        if packet_loss > 5:
+            risk_score += 0.25
+            factors.append({'factor': 'ping_packet_loss', 'impact': 'high'})
+        
+        cpu_usage = current_metrics.get('cpu_percent', 0)
+        if cpu_usage > 95:
+            risk_score += 0.2
+            factors.append({'factor': 'cpu_percent', 'impact': 'high'})
+        
+        memory_usage = current_metrics.get('memory_percent', 0)
+        if memory_usage > 95:
+            risk_score += 0.15
+            factors.append({'factor': 'memory_percent', 'impact': 'high'})
+        
+        risk_level = self._determine_failure_risk_level(risk_score)
+        
+        return {
+            'failure_probability': float(risk_score),
+            'risk_level': risk_level,
+            'time_horizon_hours': time_horizon_hours,
+            'confidence_score': 0.7,  # Rule-based has moderate confidence
+            'contributing_factors': factors,
+            'recommendations': self._generate_failure_prevention_recommendations(risk_score, factors, time_horizon_hours),
+            'predicted_failure_time': self._estimate_failure_time(risk_score, time_horizon_hours),
+            'status': 'success_rule_based'
+        }
     
     def analyze_capacity_trends(self, days_back: int = 30) -> Dict[str, Any]:
         """
