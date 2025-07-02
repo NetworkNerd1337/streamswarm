@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 2, 2025: Enhanced test interface with comprehensive timestamp display and automatic status synchronization
+  - Added "Created" column to tests page showing when each test was originally created with timestamp (YYYY-MM-DD HH:MM format)
+  - Implemented automatic status refresh system with 10-second intervals to prevent status/progress column mismatches
+  - Created efficient API endpoint for real-time test status updates without manual page refresh
+  - Fixed interface bug where completed tests showed incorrect status when users returned after test completion
+  - Enhanced both server-rendered and infinite scroll test loading to include creation timestamps
+  - Positioned Created column between Duration and Scheduled for logical information flow
 - July 2, 2025: Restored ML model quality requirements and enhanced training documentation
   - Reverted synthetic data generation for Network Failure Prediction model to maintain accuracy and reliability
   - Restored proper minimum requirements: 15+ sequential measurements for time series models, 20+ samples for quality training
