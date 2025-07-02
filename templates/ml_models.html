@@ -143,6 +143,9 @@
                                             {{ 'Trained' if 'anomaly_detector' in model_status.models_available else 'Not Trained' }}
                                         </span>
                                     </p>
+                                    <small class="text-muted">
+                                        <strong>Training Requirement:</strong> Any test data with network metrics
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -160,6 +163,9 @@
                                             {{ 'Trained' if 'health_classifier' in model_status.models_available else 'Not Trained' }}
                                         </span>
                                     </p>
+                                    <small class="text-muted">
+                                        <strong>Training Requirement:</strong> Diverse test results with varying network conditions
+                                    </small>
                                 </div>
                             </div>
                         </div>

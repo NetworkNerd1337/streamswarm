@@ -426,7 +426,7 @@ class NetworkDiagnosticEngine:
             
             # Train network failure predictor using Time Series approach
             failure_risk_scores = self._calculate_failure_risk_scores(X)
-            if len(failure_risk_scores) > 5:  # Reduced minimum requirement
+            if len(failure_risk_scores) > 20:  # Proper minimum requirement for quality
                 # Create time series features for failure prediction
                 time_series_data = self._create_time_series_features(X, results)
                 
@@ -2555,31 +2555,28 @@ class NetworkDiagnosticEngine:
     def _create_time_series_features(self, features_df, results):
         """
         Create time series features from test results for failure prediction
-        Enhanced to work with smaller datasets
+        Requires sufficient sequential data for quality predictions
         """
         try:
-            # Sort results by timestamp if available, otherwise use index order
+            # Sort results by timestamp
             result_data = []
             for i, result in enumerate(results):
-                timestamp = getattr(result, 'created_at', None) or i  # Fallback to index
-                result_data.append({
-                    'timestamp': timestamp,
-                    'index': i
-                })
+                if hasattr(result, 'created_at') and result.created_at:
+                    result_data.append({
+                        'timestamp': result.created_at,
+                        'index': i
+                    })
             
+            if len(result_data) < 15:  # Minimum requirement for quality time series
+                logger.info(f"Insufficient sequential data for time series analysis: {len(result_data)} measurements (need 15+)")
+                return None
+                
             # Sort by timestamp
             result_data.sort(key=lambda x: x['timestamp'])
             
-            # Reduce minimum requirement and window size for smaller datasets
-            min_samples = max(6, len(result_data) // 3)  # At least 6 or 1/3 of data
-            window_size = min(3, max(2, len(result_data) // 4))  # Adaptive window size
-            
-            if len(result_data) < min_samples:
-                logger.info(f"Creating synthetic time series data to supplement {len(result_data)} real samples")
-                return self._create_synthetic_time_series_features(features_df)
-                
-            # Create time series features
+            # Create time series features with proper window size
             time_series_features = []
+            window_size = 5  # Fixed window size for consistent feature dimensions
             
             for i in range(window_size, len(result_data)):
                 # Get window of past measurements
@@ -2601,106 +2598,31 @@ class NetworkDiagnosticEngine:
                             row.get('memory_percent', 0)
                         ])
                 
-                # Pad features if needed
-                while len(window_features) < window_size * 6:
-                    window_features.append(0.0)
-                
-                # Add trend calculations
-                try:
-                    retrans_values = [features_df.iloc[idx].get('tcp_retransmission_rate', 0) for idx in window_indices]
-                    latency_values = [features_df.iloc[idx].get('ping_latency', 0) for idx in window_indices]
-                    error_values = [features_df.iloc[idx].get('total_network_errors', 0) for idx in window_indices if idx < len(features_df)]
+                if len(window_features) == window_size * 6:  # Ensure proper feature count
+                    # Add trend calculations
+                    retrans_trend = self._calculate_trend_slope([features_df.iloc[idx].get('tcp_retransmission_rate', 0) for idx in window_indices])
+                    latency_trend = self._calculate_trend_slope([features_df.iloc[idx].get('ping_latency', 0) for idx in window_indices])
+                    error_trend = self._calculate_trend_slope([features_df.iloc[idx].get('total_network_errors', 0) for idx in window_indices])
                     
-                    retrans_trend = self._calculate_trend_slope(retrans_values)
-                    latency_trend = self._calculate_trend_slope(latency_values)
-                    error_trend = self._calculate_trend_slope(error_values) if error_values else 0.0
-                except Exception:
-                    retrans_trend = latency_trend = error_trend = 0.0
-                
-                window_features.extend([retrans_trend, latency_trend, error_trend])
-                
-                time_series_features.append({
-                    'features': window_features,
-                    'target_index': current_index
-                })
+                    window_features.extend([retrans_trend, latency_trend, error_trend])
+                    
+                    time_series_features.append({
+                        'features': window_features,
+                        'target_index': current_index
+                    })
             
-            logger.info(f"Created {len(time_series_features)} time series features from {len(result_data)} data points")
+            if len(time_series_features) < 10:
+                logger.info(f"Insufficient time series features generated: {len(time_series_features)} (need 10+)")
+                return None
+            
+            logger.info(f"Created {len(time_series_features)} time series features from {len(result_data)} sequential measurements")
             return time_series_features
             
         except Exception as e:
             logger.error(f"Error creating time series features: {str(e)}")
-            # Fallback to synthetic features
-            return self._create_synthetic_time_series_features(features_df)
-    
-    def _create_synthetic_time_series_features(self, features_df):
-        """
-        Create synthetic time series features when insufficient real data is available
-        This ensures the model can still be trained with limited historical data
-        """
-        try:
-            if len(features_df) == 0:
-                return None
-                
-            # Generate synthetic time series data based on actual feature statistics
-            synthetic_features = []
-            window_size = 3  # Fixed window size for synthetic data
-            
-            # Calculate feature statistics from real data
-            feature_stats = {}
-            key_features = ['tcp_retransmission_rate', 'ping_packet_loss', 'ping_latency', 'jitter', 'cpu_percent', 'memory_percent']
-            
-            for feature in key_features:
-                if feature in features_df.columns:
-                    values = features_df[feature].fillna(0)
-                    feature_stats[feature] = {
-                        'mean': float(values.mean()),
-                        'std': float(values.std()) if len(values) > 1 else 0.0,
-                        'min': float(values.min()),
-                        'max': float(values.max())
-                    }
-                else:
-                    feature_stats[feature] = {'mean': 0.0, 'std': 0.0, 'min': 0.0, 'max': 0.0}
-            
-            # Generate at least 15 synthetic time series points
-            num_synthetic = max(15, len(features_df) * 2)
-            
-            for i in range(num_synthetic):
-                window_features = []
-                
-                # Create window of synthetic measurements
-                for w in range(window_size):
-                    for feature in key_features:
-                        stats = feature_stats[feature]
-                        # Add some controlled variation based on real data statistics
-                        if stats['std'] > 0:
-                            # Use normal distribution around mean with controlled std
-                            value = max(stats['min'], min(stats['max'], 
-                                      stats['mean'] + np.random.normal(0, stats['std'] * 0.5)))
-                        else:
-                            # If no variation in real data, use the mean with small random variation
-                            value = stats['mean'] + np.random.normal(0, 0.1)
-                        
-                        window_features.append(float(value))
-                
-                # Add synthetic trend calculations
-                retrans_trend = np.random.normal(0, 0.05)  # Small random trends
-                latency_trend = np.random.normal(0, 0.1)
-                error_trend = np.random.normal(0, 0.03)
-                
-                window_features.extend([retrans_trend, latency_trend, error_trend])
-                
-                synthetic_features.append({
-                    'features': window_features,
-                    'target_index': i % len(features_df)  # Map to existing indices
-                })
-            
-            logger.info(f"Generated {len(synthetic_features)} synthetic time series features")
-            return synthetic_features
-            
-        except Exception as e:
-            logger.error(f"Error creating synthetic time series features: {str(e)}")
             return None
     
+
     def _calculate_trend_slope(self, values):
         """Calculate trend slope for a series of values"""
         try:
@@ -2733,7 +2655,7 @@ class NetworkDiagnosticEngine:
         Train a time series-based failure predictor using a custom approach
         """
         try:
-            if not time_series_data or len(time_series_data) < 5:  # Reduced minimum
+            if not time_series_data or len(time_series_data) < 15:  # Proper minimum for quality
                 return None
             
             # Prepare training data
@@ -2746,7 +2668,7 @@ class NetworkDiagnosticEngine:
                     X_ts.append(ts_point['features'])
                     y_ts.append(failure_risk_scores[target_index])
             
-            if len(X_ts) < 5:  # Reduced minimum
+            if len(X_ts) < 15:  # Proper minimum for quality
                 return None
             
             X_ts = np.array(X_ts)
