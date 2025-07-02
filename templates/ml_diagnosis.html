@@ -254,6 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function runDiagnosis() {
     const testId = {{ test.id }};
+    console.log('Starting diagnosis for test ID:', testId);
     
     fetch(`/api/test/${testId}/diagnose`, {
         method: 'POST',
@@ -261,8 +262,15 @@ function runDiagnosis() {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Received diagnosis data:', data);
         if (data.error) {
             showError(data.error);
         } else {
@@ -270,17 +278,20 @@ function runDiagnosis() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        showError('Failed to run diagnostic analysis');
+        console.error('Error during diagnosis:', error);
+        showError(`Failed to run diagnostic analysis: ${error.message}`);
     });
 }
 
 function displayResults(diagnosis) {
-    // Hide loading status
-    document.getElementById('analysis-status').style.display = 'none';
+    console.log('Displaying results for diagnosis:', diagnosis);
     
-    // Show results
-    document.getElementById('diagnosis-results').style.display = 'block';
+    try {
+        // Hide loading status
+        document.getElementById('analysis-status').style.display = 'none';
+        
+        // Show results
+        document.getElementById('diagnosis-results').style.display = 'block';
     
     // Health Score
     const healthScore = diagnosis.health_score || 0;
@@ -327,8 +338,14 @@ function displayResults(diagnosis) {
     // Feature Importance
     displayFeatureImportance(diagnosis.feature_importance || {});
     
-    // Root Cause Analysis
-    displayRootCauseAnalysis(diagnosis.root_cause_analysis || {});
+        // Root Cause Analysis
+        displayRootCauseAnalysis(diagnosis.root_cause_analysis || {});
+        
+        console.log('Successfully displayed all diagnosis results');
+    } catch (error) {
+        console.error('Error displaying diagnosis results:', error);
+        showError(`Error displaying results: ${error.message}`);
+    }
 }
 
 function displayIssues(issues) {
