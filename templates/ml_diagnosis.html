@@ -326,6 +326,9 @@ function displayResults(diagnosis) {
     
     // Feature Importance
     displayFeatureImportance(diagnosis.feature_importance || {});
+    
+    // Root Cause Analysis
+    displayRootCauseAnalysis(diagnosis.root_cause_analysis || {});
 }
 
 function displayIssues(issues) {
@@ -516,6 +519,281 @@ function displayAnomalyDetails(anomalyDetails, totalAnomalies) {
     }
     
     anomalyContainer.innerHTML = anomalyHtml;
+}
+
+function displayRootCauseAnalysis(rootCauseData) {
+    const rootCauseSection = document.getElementById('root-cause-section');
+    
+    // Check if there's any root cause data
+    if (!rootCauseData || Object.keys(rootCauseData).length === 0) {
+        rootCauseSection.style.display = 'none';
+        return;
+    }
+    
+    // Show the root cause section
+    rootCauseSection.style.display = 'block';
+    
+    // 1. Geolocation Analysis
+    if (rootCauseData.geolocation_analysis) {
+        const geoSection = document.getElementById('geolocation-analysis');
+        const geoDetails = document.getElementById('geolocation-details');
+        
+        geoSection.style.display = 'block';
+        
+        const geo = rootCauseData.geolocation_analysis;
+        let geoHtml = '<div class="row">';
+        
+        if (geo.avg_geographic_distance_km) {
+            geoHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-primary">${geo.avg_geographic_distance_km.toFixed(0)}km</div>
+                    <small class="text-muted">Avg Distance</small>
+                </div>
+            </div>`;
+        }
+        
+        if (geo.avg_network_hops) {
+            geoHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-info">${geo.avg_network_hops.toFixed(1)}</div>
+                    <small class="text-muted">Avg Hops</small>
+                </div>
+            </div>`;
+        }
+        
+        if (geo.countries_traversed) {
+            geoHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-warning">${geo.countries_traversed}</div>
+                    <small class="text-muted">Countries</small>
+                </div>
+            </div>`;
+        }
+        
+        if (geo.inefficient_routes_percent) {
+            geoHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-danger">${geo.inefficient_routes_percent.toFixed(1)}%</div>
+                    <small class="text-muted">Inefficient Routes</small>
+                </div>
+            </div>`;
+        }
+        
+        geoHtml += '</div>';
+        geoDetails.innerHTML = geoHtml;
+    }
+    
+    // 2. GNMI Device Analysis
+    if (rootCauseData.gnmi_analysis) {
+        const gnmiSection = document.getElementById('gnmi-analysis');
+        const gnmiDetails = document.getElementById('gnmi-details');
+        
+        gnmiSection.style.display = 'block';
+        
+        const gnmi = rootCauseData.gnmi_analysis;
+        let gnmiHtml = '<div class="row">';
+        
+        if (gnmi.managed_devices_analyzed) {
+            gnmiHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-info">${gnmi.managed_devices_analyzed}</div>
+                    <small class="text-muted">Devices Analyzed</small>
+                </div>
+            </div>`;
+        }
+        
+        if (gnmi.avg_processing_latency_ms) {
+            gnmiHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-warning">${gnmi.avg_processing_latency_ms.toFixed(1)}ms</div>
+                    <small class="text-muted">Avg Processing Latency</small>
+                </div>
+            </div>`;
+        }
+        
+        if (gnmi.avg_queue_latency_ms) {
+            gnmiHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-primary">${gnmi.avg_queue_latency_ms.toFixed(1)}ms</div>
+                    <small class="text-muted">Avg Queue Latency</small>
+                </div>
+            </div>`;
+        }
+        
+        if (gnmi.high_cpu_devices || gnmi.high_utilization_devices) {
+            const totalIssues = (gnmi.high_cpu_devices || 0) + (gnmi.high_utilization_devices || 0);
+            gnmiHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-danger">${totalIssues}</div>
+                    <small class="text-muted">Devices with Issues</small>
+                </div>
+            </div>`;
+        }
+        
+        gnmiHtml += '</div>';
+        gnmiDetails.innerHTML = gnmiHtml;
+    }
+    
+    // 3. Application Layer Analysis
+    if (rootCauseData.application_layer) {
+        const appSection = document.getElementById('app-layer-analysis');
+        const appDetails = document.getElementById('app-layer-details');
+        
+        appSection.style.display = 'block';
+        
+        const app = rootCauseData.application_layer;
+        let appHtml = '<div class="row">';
+        
+        if (app.avg_dns_resolution_ms) {
+            appHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-info">${app.avg_dns_resolution_ms.toFixed(1)}ms</div>
+                    <small class="text-muted">DNS Resolution</small>
+                </div>
+            </div>`;
+        }
+        
+        if (app.avg_ssl_handshake_ms) {
+            appHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-warning">${app.avg_ssl_handshake_ms.toFixed(1)}ms</div>
+                    <small class="text-muted">SSL Handshake</small>
+                </div>
+            </div>`;
+        }
+        
+        if (app.avg_tcp_connect_ms) {
+            appHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-primary">${app.avg_tcp_connect_ms.toFixed(1)}ms</div>
+                    <small class="text-muted">TCP Connect</small>
+                </div>
+            </div>`;
+        }
+        
+        if (app.avg_ttfb_ms) {
+            appHtml += `<div class="col-md-3">
+                <div class="text-center">
+                    <div class="h5 text-success">${app.avg_ttfb_ms.toFixed(1)}ms</div>
+                    <small class="text-muted">Time to First Byte</small>
+                </div>
+            </div>`;
+        }
+        
+        if (app.primary_bottleneck) {
+            appHtml += `<div class="col-12 mt-2">
+                <div class="alert alert-info">
+                    <strong>Primary Bottleneck:</strong> ${app.primary_bottleneck.replace('_', ' ').toUpperCase()}
+                </div>
+            </div>`;
+        }
+        
+        appHtml += '</div>';
+        appDetails.innerHTML = appHtml;
+    }
+    
+    // 4. Infrastructure Correlation
+    if (rootCauseData.infrastructure) {
+        const infraSection = document.getElementById('infra-analysis');
+        const infraDetails = document.getElementById('infra-details');
+        
+        infraSection.style.display = 'block';
+        
+        const infra = rootCauseData.infrastructure;
+        let infraHtml = '<div class="row">';
+        
+        if (infra.cpu_latency_correlation) {
+            const corrClass = Math.abs(infra.cpu_latency_correlation) > 0.6 ? 'text-danger' : 'text-success';
+            infraHtml += `<div class="col-md-6">
+                <div class="text-center">
+                    <div class="h5 ${corrClass}">${infra.cpu_latency_correlation.toFixed(2)}</div>
+                    <small class="text-muted">CPU-Latency Correlation</small>
+                </div>
+            </div>`;
+        }
+        
+        if (infra.memory_latency_correlation) {
+            const corrClass = Math.abs(infra.memory_latency_correlation) > 0.6 ? 'text-danger' : 'text-success';
+            infraHtml += `<div class="col-md-6">
+                <div class="text-center">
+                    <div class="h5 ${corrClass}">${infra.memory_latency_correlation.toFixed(2)}</div>
+                    <small class="text-muted">Memory-Latency Correlation</small>
+                </div>
+            </div>`;
+        }
+        
+        if (infra.avg_network_errors) {
+            infraHtml += `<div class="col-md-6 mt-2">
+                <div class="text-center">
+                    <div class="h5 text-warning">${infra.avg_network_errors.toFixed(0)}</div>
+                    <small class="text-muted">Avg Network Errors</small>
+                </div>
+            </div>`;
+        }
+        
+        if (infra.system_bottleneck_periods) {
+            infraHtml += `<div class="col-md-6 mt-2">
+                <div class="text-center">
+                    <div class="h5 text-danger">${infra.system_bottleneck_periods}</div>
+                    <small class="text-muted">Resource Pressure Periods</small>
+                </div>
+            </div>`;
+        }
+        
+        infraHtml += '</div>';
+        infraDetails.innerHTML = infraHtml;
+    }
+    
+    // 5. Temporal Patterns
+    if (rootCauseData.temporal_patterns) {
+        const temporalSection = document.getElementById('temporal-analysis');
+        const temporalDetails = document.getElementById('temporal-details');
+        
+        temporalSection.style.display = 'block';
+        
+        const temporal = rootCauseData.temporal_patterns;
+        let temporalHtml = '<div class="row">';
+        
+        if (temporal.poor_performance_hours && temporal.poor_performance_hours.length > 0) {
+            temporalHtml += `<div class="col-md-6">
+                <div class="alert alert-warning">
+                    <strong>Poor Performance Hours:</strong> ${temporal.poor_performance_hours.join(', ')}
+                </div>
+            </div>`;
+        }
+        
+        if (temporal.peak_performance_hours && temporal.peak_performance_hours.length > 0) {
+            temporalHtml += `<div class="col-md-6">
+                <div class="alert alert-success">
+                    <strong>Peak Performance Hours:</strong> ${temporal.peak_performance_hours.join(', ')}
+                </div>
+            </div>`;
+        }
+        
+        if (temporal.performance_trend_percent) {
+            const trendClass = temporal.performance_trend_percent > 0 ? 'text-danger' : 'text-success';
+            const trendDirection = temporal.performance_trend_percent > 0 ? 'degraded' : 'improved';
+            temporalHtml += `<div class="col-12">
+                <div class="text-center">
+                    <div class="h5 ${trendClass}">${Math.abs(temporal.performance_trend_percent).toFixed(1)}%</div>
+                    <small class="text-muted">Performance has ${trendDirection} over time</small>
+                </div>
+            </div>`;
+        }
+        
+        if (temporal.weekday_avg_latency && temporal.weekend_avg_latency) {
+            temporalHtml += `<div class="col-md-6 mt-2">
+                <div class="text-center">
+                    <div class="h6">Weekday: ${temporal.weekday_avg_latency.toFixed(1)}ms</div>
+                    <div class="h6">Weekend: ${temporal.weekend_avg_latency.toFixed(1)}ms</div>
+                    <small class="text-muted">Average Latency Comparison</small>
+                </div>
+            </div>`;
+        }
+        
+        temporalHtml += '</div>';
+        temporalDetails.innerHTML = temporalHtml;
+    }
 }
 
 function showError(message) {

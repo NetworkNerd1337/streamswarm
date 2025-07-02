@@ -105,6 +105,17 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 2, 2025: Enhanced diagnosis engine with comprehensive root cause analysis capabilities
+  - Added five new analysis modules: geolocation correlation, GNMI device correlation, application-layer timing breakdown, infrastructure correlation, and temporal pattern analysis
+  - Enhanced existing "Diagnose Results" feature with detailed root cause identification instead of creating separate model
+  - Geolocation analysis identifies routing inefficiencies, excessive hop counts, and multi-country routing patterns
+  - GNMI analysis correlates managed device performance (processing/queue latency, CPU/interface utilization) with network issues  
+  - Application-layer analysis breaks down DNS, SSL handshake, TCP connect, and TTFB timing to identify bottlenecks
+  - Infrastructure correlation analyzes CPU/memory/disk relationships with network performance using statistical correlation
+  - Temporal pattern analysis identifies peak hours, weekend vs weekday performance differences, and long-term trends
+  - Enhanced diagnosis UI with comprehensive root cause analysis section showing metrics, correlations, and visual insights
+  - Fixed session timeout functionality with proper initialization, cleanup, and admin debugging endpoint
+  - Maintains backward compatibility while providing significantly deeper diagnostic insights through existing workflow
 - July 2, 2025: Implemented comprehensive GNMI certificate-based authentication system
   - Enhanced GNMI client to support multiple authentication methods: password, certificate, and certificate+username
   - Added flexible add_device() method with support for client certificates, private keys, and CA certificates
