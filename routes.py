@@ -57,12 +57,15 @@ def web_auth_required(f):
             # In development mode, bypass authentication
             return f(*args, **kwargs)
         
-        # Normal authentication check
+        # Normal authentication check - use Flask-Login's built-in decorator
         if not current_user.is_authenticated:
             # For API endpoints, return JSON error instead of redirect
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'Authentication required'}), 401
-            return redirect(url_for('login', next=request.url))
+            # Store the current URL for redirect after login
+            from flask import session
+            session['next'] = request.url
+            return redirect(url_for('login'))
         
         return f(*args, **kwargs)
     
