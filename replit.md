@@ -105,6 +105,16 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 2, 2025: Implemented comprehensive GNMI certificate-based authentication system
+  - Enhanced GNMI client to support multiple authentication methods: password, certificate, and certificate+username
+  - Added flexible add_device() method with support for client certificates, private keys, and CA certificates
+  - Implemented enterprise-grade certificate authentication for production GNMI deployments
+  - Added comprehensive certificate generation documentation with OpenSSL commands and security best practices
+  - Enhanced client.py with detailed authentication examples and environment variable configuration patterns
+  - Updated tutorial with complete certificate authentication section including step-by-step certificate generation
+  - Added vendor-specific GNMI port reference guide (Cisco, Juniper, Nokia, Arista, Huawei)
+  - Updated README.md with comprehensive authentication methods documentation and certificate management guidelines
+  - Maintains backward compatibility with existing username/password authentication while providing enterprise PKI integration
 - July 1, 2025: Created professional business case architecture diagram for PowerPoint presentations
   - Developed comprehensive StreamSwarm architecture visualization showing distributed client-server model
   - Added external dependencies (speedtest servers, geolocation services with HTTPS connections)

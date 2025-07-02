@@ -2595,11 +2595,152 @@ python client.py --server http://yourserver:5000
                                         </div>
                                     </div>
                                     
+                                    <!-- Certificate Authentication Section -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header bg-success text-white">
+                                                    <h6 class="mb-0">
+                                                        <i class="fas fa-certificate me-2"></i>
+                                                        Certificate-Based Authentication (Recommended)
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="alert alert-info mb-3">
+                                                        <p class="mb-2 small"><strong>Why Use Certificates?</strong></p>
+                                                        <ul class="small mb-0">
+                                                            <li><strong>Enhanced Security:</strong> No passwords to manage or rotate</li>
+                                                            <li><strong>PKI Integration:</strong> Works with enterprise certificate infrastructure</li>
+                                                            <li><strong>Audit Trail:</strong> Better logging and compliance capabilities</li>
+                                                            <li><strong>Zero Passwords:</strong> Eliminates password-based attack vectors</li>
+                                                        </ul>
+                                                    </div>
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <h6 class="text-success">Step 1: Generate Client Certificates</h6>
+                                                            <div class="bg-dark p-2 rounded mb-3">
+                                                                <code class="text-light small">
+# Create certificate directory<br>
+sudo mkdir -p /etc/streamswarm/certs<br>
+cd /etc/streamswarm/certs<br>
+<br>
+# Generate private key (2048-bit RSA)<br>
+openssl genrsa -out client.key 2048<br>
+<br>
+# Create certificate signing request<br>
+openssl req -new -key client.key -out client.csr \<br>
+&nbsp;&nbsp;-subj "/CN=streamswarm-client/O=YourOrg/C=US"<br>
+<br>
+# Self-signed certificate (365 days)<br>
+openssl x509 -req -days 365 -in client.csr \<br>
+&nbsp;&nbsp;-signkey client.key -out client.crt<br>
+<br>
+# Set proper permissions<br>
+sudo chmod 600 client.key<br>
+sudo chmod 644 client.crt
+                                                                </code>
+                                                            </div>
+                                                            
+                                                            <div class="alert alert-success">
+                                                                <h6><i class="fas fa-info-circle me-2"></i>Enterprise Tip</h6>
+                                                                <p class="mb-0 small">For production, get certificates signed by your enterprise CA rather than using self-signed certificates.</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-md-6">
+                                                            <h6 class="text-success">Step 2: Configure Certificate Authentication</h6>
+                                                            <div class="bg-dark p-2 rounded mb-3">
+                                                                <code class="text-light small">
+# Pure certificate authentication<br>
+self.gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;device_ip="192.168.1.1",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port=830,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auth_method='certificate',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cert_file='/etc/streamswarm/certs/client.crt',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;key_file='/etc/streamswarm/certs/client.key',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ca_file='/etc/streamswarm/certs/ca.crt'<br>
+)<br>
+<br>
+# Certificate + username (some devices)<br>
+self.gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;device_ip="10.0.1.5",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;username="admin",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port=32768,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auth_method='cert_username',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cert_file='/etc/streamswarm/certs/client.crt',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;key_file='/etc/streamswarm/certs/client.key'<br>
+)
+                                                                </code>
+                                                            </div>
+                                                            
+                                                            <h6 class="text-primary">Environment Variable Configuration</h6>
+                                                            <div class="bg-dark p-2 rounded">
+                                                                <code class="text-light small">
+# Set environment variables<br>
+export GNMI_CERT_FILE="/etc/streamswarm/certs/client.crt"<br>
+export GNMI_KEY_FILE="/etc/streamswarm/certs/client.key"<br>
+export GNMI_DEVICE1_IP="192.168.1.1"<br>
+export GNMI_DEVICE1_PORT="830"<br>
+<br>
+# Use in client.py<br>
+import os<br>
+self.gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;device_ip=os.getenv('GNMI_DEVICE1_IP'),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port=int(os.getenv('GNMI_DEVICE1_PORT')),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auth_method='certificate',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cert_file=os.getenv('GNMI_CERT_FILE'),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;key_file=os.getenv('GNMI_KEY_FILE')<br>
+)
+                                                                </code>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="row mt-3">
+                                                        <div class="col-12">
+                                                            <div class="card bg-light">
+                                                                <div class="card-header">
+                                                                    <h6 class="mb-0">Common GNMI Ports by Vendor</h6>
+                                                                </div>
+                                                                <div class="card-body">
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <ul class="small mb-0">
+                                                                                <li><strong>Standard GNMI:</strong> 830</li>
+                                                                                <li><strong>Cisco IOS-XR:</strong> 830, 57344</li>
+                                                                                <li><strong>Juniper:</strong> 32768, 830</li>
+                                                                            </ul>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <ul class="small mb-0">
+                                                                                <li><strong>Nokia SR-OS:</strong> 57400</li>
+                                                                                <li><strong>Arista EOS:</strong> 6030</li>
+                                                                                <li><strong>Huawei:</strong> 830</li>
+                                                                            </ul>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="row mt-3">
                                         <div class="col-12">
                                             <div class="alert alert-warning">
-                                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Security Note</h6>
-                                                <p class="mb-0 small">Store device credentials securely using environment variables or encrypted configuration files. Never hard-code credentials in production deployments.</p>
+                                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Security Best Practices</h6>
+                                                <p class="mb-2 small"><strong>Certificate Management:</strong></p>
+                                                <ul class="small mb-0">
+                                                    <li>Store certificates in secure locations with proper permissions (600 for keys, 644 for certificates)</li>
+                                                    <li>Use environment variables for production deployments</li>
+                                                    <li>Implement certificate rotation policies (recommend 90-365 day expiration)</li>
+                                                    <li>Never commit certificates to version control systems</li>
+                                                    <li>Use enterprise PKI infrastructure for certificate signing in production</li>
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>

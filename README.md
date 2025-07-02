@@ -291,14 +291,69 @@ GNMI enables direct telemetry collection from network devices (routers, switches
 
 ### Setup Requirements
 1. **GNMI-Enabled Devices**: Modern enterprise network equipment with GNMI support
-2. **Network Access**: Client must reach device management interfaces
-3. **Authentication**: Device credentials configured in GNMI analyzer
-4. **Python Package**: `pip install pygnmi` on client systems
+2. **Network Access**: Client must reach device management interfaces (ports 830, 32768, 6030, 57400)
+3. **Authentication**: Multiple methods supported (username/password, certificates, hybrid)
+4. **Python Package**: `pip install pygnmi>=0.8.15` on client systems
+5. **Certificates**: For production deployments, generate or obtain client certificates
+
+### Authentication Methods
+
+StreamSwarm supports multiple GNMI authentication methods for enterprise security requirements:
+
+#### Username/Password Authentication
+```python
+# Traditional authentication - good for testing
+gnmi_analyzer.add_device("192.168.1.1", "admin", "password123", 830)
+```
+
+#### Certificate Authentication (Recommended)
+```python
+# Enhanced security with client certificates
+gnmi_analyzer.add_device(
+    device_ip="192.168.1.1",
+    port=830,
+    auth_method='certificate',
+    cert_file='/etc/streamswarm/certs/client.crt',
+    key_file='/etc/streamswarm/certs/client.key',
+    ca_file='/etc/streamswarm/certs/ca.crt'  # Optional for custom CAs
+)
+```
+
+#### Certificate + Username Authentication
+```python
+# Hybrid approach for specific device requirements
+gnmi_analyzer.add_device(
+    device_ip="10.0.1.5",
+    username="admin",
+    port=32768,
+    auth_method='cert_username',
+    cert_file='/etc/streamswarm/certs/client.crt',
+    key_file='/etc/streamswarm/certs/client.key'
+)
+```
+
+#### Certificate Generation
+```bash
+# Create certificate directory
+sudo mkdir -p /etc/streamswarm/certs
+cd /etc/streamswarm/certs
+
+# Generate client certificate and key
+openssl genrsa -out client.key 2048
+openssl req -new -key client.key -out client.csr \
+  -subj "/CN=streamswarm-client/O=YourOrg/C=US"
+openssl x509 -req -days 365 -in client.csr \
+  -signkey client.key -out client.crt
+
+# Set secure permissions
+sudo chmod 600 client.key
+sudo chmod 644 client.crt
+```
 
 ### How It Works
 1. Client performs standard traceroute to discover network path
-2. For each hop with GNMI access, connects to collect real-time telemetry
-3. Analyzes device performance metrics and interface statistics
+2. For each hop with GNMI access, connects using configured authentication method
+3. Analyzes device performance metrics and interface statistics  
 4. Results displayed as "GNMI Managed Infrastructure Analysis" in test results
 5. Graceful fallback when GNMI unavailable (tests continue normally)
 
