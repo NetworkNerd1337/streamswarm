@@ -549,22 +549,74 @@ class NetworkDiagnosticEngine:
     
     def _rule_based_analysis(self, features_df: pd.DataFrame, results: List[TestResult]) -> Dict[str, Any]:
         """
-        Rule-based diagnostic analysis
+        Enhanced rule-based diagnostic analysis with comprehensive root cause analysis
         """
         issues = []
         recommendations = []
+        root_cause_analysis = {}
         
-        # Network performance rules
+        # Core network performance analysis
         avg_latency = features_df['ping_latency'].mean()
         avg_packet_loss = features_df['ping_packet_loss'].mean()
         avg_jitter = features_df['jitter'].mean()
         
+        # 1. GEOLOCATION PATH ANALYSIS CORRELATION
+        geolocation_insights = self._analyze_geolocation_correlation(results, avg_latency, avg_packet_loss)
+        if geolocation_insights:
+            issues.extend(geolocation_insights['issues'])
+            recommendations.extend(geolocation_insights['recommendations'])
+            root_cause_analysis['geolocation_analysis'] = geolocation_insights['analysis']
+        
+        # 2. GNMI DEVICE PERFORMANCE CORRELATION
+        gnmi_insights = self._analyze_gnmi_correlation(results, avg_latency)
+        if gnmi_insights:
+            issues.extend(gnmi_insights['issues'])
+            recommendations.extend(gnmi_insights['recommendations'])
+            root_cause_analysis['gnmi_analysis'] = gnmi_insights['analysis']
+        
+        # 3. APPLICATION-LAYER TIMING BREAKDOWN
+        app_layer_insights = self._analyze_application_layer_timing(features_df, results)
+        if app_layer_insights:
+            issues.extend(app_layer_insights['issues'])
+            recommendations.extend(app_layer_insights['recommendations'])
+            root_cause_analysis['application_layer'] = app_layer_insights['analysis']
+        
+        # 4. INFRASTRUCTURE CORRELATION ANALYSIS
+        infra_insights = self._analyze_infrastructure_correlation(features_df, avg_latency, avg_packet_loss)
+        if infra_insights:
+            issues.extend(infra_insights['issues'])
+            recommendations.extend(infra_insights['recommendations'])
+            root_cause_analysis['infrastructure'] = infra_insights['analysis']
+        
+        # 5. TEMPORAL PATTERN ANALYSIS
+        temporal_insights = self._analyze_temporal_patterns(results, features_df)
+        if temporal_insights:
+            issues.extend(temporal_insights['issues'])
+            recommendations.extend(temporal_insights['recommendations'])
+            root_cause_analysis['temporal_patterns'] = temporal_insights['analysis']
+        
+        # Original network performance rules (enhanced with root cause context)
         if avg_latency > 100:
+            severity = 'high' if avg_latency > 200 else 'medium'
+            # Determine root cause based on analysis
+            root_causes = []
+            if geolocation_insights and 'inefficient_routing' in geolocation_insights['analysis']:
+                root_causes.append('inefficient geographic routing')
+            if gnmi_insights and 'device_bottleneck' in gnmi_insights['analysis']:
+                root_causes.append('managed device bottleneck')
+            if infra_insights and 'system_correlation' in infra_insights['analysis']:
+                root_causes.append('system resource constraints')
+            
+            description = f'High average latency: {avg_latency:.1f}ms'
+            if root_causes:
+                description += f' (Root causes: {", ".join(root_causes)})'
+            
             issues.append({
                 'type': 'high_latency',
-                'severity': 'high' if avg_latency > 200 else 'medium',
-                'description': f'High average latency: {avg_latency:.1f}ms',
-                'recommendation': 'Check network routing and bandwidth utilization'
+                'severity': severity,
+                'description': description,
+                'recommendation': 'Check network routing and bandwidth utilization',
+                'root_causes': root_causes
             })
         
         if avg_packet_loss > 1:
@@ -583,7 +635,7 @@ class NetworkDiagnosticEngine:
                 'recommendation': 'Consider QoS configuration for time-sensitive applications'
             })
         
-        # System performance rules
+        # System performance rules (enhanced with correlation)
         avg_cpu = features_df['cpu_percent'].mean()
         avg_memory = features_df['memory_percent'].mean()
         
@@ -674,8 +726,567 @@ class NetworkDiagnosticEngine:
         
         return {
             'issues_detected': issues,
-            'recommendations': recommendations
+            'recommendations': recommendations,
+            'root_cause_analysis': root_cause_analysis
         }
+
+    def _analyze_geolocation_correlation(self, results: List[TestResult], avg_latency: float, avg_packet_loss: float) -> Dict[str, Any]:
+        """
+        Analyze geolocation path data to identify routing inefficiencies and geographic bottlenecks
+        """
+        import json
+        
+        issues = []
+        recommendations = []
+        analysis = {}
+        
+        try:
+            # Extract geolocation data from test results
+            path_analyses = []
+            for result in results:
+                if hasattr(result, 'path_analysis') and result.path_analysis:
+                    try:
+                        if isinstance(result.path_analysis, str):
+                            path_data = json.loads(result.path_analysis)
+                        else:
+                            path_data = result.path_analysis
+                        path_analyses.append(path_data)
+                    except (json.JSONDecodeError, TypeError):
+                        continue
+            
+            if not path_analyses:
+                return None
+            
+            # Analyze geographic efficiency
+            total_distance = 0
+            total_hops = 0
+            inefficient_routes = 0
+            countries_traversed = set()
+            
+            for path_data in path_analyses:
+                if 'total_distance_km' in path_data and path_data['total_distance_km']:
+                    total_distance += path_data['total_distance_km']
+                if 'total_hops' in path_data and path_data['total_hops']:
+                    total_hops += path_data['total_hops']
+                if 'geographic_efficiency' in path_data and path_data['geographic_efficiency'] < 70:
+                    inefficient_routes += 1
+                if 'countries_traversed' in path_data:
+                    countries_traversed.update(path_data['countries_traversed'])
+            
+            avg_distance = total_distance / len(path_analyses) if path_analyses else 0
+            avg_hops = total_hops / len(path_analyses) if path_analyses else 0
+            
+            analysis.update({
+                'avg_geographic_distance_km': avg_distance,
+                'avg_network_hops': avg_hops,
+                'countries_traversed': len(countries_traversed),
+                'inefficient_routes_percent': (inefficient_routes / len(path_analyses)) * 100 if path_analyses else 0
+            })
+            
+            # Identify inefficient routing patterns
+            if inefficient_routes > len(path_analyses) * 0.3:  # 30% of routes are inefficient
+                analysis['inefficient_routing'] = True
+                issues.append({
+                    'type': 'inefficient_routing',
+                    'severity': 'medium',
+                    'description': f'{inefficient_routes} of {len(path_analyses)} routes show geographic inefficiency',
+                    'recommendation': 'Review BGP routing policies and consider traffic engineering'
+                })
+            
+            # Long-distance routing detection
+            if avg_distance > 5000:  # > 5000km average
+                issues.append({
+                    'type': 'long_distance_routing',
+                    'severity': 'medium',
+                    'description': f'Average routing distance of {avg_distance:.0f}km indicates international paths',
+                    'recommendation': 'Consider regional CDN deployment or local caching solutions'
+                })
+            
+            # Excessive hop count
+            if avg_hops > 15:
+                issues.append({
+                    'type': 'excessive_hops',
+                    'severity': 'medium',
+                    'description': f'High average hop count of {avg_hops:.1f} may indicate suboptimal routing',
+                    'recommendation': 'Investigate peering agreements and direct interconnects'
+                })
+            
+            # Multi-country routing
+            if len(countries_traversed) > 3:
+                issues.append({
+                    'type': 'multi_country_routing',
+                    'severity': 'low',
+                    'description': f'Traffic traverses {len(countries_traversed)} countries, increasing regulatory risk',
+                    'recommendation': 'Consider data sovereignty requirements and direct peering'
+                })
+            
+            return {
+                'issues': issues,
+                'recommendations': recommendations,
+                'analysis': analysis
+            }
+            
+        except Exception as e:
+            logger.error(f"Geolocation correlation analysis failed: {e}")
+            return None
+
+    def _analyze_gnmi_correlation(self, results: List[TestResult], avg_latency: float) -> Dict[str, Any]:
+        """
+        Analyze GNMI device performance data to identify managed infrastructure bottlenecks
+        """
+        import json
+        
+        issues = []
+        recommendations = []
+        analysis = {}
+        
+        try:
+            # Extract GNMI analysis data from test results
+            gnmi_analyses = []
+            for result in results:
+                if hasattr(result, 'gnmi_path_analysis') and result.gnmi_path_analysis:
+                    try:
+                        if isinstance(result.gnmi_path_analysis, str):
+                            gnmi_data = json.loads(result.gnmi_path_analysis)
+                        else:
+                            gnmi_data = result.gnmi_path_analysis
+                        gnmi_analyses.append(gnmi_data)
+                    except (json.JSONDecodeError, TypeError):
+                        continue
+            
+            if not gnmi_analyses:
+                return None
+            
+            # Analyze managed device performance
+            device_metrics = {}
+            total_processing_latency = 0
+            total_queue_latency = 0
+            high_cpu_devices = 0
+            high_utilization_devices = 0
+            
+            for gnmi_data in gnmi_analyses:
+                if 'managed_hops' in gnmi_data:
+                    for hop in gnmi_data['managed_hops']:
+                        device_ip = hop.get('device_ip', 'unknown')
+                        
+                        if device_ip not in device_metrics:
+                            device_metrics[device_ip] = {
+                                'processing_latencies': [],
+                                'queue_latencies': [],
+                                'cpu_utilizations': [],
+                                'interface_utilizations': []
+                            }
+                        
+                        # Collect metrics
+                        if 'processing_latency_ms' in hop:
+                            device_metrics[device_ip]['processing_latencies'].append(hop['processing_latency_ms'])
+                            total_processing_latency += hop['processing_latency_ms']
+                        
+                        if 'queue_latency_ms' in hop:
+                            device_metrics[device_ip]['queue_latencies'].append(hop['queue_latency_ms'])
+                            total_queue_latency += hop['queue_latency_ms']
+                        
+                        if 'cpu_utilization_percent' in hop and hop['cpu_utilization_percent'] > 80:
+                            high_cpu_devices += 1
+                        
+                        if 'interface_utilization_percent' in hop and hop['interface_utilization_percent'] > 85:
+                            high_utilization_devices += 1
+            
+            total_devices = len(device_metrics)
+            avg_processing_latency = total_processing_latency / total_devices if total_devices > 0 else 0
+            avg_queue_latency = total_queue_latency / total_devices if total_devices > 0 else 0
+            
+            analysis.update({
+                'managed_devices_analyzed': total_devices,
+                'avg_processing_latency_ms': avg_processing_latency,
+                'avg_queue_latency_ms': avg_queue_latency,
+                'high_cpu_devices': high_cpu_devices,
+                'high_utilization_devices': high_utilization_devices
+            })
+            
+            # Identify device bottlenecks
+            if avg_processing_latency > 10:  # > 10ms processing latency
+                analysis['device_bottleneck'] = True
+                issues.append({
+                    'type': 'device_processing_bottleneck',
+                    'severity': 'high' if avg_processing_latency > 25 else 'medium',
+                    'description': f'High average device processing latency: {avg_processing_latency:.1f}ms',
+                    'recommendation': 'Review device CPU utilization and optimize forwarding pipeline'
+                })
+            
+            # Queue bottlenecks
+            if avg_queue_latency > 5:  # > 5ms queue latency
+                issues.append({
+                    'type': 'queue_bottleneck',
+                    'severity': 'medium',
+                    'description': f'Elevated queue latency: {avg_queue_latency:.1f}ms average',
+                    'recommendation': 'Review QoS policies and buffer management configuration'
+                })
+            
+            # Resource utilization issues
+            if high_cpu_devices > 0:
+                issues.append({
+                    'type': 'high_device_cpu',
+                    'severity': 'high',
+                    'description': f'{high_cpu_devices} managed devices showing high CPU utilization',
+                    'recommendation': 'Investigate device workload and consider load balancing'
+                })
+            
+            if high_utilization_devices > 0:
+                issues.append({
+                    'type': 'high_interface_utilization',
+                    'severity': 'medium',
+                    'description': f'{high_utilization_devices} interfaces showing high utilization',
+                    'recommendation': 'Consider interface upgrades or traffic load balancing'
+                })
+            
+            return {
+                'issues': issues,
+                'recommendations': recommendations,
+                'analysis': analysis
+            }
+            
+        except Exception as e:
+            logger.error(f"GNMI correlation analysis failed: {e}")
+            return None
+
+    def _analyze_application_layer_timing(self, features_df: pd.DataFrame, results: List[TestResult]) -> Dict[str, Any]:
+        """
+        Analyze application-layer timing breakdown (DNS, SSL handshake, TTFB) for bottleneck identification
+        """
+        issues = []
+        recommendations = []
+        analysis = {}
+        
+        try:
+            # DNS resolution timing analysis
+            if 'dns_resolution_time' in features_df.columns:
+                avg_dns_time = features_df['dns_resolution_time'].mean()
+                max_dns_time = features_df['dns_resolution_time'].max()
+                
+                analysis['avg_dns_resolution_ms'] = avg_dns_time
+                analysis['max_dns_resolution_ms'] = max_dns_time
+                
+                if avg_dns_time > 100:  # > 100ms DNS resolution
+                    issues.append({
+                        'type': 'slow_dns_resolution',
+                        'severity': 'high' if avg_dns_time > 500 else 'medium',
+                        'description': f'Slow DNS resolution: {avg_dns_time:.1f}ms average',
+                        'recommendation': 'Consider local DNS caching or alternative DNS providers'
+                    })
+            
+            # SSL/TLS handshake timing analysis
+            if 'ssl_handshake_time' in features_df.columns:
+                avg_ssl_time = features_df['ssl_handshake_time'].mean()
+                max_ssl_time = features_df['ssl_handshake_time'].max()
+                
+                analysis['avg_ssl_handshake_ms'] = avg_ssl_time
+                analysis['max_ssl_handshake_ms'] = max_ssl_time
+                
+                if avg_ssl_time > 200:  # > 200ms SSL handshake
+                    issues.append({
+                        'type': 'slow_ssl_handshake',
+                        'severity': 'high' if avg_ssl_time > 500 else 'medium',
+                        'description': f'Slow SSL handshake: {avg_ssl_time:.1f}ms average',
+                        'recommendation': 'Review certificate chain length and consider session resumption'
+                    })
+            
+            # Time to First Byte (TTFB) analysis
+            if 'ttfb' in features_df.columns:
+                avg_ttfb = features_df['ttfb'].mean()
+                max_ttfb = features_df['ttfb'].max()
+                
+                analysis['avg_ttfb_ms'] = avg_ttfb
+                analysis['max_ttfb_ms'] = max_ttfb
+                
+                if avg_ttfb > 500:  # > 500ms TTFB
+                    issues.append({
+                        'type': 'slow_ttfb',
+                        'severity': 'high' if avg_ttfb > 1000 else 'medium',
+                        'description': f'Slow time to first byte: {avg_ttfb:.1f}ms average',
+                        'recommendation': 'Investigate server response time and database query optimization'
+                    })
+            
+            # TCP connection timing analysis
+            if 'tcp_connect_time' in features_df.columns:
+                avg_tcp_connect = features_df['tcp_connect_time'].mean()
+                
+                analysis['avg_tcp_connect_ms'] = avg_tcp_connect
+                
+                if avg_tcp_connect > 100:  # > 100ms TCP connect
+                    issues.append({
+                        'type': 'slow_tcp_connect',
+                        'severity': 'medium',
+                        'description': f'Slow TCP connection: {avg_tcp_connect:.1f}ms average',
+                        'recommendation': 'Review network routing and server TCP configuration'
+                    })
+            
+            # Calculate timing breakdown percentages
+            total_app_time = 0
+            if 'dns_resolution_time' in analysis:
+                total_app_time += analysis['avg_dns_resolution_ms']
+            if 'ssl_handshake_time' in analysis:
+                total_app_time += analysis['avg_ssl_handshake_ms']
+            if 'tcp_connect_time' in analysis:
+                total_app_time += analysis['avg_tcp_connect_ms']
+            
+            if total_app_time > 0:
+                analysis['application_layer_overhead_ms'] = total_app_time
+                
+                # Identify dominant component
+                if 'avg_dns_resolution_ms' in analysis and analysis['avg_dns_resolution_ms'] / total_app_time > 0.5:
+                    analysis['primary_bottleneck'] = 'dns_resolution'
+                elif 'avg_ssl_handshake_ms' in analysis and analysis['avg_ssl_handshake_ms'] / total_app_time > 0.5:
+                    analysis['primary_bottleneck'] = 'ssl_handshake'
+                elif 'avg_tcp_connect_ms' in analysis and analysis['avg_tcp_connect_ms'] / total_app_time > 0.5:
+                    analysis['primary_bottleneck'] = 'tcp_connection'
+            
+            return {
+                'issues': issues,
+                'recommendations': recommendations,
+                'analysis': analysis
+            }
+            
+        except Exception as e:
+            logger.error(f"Application layer timing analysis failed: {e}")
+            return None
+
+    def _analyze_infrastructure_correlation(self, features_df: pd.DataFrame, avg_latency: float, avg_packet_loss: float) -> Dict[str, Any]:
+        """
+        Analyze correlation between infrastructure metrics and network performance
+        """
+        issues = []
+        recommendations = []
+        analysis = {}
+        
+        try:
+            # CPU correlation analysis
+            if 'cpu_percent' in features_df.columns:
+                cpu_corr_latency = features_df['cpu_percent'].corr(features_df['ping_latency'])
+                cpu_corr_loss = features_df['cpu_percent'].corr(features_df['ping_packet_loss'])
+                
+                analysis['cpu_latency_correlation'] = cpu_corr_latency
+                analysis['cpu_packet_loss_correlation'] = cpu_corr_loss
+                
+                if abs(cpu_corr_latency) > 0.6:  # Strong correlation
+                    analysis['system_correlation'] = True
+                    issues.append({
+                        'type': 'cpu_network_correlation',
+                        'severity': 'medium',
+                        'description': f'Strong correlation ({cpu_corr_latency:.2f}) between CPU usage and latency',
+                        'recommendation': 'Investigate system load impact on network stack performance'
+                    })
+            
+            # Memory correlation analysis
+            if 'memory_percent' in features_df.columns:
+                mem_corr_latency = features_df['memory_percent'].corr(features_df['ping_latency'])
+                mem_corr_loss = features_df['memory_percent'].corr(features_df['ping_packet_loss'])
+                
+                analysis['memory_latency_correlation'] = mem_corr_latency
+                analysis['memory_packet_loss_correlation'] = mem_corr_loss
+                
+                if abs(mem_corr_latency) > 0.6:  # Strong correlation
+                    issues.append({
+                        'type': 'memory_network_correlation',
+                        'severity': 'medium',
+                        'description': f'Strong correlation ({mem_corr_latency:.2f}) between memory usage and latency',
+                        'recommendation': 'Review memory pressure impact on networking subsystem'
+                    })
+            
+            # Disk I/O correlation analysis
+            if 'disk_percent' in features_df.columns:
+                disk_corr_latency = features_df['disk_percent'].corr(features_df['ping_latency'])
+                
+                analysis['disk_latency_correlation'] = disk_corr_latency
+                
+                if abs(disk_corr_latency) > 0.5:  # Moderate correlation
+                    issues.append({
+                        'type': 'disk_network_correlation',
+                        'severity': 'low',
+                        'description': f'Correlation ({disk_corr_latency:.2f}) between disk usage and latency',
+                        'recommendation': 'Consider I/O scheduling impact on network performance'
+                    })
+            
+            # Network interface correlation
+            if 'total_network_errors' in features_df.columns:
+                avg_errors = features_df['total_network_errors'].mean()
+                
+                analysis['avg_network_errors'] = avg_errors
+                
+                if avg_errors > 100:  # High error rate
+                    issues.append({
+                        'type': 'network_interface_errors',
+                        'severity': 'high' if avg_errors > 1000 else 'medium',
+                        'description': f'High network interface error rate: {avg_errors:.0f} errors/measurement',
+                        'recommendation': 'Investigate network driver issues and hardware health'
+                    })
+            
+            # Cross-metric analysis for system bottlenecks
+            high_resource_periods = 0
+            total_measurements = len(features_df)
+            
+            for _, row in features_df.iterrows():
+                resource_pressure = 0
+                if row.get('cpu_percent', 0) > 80:
+                    resource_pressure += 1
+                if row.get('memory_percent', 0) > 85:
+                    resource_pressure += 1
+                if row.get('disk_percent', 0) > 90:
+                    resource_pressure += 1
+                
+                if resource_pressure >= 2:  # Multiple resources under pressure
+                    high_resource_periods += 1
+            
+            if high_resource_periods > total_measurements * 0.2:  # > 20% of time
+                analysis['system_bottleneck_periods'] = high_resource_periods
+                issues.append({
+                    'type': 'systemic_resource_pressure',
+                    'severity': 'high',
+                    'description': f'System under resource pressure {high_resource_periods}/{total_measurements} measurements',
+                    'recommendation': 'Consider system upgrade or workload optimization'
+                })
+            
+            return {
+                'issues': issues,
+                'recommendations': recommendations,
+                'analysis': analysis
+            }
+            
+        except Exception as e:
+            logger.error(f"Infrastructure correlation analysis failed: {e}")
+            return None
+
+    def _analyze_temporal_patterns(self, results: List[TestResult], features_df: pd.DataFrame) -> Dict[str, Any]:
+        """
+        Analyze temporal patterns in network performance to identify time-based issues
+        """
+        issues = []
+        recommendations = []
+        analysis = {}
+        
+        try:
+            from datetime import datetime, timedelta
+            
+            # Group results by time periods
+            hourly_performance = {}
+            daily_performance = {}
+            
+            for result in results:
+                if not result.timestamp:
+                    continue
+                
+                hour = result.timestamp.hour
+                day = result.timestamp.strftime('%A')
+                
+                if hour not in hourly_performance:
+                    hourly_performance[hour] = {'latencies': [], 'packet_losses': []}
+                if day not in daily_performance:
+                    daily_performance[day] = {'latencies': [], 'packet_losses': []}
+                
+                if hasattr(result, 'ping_latency') and result.ping_latency:
+                    hourly_performance[hour]['latencies'].append(result.ping_latency)
+                    daily_performance[day]['latencies'].append(result.ping_latency)
+                
+                if hasattr(result, 'ping_packet_loss') and result.ping_packet_loss:
+                    hourly_performance[hour]['packet_losses'].append(result.ping_packet_loss)
+                    daily_performance[day]['packet_losses'].append(result.ping_packet_loss)
+            
+            # Analyze hourly patterns
+            peak_hours = []
+            off_peak_hours = []
+            
+            for hour, data in hourly_performance.items():
+                if data['latencies']:
+                    avg_latency = sum(data['latencies']) / len(data['latencies'])
+                    
+                    if avg_latency > features_df['ping_latency'].mean() * 1.5:  # 50% above average
+                        peak_hours.append(hour)
+                    elif avg_latency < features_df['ping_latency'].mean() * 0.7:  # 30% below average
+                        off_peak_hours.append(hour)
+            
+            analysis['peak_performance_hours'] = sorted(off_peak_hours)
+            analysis['poor_performance_hours'] = sorted(peak_hours)
+            
+            if peak_hours:
+                issues.append({
+                    'type': 'peak_hour_degradation',
+                    'severity': 'medium',
+                    'description': f'Performance degradation during hours: {sorted(peak_hours)}',
+                    'recommendation': 'Investigate traffic patterns and consider load balancing during peak hours'
+                })
+            
+            # Analyze weekly patterns
+            weekend_days = ['Saturday', 'Sunday']
+            weekday_latencies = []
+            weekend_latencies = []
+            
+            for day, data in daily_performance.items():
+                if data['latencies']:
+                    avg_latency = sum(data['latencies']) / len(data['latencies'])
+                    
+                    if day in weekend_days:
+                        weekend_latencies.append(avg_latency)
+                    else:
+                        weekday_latencies.append(avg_latency)
+            
+            if weekday_latencies and weekend_latencies:
+                weekday_avg = sum(weekday_latencies) / len(weekday_latencies)
+                weekend_avg = sum(weekend_latencies) / len(weekend_latencies)
+                
+                analysis['weekday_avg_latency'] = weekday_avg
+                analysis['weekend_avg_latency'] = weekend_avg
+                
+                if weekday_avg > weekend_avg * 1.3:  # 30% higher on weekdays
+                    issues.append({
+                        'type': 'weekday_performance_impact',
+                        'severity': 'low',
+                        'description': f'Weekday performance {(weekday_avg/weekend_avg-1)*100:.1f}% worse than weekends',
+                        'recommendation': 'Consider business hour traffic management and capacity planning'
+                    })
+            
+            # Analyze performance trends over time
+            if len(results) >= 10:
+                # Split into early and late periods
+                sorted_results = sorted(results, key=lambda x: x.timestamp if x.timestamp else datetime.min)
+                mid_point = len(sorted_results) // 2
+                
+                early_latencies = []
+                late_latencies = []
+                
+                for i, result in enumerate(sorted_results):
+                    if hasattr(result, 'ping_latency') and result.ping_latency:
+                        if i < mid_point:
+                            early_latencies.append(result.ping_latency)
+                        else:
+                            late_latencies.append(result.ping_latency)
+                
+                if early_latencies and late_latencies:
+                    early_avg = sum(early_latencies) / len(early_latencies)
+                    late_avg = sum(late_latencies) / len(late_latencies)
+                    
+                    trend_change = (late_avg - early_avg) / early_avg * 100
+                    analysis['performance_trend_percent'] = trend_change
+                    
+                    if abs(trend_change) > 20:  # > 20% change
+                        severity = 'high' if abs(trend_change) > 50 else 'medium'
+                        direction = 'degraded' if trend_change > 0 else 'improved'
+                        
+                        issues.append({
+                            'type': 'performance_trend',
+                            'severity': severity,
+                            'description': f'Performance has {direction} by {abs(trend_change):.1f}% over time',
+                            'recommendation': 'Investigate long-term performance trends and capacity planning'
+                        })
+            
+            return {
+                'issues': issues,
+                'recommendations': recommendations,
+                'analysis': analysis
+            }
+            
+        except Exception as e:
+            logger.error(f"Temporal pattern analysis failed: {e}")
+            return None
     
     def _analyze_specific_anomalies(self, anomalies, anomaly_scores, features_df, results, original_features_df):
         """
