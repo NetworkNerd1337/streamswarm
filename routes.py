@@ -1680,6 +1680,26 @@ def predict_performance():
         logging.error(f"Error predicting performance: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/predict-failure', methods=['POST'])
+@web_auth_required
+def predict_network_failure():
+    """Predict network failure probability based on current metrics"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No metrics provided'}), 400
+        
+        current_metrics = data.get('current_metrics', {})
+        time_horizon_hours = data.get('time_horizon_hours', 24)
+        
+        prediction = diagnostic_engine.predict_network_failure(current_metrics, time_horizon_hours)
+        return jsonify(prediction)
+        
+    except Exception as e:
+        logging.error(f"Error predicting network failure: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/capacity-trends')
 @web_auth_required
 def capacity_trends():

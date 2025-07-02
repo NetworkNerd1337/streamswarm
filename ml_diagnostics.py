@@ -1672,7 +1672,7 @@ class NetworkDiagnosticEngine:
         status['total_training_samples'] = total_results
         
         # Check for model files and get timestamps
-        model_files = ['anomaly_model.joblib', 'health_classifier.joblib', 'performance_predictor.joblib']
+        model_files = ['anomaly_detector.joblib', 'health_classifier.joblib', 'performance_predictor.joblib', 'failure_predictor.joblib']
         for filename in model_files:
             filepath = os.path.join(self.models_dir, filename)
             if os.path.exists(filepath):

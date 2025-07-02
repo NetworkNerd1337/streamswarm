@@ -180,6 +180,23 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Network Failure Prediction</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> Gradient Boosting<br>
+                                        <strong>Purpose:</strong> Predict network failure probability<br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if 'failure_predictor' in model_status.models_available else 'secondary' }}">
+                                            {{ 'Trained' if 'failure_predictor' in model_status.models_available else 'Not Trained' }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
