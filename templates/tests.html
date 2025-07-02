@@ -392,10 +392,13 @@
 document.getElementById('createTestForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Get selected clients
+    // Get selected clients (exclude the recurring checkbox)
     const selectedClients = [];
     document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-        selectedClients.push(parseInt(checkbox.value));
+        // Only include checkboxes that have a numeric value (client checkboxes)
+        if (checkbox.value && !isNaN(parseInt(checkbox.value))) {
+            selectedClients.push(parseInt(checkbox.value));
+        }
     });
     
     if (selectedClients.length === 0) {
