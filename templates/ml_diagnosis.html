@@ -719,7 +719,7 @@ function displayRootCauseAnalysis(rootCauseData) {
         const infra = rootCauseData.infrastructure;
         let infraHtml = '<div class="row">';
         
-        if (infra.cpu_latency_correlation) {
+        if (infra.cpu_latency_correlation !== null && infra.cpu_latency_correlation !== undefined) {
             const corrClass = Math.abs(infra.cpu_latency_correlation) > 0.6 ? 'text-danger' : 'text-success';
             infraHtml += `<div class="col-md-6">
                 <div class="text-center">
@@ -729,7 +729,7 @@ function displayRootCauseAnalysis(rootCauseData) {
             </div>`;
         }
         
-        if (infra.memory_latency_correlation) {
+        if (infra.memory_latency_correlation !== null && infra.memory_latency_correlation !== undefined) {
             const corrClass = Math.abs(infra.memory_latency_correlation) > 0.6 ? 'text-danger' : 'text-success';
             infraHtml += `<div class="col-md-6">
                 <div class="text-center">

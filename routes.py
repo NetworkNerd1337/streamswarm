@@ -1590,13 +1590,30 @@ def diagnose_test(test_id):
                          test=test, 
                          results_count=results_count)
 
+def clean_diagnosis_data(data):
+    """Clean diagnosis data for JSON serialization by handling NaN values"""
+    import math
+    
+    if isinstance(data, dict):
+        return {k: clean_diagnosis_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [clean_diagnosis_data(item) for item in data]
+    elif isinstance(data, float):
+        if math.isnan(data) or math.isinf(data):
+            return None
+        return data
+    else:
+        return data
+
 @app.route('/api/test/<int:test_id>/diagnose', methods=['POST'])
 @web_auth_required
 def api_diagnose_test(test_id):
     """API endpoint to run ML diagnosis on test results"""
     try:
         diagnosis = diagnostic_engine.diagnose_test(test_id)
-        return jsonify(diagnosis)
+        # Clean the data to handle NaN values that can't be JSON serialized
+        clean_diagnosis = clean_diagnosis_data(diagnosis)
+        return jsonify(clean_diagnosis)
     except Exception as e:
         logging.error(f"Error running diagnosis: {str(e)}")
         return jsonify({'error': str(e)}), 500
