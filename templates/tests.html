@@ -19,10 +19,16 @@
             </div>
         </div>
         <div class="col-auto">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTestModal">
-                <i class="fas fa-plus me-1"></i>
-                Create Test
-            </button>
+            <div class="btn-group" role="group">
+                <button id="bulkDeleteBtn" class="btn btn-danger me-2" style="display: none;" onclick="confirmBulkDelete()">
+                    <i class="fas fa-trash me-1"></i>
+                    Delete Selected (<span id="selectedCount">0</span>)
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTestModal">
+                    <i class="fas fa-plus me-1"></i>
+                    Create Test
+                </button>
+            </div>
         </div>
     </div>
 
@@ -75,6 +81,9 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th width="40px">
+                                        <input type="checkbox" id="selectAll" class="form-check-input" title="Select all tests">
+                                    </th>
                                     <th>Status</th>
                                     <th>Test Name</th>
                                     <th>Destination</th>
@@ -88,6 +97,9 @@
                             <tbody>
                                 {% for test in tests %}
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input test-checkbox" value="{{ test.id }}" data-test-id="{{ test.id }}">
+                                    </td>
                                     <td>
                                         {% if test.status == 'running' %}
                                             <span class="badge bg-success">
@@ -602,6 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSearch();
     updateTestCount();
     setupAutoRefresh();
+    setupMultiSelect();
 });
 
 // Setup infinite scroll functionality
@@ -862,6 +875,9 @@ function createTestRow(test) {
     const scheduled_display = test.scheduled_time || 'Immediate';
     
     row.innerHTML = `
+        <td>
+            <input type="checkbox" class="form-check-input test-checkbox" value="${test.id}" data-test-id="${test.id}">
+        </td>
         <td>${statusBadge}</td>
         <td>
             <strong>${test.name}</strong>
@@ -980,8 +996,8 @@ function updateTestStatusesInDOM(tests) {
         const testRow = findTestRowById(test.id);
         if (!testRow) return;
         
-        // Update status badge
-        const statusCell = testRow.querySelector('td:first-child');
+        // Update status badge (now in second column due to checkbox)
+        const statusCell = testRow.querySelector('td:nth-child(2)');
         if (statusCell) {
             let statusBadge = '';
             if (test.status === 'running') {
@@ -1022,6 +1038,160 @@ function findTestRowById(testId) {
         }
     }
     return null;
+}
+
+// ================================
+// MULTI-SELECT DELETE FUNCTIONS
+// ================================
+
+// Setup multi-select functionality
+function setupMultiSelect() {
+    // Select all checkbox functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const testCheckboxes = document.querySelectorAll('.test-checkbox');
+            testCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkDeleteButton();
+        });
+    }
+    
+    // Listen for individual checkbox changes
+    document.addEventListener('change', function(event) {
+        if (event.target.classList.contains('test-checkbox')) {
+            updateSelectAllState();
+            updateBulkDeleteButton();
+        }
+    });
+}
+
+// Update select all checkbox state based on individual selections
+function updateSelectAllState() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const testCheckboxes = document.querySelectorAll('.test-checkbox');
+    const checkedCheckboxes = document.querySelectorAll('.test-checkbox:checked');
+    
+    if (selectAllCheckbox) {
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes.length === testCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+}
+
+// Update bulk delete button visibility and count
+function updateBulkDeleteButton() {
+    const checkedCheckboxes = document.querySelectorAll('.test-checkbox:checked');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkedCheckboxes.length > 0) {
+        bulkDeleteBtn.style.display = 'inline-block';
+        selectedCount.textContent = checkedCheckboxes.length;
+    } else {
+        bulkDeleteBtn.style.display = 'none';
+    }
+}
+
+// Confirm bulk delete action
+function confirmBulkDelete() {
+    const checkedCheckboxes = document.querySelectorAll('.test-checkbox:checked');
+    const testIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+    
+    if (testIds.length === 0) {
+        alert('No tests selected for deletion.');
+        return;
+    }
+    
+    const confirmMessage = `Are you sure you want to delete ${testIds.length} selected test${testIds.length > 1 ? 's' : ''}? This action cannot be undone.`;
+    
+    if (confirm(confirmMessage)) {
+        performBulkDelete(testIds);
+    }
+}
+
+// Perform bulk delete operation
+function performBulkDelete(testIds) {
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const originalText = bulkDeleteBtn.innerHTML;
+    
+    // Show loading state
+    bulkDeleteBtn.disabled = true;
+    bulkDeleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+    
+    fetch('/api/tests/bulk-delete', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ test_ids: testIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove deleted test rows from DOM
+            testIds.forEach(testId => {
+                const checkbox = document.querySelector(`.test-checkbox[value="${testId}"]`);
+                if (checkbox) {
+                    const row = checkbox.closest('tr');
+                    if (row) {
+                        row.remove();
+                        totalTestsLoaded--;
+                    }
+                }
+            });
+            
+            // Update UI
+            updateTestCount();
+            updateBulkDeleteButton();
+            updateSelectAllState();
+            
+            // Show success message
+            const message = `Successfully deleted ${testIds.length} test${testIds.length > 1 ? 's' : ''}.`;
+            showMessage(message, 'success');
+        } else {
+            throw new Error(data.error || 'Failed to delete tests');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error deleting tests: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        bulkDeleteBtn.disabled = false;
+        bulkDeleteBtn.innerHTML = originalText;
+    });
+}
+
+// Show temporary message to user
+function showMessage(message, type) {
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    messageDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to page
+    document.body.appendChild(messageDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.remove();
+        }
+    }, 5000);
 }
 
 // ================================

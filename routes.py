@@ -930,6 +930,73 @@ def calculate_test_progress(test):
     else:  # pending
         return 0
 
+@app.route('/api/tests/bulk-delete', methods=['DELETE'])
+@web_auth_required
+def bulk_delete_tests():
+    """Delete multiple tests at once"""
+    data = request.get_json()
+    if not data or 'test_ids' not in data:
+        return jsonify({'error': 'test_ids required'}), 400
+    
+    test_ids = data['test_ids']
+    if not isinstance(test_ids, list) or not test_ids:
+        return jsonify({'error': 'test_ids must be a non-empty list'}), 400
+    
+    # Validate that all test_ids are integers
+    try:
+        test_ids = [int(test_id) for test_id in test_ids]
+    except (ValueError, TypeError):
+        return jsonify({'error': 'All test_ids must be valid integers'}), 400
+    
+    try:
+        deleted_count = 0
+        errors = []
+        
+        for test_id in test_ids:
+            test = Test.query.get(test_id)
+            if not test:
+                errors.append(f"Test {test_id} not found")
+                continue
+            
+            try:
+                # Delete all test results
+                TestResult.query.filter_by(test_id=test_id).delete()
+                
+                # Delete all test client assignments
+                TestClient.query.filter_by(test_id=test_id).delete()
+                
+                # Delete the test itself
+                db.session.delete(test)
+                db.session.commit()
+                deleted_count += 1
+                
+            except Exception as e:
+                db.session.rollback()
+                errors.append(f"Failed to delete test {test_id}: {str(e)}")
+                continue
+        
+        if deleted_count > 0:
+            message = f"Successfully deleted {deleted_count} test{'s' if deleted_count > 1 else ''}"
+            if errors:
+                message += f". {len(errors)} error{'s' if len(errors) > 1 else ''} occurred."
+            
+            return jsonify({
+                'status': 'success',
+                'message': message,
+                'deleted_count': deleted_count,
+                'errors': errors
+            })
+        else:
+            return jsonify({
+                'error': 'No tests were deleted',
+                'errors': errors
+            }), 400
+            
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error in bulk delete: {str(e)}")
+        return jsonify({'error': 'Failed to delete tests'}), 500
+
 @app.route('/api/test/<int:test_id>/data', methods=['GET'])
 def get_test_data(test_id):
     """Get test data for charts"""
