@@ -171,34 +171,104 @@
                     <div class="card-body">
                         <p class="text-muted mb-3">Comprehensive analysis of underlying performance factors:</p>
                         
-                        <!-- Geolocation Analysis -->
-                        <div id="geolocation-analysis" style="display: none;">
-                            <h6 class="text-primary"><i class="fas fa-globe me-2"></i>Geographic Path Analysis</h6>
-                            <div id="geolocation-details" class="mb-3"></div>
+                        <!-- Application Layer Analysis - GREEN THEME -->
+                        <div id="app-layer-analysis" style="display: none;" class="mb-4">
+                            <div class="card border-success shadow-sm">
+                                <div class="card-header bg-success text-white">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-layer-group fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Application Layer Timing</h6>
+                                            <small class="text-light">Connection breakdown and bottleneck identification</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);">
+                                    <div id="app-layer-details"></div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- GNMI Device Analysis -->
-                        <div id="gnmi-analysis" style="display: none;">
-                            <h6 class="text-info"><i class="fas fa-network-wired me-2"></i>Managed Infrastructure Analysis</h6>
-                            <div id="gnmi-details" class="mb-3"></div>
+                        <!-- Infrastructure Correlation - ORANGE THEME -->
+                        <div id="infra-analysis" style="display: none;" class="mb-4">
+                            <div class="card border-warning shadow-sm">
+                                <div class="card-header bg-warning text-dark">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-white text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-server fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Infrastructure Correlation</h6>
+                                            <small>System resource impact on network performance</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);">
+                                    <div id="infra-details"></div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Application Layer Analysis -->
-                        <div id="app-layer-analysis" style="display: none;">
-                            <h6 class="text-success"><i class="fas fa-layer-group me-2"></i>Application Layer Timing</h6>
-                            <div id="app-layer-details" class="mb-3"></div>
+                        <!-- Temporal Patterns - BLUE THEME -->
+                        <div id="temporal-analysis" style="display: none;" class="mb-4">
+                            <div class="card border-info shadow-sm">
+                                <div class="card-header bg-info text-white">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-white text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-clock fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Temporal Patterns</h6>
+                                            <small class="text-light">Performance trends and time-based analysis</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="background: linear-gradient(135deg, #cce7ff 0%, #ffffff 100%);">
+                                    <div id="temporal-details"></div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Infrastructure Correlation -->
-                        <div id="infra-analysis" style="display: none;">
-                            <h6 class="text-warning"><i class="fas fa-server me-2"></i>Infrastructure Correlation</h6>
-                            <div id="infra-details" class="mb-3"></div>
+                        <!-- Geolocation Analysis - PURPLE THEME -->
+                        <div id="geolocation-analysis" style="display: none;" class="mb-4">
+                            <div class="card border-primary shadow-sm">
+                                <div class="card-header bg-primary text-white">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-globe fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Geographic Path Analysis</h6>
+                                            <small class="text-light">Network routing and geographic efficiency</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="background: linear-gradient(135deg, #e7f3ff 0%, #ffffff 100%);">
+                                    <div id="geolocation-details"></div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Temporal Patterns -->
-                        <div id="temporal-analysis" style="display: none;">
-                            <h6 class="text-secondary"><i class="fas fa-clock me-2"></i>Temporal Patterns</h6>
-                            <div id="temporal-details" class="mb-3"></div>
+                        <!-- GNMI Device Analysis - GRAY THEME -->
+                        <div id="gnmi-analysis" style="display: none;" class="mb-4">
+                            <div class="card border-secondary shadow-sm">
+                                <div class="card-header bg-secondary text-white">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-white text-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-network-wired fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">Managed Infrastructure Analysis</h6>
+                                            <small class="text-light">GNMI device performance metrics</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body" style="background: linear-gradient(135deg, #e2e6ea 0%, #ffffff 100%);">
+                                    <div id="gnmi-details"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
