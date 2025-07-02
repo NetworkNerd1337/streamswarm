@@ -58,8 +58,13 @@ def web_auth_required(f):
             return f(*args, **kwargs)
         
         # Normal authentication check
-        from flask_login import login_required
-        return login_required(f)(*args, **kwargs)
+        if not current_user.is_authenticated:
+            # For API endpoints, return JSON error instead of redirect
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Authentication required'}), 401
+            return redirect(url_for('login', next=request.url))
+        
+        return f(*args, **kwargs)
     
     return decorated_function
 
