@@ -79,6 +79,7 @@
                                     <th>Test Name</th>
                                     <th>Destination</th>
                                     <th>Duration</th>
+                                    <th>Created</th>
                                     <th>Scheduled</th>
                                     <th>Progress</th>
                                     <th>Actions</th>
@@ -122,6 +123,13 @@
                                     <td>
                                         {{ test.duration // 60 }}m {{ test.duration % 60 }}s
                                         <br><small class="text-muted">{{ test.interval }}s intervals</small>
+                                    </td>
+                                    <td>
+                                        {% if test.created_at %}
+                                            <small>{{ test.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Unknown</span>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         {% if test.scheduled_time %}
@@ -843,6 +851,14 @@ function createTestRow(test) {
     
     const duration_minutes = Math.floor(test.duration / 60);
     const duration_seconds = test.duration % 60;
+    const created_display = test.created_at ? new Date(test.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).replace(',', '') : 'Unknown';
     const scheduled_display = test.scheduled_time || 'Immediate';
     
     row.innerHTML = `
@@ -855,6 +871,9 @@ function createTestRow(test) {
         <td>
             ${duration_minutes}m ${duration_seconds}s
             <br><small class="text-muted">${test.interval}s intervals</small>
+        </td>
+        <td>
+            <small>${created_display}</small>
         </td>
         <td>
             ${scheduled_display === 'Immediate' ? '<span class="text-muted">Immediate</span>' : `<small>${scheduled_display}</small>`}
