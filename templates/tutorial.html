@@ -2455,15 +2455,20 @@ nssm install StreamSwarmClient</code></pre>
                                     <div class="bg-dark p-2 rounded mb-2">
                                         <code class="text-light">pip install pygnmi>=0.8.15</code>
                                     </div>
-                                    <p class="mb-2"><strong>Device Credentials:</strong> Configure in client code</p>
-                                    <div class="bg-dark p-2 rounded">
+                                    <p class="mb-2"><strong>Device Credentials:</strong> Multiple authentication methods</p>
+                                    <div class="bg-dark p-2 rounded mb-2">
                                         <code class="text-light small">
-# In client.py, add device credentials:<br>
+# Method 1: Username/Password (Traditional)<br>
 gnmi_analyzer.add_device(<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"192.168.1.1",  # device IP<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"admin",        # username<br>
-&nbsp;&nbsp;&nbsp;&nbsp;"password",     # password<br>
-&nbsp;&nbsp;&nbsp;&nbsp;830             # GNMI port<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"192.168.1.1", "admin", "password", 830<br>
+)<br><br>
+# Method 2: Certificate Auth (Recommended)<br>
+gnmi_analyzer.add_device(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;device_ip="192.168.1.1",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port=830,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;auth_method='certificate',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cert_file='/path/to/client.crt',<br>
+&nbsp;&nbsp;&nbsp;&nbsp;key_file='/path/to/client.key'<br>
 )
                                         </code>
                                     </div>

@@ -84,6 +84,71 @@ class StreamSwarmClient:
         # Initialize GNMI network analyzer for managed infrastructure analysis
         if GNMI_AVAILABLE:
             self.gnmi_analyzer = GNMINetworkAnalyzer()
+            
+            # Configure GNMI devices - Add your network devices here
+            # Multiple authentication methods are supported:
+            
+            # Method 1: Username/Password Authentication (Traditional)
+            # self.gnmi_analyzer.add_device("192.168.1.1", "admin", "cisco123", 830)
+            # self.gnmi_analyzer.add_device("10.0.1.5", "netconf", "juniper456", 32768)
+            
+            # Method 2: Certificate Authentication (Recommended for production)
+            # self.gnmi_analyzer.add_device(
+            #     device_ip="192.168.1.1",
+            #     port=830,
+            #     auth_method='certificate',
+            #     cert_file='/etc/streamswarm/certs/client.crt',
+            #     key_file='/etc/streamswarm/certs/client.key',
+            #     ca_file='/etc/streamswarm/certs/ca.crt'  # Optional for custom CAs
+            # )
+            
+            # Method 3: Certificate + Username Authentication (Hybrid)
+            # self.gnmi_analyzer.add_device(
+            #     device_ip="10.0.1.5",
+            #     username="admin",
+            #     port=32768,
+            #     auth_method='cert_username',
+            #     cert_file='/etc/streamswarm/certs/client.crt',
+            #     key_file='/etc/streamswarm/certs/client.key'
+            # )
+            
+            # Environment Variable Configuration (Production Recommended)
+            # Example: Load devices from environment variables
+            # import os
+            # devices = [
+            #     {
+            #         'ip': os.getenv('GNMI_DEVICE1_IP'),
+            #         'username': os.getenv('GNMI_DEVICE1_USER'),
+            #         'password': os.getenv('GNMI_DEVICE1_PASS'),
+            #         'port': int(os.getenv('GNMI_DEVICE1_PORT', '830')),
+            #         'auth_method': 'password'
+            #     },
+            #     {
+            #         'ip': os.getenv('GNMI_DEVICE2_IP'),
+            #         'port': int(os.getenv('GNMI_DEVICE2_PORT', '830')),
+            #         'auth_method': 'certificate',
+            #         'cert_file': os.getenv('GNMI_CERT_FILE'),
+            #         'key_file': os.getenv('GNMI_KEY_FILE'),
+            #         'ca_file': os.getenv('GNMI_CA_FILE')
+            #     }
+            # ]
+            # 
+            # for device in devices:
+            #     if device['ip']:
+            #         if device['auth_method'] == 'password':
+            #             self.gnmi_analyzer.add_device(
+            #                 device['ip'], device['username'], device['password'], device['port']
+            #             )
+            #         elif device['auth_method'] == 'certificate':
+            #             self.gnmi_analyzer.add_device(
+            #                 device_ip=device['ip'],
+            #                 port=device['port'],
+            #                 auth_method='certificate',
+            #                 cert_file=device['cert_file'],
+            #                 key_file=device['key_file'],
+            #                 ca_file=device.get('ca_file')
+            #             )
+            
             logger.info("GNMI network analyzer initialized for managed infrastructure analysis")
         else:
             self.gnmi_analyzer = None

@@ -22,17 +22,81 @@ class GNMINetworkAnalyzer:
         self.connected_devices = {}
         self.device_credentials = {}
         
-    def add_device(self, device_ip: str, username: str, password: str, port: int = 830):
-        """Add a network device for GNMI monitoring"""
+    def add_device(self, device_ip: str, username: str = None, password: str = None, 
+                   port: int = 830, cert_file: str = None, key_file: str = None, 
+                   ca_file: str = None, auth_method: str = 'password'):
+        """
+        Add a network device for GNMI monitoring
+        
+        Authentication Methods:
+            'password': Username/password authentication (default)
+            'certificate': Pure certificate-based authentication (mTLS)
+            'cert_username': Certificate + username authentication
+        
+        Args:
+            device_ip: IP address of the GNMI device
+            username: Username for authentication (optional for cert-only auth)
+            password: Password for authentication (required for password auth)
+            port: GNMI port (default: 830, common alternatives: 32768, 6030, 57400)
+            cert_file: Path to client certificate file (.crt or .pem)
+            key_file: Path to client private key file (.key or .pem)
+            ca_file: Path to CA certificate file (optional, for custom CAs)
+            auth_method: Authentication method to use
+        
+        Examples:
+            # Password authentication
+            add_device("192.168.1.1", "admin", "password123", 830)
+            
+            # Certificate authentication
+            add_device("192.168.1.1", port=830, auth_method='certificate',
+                      cert_file='/path/to/client.crt', key_file='/path/to/client.key')
+            
+            # Certificate + username authentication
+            add_device("192.168.1.1", username="admin", auth_method='cert_username',
+                      cert_file='/path/to/client.crt', key_file='/path/to/client.key')
+        """
         try:
             device_key = f"{device_ip}:{port}"
-            self.device_credentials[device_key] = {
-                'host': (device_ip, port),
-                'username': username,
-                'password': password,
-                'skip_verify': True  # For lab environments
-            }
-            logger.info(f"Added GNMI device: {device_key}")
+            
+            # Validate authentication parameters
+            if auth_method == 'password':
+                if not username or not password:
+                    raise ValueError(f"Username and password required for password authentication on {device_ip}")
+                credentials = {
+                    'host': (device_ip, port),
+                    'username': username,
+                    'password': password,
+                    'auth_method': 'password',
+                    'skip_verify': True  # For lab environments
+                }
+            elif auth_method == 'certificate':
+                if not cert_file or not key_file:
+                    raise ValueError(f"Certificate and key files required for certificate authentication on {device_ip}")
+                credentials = {
+                    'host': (device_ip, port),
+                    'cert_file': cert_file,
+                    'key_file': key_file,
+                    'ca_file': ca_file,
+                    'auth_method': 'certificate',
+                    'skip_verify': False if ca_file else True
+                }
+            elif auth_method == 'cert_username':
+                if not username or not cert_file or not key_file:
+                    raise ValueError(f"Username, certificate and key files required for cert+username authentication on {device_ip}")
+                credentials = {
+                    'host': (device_ip, port),
+                    'username': username,
+                    'cert_file': cert_file,
+                    'key_file': key_file,
+                    'ca_file': ca_file,
+                    'auth_method': 'cert_username',
+                    'skip_verify': False if ca_file else True
+                }
+            else:
+                raise ValueError(f"Invalid auth_method: {auth_method}. Must be 'password', 'certificate', or 'cert_username'")
+            
+            self.device_credentials[device_key] = credentials
+            logger.info(f"Added GNMI device: {device_key} using {auth_method} authentication")
             return True
         except Exception as e:
             logger.error(f"Error adding GNMI device {device_ip}: {str(e)}")
@@ -46,12 +110,42 @@ class GNMINetworkAnalyzer:
                 return None
                 
             creds = self.device_credentials[device_key]
-            client = gNMIclient(
-                target=creds['host'],
-                username=creds['username'],
-                password=creds['password'],
-                skip_verify=creds['skip_verify']
-            )
+            auth_method = creds.get('auth_method', 'password')
+            
+            # Build connection parameters based on authentication method
+            connection_params = {
+                'target': creds['host'],
+                'skip_verify': creds['skip_verify']
+            }
+            
+            if auth_method == 'password':
+                connection_params.update({
+                    'username': creds['username'],
+                    'password': creds['password']
+                })
+                logger.info(f"Connecting to {device_key} using username/password authentication")
+                
+            elif auth_method == 'certificate':
+                connection_params.update({
+                    'cert_file': creds['cert_file'],
+                    'key_file': creds['key_file']
+                })
+                if creds.get('ca_file'):
+                    connection_params['ca_file'] = creds['ca_file']
+                logger.info(f"Connecting to {device_key} using certificate authentication")
+                
+            elif auth_method == 'cert_username':
+                connection_params.update({
+                    'username': creds['username'],
+                    'cert_file': creds['cert_file'],
+                    'key_file': creds['key_file']
+                })
+                if creds.get('ca_file'):
+                    connection_params['ca_file'] = creds['ca_file']
+                logger.info(f"Connecting to {device_key} using certificate + username authentication")
+            
+            # Create GNMI client with appropriate authentication
+            client = gNMIclient(**connection_params)
             
             # Test connection with capabilities request
             capabilities = client.capabilities()
@@ -62,6 +156,7 @@ class GNMINetworkAnalyzer:
             
         except Exception as e:
             logger.error(f"Failed to connect to GNMI device {device_key}: {str(e)}")
+            logger.debug(f"Connection details: auth_method={auth_method}, target={creds['host']}")
             return None
     
     def get_interface_statistics(self, device_key: str) -> Dict[str, Any]:
