@@ -58,17 +58,31 @@ def check_session_timeout():
     # Get session timeout setting
     timeout_minutes = SystemConfig.get_session_timeout_minutes()
     
+    # Get current time for session tracking
+    now = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+    current_time_iso = now.isoformat()
+    
+    # Initialize last_activity for new sessions
+    if 'last_activity' not in session:
+        session['last_activity'] = current_time_iso
+    
     # Check if user has been idle too long (only if timeout is enabled)
     if timeout_minutes > 0:
         last_activity = session.get('last_activity')
         if last_activity:
-            last_activity_time = datetime.fromisoformat(last_activity)
-            now = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
-            
-            if now - last_activity_time > timedelta(minutes=timeout_minutes):
-                logout_user()
-                session.clear()
-                return redirect(url_for('login', timeout='1'))
+            try:
+                last_activity_time = datetime.fromisoformat(last_activity)
+                
+                # Check if session has timed out
+                if now - last_activity_time > timedelta(minutes=timeout_minutes):
+                    logging.info(f"Session timed out for user {current_user.id if hasattr(current_user, 'id') else 'unknown'} after {timeout_minutes} minutes")
+                    logout_user()
+                    session.clear()
+                    return redirect(url_for('login', timeout='1'))
+            except (ValueError, TypeError) as e:
+                # Invalid date format, reset last_activity
+                logging.warning(f"Invalid last_activity format, resetting: {e}")
+                session['last_activity'] = current_time_iso
     
     # Update last activity for navigation requests (not AJAX/auto-refresh)
     # Only track activity for main pages to avoid auto-refresh interference
@@ -78,10 +92,17 @@ def check_session_timeout():
         'ml_models', 'test_results', 'create_test', 'edit_test'
     ]
     
-    if (request.endpoint in main_pages and 
+    # Update activity timestamp for legitimate user interactions
+    should_update_activity = (
+        request.endpoint in main_pages and 
         request.method == 'GET' and 
-        'XMLHttpRequest' not in request.headers.get('X-Requested-With', '')):
-        session['last_activity'] = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat()
+        'XMLHttpRequest' not in request.headers.get('X-Requested-With', '') and
+        not request.path.startswith('/api/')
+    )
+    
+    if should_update_activity:
+        session['last_activity'] = current_time_iso
+        session.permanent = True  # Ensure session persists properly
 
 # Development mode bypass decorator
 from functools import wraps

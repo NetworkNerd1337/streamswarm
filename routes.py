@@ -1753,9 +1753,61 @@ def login():
 @login_required
 def logout():
     """Logout from web GUI"""
-    logout_user()
-    flash('You have been logged out.', 'info')
+    try:
+        username = current_user.username if hasattr(current_user, 'username') else 'unknown'
+        logout_user()
+        session.clear()  # Clear all session data including last_activity
+        flash('You have been logged out.', 'info')
+        logging.info(f"User {username} logged out successfully")
+    except Exception as e:
+        logging.error(f"Error during logout: {str(e)}")
+        flash('Logout completed.', 'info')
+    
     return redirect(url_for('login'))
+
+# Session timeout debugging endpoint (admin only)
+@app.route('/api/session-debug')
+@admin_required
+def session_debug():
+    """Debug session timeout functionality - admin only"""
+    try:
+        from models import SystemConfig
+        from datetime import datetime
+        import zoneinfo
+        
+        current_time = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        timeout_minutes = SystemConfig.get_session_timeout_minutes()
+        last_activity = session.get('last_activity')
+        
+        response_data = {
+            'current_time': current_time.isoformat(),
+            'timeout_minutes': timeout_minutes,
+            'timeout_enabled': timeout_minutes > 0,
+            'last_activity': last_activity,
+            'session_keys': list(session.keys()),
+            'user_authenticated': current_user.is_authenticated,
+            'user_id': current_user.id if hasattr(current_user, 'id') else None,
+            'username': current_user.username if hasattr(current_user, 'username') else None
+        }
+        
+        if last_activity:
+            try:
+                last_activity_time = datetime.fromisoformat(last_activity)
+                time_diff = current_time - last_activity_time
+                response_data.update({
+                    'last_activity_parsed': last_activity_time.isoformat(),
+                    'time_since_activity_seconds': int(time_diff.total_seconds()),
+                    'time_since_activity_minutes': time_diff.total_seconds() / 60,
+                    'should_timeout': timeout_minutes > 0 and time_diff.total_seconds() > (timeout_minutes * 60)
+                })
+            except (ValueError, TypeError) as e:
+                response_data['last_activity_error'] = str(e)
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logging.error(f"Session debug error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/user-management')
 @admin_required
