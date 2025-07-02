@@ -129,6 +129,21 @@
                                         {% else %}
                                             <span class="text-muted">Immediate</span>
                                         {% endif %}
+                                        {% if test.is_recurring %}
+                                            <br><small class="text-info">
+                                                <i class="fas fa-sync-alt me-1"></i>
+                                                Repeats every 
+                                                {% if test.recurrence_interval >= 604800 %}
+                                                    {{ (test.recurrence_interval // 604800) }} week{{ 's' if test.recurrence_interval // 604800 > 1 else '' }}
+                                                {% elif test.recurrence_interval >= 86400 %}
+                                                    {{ (test.recurrence_interval // 86400) }} day{{ 's' if test.recurrence_interval // 86400 > 1 else '' }}
+                                                {% elif test.recurrence_interval >= 3600 %}
+                                                    {{ (test.recurrence_interval // 3600) }} hour{{ 's' if test.recurrence_interval // 3600 > 1 else '' }}
+                                                {% else %}
+                                                    {{ (test.recurrence_interval // 60) }} minute{{ 's' if test.recurrence_interval // 60 > 1 else '' }}
+                                                {% endif %}
+                                            </small>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         {% if test.status == 'running' %}
@@ -256,6 +271,32 @@
                             </div>
                         </div>
                         
+                        <!-- Recurrence Section -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableRecurrence" onchange="toggleRecurrence()">
+                                    <label class="form-check-label" for="enableRecurrence">
+                                        <i class="fas fa-sync-alt me-1"></i>
+                                        Enable Recurring Test
+                                    </label>
+                                </div>
+                                <small class="text-muted">Automatically repeat this test at specified intervals</small>
+                            </div>
+                            <div class="col-md-6 mb-3" id="recurrenceOptions" style="display: none;">
+                                <label for="recurrenceInterval" class="form-label">Recurrence Interval</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="recurrenceIntervalValue" min="1" value="1" onchange="validateRecurrence()">
+                                    <select class="form-select" id="recurrenceUnit" onchange="validateRecurrence()">
+                                        <option value="3600">Hours</option>
+                                        <option value="86400">Days</option>
+                                        <option value="604800">Weeks</option>
+                                    </select>
+                                </div>
+                                <div id="recurrenceValidation" class="form-text"></div>
+                            </div>
+                        </div>
+                        
                         <!-- Performance Prediction Section -->
                         <div class="mb-4">
                             <div class="card bg-light border-primary">
@@ -377,6 +418,11 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
         destination = destination.slice(0, -1);
     }
     
+    // Check recurrence validation before proceeding
+    if (document.getElementById('enableRecurrence').checked && !validateRecurrence()) {
+        return;
+    }
+    
     const testData = {
         name: document.getElementById('testName').value,
         description: document.getElementById('testDescription').value,
@@ -385,6 +431,9 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
         interval: parseInt(document.getElementById('testInterval').value),
         packet_size: parseInt(document.getElementById('packetSize').value),
         scheduled_time: document.getElementById('scheduledTime').value || null,
+        is_recurring: document.getElementById('enableRecurrence').checked,
+        recurrence_interval: document.getElementById('enableRecurrence').checked ? 
+            parseInt(document.getElementById('recurrenceIntervalValue').value) * parseInt(document.getElementById('recurrenceUnit').value) : null,
         client_ids: selectedClients
     };
     
@@ -410,6 +459,64 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
         console.error('Error:', error);
         alert('Error creating test. Please try again.');
     });
+});
+
+function toggleRecurrence() {
+    const checkbox = document.getElementById('enableRecurrence');
+    const options = document.getElementById('recurrenceOptions');
+    
+    if (checkbox.checked) {
+        options.style.display = 'block';
+        validateRecurrence();
+    } else {
+        options.style.display = 'none';
+        document.getElementById('recurrenceValidation').innerHTML = '';
+    }
+}
+
+function validateRecurrence() {
+    const enableRecurrence = document.getElementById('enableRecurrence');
+    const validationDiv = document.getElementById('recurrenceValidation');
+    
+    if (!enableRecurrence.checked) {
+        validationDiv.innerHTML = '';
+        return true;
+    }
+    
+    const duration = parseInt(document.getElementById('testDuration').value) || 0;
+    const intervalValue = parseInt(document.getElementById('recurrenceIntervalValue').value) || 0;
+    const unit = parseInt(document.getElementById('recurrenceUnit').value) || 0;
+    const recurrenceSeconds = intervalValue * unit;
+    
+    // Minimum recurrence interval: test duration + 10 minute buffer
+    const minRecurrenceSeconds = duration + (10 * 60); // 10 minutes = 600 seconds
+    
+    if (recurrenceSeconds < minRecurrenceSeconds) {
+        const minMinutes = Math.ceil(minRecurrenceSeconds / 60);
+        const minHours = Math.floor(minMinutes / 60);
+        const remainingMinutes = minMinutes % 60;
+        
+        let minTimeStr;
+        if (minHours > 0) {
+            minTimeStr = remainingMinutes > 0 ? `${minHours}h ${remainingMinutes}m` : `${minHours}h`;
+        } else {
+            minTimeStr = `${minMinutes}m`;
+        }
+        
+        validationDiv.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Minimum interval: ${minTimeStr} (test duration + 10min buffer)</span>`;
+        return false;
+    } else {
+        validationDiv.innerHTML = '<span class="text-success"><i class="fas fa-check"></i> Valid recurrence interval</span>';
+        return true;
+    }
+}
+
+// Add event listeners for duration changes to revalidate recurrence
+document.addEventListener('DOMContentLoaded', function() {
+    const durationField = document.getElementById('testDuration');
+    if (durationField) {
+        durationField.addEventListener('input', validateRecurrence);
+    }
 });
 
 function stopTest(testId) {

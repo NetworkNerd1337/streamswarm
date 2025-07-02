@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 import zoneinfo
 import json
 import logging
+import math
 import os
 import threading
 import time
@@ -827,14 +828,43 @@ def create_test():
         
         destination = validated_destination
         
+        # Handle recurrence settings
+        is_recurring = data.get('is_recurring', False)
+        recurrence_interval = data.get('recurrence_interval') if is_recurring else None
+        
+        # Validate recurrence if enabled
+        if is_recurring:
+            if not recurrence_interval:
+                return jsonify({'error': 'Recurrence interval is required when recurring is enabled'}), 400
+            
+            # Minimum recurrence interval: test duration + 10 minute buffer
+            min_interval = duration + (10 * 60)  # 10 minutes buffer
+            if recurrence_interval < min_interval:
+                min_minutes = math.ceil(min_interval / 60)
+                return jsonify({'error': f'Recurrence interval must be at least {min_minutes} minutes (test duration + 10 minute buffer)'}), 400
+        
+        # Calculate next execution time if recurring
+        scheduled_time = None
+        next_execution = None
+        if data.get('scheduled_time'):
+            scheduled_time = datetime.fromisoformat(data['scheduled_time']).replace(tzinfo=None)
+            if is_recurring:
+                next_execution = scheduled_time + timedelta(seconds=recurrence_interval)
+        elif is_recurring:
+            # If no scheduled time but recurring, set next execution for the interval from now
+            next_execution = datetime.now() + timedelta(seconds=recurrence_interval)
+        
         test = Test(
             name=name,
             description=description,
             destination=destination,
-            scheduled_time=datetime.fromisoformat(data['scheduled_time']).replace(tzinfo=None) if data.get('scheduled_time') else None,
+            scheduled_time=scheduled_time,
             duration=duration,
             interval=interval,
-            packet_size=packet_size
+            packet_size=packet_size,
+            is_recurring=is_recurring,
+            recurrence_interval=recurrence_interval,
+            next_execution=next_execution
         )
         
         db.session.add(test)

@@ -4,9 +4,10 @@ Provides comprehensive validation for all API endpoints to prevent injection att
 """
 
 import re
+import math
 import bleach
 import ipaddress
-from marshmallow import Schema, fields, validate, ValidationError as MarshmallowValidationError, pre_load
+from marshmallow import Schema, fields, validate, ValidationError as MarshmallowValidationError, pre_load, validates_schema
 from wtforms import validators
 from flask import request
 import json
@@ -205,6 +206,9 @@ class TestCreationSchema(Schema):
     destination = fields.Str(required=True, validate=validate.Length(min=1, max=255))
     duration = fields.Int(required=False, validate=validate.Range(min=1, max=86400))  # Max 24 hours
     interval = fields.Int(required=False, validate=validate.Range(min=1, max=3600))   # Max 1 hour
+    is_recurring = fields.Bool(required=False, load_default=False)
+    recurrence_interval = fields.Int(required=False, allow_none=True, validate=validate.Range(min=600))  # Min 10 minutes
+    scheduled_time = fields.Str(required=False, allow_none=True)
     client_ids = fields.List(fields.Int(validate=validate.Range(min=1)), required=True)
     
     @pre_load
@@ -227,6 +231,24 @@ class TestCreationSchema(Schema):
                 except ValidationError:
                     raise ValidationError("Destination must be valid IP address or hostname")
             data['destination'] = dest
+        return data
+    
+    @validates_schema
+    def validate_recurrence(self, data, **kwargs):
+        """Validate recurrence settings"""
+        if data.get('is_recurring', False):
+            duration = data.get('duration', 300)
+            recurrence_interval = data.get('recurrence_interval')
+            
+            if not recurrence_interval:
+                raise MarshmallowValidationError("Recurrence interval is required when recurring is enabled")
+            
+            # Minimum recurrence interval: test duration + 10 minute buffer
+            min_interval = duration + (10 * 60)  # 10 minutes buffer
+            if recurrence_interval < min_interval:
+                min_minutes = math.ceil(min_interval / 60)
+                raise MarshmallowValidationError(f"Recurrence interval must be at least {min_minutes} minutes (test duration + 10 minute buffer)")
+        
         return data
 
 

@@ -160,6 +160,13 @@ class Test(db.Model):
     packet_size = db.Column(db.Integer, default=64)  # Packet size in bytes for ping/network tests
     test_config = db.Column(Text)  # JSON string for additional test configuration
     status = db.Column(db.String(20), default='pending')  # pending, running, completed, failed
+    
+    # Recurrence fields
+    is_recurring = db.Column(db.Boolean, default=False)  # Whether this test recurs
+    recurrence_interval = db.Column(db.Integer)  # Recurrence interval in seconds
+    parent_test_id = db.Column(db.Integer, db.ForeignKey('test.id'))  # Reference to original recurring test
+    next_execution = db.Column(db.DateTime)  # When the next recurrence should run
+    
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     started_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
@@ -180,6 +187,10 @@ class Test(db.Model):
             'packet_size': self.packet_size,
             'test_config': json.loads(self.test_config) if self.test_config else {},
             'status': self.status,
+            'is_recurring': self.is_recurring,
+            'recurrence_interval': self.recurrence_interval,
+            'parent_test_id': self.parent_test_id,
+            'next_execution': self.next_execution.isoformat() if self.next_execution else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'started_at': self.started_at.isoformat() if self.started_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None

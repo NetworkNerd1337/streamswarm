@@ -161,6 +161,14 @@ with app.app_context():
         db.session.add(admin_user)
         db.session.commit()
         logging.info("Created default admin user: username=admin, password=admin123")
+    
+    # Start recurring test processor
+    try:
+        from recurring_test_processor import start_recurring_processor
+        start_recurring_processor()
+        logging.info("Recurring test processor started successfully")
+    except Exception as e:
+        logging.error(f"Failed to start recurring test processor: {e}")
 
 # Custom Jinja filters
 @app.template_filter('extract_numeric')
