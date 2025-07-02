@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 2, 2025: Restored ML model quality requirements and enhanced training documentation
+  - Reverted synthetic data generation for Network Failure Prediction model to maintain accuracy and reliability
+  - Restored proper minimum requirements: 15+ sequential measurements for time series models, 20+ samples for quality training
+  - Added comprehensive training requirement explanations to ML models interface showing specific data needs for each model type
+  - Enhanced ML models page with informational section explaining why models may not train (insufficient data, quality requirements, zero-trust architecture)
+  - Network Failure Prediction now properly uses Time Series Ensemble algorithm (distinct from Gradient Boosting for Performance Prediction)
+  - All four ML models maintain distinct algorithms: Isolation Forest (anomaly), Random Forest (health), Gradient Boosting (performance), Time Series Ensemble (failure prediction)
+  - Maintains model quality over forced functionality - models only train when sufficient quality data is available
 - July 2, 2025: Enhanced diagnosis engine with comprehensive root cause analysis capabilities
   - Added five new analysis modules: geolocation correlation, GNMI device correlation, application-layer timing breakdown, infrastructure correlation, and temporal pattern analysis
   - Enhanced existing "Diagnose Results" feature with detailed root cause identification instead of creating separate model
