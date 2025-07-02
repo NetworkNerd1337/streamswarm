@@ -883,6 +883,53 @@ def create_test():
         logging.error(f"Error creating test: {str(e)}")
         return jsonify({'error': 'Failed to create test'}), 500
 
+@app.route('/api/tests/status', methods=['POST'])
+def get_tests_status():
+    """Get current status for multiple tests"""
+    data = request.get_json()
+    if not data or 'test_ids' not in data:
+        return jsonify({'error': 'test_ids required'}), 400
+    
+    test_ids = data['test_ids']
+    if not isinstance(test_ids, list):
+        return jsonify({'error': 'test_ids must be a list'}), 400
+    
+    try:
+        tests = Test.query.filter(Test.id.in_(test_ids)).all()
+        test_statuses = []
+        
+        for test in tests:
+            test_statuses.append({
+                'id': test.id,
+                'status': test.status,
+                'progress': calculate_test_progress(test)
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'tests': test_statuses
+        })
+        
+    except Exception as e:
+        logging.error(f"Error fetching test statuses: {str(e)}")
+        return jsonify({'error': 'Failed to fetch test statuses'}), 500
+
+def calculate_test_progress(test):
+    """Calculate test progress percentage"""
+    if test.status == 'completed':
+        return 100
+    elif test.status == 'failed':
+        return 0
+    elif test.status == 'running':
+        if test.started_at and test.duration:
+            from datetime import datetime
+            elapsed = (datetime.now() - test.started_at).total_seconds()
+            progress = min(100, int((elapsed / test.duration) * 100))
+            return progress
+        return 0
+    else:  # pending
+        return 0
+
 @app.route('/api/test/<int:test_id>/data', methods=['GET'])
 def get_test_data(test_id):
     """Get test data for charts"""

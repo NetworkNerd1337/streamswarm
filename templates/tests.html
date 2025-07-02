@@ -593,6 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupInfiniteScroll();
     setupSearch();
     updateTestCount();
+    setupAutoRefresh();
 });
 
 // Setup infinite scroll functionality
@@ -905,6 +906,104 @@ function refreshPage() {
 // Update progress every 5 seconds for running tests only
 setInterval(updateTestProgress, 5000);
 updateTestProgress(); // Initial call
+
+// Setup automatic status refresh
+function setupAutoRefresh() {
+    // Refresh test statuses every 10 seconds
+    setInterval(refreshTestStatuses, 10000);
+}
+
+// Refresh test statuses to fix status/progress mismatch issues
+function refreshTestStatuses() {
+    // Only refresh if we're not in the middle of loading more tests
+    if (isLoading) return;
+    
+    // Get all visible test IDs
+    const testRows = document.querySelectorAll('tbody tr');
+    const testIds = [];
+    
+    testRows.forEach(row => {
+        const viewButton = row.querySelector('a[href*="/test_results/"]');
+        if (viewButton) {
+            const href = viewButton.getAttribute('href');
+            const testId = href.split('/').pop();
+            if (testId && !isNaN(testId)) {
+                testIds.push(parseInt(testId));
+            }
+        }
+    });
+    
+    if (testIds.length === 0) return;
+    
+    // Fetch current status for these tests
+    fetch('/api/tests/status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ test_ids: testIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            updateTestStatusesInDOM(data.tests);
+        }
+    })
+    .catch(error => {
+        // Silent fail - don't spam console on network issues
+        console.debug('Status refresh failed:', error);
+    });
+}
+
+// Update test statuses in the DOM
+function updateTestStatusesInDOM(tests) {
+    tests.forEach(test => {
+        const testRow = findTestRowById(test.id);
+        if (!testRow) return;
+        
+        // Update status badge
+        const statusCell = testRow.querySelector('td:first-child');
+        if (statusCell) {
+            let statusBadge = '';
+            if (test.status === 'running') {
+                statusBadge = '<span class="badge bg-success"><i class="fas fa-play-circle me-1"></i>Running</span>';
+            } else if (test.status === 'completed') {
+                statusBadge = '<span class="badge bg-info"><i class="fas fa-check-circle me-1"></i>Completed</span>';
+            } else if (test.status === 'failed') {
+                statusBadge = '<span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i>Failed</span>';
+            } else {
+                statusBadge = '<span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Pending</span>';
+            }
+            statusCell.innerHTML = statusBadge;
+        }
+        
+        // Update progress cell for completed/failed tests
+        const progressCell = testRow.querySelector('.progress');
+        if (progressCell && (test.status === 'completed' || test.status === 'failed')) {
+            if (test.status === 'completed') {
+                progressCell.innerHTML = '<span class="badge bg-success">Complete</span>';
+            } else if (test.status === 'failed') {
+                progressCell.innerHTML = '<span class="badge bg-danger">Failed</span>';
+            }
+        }
+    });
+}
+
+// Find test row by test ID
+function findTestRowById(testId) {
+    const testRows = document.querySelectorAll('tbody tr');
+    for (let row of testRows) {
+        const viewButton = row.querySelector('a[href*="/test_results/"]');
+        if (viewButton) {
+            const href = viewButton.getAttribute('href');
+            const rowTestId = href.split('/').pop();
+            if (parseInt(rowTestId) === testId) {
+                return row;
+            }
+        }
+    }
+    return null;
+}
 
 // ================================
 // PERFORMANCE PREDICTION FUNCTIONS
