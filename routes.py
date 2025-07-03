@@ -997,6 +997,46 @@ def bulk_delete_tests():
         logging.error(f"Error in bulk delete: {str(e)}")
         return jsonify({'error': 'Failed to delete tests'}), 500
 
+@app.route('/api/test/<int:test_id>/restart', methods=['POST'])
+@web_auth_required
+def restart_test(test_id):
+    """Restart a test with its original parameters"""
+    test = Test.query.get_or_404(test_id)
+    
+    # Check if test is currently running
+    if test.status == 'running':
+        return jsonify({'error': 'Cannot restart a test that is currently running'}), 400
+    
+    try:
+        # Reset test status and timing
+        test.status = 'pending'
+        test.scheduled_time = datetime.now()
+        test.started_at = None
+        test.completed_at = None
+        
+        # Reset all client assignments to 'assigned' status
+        test_clients = TestClient.query.filter_by(test_id=test_id).all()
+        for test_client in test_clients:
+            test_client.status = 'assigned'
+        
+        # Clear any previous test results to start fresh
+        TestResult.query.filter_by(test_id=test_id).delete()
+        
+        db.session.commit()
+        
+        logging.info(f"Test {test_id} restarted by user")
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Test restarted successfully',
+            'test_id': test_id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error restarting test {test_id}: {str(e)}")
+        return jsonify({'error': 'Failed to restart test'}), 500
+
 @app.route('/api/test/<int:test_id>/data', methods=['GET'])
 def get_test_data(test_id):
     """Get test data for charts"""
