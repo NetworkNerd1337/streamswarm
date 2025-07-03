@@ -1008,11 +1008,13 @@ def restart_test(test_id):
         return jsonify({'error': 'Cannot restart a test that is currently running'}), 400
     
     try:
-        # Reset test status and timing
+        # Reset test status and timing for immediate execution
         test.status = 'pending'
-        test.scheduled_time = datetime.now()
+        # Set scheduled time to 5 seconds ago to ensure immediate execution
+        test.scheduled_time = datetime.now() - timedelta(seconds=5)
         test.started_at = None
         test.completed_at = None
+        test.recurrence_interval = None  # Clear recurring schedule so it runs once immediately
         
         # Reset all client assignments to 'assigned' status
         test_clients = TestClient.query.filter_by(test_id=test_id).all()
