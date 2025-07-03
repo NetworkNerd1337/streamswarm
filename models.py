@@ -164,6 +164,7 @@ class Test(db.Model):
     # Recurrence fields
     is_recurring = db.Column(db.Boolean, default=False)  # Whether this test recurs
     recurrence_interval = db.Column(db.Integer)  # Recurrence interval in seconds
+    recurrence_type = db.Column(db.String(20), default='continue')  # 'continue' or 'new' - how recurrence behaves
     parent_test_id = db.Column(db.Integer, db.ForeignKey('test.id'))  # Reference to original recurring test
     next_execution = db.Column(db.DateTime)  # When the next recurrence should run
     
@@ -189,6 +190,7 @@ class Test(db.Model):
             'status': self.status,
             'is_recurring': self.is_recurring,
             'recurrence_interval': self.recurrence_interval,
+            'recurrence_type': self.recurrence_type,
             'parent_test_id': self.parent_test_id,
             'next_execution': self.next_execution.isoformat() if self.next_execution else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,

@@ -831,11 +831,16 @@ def create_test():
         # Handle recurrence settings
         is_recurring = data.get('is_recurring', False)
         recurrence_interval = data.get('recurrence_interval') if is_recurring else None
+        recurrence_type = data.get('recurrence_type', 'continue') if is_recurring else 'continue'
         
         # Validate recurrence if enabled
         if is_recurring:
             if not recurrence_interval:
                 return jsonify({'error': 'Recurrence interval is required when recurring is enabled'}), 400
+            
+            # Validate recurrence type
+            if recurrence_type not in ['continue', 'new']:
+                return jsonify({'error': 'Recurrence type must be either "continue" or "new"'}), 400
             
             # Minimum recurrence interval: test duration + 10 minute buffer
             min_interval = duration + (10 * 60)  # 10 minutes buffer
@@ -864,6 +869,7 @@ def create_test():
             packet_size=packet_size,
             is_recurring=is_recurring,
             recurrence_interval=recurrence_interval,
+            recurrence_type=recurrence_type,
             next_execution=next_execution
         )
         

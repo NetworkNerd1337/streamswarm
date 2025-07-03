@@ -1,0 +1,1147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1400"
+   height="1000"
+   viewBox="0 0 1400 1000"
+   version="1.1"
+   id="svg112"
+   sodipodi:docname="streamswarm_architecture_fixed.svg"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview112"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="1.1940003"
+     inkscape:cx="685.51072"
+     inkscape:cy="520.10037"
+     inkscape:window-width="3136"
+     inkscape:window-height="1387"
+     inkscape:window-x="309"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg112" />
+  <defs
+     id="defs3">
+    <style
+       id="style1">
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; fill: #34495e; }
+      .label { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-label { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .server-box { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
+      .client-box { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
+      .internet-box { fill: #f39c12; stroke: #e67e22; stroke-width: 2; }
+      .network-box { fill: #2ecc71; stroke: #27ae60; stroke-width: 2; }
+      .database-box { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; }
+      .connection-line { stroke: #7f8c8d; stroke-width: 2; fill: none; }
+      .data-flow { stroke: #e74c3c; stroke-width: 3; fill: none; stroke-dasharray: 5,5; }
+      .internet-flow { stroke: #f39c12; stroke-width: 2; fill: none; }
+      .white-text { fill: white; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; }
+      .dependency-text { fill: #e67e22; font-family: Arial, sans-serif; font-size: 10px; }
+    </style>
+    <marker
+       id="arrowhead"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="0 0, 10 3.5, 0 7"
+         fill="#7f8c8d"
+         id="polygon1" />
+    </marker>
+    <marker
+       id="dataflow"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="0 0, 10 3.5, 0 7"
+         fill="#e74c3c"
+         id="polygon2" />
+    </marker>
+    <marker
+       id="internetflow"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="0 0, 10 3.5, 0 7"
+         fill="#f39c12"
+         id="polygon3" />
+    </marker>
+    <marker
+       id="dataflow-7"
+       markerWidth="10"
+       markerHeight="7"
+       refX="9"
+       refY="3.5"
+       orient="auto">
+      <polygon
+         points="10,3.5 0,7 0,0 "
+         fill="#e74c3c"
+         id="polygon2-5" />
+    </marker>
+  </defs>
+  <!-- Title -->
+  <text
+     x="700"
+     y="30"
+     text-anchor="middle"
+     class="title"
+     id="text3">StreamSwarm Distributed Network NPV Architecture</text>
+  <text
+     x="700"
+     y="55"
+     text-anchor="middle"
+     class="subtitle"
+     id="text4">Enterprise Network Performance &amp; Visibility Platform</text>
+  <!-- Central Server Section -->
+  <rect
+     x="500"
+     y="100"
+     width="400"
+     height="200"
+     rx="10"
+     class="server-box"
+     id="rect4" />
+  <text
+     x="700"
+     y="125"
+     text-anchor="middle"
+     class="white-text"
+     font-size="14"
+     id="text5">STREAMSWARM SERVER</text>
+  <text
+     x="700"
+     y="145"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text6">Flask Web Application</text>
+  <!-- Server Components Grid -->
+  <rect
+     x="520"
+     y="160"
+     width="110"
+     height="50"
+     rx="5"
+     fill="rgba(255,255,255,0.2)"
+     id="rect6" />
+  <text
+     x="575"
+     y="180"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text7">Web GUI</text>
+  <text
+     x="575"
+     y="195"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text8">Dashboard</text>
+  <rect
+     x="645"
+     y="160"
+     width="110"
+     height="50"
+     rx="5"
+     fill="rgba(255,255,255,0.2)"
+     id="rect8" />
+  <text
+     x="700"
+     y="180"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text9">REST API</text>
+  <text
+     x="700"
+     y="195"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text10">Client Management</text>
+  <rect
+     x="770"
+     y="160"
+     width="110"
+     height="50"
+     rx="5"
+     fill="rgba(255,255,255,0.2)"
+     id="rect10" />
+  <text
+     x="825"
+     y="180"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text11">AI/ML Engine</text>
+  <text
+     x="825"
+     y="195"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text12">Analytics</text>
+  <rect
+     x="520"
+     y="225"
+     width="110"
+     height="50"
+     rx="5"
+     fill="rgba(255,255,255,0.2)"
+     id="rect12" />
+  <text
+     x="575"
+     y="245"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text13">Geo Processing</text>
+  <text
+     x="575"
+     y="260"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text14">Path Analysis</text>
+  <rect
+     x="645"
+     y="225"
+     width="110"
+     height="50"
+     rx="5"
+     fill="rgba(255,255,255,0.2)"
+     id="rect14" />
+  <text
+     x="700"
+     y="245"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text15">Test Scheduler</text>
+  <text
+     x="700"
+     y="260"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text16">Job Queue</text>
+  <rect
+     x="770"
+     y="225"
+     width="110"
+     height="50"
+     rx="5"
+     fill="rgba(255,255,255,0.2)"
+     id="rect16" />
+  <text
+     x="825"
+     y="245"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text17">GNMI Analysis</text>
+  <text
+     x="825"
+     y="260"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text18">Telemetry</text>
+  <!-- Database -->
+  <rect
+     x="550"
+     y="320"
+     width="300"
+     height="80"
+     rx="10"
+     class="database-box"
+     id="rect18" />
+  <text
+     x="700"
+     y="345"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text19">PostgreSQL Database</text>
+  <text
+     x="700"
+     y="365"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text20">Test Results • Client Data • Performance Metrics</text>
+  <text
+     x="700"
+     y="385"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text21">65+ Advanced Network Metrics per Test</text>
+  <!-- Database connection -->
+  <line
+     x1="700"
+     y1="300"
+     x2="700"
+     y2="320"
+     class="connection-line"
+     marker-end="url(#arrowhead)"
+     id="line21" />
+  <!-- External Internet Dependencies -->
+  <rect
+     x="1045.4774"
+     y="71.524292"
+     width="220"
+     height="180"
+     rx="10"
+     class="internet-box"
+     id="rect21" />
+  <text
+     x="1155.4774"
+     y="96.524292"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text22">EXTERNAL DEPENDENCIES</text>
+  <rect
+     x="1065.4774"
+     y="116.52429"
+     width="180"
+     height="25"
+     rx="3"
+     fill="rgba(255,255,255,0.2)"
+     id="rect22" />
+  <text
+     x="1155.4774"
+     y="133.52429"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text23">ip-api.com (HTTPS:443)</text>
+  <rect
+     x="1065.4774"
+     y="146.52429"
+     width="180"
+     height="25"
+     rx="3"
+     fill="rgba(255,255,255,0.2)"
+     id="rect23" />
+  <text
+     x="1155.4774"
+     y="163.52429"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text24">Geolocation Services</text>
+  <rect
+     x="1065.4774"
+     y="176.52429"
+     width="180"
+     height="25"
+     rx="3"
+     fill="rgba(255,255,255,0.2)"
+     id="rect24" />
+  <text
+     x="1155.4774"
+     y="193.52429"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text25">Speedtest Servers</text>
+  <rect
+     x="1065.4774"
+     y="206.52429"
+     width="180"
+     height="25"
+     rx="3"
+     fill="rgba(255,255,255,0.2)"
+     id="rect25" />
+  <text
+     x="1155.4774"
+     y="223.52429"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text26">speedtest.net API</text>
+  <!-- Internet connection -->
+  <line
+     x1="900"
+     y1="190"
+     x2="1040.9999"
+     y2="190"
+     class="internet-flow"
+     marker-end="url(#internetflow)"
+     id="line26" />
+  <text
+     x="958.50079"
+     y="180.81239"
+     text-anchor="middle"
+     class="dependency-text"
+     font-size="9"
+     id="text27">HTTPS</text>
+  <!-- Distributed Clients Section -->
+  <!-- Branch Office 1 -->
+  <rect
+     x="50"
+     y="150"
+     width="160"
+     height="120"
+     rx="10"
+     class="network-box"
+     id="rect27" />
+  <text
+     x="130"
+     y="175"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text28">BRANCH OFFICE 1</text>
+  <text
+     x="130"
+     y="195"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text29">New York</text>
+  <rect
+     x="68.026772"
+     y="210.02676"
+     width="126.64662"
+     height="49.946457"
+     rx="5.2769427"
+     class="client-box"
+     id="rect29" />
+  <text
+     x="130"
+     y="230"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text30">StreamSwarm Client</text>
+  <text
+     x="130"
+     y="245"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text31">Network Testing Agent</text>
+  <!-- Branch Office 2 -->
+  <rect
+     x="50"
+     y="300"
+     width="160"
+     height="120"
+     rx="10"
+     class="network-box"
+     id="rect31" />
+  <text
+     x="130"
+     y="325"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text32">BRANCH OFFICE 2</text>
+  <text
+     x="130"
+     y="345"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text33">London</text>
+  <rect
+     x="68.026772"
+     y="360.02676"
+     width="126.64662"
+     height="49.946457"
+     rx="5.2769427"
+     class="client-box"
+     id="rect33" />
+  <text
+     x="130"
+     y="380"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text34">StreamSwarm Client</text>
+  <text
+     x="130"
+     y="395"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text35">Network Testing Agent</text>
+  <!-- Data Center -->
+  <rect
+     x="50"
+     y="450"
+     width="160"
+     height="120"
+     rx="10"
+     class="network-box"
+     id="rect35" />
+  <text
+     x="130"
+     y="475"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text36">DATA CENTER</text>
+  <text
+     x="130"
+     y="495"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text37">Tokyo</text>
+  <rect
+     x="68.036621"
+     y="510.03662"
+     width="129.13948"
+     height="49.926754"
+     rx="5.3808117"
+     class="client-box"
+     id="rect37" />
+  <text
+     x="130"
+     y="530"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text38">StreamSwarm Client</text>
+  <text
+     x="130"
+     y="545"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text39">Network Testing Agent</text>
+  <!-- Remote Office -->
+  <rect
+     x="50"
+     y="600"
+     width="160"
+     height="120"
+     rx="10"
+     class="network-box"
+     id="rect39" />
+  <text
+     x="130"
+     y="625"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text40">REMOTE OFFICE</text>
+  <text
+     x="130"
+     y="645"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text41">Singapore</text>
+  <rect
+     x="68.020149"
+     y="660.02014"
+     width="124.98483"
+     height="49.959705"
+     rx="5.2077012"
+     class="client-box"
+     id="rect41" />
+  <text
+     x="130"
+     y="680"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text42">StreamSwarm Client</text>
+  <text
+     x="130"
+     y="695"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text43">Network Testing Agent</text>
+  <!-- Cloud Clients with better spacing -->
+  <rect
+     x="1221.675"
+     y="537.77209"
+     width="160"
+     height="100"
+     rx="10"
+     class="network-box"
+     id="rect43" />
+  <text
+     x="1301.675"
+     y="562.77209"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text44">AWS CLOUD</text>
+  <text
+     x="1301.675"
+     y="582.77209"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text45">US-East-1</text>
+  <rect
+     x="1241.675"
+     y="593.77209"
+     width="120"
+     height="40"
+     rx="5"
+     class="client-box"
+     id="rect45" />
+  <text
+     x="1301.675"
+     y="610.77209"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text46">StreamSwarm Client</text>
+  <text
+     x="1301.675"
+     y="625.77209"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text47">Cloud Instance</text>
+  <rect
+     x="1220"
+     y="280"
+     width="160"
+     height="100"
+     rx="10"
+     class="network-box"
+     id="rect47" />
+  <text
+     x="1300"
+     y="305"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text48">AZURE CLOUD</text>
+  <text
+     x="1300"
+     y="325"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text49">Europe-West</text>
+  <rect
+     x="1240"
+     y="336"
+     width="120"
+     height="40"
+     rx="5"
+     class="client-box"
+     id="rect49" />
+  <text
+     x="1300"
+     y="353"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text50">StreamSwarm Client</text>
+  <text
+     x="1300"
+     y="368"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text51">Cloud Instance</text>
+  <rect
+     x="1220"
+     y="410"
+     width="160"
+     height="100"
+     rx="10"
+     class="network-box"
+     id="rect51" />
+  <text
+     x="1300"
+     y="435"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text52">GOOGLE GCP</text>
+  <text
+     x="1300"
+     y="455"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text53">Asia-Pacific</text>
+  <rect
+     x="1240"
+     y="466"
+     width="120"
+     height="40"
+     rx="5"
+     class="client-box"
+     id="rect53" />
+  <text
+     x="1300"
+     y="483"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text54">StreamSwarm Client</text>
+  <text
+     x="1300"
+     y="498"
+     text-anchor="middle"
+     class="white-text"
+     font-size="10"
+     id="text55">Cloud Instance</text>
+  <!-- Enterprise Network Infrastructure - moved away from connection lines -->
+  <rect
+     x="294.38861"
+     y="644.48907"
+     width="160"
+     height="120"
+     rx="10"
+     class="network-box"
+     id="rect55" />
+  <text
+     x="374.38861"
+     y="669.48907"
+     text-anchor="middle"
+     class="white-text"
+     font-size="12"
+     id="text56">ENTERPRISE NETWORK</text>
+  <text
+     x="374.38861"
+     y="689.48907"
+     text-anchor="middle"
+     class="white-text"
+     font-size="11"
+     id="text57">GNMI-Enabled Devices</text>
+  <rect
+     x="302.38861"
+     y="702.48907"
+     width="145.96313"
+     height="20"
+     rx="3.6490786"
+     fill="rgba(255,255,255,0.2)"
+     id="rect57"
+     style="stroke-width:1.10288" />
+  <text
+     x="374.38861"
+     y="715.48907"
+     text-anchor="middle"
+     class="white-text"
+     font-size="9"
+     id="text58">Network Switches/Routers</text>
+  <rect
+     x="312.38861"
+     y="730.48907"
+     width="120"
+     height="20"
+     rx="3"
+     fill="rgba(255,255,255,0.2)"
+     id="rect59" />
+  <text
+     x="372.38861"
+     y="743.48907"
+     text-anchor="middle"
+     class="white-text"
+     font-size="9"
+     id="text60">Enterprise Firewalls</text>
+  <!-- Data Flow Connections -->
+  <line
+     x1="210.01047"
+     y1="235.01125"
+     x2="497.50119"
+     y2="199.9919"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line60" />
+  <line
+     x1="210.00049"
+     y1="385.0065"
+     x2="497.50366"
+     y2="229.99352"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line61" />
+  <line
+     x1="209.98772"
+     y1="535.01263"
+     x2="496.67529"
+     y2="263.32571"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line62" />
+  <line
+     x1="210"
+     y1="685"
+     x2="500"
+     y2="290"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line63" />
+  <line
+     x1="1220.0161"
+     y1="355.03049"
+     x2="905.80579"
+     y2="233.31958"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line65" />
+  <line
+     x1="1220.0212"
+     y1="485.02161"
+     x2="904.14581"
+     y2="265.82819"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line66" />
+  <line
+     x1="1219.0687"
+     y1="582.00299"
+     x2="883.60315"
+     y2="302.96198"
+     class="data-flow"
+     marker-end="url(#dataflow-7)"
+     id="line66-0"
+     style="fill:none;stroke:#e74c3c;stroke-width:3.42068;stroke-dasharray:5.70114, 5.70114;marker-end:url(#dataflow-7)" />
+  <!-- GNMI Telemetry -->
+  <line
+     x1="382.3165"
+     y1="641.66431"
+     x2="522.40735"
+     y2="304.15814"
+     class="data-flow"
+     marker-end="url(#dataflow)"
+     id="line67" />
+  <!-- Connection Labels -->
+  <!-- AI/ML Features Box -->
+  <rect
+     x="654.78729"
+     y="705.44379"
+     width="220"
+     height="120"
+     rx="10"
+     fill="rgba(142, 68, 173, 0.1)"
+     stroke="#8e44ad"
+     stroke-width="2"
+     id="rect74" />
+  <text
+     x="764.78729"
+     y="730.44379"
+     text-anchor="middle"
+     class="label"
+     font-weight="bold"
+     id="text75">AI/ML CAPABILITIES</text>
+  <text
+     x="664.78729"
+     y="750.44379"
+     class="small-label"
+     id="text76">• Anomaly Detection (Isolation Forest)</text>
+  <text
+     x="664.78729"
+     y="765.44379"
+     class="small-label"
+     id="text77">• Health Classification (Random Forest)</text>
+  <text
+     x="664.78729"
+     y="780.44379"
+     class="small-label"
+     id="text78">• Performance Prediction (Gradient Boosting)</text>
+  <text
+     x="664.78729"
+     y="795.44379"
+     class="small-label"
+     id="text79">• Capacity Trend Analysis</text>
+  <text
+     x="664.78729"
+     y="810.44379"
+     class="small-label"
+     id="text80">• Real-time Diagnostic Insights</text>
+  <!-- Zero-Trust Security Box -->
+  <rect
+     x="894.78729"
+     y="705.44379"
+     width="220"
+     height="120"
+     rx="10"
+     fill="rgba(39, 174, 96, 0.1)"
+     stroke="#27ae60"
+     stroke-width="2"
+     id="rect80" />
+  <text
+     x="1004.7873"
+     y="730.44379"
+     text-anchor="middle"
+     class="label"
+     font-weight="bold"
+     id="text81">ZERO-TRUST SECURITY</text>
+  <text
+     x="904.78729"
+     y="750.44379"
+     class="small-label"
+     id="text82">• Local ML Processing Only</text>
+  <text
+     x="904.78729"
+     y="765.44379"
+     class="small-label"
+     id="text83">• No Cloud Dependencies for AI</text>
+  <text
+     x="904.78729"
+     y="780.44379"
+     class="small-label"
+     id="text84">• On-Premises Data Processing</text>
+  <text
+     x="904.78729"
+     y="795.44379"
+     class="small-label"
+     id="text85">• Air-Gapped Compatible</text>
+  <text
+     x="904.78729"
+     y="810.44379"
+     class="small-label"
+     id="text86">• Enterprise Security Compliant</text>
+  <!-- Network Requirements Box -->
+  <rect
+     x="563.38629"
+     y="439.50684"
+     width="352.64462"
+     height="139.5793"
+     rx="14.693525"
+     fill="rgba(231, 76, 60, 0.1)"
+     stroke="#e74c3c"
+     stroke-width="2.4207"
+     id="rect86" />
+  <text
+     x="683.17603"
+     y="464.29645"
+     text-anchor="middle"
+     class="label"
+     font-weight="bold"
+     id="text87">NETWORK REQUIREMENTS</text>
+  <text
+     x="573.17603"
+     y="484.29645"
+     class="small-label"
+     id="text88">• Outbound HTTPS (443) to Server</text>
+  <text
+     x="573.17603"
+     y="499.29651"
+     class="small-label"
+     id="text89">• Outbound HTTPS (443) for Geolocation (client preffered, server fallback)</text>
+  <text
+     x="573.17603"
+     y="514.29651"
+     class="small-label"
+     id="text90">• Speedtest Servers (HTTPS:443)</text>
+  <text
+     x="573.17603"
+     y="529.29651"
+     class="small-label"
+     id="text91">• GNMI Access (830/32768) to Devices</text>
+  <text
+     x="573.17603"
+     y="544.29651"
+     class="small-label"
+     id="text92">• Standard Network Tools (ping, traceroute)</text>
+  <text
+     x="573.17603"
+     y="559.29651"
+     class="small-label"
+     id="text93">• Optional: MTR for enhanced analysis</text>
+  <!-- Key Capabilities Box -->
+  <rect
+     x="654.78729"
+     y="845.44379"
+     width="220"
+     height="120"
+     rx="10"
+     fill="rgba(52, 152, 219, 0.1)"
+     stroke="#3498db"
+     stroke-width="2"
+     id="rect93" />
+  <text
+     x="764.78729"
+     y="870.44379"
+     text-anchor="middle"
+     class="label"
+     font-weight="bold"
+     id="text94">KEY CAPABILITIES</text>
+  <text
+     x="664.78729"
+     y="890.44379"
+     class="small-label"
+     id="text95">• 65+ Network Performance Metrics</text>
+  <text
+     x="664.78729"
+     y="905.44379"
+     class="small-label"
+     id="text96">• Geolocation Path Visualization</text>
+  <text
+     x="664.78729"
+     y="920.44379"
+     class="small-label"
+     id="text97">• GNMI Enterprise Telemetry</text>
+  <text
+     x="664.78729"
+     y="935.44379"
+     class="small-label"
+     id="text98">• Professional PDF Reporting</text>
+  <text
+     x="664.78729"
+     y="950.44379"
+     class="small-label"
+     id="text99">• Role-Based Access Control</text>
+  <!-- Business Benefits Box -->
+  <rect
+     x="894.78729"
+     y="845.44379"
+     width="220"
+     height="120"
+     rx="10"
+     fill="rgba(243, 156, 18, 0.1)"
+     stroke="#f39c12"
+     stroke-width="2"
+     id="rect99" />
+  <text
+     x="1004.7873"
+     y="870.44379"
+     text-anchor="middle"
+     class="label"
+     font-weight="bold"
+     id="text100">BUSINESS BENEFITS</text>
+  <text
+     x="904.78729"
+     y="890.44379"
+     class="small-label"
+     id="text101">• Proactive Network Monitoring</text>
+  <text
+     x="904.78729"
+     y="905.44379"
+     class="small-label"
+     id="text102">• Reduced Downtime</text>
+  <text
+     x="904.78729"
+     y="920.44379"
+     class="small-label"
+     id="text103">• Performance Optimization</text>
+  <text
+     x="904.78729"
+     y="935.44379"
+     class="small-label"
+     id="text104">• Capacity Planning</text>
+  <text
+     x="904.78729"
+     y="950.44379"
+     class="small-label"
+     id="text105">• Enterprise Compliance</text>
+  <!-- Legend -->
+  <rect
+     x="88.48922"
+     y="823.80231"
+     width="460"
+     height="140"
+     rx="5"
+     fill="rgba(52, 73, 94, 0.1)"
+     stroke="#34495e"
+     stroke-width="1"
+     id="rect105" />
+  <text
+     x="318.48926"
+     y="843.80231"
+     text-anchor="middle"
+     class="label"
+     font-weight="bold"
+     id="text106">LEGEND</text>
+  <rect
+     x="98.48922"
+     y="858.80231"
+     width="20"
+     height="15"
+     class="server-box"
+     id="rect106" />
+  <text
+     x="128.48926"
+     y="870.80231"
+     class="small-label"
+     id="text107">Central Server and Database</text>
+  <rect
+     x="98.48922"
+     y="878.80231"
+     width="20"
+     height="15"
+     class="client-box"
+     id="rect107" />
+  <text
+     x="128.48926"
+     y="890.80231"
+     class="small-label"
+     id="text108">Distributed Monitoring Clients</text>
+  <rect
+     x="98.48922"
+     y="898.80231"
+     width="20"
+     height="15"
+     class="network-box"
+     id="rect108" />
+  <text
+     x="128.48926"
+     y="910.80231"
+     class="small-label"
+     id="text109">Network Locations and Infrastructure</text>
+  <rect
+     x="98.48922"
+     y="918.80231"
+     width="20"
+     height="15"
+     class="internet-box"
+     id="rect109" />
+  <text
+     x="128.48926"
+     y="930.80231"
+     class="small-label"
+     id="text110">External Internet Dependencies</text>
+  <line
+     x1="98.48922"
+     y1="943.80231"
+     x2="138.48926"
+     y2="943.80231"
+     class="data-flow"
+     id="line110" />
+  <text
+     x="148.48926"
+     y="948.80231"
+     class="small-label"
+     id="text111">Performance Data Flow</text>
+  <line
+     x1="318.48926"
+     y1="863.80231"
+     x2="358.48926"
+     y2="863.80231"
+     class="internet-flow"
+     id="line111" />
+  <text
+     x="368.48926"
+     y="868.80231"
+     class="small-label"
+     id="text112">Internet Access Required</text>
+</svg>

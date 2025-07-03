@@ -322,6 +322,33 @@
                             </div>
                         </div>
                         
+                        <!-- Recurrence Type Selection -->
+                        <div class="row" id="recurrenceTypeOptions" style="display: none;">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Recurrence Behavior</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recurrenceType" id="recurrenceTypeContinue" value="continue" checked>
+                                            <label class="form-check-label" for="recurrenceTypeContinue">
+                                                <strong>Continue Same Test</strong>
+                                                <br><small class="text-muted">Reuse the same test and restart it each interval (current behavior)</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="recurrenceType" id="recurrenceTypeNew" value="new">
+                                            <label class="form-check-label" for="recurrenceTypeNew">
+                                                <strong>Create New Tests</strong>
+                                                <br><small class="text-muted">Generate a new test for each occurrence (better for tracking historical data)</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Performance Prediction Section -->
                         <div class="mb-4">
                             <div class="card bg-light border-primary">
@@ -462,6 +489,8 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
         is_recurring: document.getElementById('enableRecurrence').checked,
         recurrence_interval: document.getElementById('enableRecurrence').checked ? 
             parseInt(document.getElementById('recurrenceIntervalValue').value) * parseInt(document.getElementById('recurrenceUnit').value) : null,
+        recurrence_type: document.getElementById('enableRecurrence').checked ? 
+            document.querySelector('input[name="recurrenceType"]:checked').value : null,
         client_ids: selectedClients
     };
     
@@ -492,12 +521,15 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
 function toggleRecurrence() {
     const checkbox = document.getElementById('enableRecurrence');
     const options = document.getElementById('recurrenceOptions');
+    const typeOptions = document.getElementById('recurrenceTypeOptions');
     
     if (checkbox.checked) {
         options.style.display = 'block';
+        typeOptions.style.display = 'block';
         validateRecurrence();
     } else {
         options.style.display = 'none';
+        typeOptions.style.display = 'none';
         document.getElementById('recurrenceValidation').innerHTML = '';
     }
 }
