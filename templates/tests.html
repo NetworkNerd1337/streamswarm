@@ -149,7 +149,7 @@
                                         {% else %}
                                             <span class="text-muted">Immediate</span>
                                         {% endif %}
-                                        {% if test.is_recurring %}
+                                        {% if test.is_recurring and test.recurrence_interval %}
                                             <br><small class="text-info">
                                                 <i class="fas fa-sync-alt me-1"></i>
                                                 Repeats every 
