@@ -51,6 +51,7 @@
                                 <li><a href="#ai-ml-setup" class="text-decoration-none">AI/ML Diagnostic Setup</a></li>
                                 <li><a href="#geolocation-features" class="text-decoration-none">Geolocation Mapping</a></li>
                                 <li><a href="#gnmi-analysis" class="text-decoration-none">GNMI Network Analysis</a></li>
+                                <li><a href="#recurring-tests" class="text-decoration-none">Recurring Tests & Scheduling</a></li>
                                 <li><a href="#metrics-definition" class="text-decoration-none">Metrics Definition Guide</a></li>
                                 <li><a href="#use-cases" class="text-decoration-none">Real-World Use Cases</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Multi-Client Setup</a></li>
@@ -2237,6 +2238,165 @@ nssm install StreamSwarmClient</code></pre>
                                         <li>Tests: Performance comparison to common destinations</li>
                                     </ul>
                                     <p><strong>Benefits:</strong> ISP performance comparison, load balancing optimization, connectivity issue detection.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurring Tests and Scheduling -->
+    <div class="row mb-4" id="recurring-tests">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        Recurring Tests and Advanced Scheduling
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Enhanced Recurrence Behaviors</h6>
+                        <p class="mb-0">StreamSwarm now offers two distinct recurrence modes for different monitoring needs: "Continue Same Test" for real-time monitoring and "Create New Tests" for historical data tracking.</p>
+                    </div>
+                    
+                    <!-- Recurrence Modes -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-redo me-2"></i>
+                                        Continue Same Test
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Best for:</strong> Real-time monitoring, dashboards, alerting systems</p>
+                                    <p><strong>Behavior:</strong></p>
+                                    <ul class="small">
+                                        <li>Reuses the same test record for each execution</li>
+                                        <li>Overwrites previous results with new data</li>
+                                        <li>Maintains single test ID throughout lifecycle</li>
+                                        <li>Efficient for continuous monitoring</li>
+                                    </ul>
+                                    <p><strong>Use Cases:</strong> Network health monitoring, service availability checks, real-time performance tracking</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Create New Tests
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Best for:</strong> Historical analysis, trend tracking, compliance reporting</p>
+                                    <p><strong>Behavior:</strong></p>
+                                    <ul class="small">
+                                        <li>Creates a new test record for each execution</li>
+                                        <li>Preserves all historical results</li>
+                                        <li>Each test has unique ID and lifecycle</li>
+                                        <li>Links to original test via parent_test_id</li>
+                                    </ul>
+                                    <p><strong>Use Cases:</strong> Performance trending, SLA compliance reporting, historical analysis</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuration Guide -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Configuration Guide
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-6 mb-3">
+                                            <h6 class="text-primary">Setting Up Recurring Tests</h6>
+                                            <ol class="small">
+                                                <li>Create a new test from the dashboard</li>
+                                                <li>Enable "Recurring Test" checkbox</li>
+                                                <li>Set recurrence interval (minimum: test duration + 10 minutes)</li>
+                                                <li>Choose recurrence behavior:
+                                                    <ul>
+                                                        <li><strong>Continue Same Test:</strong> For real-time monitoring</li>
+                                                        <li><strong>Create New Tests:</strong> For historical tracking</li>
+                                                    </ul>
+                                                </li>
+                                                <li>Schedule test execution time (optional)</li>
+                                                <li>Assign monitoring clients</li>
+                                            </ol>
+                                        </div>
+                                        
+                                        <div class="col-lg-6 mb-3">
+                                            <h6 class="text-success">Best Practices</h6>
+                                            <ul class="small">
+                                                <li><strong>Interval Timing:</strong> Allow 10+ minute buffer between test executions</li>
+                                                <li><strong>Resource Management:</strong> "Create New Tests" mode automatically frees client resources</li>
+                                                <li><strong>Data Retention:</strong> Consider storage requirements when using "Create New Tests"</li>
+                                                <li><strong>Monitoring Strategy:</strong> Use "Continue Same Test" for alerts, "Create New Tests" for reporting</li>
+                                                <li><strong>Client Allocation:</strong> Ensure sufficient clients for all recurring tests</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Example Scenarios -->
+                    <div class="row">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chart-line me-2"></i>
+                                        Example: Website SLA Monitoring
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Scenario:</strong> Monitor website availability every 15 minutes</p>
+                                    <p><strong>Configuration:</strong></p>
+                                    <ul class="small">
+                                        <li>Test Duration: 5 minutes</li>
+                                        <li>Recurrence: Every 15 minutes</li>
+                                        <li>Mode: <strong>Continue Same Test</strong></li>
+                                        <li>Clients: 3 geographic locations</li>
+                                    </ul>
+                                    <p><strong>Benefits:</strong> Real-time dashboard, immediate alerts, minimal storage</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-archive me-2"></i>
+                                        Example: Monthly Performance Reports
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Scenario:</strong> Generate monthly performance reports</p>
+                                    <p><strong>Configuration:</strong></p>
+                                    <ul class="small">
+                                        <li>Test Duration: 10 minutes</li>
+                                        <li>Recurrence: Daily at 2 AM</li>
+                                        <li>Mode: <strong>Create New Tests</strong></li>
+                                        <li>Clients: All office locations</li>
+                                    </ul>
+                                    <p><strong>Benefits:</strong> Historical trending, compliance reporting, detailed analysis</p>
                                 </div>
                             </div>
                         </div>

@@ -105,6 +105,17 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 3, 2025: Enhanced recurring test system with two distinct behavior modes for different monitoring strategies
+  - Added "Continue Same Test" mode for real-time monitoring (reuses same test record, overwrites results)
+  - Added "Create New Tests" mode for historical tracking (creates new test for each occurrence, preserves all data)
+  - Implemented comprehensive database migration for recurrence_type field in Test model
+  - Enhanced test creation API with recurrence_type validation and backend processing
+  - Updated recurring test processor to handle both behavior modes with proper resource management
+  - Added extensive documentation to tutorial page with configuration guides, best practices, and example scenarios
+  - Updated README.md with dedicated Enhanced Recurring Tests section explaining both modes and use cases
+  - Radio button selection in test creation form for choosing recurrence behavior
+  - New tests in "Create New Tests" mode link to original via parent_test_id for tracking relationship
+  - Original recurring test marked as completed when creating new tests to free client resources
 - July 3, 2025: Fixed restart functionality timezone bug and implemented comprehensive individual test restart feature
   - Fixed critical timezone mismatch between restart function and client polling (UTC vs Eastern Time)
   - Added individual test restart button with immediate execution override regardless of original schedule

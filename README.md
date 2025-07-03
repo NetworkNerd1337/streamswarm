@@ -14,6 +14,7 @@ StreamSwarm provides distributed network performance testing and system resource
 - **🔧 GNMI Managed Infrastructure Analysis**: Hop-by-hop telemetry from GNMI-enabled network devices for enterprise infrastructure
 - **📊 Advanced Metrics Collection**: 65+ performance metrics including application layer, infrastructure health, and system resources
 - **🏢 Multi-Client Architecture**: Distributed testing from multiple network locations with automatic client assignment
+- **⏰ Enhanced Recurring Tests**: Two behavior modes - "Continue Same Test" for real-time monitoring and "Create New Tests" for historical data tracking
 - **📈 Real-Time Visualization**: Web-based interface with interactive charts and comprehensive dashboards
 - **📄 Professional Reporting**: Executive PDF reports with charts, analysis, and recommendations
 - **🛡️ Secure Web Authentication**: Role-based access control with user management and session security
@@ -606,6 +607,51 @@ ALLOW TCP 80 FROM streamswarm_server TO ip-api.com
 # Required: DNS resolution
 ALLOW UDP 53 FROM any TO dns_servers
 ```
+
+## Enhanced Recurring Tests
+
+StreamSwarm offers advanced recurring test functionality with two distinct behavior modes to support different monitoring strategies:
+
+### Recurrence Behavior Options
+
+#### Continue Same Test (Real-Time Monitoring)
+- **Best for**: Dashboards, alerting systems, real-time monitoring
+- **Behavior**: Reuses the same test record for each execution, overwriting previous results
+- **Benefits**: Efficient resource usage, single test ID, ideal for continuous monitoring
+- **Use cases**: Service availability checks, network health monitoring, performance alerting
+
+#### Create New Tests (Historical Tracking)
+- **Best for**: Trend analysis, compliance reporting, historical data collection
+- **Behavior**: Creates a new test record for each scheduled execution
+- **Benefits**: Preserves all historical results, enables detailed trending analysis
+- **Use cases**: SLA compliance reporting, capacity planning, performance trend analysis
+
+### Configuration Guidelines
+
+**Minimum Requirements:**
+- Recurrence interval must be at least test duration + 10 minutes
+- Sufficient client resources for all recurring tests
+- Consider storage requirements for "Create New Tests" mode
+
+**Best Practices:**
+- Use "Continue Same Test" for real-time dashboards and alerting
+- Use "Create New Tests" for regulatory compliance and historical reporting
+- Monitor client allocation to ensure recurring tests don't conflict
+- Set appropriate recurrence intervals based on network requirements
+
+**Example Configurations:**
+
+*Website SLA Monitoring:*
+- Test Duration: 5 minutes
+- Recurrence: Every 15 minutes
+- Mode: Continue Same Test
+- Result: Real-time availability dashboard
+
+*Monthly Performance Reports:*
+- Test Duration: 10 minutes
+- Recurrence: Daily at 2 AM
+- Mode: Create New Tests
+- Result: Historical trend data for reporting
 
 ## Troubleshooting
 
