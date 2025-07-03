@@ -64,7 +64,7 @@ class RecurringTestProcessor:
         tests_to_process = db.session.query(Test).filter(
             Test.is_recurring == True,
             Test.next_execution <= now,
-            Test.status.in_(['completed', 'pending'])  # Only process completed or pending tests
+            Test.parent_test_id.is_(None)  # Only process original recurring tests, not child tests
         ).all()
         
         if not tests_to_process:
@@ -137,9 +137,9 @@ class RecurringTestProcessor:
             )
             db.session.add(new_test_client)
         
-        # Update the original test's next execution and mark it as completed
+        # Update the original test's next execution but keep it active for future recurrences
         self._update_next_execution(original_test)
-        original_test.status = 'completed'  # Mark original as completed to free resources
+        # Don't mark original as completed - it needs to stay active to generate future tests
         
         logger.info(f"Created new test {new_test.id} from recurring test {original_test.id}")
         
