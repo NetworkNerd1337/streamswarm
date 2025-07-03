@@ -1008,10 +1008,11 @@ def restart_test(test_id):
         return jsonify({'error': 'Cannot restart a test that is currently running'}), 400
     
     try:
-        # Reset test status and timing for immediate execution
+        # Reset test status and timing for immediate execution using consistent timezone
         test.status = 'pending'
-        # Set scheduled time to 5 seconds ago to ensure immediate execution
-        test.scheduled_time = datetime.now() - timedelta(seconds=5)
+        # Set scheduled time to 5 seconds ago using the same timezone as client polling
+        now = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        test.scheduled_time = now - timedelta(seconds=5)
         test.started_at = None
         test.completed_at = None
         test.recurrence_interval = None  # Clear recurring schedule so it runs once immediately
