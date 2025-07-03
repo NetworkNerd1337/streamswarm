@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 3, 2025: Fixed restart functionality timezone bug and implemented comprehensive individual test restart feature
+  - Fixed critical timezone mismatch between restart function and client polling (UTC vs Eastern Time)
+  - Added individual test restart button with immediate execution override regardless of original schedule
+  - Implemented restart API endpoint that clears recurrence intervals and sets immediate execution time
+  - Fixed template error handling for tests with null recurrence_interval values
+  - Restart feature integrates seamlessly with multi-select delete, auto-refresh, and infinite scroll functionality
+  - Added loading states, confirmation dialogs, and success notifications for restart operations
+  - Supports upcoming real-time alerting system by enabling quick test restarts when issues are detected
 - July 3, 2025: Fixed critical recurring test bug and implemented comprehensive multi-select delete functionality
   - Fixed recurring test processor to restart existing test instead of creating duplicate test entries
   - Resolved client allocation conflicts that caused new recurring test instances to remain in "pending" state
