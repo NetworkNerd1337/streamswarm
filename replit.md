@@ -105,6 +105,16 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 3, 2025: Fixed critical recurring test bug and implemented comprehensive multi-select delete functionality
+  - Fixed recurring test processor to restart existing test instead of creating duplicate test entries
+  - Resolved client allocation conflicts that caused new recurring test instances to remain in "pending" state
+  - Implemented comprehensive multi-select delete feature with checkboxes for individual test selection
+  - Added "Select all" checkbox functionality with smart indeterminate state support
+  - Created dynamic "Delete Selected" button showing real-time count of selected tests
+  - Built robust bulk delete API endpoint with proper error handling and transaction safety
+  - Added success/error notifications with auto-dismiss functionality
+  - Ensured seamless integration with existing infinite scroll, auto-refresh, and search features
+  - Multi-select system includes confirmation dialogs, loading states, and automatic UI updates
 - July 2, 2025: Enhanced test interface with comprehensive timestamp display and automatic status synchronization
   - Added "Created" column to tests page showing when each test was originally created with timestamp (YYYY-MM-DD HH:MM format)
   - Implemented automatic status refresh system with 10-second intervals to prevent status/progress column mismatches

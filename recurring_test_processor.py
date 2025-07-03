@@ -9,7 +9,7 @@ import threading
 import time
 from datetime import datetime, timedelta
 from app import app, db
-from models import Test, TestClient
+from models import Test, TestClient, TestResult
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -74,44 +74,30 @@ class RecurringTestProcessor:
         
         for original_test in tests_to_process:
             try:
-                self._create_recurring_test_instance(original_test)
+                self._restart_recurring_test(original_test)
                 self._update_next_execution(original_test)
             except Exception as e:
                 logger.error(f"Error processing recurring test {original_test.id}: {e}")
         
         db.session.commit()
     
-    def _create_recurring_test_instance(self, original_test):
-        """Create a new test instance from a recurring test"""
-        # Create new test instance
-        new_test = Test(
-            name=f"{original_test.name} (Auto-{datetime.now().strftime('%Y%m%d-%H%M')})",
-            description=f"Recurring instance of: {original_test.description}" if original_test.description else "Auto-generated recurring test",
-            destination=original_test.destination,
-            duration=original_test.duration,
-            interval=original_test.interval,
-            packet_size=original_test.packet_size,
-            scheduled_time=datetime.now(),  # Schedule immediately
-            is_recurring=False,  # Instance is not recurring itself
-            parent_test_id=original_test.id,  # Link to original recurring test
-            status='pending'
-        )
+    def _restart_recurring_test(self, original_test):
+        """Restart the original test for recurring execution"""
+        # Reset the original test to restart it
+        original_test.scheduled_time = datetime.now()  # Schedule immediately
+        original_test.status = 'pending'
+        original_test.started_at = None
+        original_test.completed_at = None
         
-        db.session.add(new_test)
-        db.session.flush()  # Get the new test ID
+        # Reset all client assignments to 'assigned' status
+        test_clients = db.session.query(TestClient).filter_by(test_id=original_test.id).all()
+        for test_client in test_clients:
+            test_client.status = 'assigned'
         
-        # Copy client assignments from original test
-        original_clients = db.session.query(TestClient).filter_by(test_id=original_test.id).all()
+        # Clear any previous test results to start fresh
+        db.session.query(TestResult).filter_by(test_id=original_test.id).delete()
         
-        for original_client in original_clients:
-            new_test_client = TestClient(
-                test_id=new_test.id,
-                client_id=original_client.client_id,
-                status='assigned'
-            )
-            db.session.add(new_test_client)
-        
-        logger.info(f"Created recurring test instance {new_test.id} from original test {original_test.id}")
+        logger.info(f"Restarted recurring test {original_test.id} for next execution")
         
     def _update_next_execution(self, test):
         """Update the next execution time for a recurring test"""
