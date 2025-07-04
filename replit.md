@@ -105,7 +105,7 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- July 4, 2025: Created comprehensive Linux client deployment automation system
+- July 4, 2025: Created comprehensive Linux client deployment automation system with integrated web download
   - Added start_streamswarm_client.sh: Professional bash script for automated client startup with cron @reboot support
   - Implemented screen session management for background execution without user interaction
   - Added git pull automation for client code updates on startup
@@ -117,6 +117,9 @@ The system operates on a distributed client-server architecture where:
   - Updated README.md with automated deployment section highlighting production-ready approach
   - Script supports manual configuration editing for server URL, API token, and paths
   - Includes backup/recovery procedures and multi-client deployment strategies
+  - Integrated download button in web interface: "Download Linux Startup Script" on /clients page
+  - Created API endpoint /api/download/linux-startup-script for web-based script distribution
+  - Prepared infrastructure for future Windows and Mac deployment scripts
 - July 4, 2025: Enhanced admin navigation consistency and fixed critical recurring test bug
   - Added consistent breadcrumb navigation and "Back to System Configuration" buttons to all admin pages
   - User Management, API Token Management, and AI Models Configuration pages now have unified navigation structure
