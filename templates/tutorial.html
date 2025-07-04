@@ -3171,21 +3171,24 @@ self.gnmi_analyzer.add_device(<br>
                                         <div class="col-md-6">
                                             <h6>Diagnostic Steps:</h6>
                                             <pre class="bg-dark text-light p-2 rounded"><code># Test server accessibility
-curl http://server-ip:5000/api/dashboard/stats
+curl https://server-url/api/dashboard/stats
 
 # Check network connectivity  
-ping server-ip
+ping server-hostname
 
-# Verify firewall rules
-sudo ufw status</code></pre>
+# Verify firewall rules (HTTPS port 443)
+sudo ufw status
+telnet server-hostname 443</code></pre>
                                         </div>
                                         <div class="col-md-6">
                                             <h6>Common Solutions:</h6>
                                             <ul class="small">
                                                 <li>Verify server is running and accessible</li>
-                                                <li>Check firewall rules on server</li>
-                                                <li>Ensure port 5000 is not blocked</li>
+                                                <li>Check firewall rules on server and client</li>
+                                                <li>Ensure HTTPS port 443 is not blocked</li>
                                                 <li>Confirm correct server URL in client command</li>
+                                                <li>Check SSL certificate validity</li>
+                                                <li>Verify DNS resolution for server hostname</li>
                                             </ul>
                                         </div>
                                     </div>
