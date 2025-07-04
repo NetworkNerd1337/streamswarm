@@ -311,12 +311,16 @@
                             <div class="col-md-6 mb-3" id="recurrenceOptions" style="display: none;">
                                 <label for="recurrenceInterval" class="form-label">Recurrence Interval</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="recurrenceIntervalValue" min="1" value="1" onchange="validateRecurrence()">
+                                    <input type="number" class="form-control" id="recurrenceIntervalValue" min="1" value="30" onchange="validateRecurrence()">
                                     <select class="form-select" id="recurrenceUnit" onchange="validateRecurrence()">
+                                        <option value="60">Minutes</option>
                                         <option value="3600">Hours</option>
                                         <option value="86400">Days</option>
                                         <option value="604800">Weeks</option>
                                     </select>
+                                </div>
+                                <div class="form-text text-muted">
+                                    <small>Minimum: 30 minutes. Must be at least test duration + 10 minutes buffer.</small>
                                 </div>
                                 <div id="recurrenceValidation" class="form-text"></div>
                             </div>
@@ -547,6 +551,14 @@ function validateRecurrence() {
     const intervalValue = parseInt(document.getElementById('recurrenceIntervalValue').value) || 0;
     const unit = parseInt(document.getElementById('recurrenceUnit').value) || 0;
     const recurrenceSeconds = intervalValue * unit;
+    
+    // Absolute minimum recurrence interval: 30 minutes
+    const absoluteMinimumSeconds = 30 * 60; // 30 minutes = 1800 seconds
+    
+    if (recurrenceSeconds < absoluteMinimumSeconds) {
+        validationDiv.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Recurrence interval must be at least 30 minutes</span>';
+        return false;
+    }
     
     // Minimum recurrence interval: test duration + 10 minute buffer
     const minRecurrenceSeconds = duration + (10 * 60); // 10 minutes = 600 seconds

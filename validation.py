@@ -207,7 +207,7 @@ class TestCreationSchema(Schema):
     duration = fields.Int(required=False, validate=validate.Range(min=1, max=86400))  # Max 24 hours
     interval = fields.Int(required=False, validate=validate.Range(min=1, max=3600))   # Max 1 hour
     is_recurring = fields.Bool(required=False, load_default=False)
-    recurrence_interval = fields.Int(required=False, allow_none=True, validate=validate.Range(min=600))  # Min 10 minutes
+    recurrence_interval = fields.Int(required=False, allow_none=True, validate=validate.Range(min=1800))  # Min 30 minutes
     scheduled_time = fields.Str(required=False, allow_none=True)
     client_ids = fields.List(fields.Int(validate=validate.Range(min=1)), required=True)
     
@@ -243,11 +243,21 @@ class TestCreationSchema(Schema):
             if not recurrence_interval:
                 raise MarshmallowValidationError("Recurrence interval is required when recurring is enabled")
             
-            # Minimum recurrence interval: test duration + 10 minute buffer
-            min_interval = duration + (10 * 60)  # 10 minutes buffer
-            if recurrence_interval < min_interval:
-                min_minutes = math.ceil(min_interval / 60)
+            # Absolute minimum recurrence interval: 30 minutes
+            if recurrence_interval < 1800:  # 30 minutes
+                raise MarshmallowValidationError("Recurrence interval must be at least 30 minutes")
+            
+            # Ensure sufficient buffer: recurrence interval must be at least test duration + 10 minutes
+            min_interval_with_buffer = duration + (10 * 60)  # 10 minutes buffer
+            if recurrence_interval < min_interval_with_buffer:
+                min_minutes = math.ceil(min_interval_with_buffer / 60)
                 raise MarshmallowValidationError(f"Recurrence interval must be at least {min_minutes} minutes (test duration + 10 minute buffer)")
+            
+            # Maximum practical test duration for given recurrence interval
+            max_duration = recurrence_interval - (10 * 60)  # Leave 10 minutes buffer
+            if duration > max_duration:
+                max_duration_minutes = math.floor(max_duration / 60)
+                raise MarshmallowValidationError(f"Test duration must be at most {max_duration_minutes} minutes (recurrence interval - 10 minute buffer)")
         
         return data
 
