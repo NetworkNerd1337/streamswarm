@@ -22,13 +22,13 @@ SERVER_URL="https://swarmstreamserver-example.com"
 API_TOKEN="your-api-token-here"
 
 # Client name (will be displayed in server dashboard)
-CLIENT_NAME="$(hostname)-client"
+CLIENT_NAME="$(hostname)"
 
 # Python virtual environment path
-VENV_PATH="/home/$(whoami)/streamswarm-venv"
+VENV_PATH="/home/$(whoami)/streamswarm-env"
 
 # Application directory path
-APP_DIR="/home/$(whoami)/streamswarm-client"
+APP_DIR="/home/$(whoami)/Swarm"
 
 # Screen session name
 SCREEN_SESSION="streamswarm-client"
