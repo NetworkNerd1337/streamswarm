@@ -389,6 +389,27 @@ sudo chmod 644 client.crt
 
 ## Client Deployment
 
+### Automated Linux Deployment (Recommended)
+For production deployments, use the provided automated startup script:
+
+**Files:**
+- `start_streamswarm_client.sh` - Automated startup script with cron support
+- `CLIENT_DEPLOYMENT.md` - Comprehensive deployment guide
+
+**Quick Setup:**
+1. Download client files to target machine
+2. Edit `start_streamswarm_client.sh` with your server URL and API token
+3. Make executable: `chmod +x start_streamswarm_client.sh`
+4. Add to cron: `@reboot /path/to/start_streamswarm_client.sh`
+
+The script automatically handles:
+- Screen session management for background execution
+- Python virtual environment activation
+- Git repository updates (git pull origin main)
+- Network connectivity waiting (important for @reboot)
+- Comprehensive logging and error handling
+- Status monitoring and client health checks
+
 ### Single Client
 ```bash
 # Basic connection

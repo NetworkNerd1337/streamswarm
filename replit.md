@@ -105,6 +105,18 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 4, 2025: Created comprehensive Linux client deployment automation system
+  - Added start_streamswarm_client.sh: Professional bash script for automated client startup with cron @reboot support
+  - Implemented screen session management for background execution without user interaction
+  - Added git pull automation for client code updates on startup
+  - Included network connectivity waiting (crucial for @reboot scenarios)
+  - Created comprehensive logging system with /var/log/streamswarm-client.log
+  - Added client_status.sh generation for easy monitoring and troubleshooting
+  - Implemented virtual environment activation and proper error handling
+  - Added CLIENT_DEPLOYMENT.md with complete deployment guide, troubleshooting, and security considerations
+  - Updated README.md with automated deployment section highlighting production-ready approach
+  - Script supports manual configuration editing for server URL, API token, and paths
+  - Includes backup/recovery procedures and multi-client deployment strategies
 - July 4, 2025: Enhanced admin navigation consistency and fixed critical recurring test bug
   - Added consistent breadcrumb navigation and "Back to System Configuration" buttons to all admin pages
   - User Management, API Token Management, and AI Models Configuration pages now have unified navigation structure
