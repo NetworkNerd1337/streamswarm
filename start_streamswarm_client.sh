@@ -121,7 +121,7 @@ log_message "Starting StreamSwarm client with server: $SERVER_URL"
 screen -dmS "$SCREEN_SESSION" bash -c "
     source '$VENV_PATH/bin/activate'
     cd '$APP_DIR'
-    python client.py --server-url '$SERVER_URL' --api-token '$API_TOKEN' --client-name '$CLIENT_NAME' 2>&1 | tee -a '$LOG_FILE'
+    python client.py --server '$SERVER_URL' --token '$API_TOKEN' --name '$CLIENT_NAME' 2>&1 | tee -a '$LOG_FILE'
 "
 
 # Verify screen session started
