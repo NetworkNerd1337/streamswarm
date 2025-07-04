@@ -4,18 +4,37 @@
 
 {% block content %}
 <div class="container">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('system_configuration') }}">
+                    <i class="fas fa-cogs me-1"></i>System Configuration
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-key me-1"></i>API Token Management
+            </li>
+        </ol>
+    </nav>
+    
     <!-- Header -->
     <div class="row mb-4">
         <div class="col">
-            <div class="d-flex align-items-center mb-3">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StreamSwarm" height="48" class="me-3">
-                <div>
-                    <h1 class="h2 mb-1">
-                        <i class="fas fa-key me-2"></i>
-                        API Token Management
-                    </h1>
-                    <p class="text-muted mb-0">Create and manage API tokens for client authentication</p>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StreamSwarm" height="48" class="me-3">
+                    <div>
+                        <h1 class="h2 mb-1">
+                            <i class="fas fa-key me-2"></i>
+                            API Token Management
+                        </h1>
+                        <p class="text-muted mb-0">Create and manage API tokens for client authentication</p>
+                    </div>
                 </div>
+                <a href="{{ url_for('system_configuration') }}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to System Configuration
+                </a>
             </div>
         </div>
     </div>

@@ -4,6 +4,20 @@
 
 {% block content %}
 <div class="container">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('system_configuration') }}">
+                    <i class="fas fa-cogs me-1"></i>System Configuration
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-robot me-1"></i>AI Models Configuration
+            </li>
+        </ol>
+    </nav>
+    
     <!-- Header -->
     <div class="row mb-4">
         <div class="col">
@@ -14,9 +28,9 @@
             <p class="text-muted">Manage and train AI models for network diagnostic analysis</p>
         </div>
         <div class="col-auto">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('system_configuration') }}" class="btn btn-outline-light">
                 <i class="fas fa-arrow-left me-1"></i>
-                Back to Dashboard
+                Back to System Configuration
             </a>
         </div>
     </div>
