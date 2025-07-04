@@ -105,7 +105,9 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- July 4, 2025: Fixed critical recurring test bug in "Create New Tests" mode - implemented immediate test creation on completion
+- July 4, 2025: Enhanced admin navigation consistency and fixed critical recurring test bug
+  - Added consistent breadcrumb navigation and "Back to System Configuration" buttons to all admin pages
+  - User Management, API Token Management, and AI Models Configuration pages now have unified navigation structure
   - Fixed "Create New Tests" mode that was creating tests in pending status instead of auto-starting
   - Added completion-triggered test creation (_handle_recurring_test_completion) in routes.py
   - New tests now automatically trigger when previous test completes, creating continuous monitoring chains
