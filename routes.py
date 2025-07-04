@@ -2271,7 +2271,7 @@ def system_configuration():
     """System configuration dashboard - admin only"""
     from models import SystemConfig
     
-    # Get all system configuration settings
+    # Get all system configuration settings and management options
     configurations = {
         'development_mode': {
             'current_value': SystemConfig.is_development_mode(),
@@ -2285,6 +2285,18 @@ def system_configuration():
             'min': 0,
             'max': 60,
             'options': ['Disabled', '10min', '15min', '30min', '45min', '60min']
+        },
+        'user_management': {
+            'description': 'Manage web GUI user accounts and permissions',
+            'type': 'management'
+        },
+        'api_token_management': {
+            'description': 'Manage API tokens for client authentication',
+            'type': 'management'
+        },
+        'ai_model_configuration': {
+            'description': 'Configure and train machine learning models',
+            'type': 'management'
         }
     }
     
