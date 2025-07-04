@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 4, 2025: Enhanced recurring test system with 30-minute minimum intervals and validated authentication independence
+  - Added support for 30-59 minute recurrence intervals (previously minimum was 1 hour)
+  - Updated frontend interface with "Minutes" option in recurrence dropdown
+  - Enhanced validation to enforce 30-minute absolute minimum with 10-minute buffer requirement
+  - Validated recurring test processor works independently of authentication status (confirmed with comprehensive testing)
+  - Recurring tests execute properly when users are logged out and authentication is enabled
+  - Background processor operates via app context with direct database access, no authentication decorators
 - July 4, 2025: Fixed recurring test "Create New Tests" mode scheduling to use 2-minute buffer instead of 4-hour delays
   - Fixed completion handler logic to properly handle both original recurring tests and child test completions
   - Implemented 2-minute scheduling buffer for new tests to allow previous test cleanup and prevent resource conflicts
