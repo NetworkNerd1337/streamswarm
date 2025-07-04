@@ -8,8 +8,13 @@ import logging
 import threading
 import time
 from datetime import datetime, timedelta
+import zoneinfo
 from app import app, db
 from models import Test, TestClient, TestResult
+
+def get_eastern_time():
+    """Get current time in Eastern timezone"""
+    return datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +63,7 @@ class RecurringTestProcessor:
     
     def _process_recurring_tests(self):
         """Process all recurring tests that need to be executed"""
-        now = datetime.now()
+        now = get_eastern_time()
         
         # Find recurring tests that need to be executed
         tests_to_process = db.session.query(Test).filter(
@@ -87,7 +92,7 @@ class RecurringTestProcessor:
     def _restart_recurring_test(self, original_test):
         """Restart the original test for recurring execution"""
         # Reset the original test to restart it
-        original_test.scheduled_time = datetime.now()  # Schedule immediately
+        original_test.scheduled_time = get_eastern_time()  # Schedule immediately
         original_test.status = 'pending'
         original_test.started_at = None
         original_test.completed_at = None
@@ -111,7 +116,7 @@ class RecurringTestProcessor:
             name=original_test.name,
             description=original_test.description,
             destination=original_test.destination,
-            scheduled_time=datetime.now(),  # Schedule immediately
+            scheduled_time=get_eastern_time(),  # Schedule immediately
             duration=original_test.duration,
             interval=original_test.interval,
             packet_size=original_test.packet_size,
@@ -141,6 +146,10 @@ class RecurringTestProcessor:
         self._update_next_execution(original_test)
         # Don't mark original as completed - it needs to stay active to generate future tests
         
+        # Ensure the new test is scheduled immediately, not at the next recurrence time
+        new_test.scheduled_time = get_eastern_time()
+        new_test.status = 'pending'
+        
         logger.info(f"Created new test {new_test.id} from recurring test {original_test.id}")
         
     def _update_next_execution(self, test):
@@ -153,7 +162,7 @@ class RecurringTestProcessor:
         if test.next_execution:
             test.next_execution = test.next_execution + timedelta(seconds=test.recurrence_interval)
         else:
-            test.next_execution = datetime.now() + timedelta(seconds=test.recurrence_interval)
+            test.next_execution = get_eastern_time() + timedelta(seconds=test.recurrence_interval)
         
         logger.info(f"Updated next execution for test {test.id} to {test.next_execution}")
 

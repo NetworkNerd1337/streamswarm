@@ -2582,13 +2582,18 @@ def _handle_recurring_test_completion(completed_test):
 def _create_next_recurring_test(original_test):
     """Create the next test in a recurring series immediately"""
     from datetime import datetime
+    import zoneinfo
+    
+    def get_eastern_time():
+        """Get current time in Eastern timezone"""
+        return datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
     
     # Create new test with same settings
     new_test = Test(
         name=original_test.name,
         description=original_test.description,
         destination=original_test.destination,
-        scheduled_time=datetime.now(),  # Schedule immediately
+        scheduled_time=get_eastern_time(),  # Schedule immediately
         duration=original_test.duration,
         interval=original_test.interval,
         packet_size=original_test.packet_size,
