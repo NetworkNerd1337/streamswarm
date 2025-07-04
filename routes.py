@@ -1445,6 +1445,29 @@ def get_test_progress(test_id):
     
     return jsonify({'progress': 0, 'status': test.status})
 
+@app.route('/api/download/linux-startup-script', methods=['GET'])
+def download_linux_startup_script():
+    """Download the Linux startup script for StreamSwarm clients"""
+    try:
+        # Path to the startup script
+        script_path = os.path.join(os.getcwd(), 'start_streamswarm_client.sh')
+        
+        # Check if file exists
+        if not os.path.exists(script_path):
+            return jsonify({'error': 'Startup script not found'}), 404
+        
+        # Send file with appropriate headers
+        return send_file(
+            script_path,
+            as_attachment=True,
+            download_name='start_streamswarm_client.sh',
+            mimetype='application/x-sh'
+        )
+        
+    except Exception as e:
+        logging.error(f"Error downloading startup script: {str(e)}")
+        return jsonify({'error': 'Failed to download startup script'}), 500
+
 @app.route('/api/dashboard/stats', methods=['GET'])
 def get_dashboard_stats():
     """Get dashboard statistics"""

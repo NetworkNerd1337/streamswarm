@@ -16,7 +16,7 @@
 # =============================================================================
 
 # StreamSwarm server URL (include https:// and port if needed)
-SERVER_URL="https://your-server.replit.app"
+SERVER_URL="https://swarmstreamserver-example.com"
 
 # API token for client authentication (get from server admin panel)
 API_TOKEN="your-api-token-here"

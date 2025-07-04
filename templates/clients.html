@@ -39,10 +39,16 @@
                         </div>
                         <div class="col-md-6 text-md-end mt-2 mt-md-0">
                             <small class="text-muted me-3" id="searchResults" style="display: none;"></small>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshClients()">
-                                <i class="fas fa-sync-alt me-1"></i>
-                                Refresh
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="downloadLinuxScript()">
+                                    <i class="fas fa-download me-1"></i>
+                                    Download Linux Startup Script
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="refreshClients()">
+                                    <i class="fas fa-sync-alt me-1"></i>
+                                    Refresh
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -574,6 +580,18 @@ async function deleteClient(clientId, hostname) {
         console.error('Error deleting client:', error);
         showToast('Failed to delete client', 'danger');
     }
+}
+
+// Download Linux startup script
+function downloadLinuxScript() {
+    const link = document.createElement('a');
+    link.href = '/api/download/linux-startup-script';
+    link.download = 'start_streamswarm_client.sh';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Linux startup script downloaded successfully', 'success');
 }
 
 // Auto-refresh every 30 seconds
