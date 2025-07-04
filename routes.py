@@ -2594,12 +2594,18 @@ def process_all_geolocation():
 
 def _handle_recurring_test_completion(completed_test):
     """Handle the completion of a test that might be part of a recurring series"""
-    # Check if this test is part of a recurring series (has a parent_test_id)
-    if completed_test.parent_test_id:
+    
+    # SCENARIO 1: Original recurring test completes - create first child test
+    if completed_test.is_recurring and completed_test.recurrence_type == 'new' and not completed_test.parent_test_id:
+        # This is the original recurring test completing - create first child
+        _create_next_recurring_test(completed_test)
+    
+    # SCENARIO 2: Child test completes - create next child test
+    elif completed_test.parent_test_id:
         # Find the original recurring test
         original_test = Test.query.get(completed_test.parent_test_id)
         if original_test and original_test.is_recurring and original_test.recurrence_type == 'new':
-            # Create the next test in the series immediately
+            # Create the next test in the series
             _create_next_recurring_test(original_test)
 
 def _create_next_recurring_test(original_test):
@@ -2611,12 +2617,15 @@ def _create_next_recurring_test(original_test):
         """Get current time in Eastern timezone"""
         return datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
     
+    # Schedule new test 2 minutes in the future to allow previous test cleanup
+    scheduled_time = get_eastern_time() + timedelta(minutes=2)
+    
     # Create new test with same settings
     new_test = Test(
         name=original_test.name,
         description=original_test.description,
         destination=original_test.destination,
-        scheduled_time=get_eastern_time(),  # Schedule immediately
+        scheduled_time=scheduled_time,  # Schedule 2 minutes in future
         duration=original_test.duration,
         interval=original_test.interval,
         packet_size=original_test.packet_size,

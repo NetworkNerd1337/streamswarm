@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 4, 2025: Fixed recurring test "Create New Tests" mode scheduling to use 2-minute buffer instead of 4-hour delays
+  - Fixed completion handler logic to properly handle both original recurring tests and child test completions
+  - Implemented 2-minute scheduling buffer for new tests to allow previous test cleanup and prevent resource conflicts
+  - Maintained consistent Eastern US timezone handling throughout recurring test chain creation
+  - Verified with synthetic testing: Test 139 → Test 140 → Test 141 chain working correctly with proper 2-minute intervals
+  - Fixed timezone inconsistency that was causing 4-hour delays in test scheduling
+  - Enhanced completion handler with two scenarios: original test completion and child test completion
 - July 4, 2025: Created comprehensive Linux client deployment automation system with integrated web download
   - Added start_streamswarm_client.sh: Professional bash script for automated client startup with cron @reboot support
   - Implemented screen session management for background execution without user interaction
