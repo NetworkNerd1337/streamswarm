@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 4, 2025: Fixed critical recurring test bug in "Create New Tests" mode - implemented immediate test creation on completion
+  - Fixed "Create New Tests" mode that was creating tests in pending status instead of auto-starting
+  - Added completion-triggered test creation (_handle_recurring_test_completion) in routes.py
+  - New tests now automatically trigger when previous test completes, creating continuous monitoring chains
+  - Fixed chain continuation: Test A completes → Test B created immediately → Test B completes → Test C created → etc.
+  - Maintains proper client assignments and test configuration inheritance throughout the chain
+  - Both recurring modes now work correctly: "Continue Same Test" (reuses test) and "Create New Tests" (creates chain)
 - July 3, 2025: Enhanced recurring test system with two distinct behavior modes for different monitoring strategies
   - Added "Continue Same Test" mode for real-time monitoring (reuses same test record, overwrites results)
   - Added "Create New Tests" mode for historical tracking (creates new test for each occurrence, preserves all data)

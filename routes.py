@@ -742,6 +742,9 @@ def submit_test_results():
                 test_client = TestClient.query.filter_by(test_id=test.id, client_id=result.client_id).first()
                 if test_client:
                     test_client.status = 'completed'
+                
+                # Handle recurring test logic for "Create New Tests" mode
+                _handle_recurring_test_completion(test)
         
         return jsonify({'status': 'success', 'message': 'Results submitted successfully'})
         
@@ -2565,3 +2568,54 @@ def process_all_geolocation():
     except Exception as e:
         logging.error(f"Error starting batch geolocation processing: {str(e)}")
         return jsonify({'error': 'Failed to start geolocation processing'}), 500
+
+def _handle_recurring_test_completion(completed_test):
+    """Handle the completion of a test that might be part of a recurring series"""
+    # Check if this test is part of a recurring series (has a parent_test_id)
+    if completed_test.parent_test_id:
+        # Find the original recurring test
+        original_test = Test.query.get(completed_test.parent_test_id)
+        if original_test and original_test.is_recurring and original_test.recurrence_type == 'new':
+            # Create the next test in the series immediately
+            _create_next_recurring_test(original_test)
+
+def _create_next_recurring_test(original_test):
+    """Create the next test in a recurring series immediately"""
+    from datetime import datetime
+    
+    # Create new test with same settings
+    new_test = Test(
+        name=original_test.name,
+        description=original_test.description,
+        destination=original_test.destination,
+        scheduled_time=datetime.now(),  # Schedule immediately
+        duration=original_test.duration,
+        interval=original_test.interval,
+        packet_size=original_test.packet_size,
+        test_config=original_test.test_config,
+        status='pending',
+        is_recurring=False,  # New test is not recurring itself
+        recurrence_interval=None,
+        recurrence_type='continue',
+        parent_test_id=original_test.id,  # Link to original recurring test
+        next_execution=None
+    )
+    
+    db.session.add(new_test)
+    db.session.flush()  # Get the new test ID
+    
+    # Copy client assignments from original test
+    original_clients = db.session.query(TestClient).filter_by(test_id=original_test.id).all()
+    for original_client in original_clients:
+        new_test_client = TestClient(
+            test_id=new_test.id,
+            client_id=original_client.client_id,
+            status='assigned'
+        )
+        db.session.add(new_test_client)
+    
+    db.session.commit()
+    
+    logging.info(f"Created next recurring test {new_test.id} from completed test with parent {original_test.id}")
+    
+    return new_test
