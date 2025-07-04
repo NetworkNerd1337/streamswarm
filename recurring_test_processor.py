@@ -66,6 +66,7 @@ class RecurringTestProcessor:
         now = get_eastern_time()
         
         # Find recurring tests that need to be executed
+        # Include both active and completed tests, as "Create New Tests" mode marks original as completed
         tests_to_process = db.session.query(Test).filter(
             Test.is_recurring == True,
             Test.next_execution <= now,
@@ -80,8 +81,12 @@ class RecurringTestProcessor:
         for original_test in tests_to_process:
             try:
                 if original_test.recurrence_type == 'new':
-                    self._create_new_recurring_test(original_test)
+                    # For "Create New Tests" mode, the completion handler manages the scheduling
+                    # The processor only needs to update next_execution for future reference
+                    logger.info(f"Skipping processor action for 'Create New Tests' mode test {original_test.id} - managed by completion handler")
+                    self._update_next_execution(original_test)
                 else:
+                    # For "Continue Same Test" mode, the processor handles restarting
                     self._restart_recurring_test(original_test)
                     self._update_next_execution(original_test)
             except Exception as e:
