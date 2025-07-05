@@ -567,16 +567,10 @@ class NetworkDiagnosticEngine:
                     'status': 'insufficient_data'
                 }
             
-            # Check if this is our new time series model
-            if isinstance(failure_predictor, dict) and failure_predictor.get('type') == 'time_series_ensemble':
-                # Use time series prediction with destination-specific data
-                failure_probability = self._predict_with_time_series_model_for_destination(
-                    failure_predictor, destination, recent_metrics
-                )
-            else:
-                # Fallback to rule-based for any legacy models
-                logger.warning("Legacy model detected, using rule-based prediction")
-                return self._rule_based_failure_prediction_for_destination(destination, prediction_horizon, current_conditions)
+            # Use destination-specific prediction with loaded model
+            failure_probability = self._predict_with_time_series_model_for_destination(
+                failure_predictor, destination, recent_metrics
+            )
             
             # Adjust probability based on time horizon and current conditions
             time_adjusted_probability = self._adjust_failure_probability_for_time(
@@ -602,9 +596,11 @@ class NetworkDiagnosticEngine:
             )
             
             # Calculate confidence based on data quality and model type
+            logger.debug(f"About to calculate confidence for {destination}")
             confidence = self._calculate_destination_prediction_confidence(
                 destination, recent_metrics, failure_predictor
             )
+            logger.debug(f"Confidence calculated: {confidence}")
             
             return {
                 'failure_probability': float(condition_adjusted_probability),
@@ -647,8 +643,8 @@ class NetworkDiagnosticEngine:
             for result in results:
                 metrics.append({
                     'timestamp': result.timestamp,
-                    'avg_latency': result.avg_latency,
-                    'packet_loss': result.packet_loss,
+                    'avg_latency': result.ping_latency,
+                    'packet_loss': result.ping_packet_loss,
                     'jitter': result.jitter,
                     'destination': destination
                 })
@@ -665,10 +661,14 @@ class NetworkDiagnosticEngine:
             if not recent_metrics:
                 return 0.15  # Default moderate risk
             
+            # Debug logging
+            logger.debug(f"Processing {len(recent_metrics)} metrics for {destination}")
+            logger.debug(f"Sample metric: {recent_metrics[0] if recent_metrics else 'None'}")
+            
             # Calculate failure indicators from recent metrics
-            avg_latency = sum(m.get('avg_latency', 0) for m in recent_metrics) / len(recent_metrics)
-            avg_packet_loss = sum(m.get('packet_loss', 0) for m in recent_metrics) / len(recent_metrics)
-            avg_jitter = sum(m.get('jitter', 0) for m in recent_metrics) / len(recent_metrics)
+            avg_latency = sum(float(m.get('avg_latency', 0) or 0) for m in recent_metrics) / len(recent_metrics)
+            avg_packet_loss = sum(float(m.get('packet_loss', 0) or 0) for m in recent_metrics) / len(recent_metrics)
+            avg_jitter = sum(float(m.get('jitter', 0) or 0) for m in recent_metrics) / len(recent_metrics)
             
             # Base failure probability on performance degradation
             base_failure_prob = 0.05  # 5% baseline
@@ -2522,7 +2522,7 @@ class NetworkDiagnosticEngine:
         
         return {'severity': 'low', 'description': 'Normal range'}
     
-    def _generate_failure_prevention_recommendations(self, probability: float, factors: List[Dict], hours: int) -> List[str]:
+    def _generate_failure_prevention_recommendations(self, probability: float, factors: List[str], hours: int) -> List[str]:
         """Generate proactive recommendations to prevent network failures"""
         recommendations = []
         
@@ -2535,23 +2535,48 @@ class NetworkDiagnosticEngine:
         
         # Factor-specific recommendations
         for factor in factors:
-            factor_name = factor['factor']
+            # Handle both string and dictionary factor formats
+            if isinstance(factor, dict):
+                factor_name = factor['factor']
+                impact = factor.get('impact', 'medium')
+            else:
+                # Handle string factors from destination-specific analysis
+                factor_name = factor
+                impact = 'medium'  # Default to medium impact for string factors
             
-            if factor_name == 'tcp_retransmission_rate' and factor['impact'] != 'low':
+            if factor_name == 'tcp_retransmission_rate' and impact != 'low':
                 recommendations.append("Investigate network congestion and bandwidth utilization")
                 recommendations.append("Check for faulty network equipment or cables")
             
-            elif factor_name == 'total_network_errors' and factor['impact'] != 'low':
+            elif factor_name == 'total_network_errors' and impact != 'low':
                 recommendations.append("Update network drivers and firmware")
                 recommendations.append("Perform hardware diagnostics on network interfaces")
             
-            elif factor_name == 'ping_packet_loss' and factor['impact'] != 'low':
+            elif factor_name == 'ping_packet_loss' and impact != 'low':
                 recommendations.append("Analyze network routing and switch configurations")
                 recommendations.append("Monitor for intermittent hardware failures")
             
-            elif factor_name in ['cpu_percent', 'memory_percent'] and factor['impact'] != 'low':
+            elif factor_name in ['cpu_percent', 'memory_percent'] and impact != 'low':
                 recommendations.append("Scale system resources or redistribute workloads")
                 recommendations.append("Identify and terminate resource-intensive processes")
+            
+            # Handle string-based factors from destination analysis
+            elif isinstance(factor, str):
+                if "high average latency" in factor.lower():
+                    recommendations.append("Investigate network routing and consider CDN or edge caching")
+                    recommendations.append("Check for bandwidth constraints or network congestion")
+                elif "packet loss" in factor.lower():
+                    recommendations.append("Analyze network routing and switch configurations")
+                    recommendations.append("Monitor for intermittent hardware failures")
+                elif "high jitter" in factor.lower():
+                    recommendations.append("Investigate network consistency and buffer management")
+                    recommendations.append("Consider quality of service (QoS) configuration")
+                elif "international destination" in factor.lower():
+                    recommendations.append("Consider using CDN or geographic load balancing")
+                    recommendations.append("Implement regional failover capabilities")
+                elif "network maintenance" in factor.lower():
+                    recommendations.append("Coordinate with network operations team")
+                    recommendations.append("Implement backup connectivity during maintenance windows")
         
         # Time-sensitive recommendations
         if hours <= 4:
