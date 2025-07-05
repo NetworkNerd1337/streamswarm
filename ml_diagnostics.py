@@ -2989,9 +2989,9 @@ class NetworkDiagnosticEngine:
             # Calculate overall compliance score
             avg_compliance = np.mean(compliance_predictions)
             compliance_distribution = {
-                'non_compliant': np.sum(compliance_predictions == 0),
-                'partially_compliant': np.sum(compliance_predictions == 1),
-                'fully_compliant': np.sum(compliance_predictions == 2)
+                'non_compliant': int(np.sum(compliance_predictions == 0)),
+                'partially_compliant': int(np.sum(compliance_predictions == 1)),
+                'fully_compliant': int(np.sum(compliance_predictions == 2))
             }
             
             # Generate compliance insights
