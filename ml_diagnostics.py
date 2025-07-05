@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple, Optional, Any
 
 # Scikit-learn imports
 from sklearn.ensemble import IsolationForest, RandomForestClassifier, GradientBoostingRegressor
+from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, mean_squared_error
@@ -455,8 +456,8 @@ class NetworkDiagnosticEngine:
                     qos_scaler = StandardScaler()
                     X_qos_scaled = qos_scaler.fit_transform(qos_features)
                     
-                    # Use Random Forest for QoS compliance classification
-                    qos_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+                    # Use Support Vector Machine for QoS compliance classification
+                    qos_classifier = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42, probability=True)
                     qos_classifier.fit(X_qos_scaled, qos_compliance_scores)
                     
                     self.models['qos_compliance_monitor'] = qos_classifier

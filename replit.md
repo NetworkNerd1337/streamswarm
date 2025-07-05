@@ -107,7 +107,7 @@ The system operates on a distributed client-server architecture where:
 
 - July 5, 2025: Successfully implemented QoS Compliance Monitoring Model as fifth ML model in StreamSwarm
   - Added comprehensive QoS compliance analysis with DSCP value evaluation and traffic classification assessment
-  - Integrated QoS model training into existing ML pipeline with Random Forest algorithm and specialized feature extraction
+  - Integrated QoS model training into existing ML pipeline with Support Vector Machine algorithm and specialized feature extraction
   - Created QoS Compliance Monitoring section in Predictive Analytics page with real-time analysis capabilities
   - Implemented API endpoint for QoS analysis with detailed compliance scoring and violation detection
   - Added QoS model card to ML Models Configuration page showing training status and requirements
