@@ -48,9 +48,11 @@ class NetworkDiagnosticEngine:
             'health_classifier': 'health_classifier.joblib',
             'performance_predictor': 'performance_predictor.joblib',
             'failure_predictor': 'failure_predictor.joblib',
+            'qos_compliance_monitor': 'qos_compliance_monitor.joblib',
             'scaler': 'feature_scaler.joblib',
             'performance_scaler': 'performance_scaler.joblib',
             'failure_scaler': 'failure_scaler.joblib',
+            'qos_scaler': 'qos_scaler.joblib',
             'health_encoder': 'health_encoder.joblib'
         }
         
@@ -64,6 +66,8 @@ class NetworkDiagnosticEngine:
                         self.scalers['performance'] = joblib.load(filepath)
                     elif model_name == 'failure_scaler':
                         self.scalers['failure'] = joblib.load(filepath)
+                    elif model_name == 'qos_scaler':
+                        self.scalers['qos'] = joblib.load(filepath)
                     elif model_name == 'health_encoder':
                         self.encoders['health'] = joblib.load(filepath)
                     else:
@@ -440,6 +444,28 @@ class NetworkDiagnosticEngine:
                         logger.warning("Failed to train time series failure predictor")
                 else:
                     logger.warning("Insufficient time series data for failure prediction")
+            
+            # Train QoS Compliance Monitoring Model
+            qos_compliance_scores = self._calculate_qos_compliance_scores(X, results)
+            if len(qos_compliance_scores) > 20:  # Minimum samples for quality training
+                # Extract QoS-specific features
+                qos_features = self._extract_qos_features(X, results)
+                
+                if qos_features is not None and len(qos_features) > 0:
+                    qos_scaler = StandardScaler()
+                    X_qos_scaled = qos_scaler.fit_transform(qos_features)
+                    
+                    # Use Random Forest for QoS compliance classification
+                    qos_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+                    qos_classifier.fit(X_qos_scaled, qos_compliance_scores)
+                    
+                    self.models['qos_compliance_monitor'] = qos_classifier
+                    self.scalers['qos'] = qos_scaler
+                    logger.info("QoS Compliance Monitoring Model trained successfully")
+                else:
+                    logger.warning("Insufficient QoS data for compliance model training")
+            else:
+                logger.warning("Not enough QoS samples for compliance model training")
             
             # Save trained models
             self._save_models()
@@ -1889,7 +1915,7 @@ class NetworkDiagnosticEngine:
         status['total_training_samples'] = total_results
         
         # Check for model files and get timestamps
-        model_files = ['anomaly_detector.joblib', 'health_classifier.joblib', 'performance_predictor.joblib', 'failure_predictor.joblib']
+        model_files = ['anomaly_detector.joblib', 'health_classifier.joblib', 'performance_predictor.joblib', 'failure_predictor.joblib', 'qos_compliance_monitor.joblib']
         for filename in model_files:
             filepath = os.path.join(self.models_dir, filename)
             if os.path.exists(filepath):
@@ -2755,6 +2781,361 @@ class NetworkDiagnosticEngine:
             'current_avg': round(data_series.tail(5).mean(), 2),
             'baseline_avg': round(data_series.head(5).mean(), 2)
         }
+    
+    def _calculate_qos_compliance_scores(self, features_df: pd.DataFrame, results: List[TestResult]) -> List[int]:
+        """
+        Calculate QoS compliance scores for training the QoS compliance model
+        Returns compliance levels: 0=Non-compliant, 1=Partially compliant, 2=Fully compliant
+        """
+        compliance_scores = []
+        
+        for i, result in enumerate(results):
+            compliance_score = 2  # Start with fully compliant assumption
+            
+            # Check DSCP marking compliance
+            dscp_value = getattr(result, 'dscp_value', None)
+            traffic_class = getattr(result, 'traffic_class', None)
+            qos_policy_compliant = getattr(result, 'qos_policy_compliant', None)
+            
+            # DSCP compliance check
+            if dscp_value is not None:
+                if dscp_value == 0:  # Best effort when should be prioritized
+                    avg_latency = getattr(result, 'ping_latency', 0) or 0
+                    if avg_latency > 50:  # High latency suggests this might need prioritization
+                        compliance_score -= 1
+                
+                # Check for proper traffic classification
+                if traffic_class:
+                    if traffic_class.lower() in ['voice', 'video'] and dscp_value < 32:
+                        compliance_score -= 1  # Real-time traffic should have high DSCP
+                    elif traffic_class.lower() == 'bulk' and dscp_value > 16:
+                        compliance_score -= 1  # Bulk traffic should have lower priority
+            
+            # Bandwidth policy compliance
+            bandwidth_per_class = getattr(result, 'bandwidth_per_class', None)
+            if bandwidth_per_class:
+                try:
+                    import json
+                    bandwidth_data = json.loads(bandwidth_per_class) if isinstance(bandwidth_per_class, str) else bandwidth_per_class
+                    
+                    # Check if high-priority traffic is consuming excessive bandwidth
+                    if 'ef' in bandwidth_data and bandwidth_data['ef'] > 30:  # EF should be limited
+                        compliance_score -= 1
+                    if 'af41' in bandwidth_data and bandwidth_data['af41'] > 40:  # Video bandwidth limits
+                        compliance_score -= 1
+                except:
+                    pass  # Ignore JSON parsing errors
+            
+            # Latency SLA compliance for different traffic classes
+            ping_latency = getattr(result, 'ping_latency', 0) or 0
+            jitter = getattr(result, 'jitter', 0) or 0
+            
+            if traffic_class:
+                if traffic_class.lower() == 'voice' and (ping_latency > 150 or jitter > 30):
+                    compliance_score -= 1  # Voice traffic latency/jitter requirements
+                elif traffic_class.lower() == 'video' and ping_latency > 250:
+                    compliance_score -= 1  # Video traffic latency requirements
+            
+            # Packet loss compliance
+            packet_loss = getattr(result, 'ping_packet_loss', 0) or 0
+            if packet_loss > 1:  # Any significant packet loss affects QoS
+                compliance_score -= 1
+            
+            # Policy compliance flag
+            if qos_policy_compliant is False:
+                compliance_score -= 1
+            
+            # Ensure score is within valid range
+            compliance_score = max(0, min(2, compliance_score))
+            compliance_scores.append(compliance_score)
+        
+        return compliance_scores
+    
+    def _extract_qos_features(self, features_df: pd.DataFrame, results: List[TestResult]) -> pd.DataFrame:
+        """
+        Extract QoS-specific features for training the compliance model
+        """
+        qos_features = []
+        
+        for i, result in enumerate(results):
+            # Get basic network metrics
+            row = features_df.iloc[i] if i < len(features_df) else None
+            
+            features = {
+                # Network performance metrics
+                'ping_latency': getattr(result, 'ping_latency', 0) or 0,
+                'ping_packet_loss': getattr(result, 'ping_packet_loss', 0) or 0,
+                'jitter': getattr(result, 'jitter', 0) or 0,
+                
+                # QoS-specific metrics
+                'dscp_value': getattr(result, 'dscp_value', 0) or 0,
+                'cos_value': getattr(result, 'cos_value', 0) or 0,
+                
+                # Bandwidth utilization
+                'bandwidth_upload': getattr(result, 'bandwidth_upload', 0) or 0,
+                'bandwidth_download': getattr(result, 'bandwidth_download', 0) or 0,
+                
+                # TCP performance indicators
+                'tcp_retransmission_rate': getattr(result, 'tcp_retransmission_rate', 0) or 0,
+                'tcp_out_of_order_packets': getattr(result, 'tcp_out_of_order_packets', 0) or 0,
+                'tcp_duplicate_acks': getattr(result, 'tcp_duplicate_acks', 0) or 0,
+                
+                # Application layer timing
+                'dns_resolution_time': getattr(result, 'dns_resolution_time', 0) or 0,
+                'tcp_connect_time': getattr(result, 'tcp_connect_time', 0) or 0,
+                'ssl_handshake_time': getattr(result, 'ssl_handshake_time', 0) or 0,
+                'ttfb': getattr(result, 'ttfb', 0) or 0,
+                
+                # System resource impact
+                'cpu_percent': getattr(result, 'cpu_percent', 0) or 0,
+                'memory_percent': getattr(result, 'memory_percent', 0) or 0,
+                
+                # Network interface errors
+                'network_errors_in': getattr(result, 'network_errors_in', 0) or 0,
+                'network_errors_out': getattr(result, 'network_errors_out', 0) or 0,
+                'network_drops_in': getattr(result, 'network_drops_in', 0) or 0,
+                'network_drops_out': getattr(result, 'network_drops_out', 0) or 0,
+            }
+            
+            # Calculate derived QoS metrics
+            total_errors = features['network_errors_in'] + features['network_errors_out']
+            total_drops = features['network_drops_in'] + features['network_drops_out']
+            features['total_network_errors'] = total_errors + total_drops
+            
+            # Calculate latency efficiency ratio
+            if features['ping_latency'] > 0 and features['tcp_connect_time'] > 0:
+                features['latency_efficiency'] = features['ping_latency'] / features['tcp_connect_time']
+            else:
+                features['latency_efficiency'] = 1.0
+            
+            # Calculate QoS priority score based on DSCP
+            features['qos_priority_score'] = self._calculate_qos_priority_score(features['dscp_value'])
+            
+            qos_features.append(features)
+        
+        return pd.DataFrame(qos_features)
+    
+    def _calculate_qos_priority_score(self, dscp_value: int) -> float:
+        """
+        Convert DSCP value to a priority score for ML training
+        Higher scores indicate higher priority traffic
+        """
+        if dscp_value == 0:
+            return 0.0  # Best Effort
+        elif dscp_value in [8, 10, 12, 14]:  # AF1x class
+            return 0.25
+        elif dscp_value in [16, 18, 20, 22]:  # AF2x class
+            return 0.5
+        elif dscp_value in [24, 26, 28, 30]:  # AF3x class
+            return 0.75
+        elif dscp_value in [32, 34, 36, 38]:  # AF4x class
+            return 0.9
+        elif dscp_value == 46:  # Expedited Forwarding (EF)
+            return 1.0
+        elif dscp_value in [48, 56]:  # Network Control
+            return 0.95
+        else:
+            return 0.1  # Unknown/non-standard
+    
+    def analyze_qos_compliance(self, test_id: int = None, destination: str = None) -> Dict[str, Any]:
+        """
+        Analyze QoS compliance for specific tests or destinations
+        """
+        try:
+            if 'qos_compliance_monitor' not in self.models:
+                return {
+                    'error': 'QoS Compliance Model not trained yet',
+                    'status': 'model_unavailable'
+                }
+            
+            # Get test results for analysis
+            query = TestResult.query
+            if test_id:
+                query = query.filter_by(test_id=test_id)
+            elif destination:
+                query = query.join(Test).filter(Test.destination == destination)
+            
+            results = query.limit(100).all()
+            
+            if not results:
+                return {
+                    'error': 'No test results found for analysis',
+                    'status': 'no_data'
+                }
+            
+            # Extract features for analysis
+            features_df = self.extract_features(results)
+            qos_features = self._extract_qos_features(features_df, results)
+            
+            if qos_features.empty:
+                return {
+                    'error': 'Unable to extract QoS features',
+                    'status': 'feature_extraction_failed'
+                }
+            
+            # Scale features
+            qos_scaler = self.scalers.get('qos')
+            if qos_scaler:
+                X_scaled = qos_scaler.transform(qos_features.fillna(0))
+            else:
+                X_scaled = qos_features.fillna(0)
+            
+            # Predict compliance
+            qos_model = self.models['qos_compliance_monitor']
+            compliance_predictions = qos_model.predict(X_scaled)
+            compliance_probabilities = qos_model.predict_proba(X_scaled)
+            
+            # Calculate overall compliance score
+            avg_compliance = np.mean(compliance_predictions)
+            compliance_distribution = {
+                'non_compliant': np.sum(compliance_predictions == 0),
+                'partially_compliant': np.sum(compliance_predictions == 1),
+                'fully_compliant': np.sum(compliance_predictions == 2)
+            }
+            
+            # Generate compliance insights
+            insights = self._generate_qos_insights(qos_features, compliance_predictions, results)
+            
+            # Calculate confidence score
+            confidence = np.mean(np.max(compliance_probabilities, axis=1))
+            
+            return {
+                'overall_compliance_score': float(avg_compliance),
+                'compliance_level': self._get_compliance_level(avg_compliance),
+                'compliance_distribution': compliance_distribution,
+                'total_samples': len(results),
+                'confidence_score': float(confidence),
+                'insights': insights,
+                'recommendations': self._generate_qos_recommendations(insights),
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing QoS compliance: {str(e)}")
+            return {
+                'error': f'QoS analysis failed: {str(e)}',
+                'status': 'analysis_failed'
+            }
+    
+    def _get_compliance_level(self, score: float) -> str:
+        """Convert numeric compliance score to descriptive level"""
+        if score >= 1.8:
+            return 'Excellent'
+        elif score >= 1.5:
+            return 'Good'
+        elif score >= 1.0:
+            return 'Fair'
+        elif score >= 0.5:
+            return 'Poor'
+        else:
+            return 'Critical'
+    
+    def _generate_qos_insights(self, qos_features: pd.DataFrame, compliance_predictions: List[int], results: List[TestResult]) -> Dict[str, Any]:
+        """Generate detailed QoS compliance insights"""
+        insights = {
+            'dscp_analysis': {},
+            'latency_violations': [],
+            'bandwidth_issues': [],
+            'traffic_classification_problems': []
+        }
+        
+        # DSCP value analysis
+        dscp_values = qos_features['dscp_value'].values
+        unique_dscp = np.unique(dscp_values)
+        for dscp in unique_dscp:
+            dscp_mask = dscp_values == dscp
+            dscp_compliance = np.mean(compliance_predictions[dscp_mask])
+            insights['dscp_analysis'][str(int(dscp))] = {
+                'count': int(np.sum(dscp_mask)),
+                'compliance_score': float(dscp_compliance),
+                'description': self._get_dscp_description(dscp)
+            }
+        
+        # Latency violations
+        high_latency_mask = qos_features['ping_latency'] > 150
+        if np.any(high_latency_mask):
+            insights['latency_violations'] = [
+                {
+                    'average_latency': float(qos_features[high_latency_mask]['ping_latency'].mean()),
+                    'affected_samples': int(np.sum(high_latency_mask)),
+                    'compliance_impact': float(np.mean(compliance_predictions[high_latency_mask]))
+                }
+            ]
+        
+        # Bandwidth utilization issues
+        high_bandwidth_mask = qos_features['bandwidth_download'] > 100  # > 100 Mbps
+        if np.any(high_bandwidth_mask):
+            insights['bandwidth_issues'] = [
+                {
+                    'average_bandwidth': float(qos_features[high_bandwidth_mask]['bandwidth_download'].mean()),
+                    'affected_samples': int(np.sum(high_bandwidth_mask)),
+                    'potential_congestion_risk': 'High'
+                }
+            ]
+        
+        return insights
+    
+    def _get_dscp_description(self, dscp_value: int) -> str:
+        """Get human-readable description of DSCP value"""
+        dscp_map = {
+            0: "Best Effort (Default)",
+            8: "AF11 - Low Priority Data",
+            10: "AF12 - Low Priority Data",
+            12: "AF13 - Low Priority Data", 
+            14: "AF14 - Low Priority Data",
+            16: "AF21 - Medium Priority Data",
+            18: "AF22 - Medium Priority Data",
+            20: "AF23 - Medium Priority Data",
+            22: "AF24 - Medium Priority Data", 
+            24: "AF31 - High Priority Data",
+            26: "AF32 - High Priority Data",
+            28: "AF33 - High Priority Data",
+            30: "AF34 - High Priority Data",
+            32: "AF41 - Video/Interactive",
+            34: "AF42 - Video/Interactive", 
+            36: "AF43 - Video/Interactive",
+            38: "AF44 - Video/Interactive",
+            46: "EF - Voice/Real-time",
+            48: "CS6 - Network Control",
+            56: "CS7 - Network Control"
+        }
+        return dscp_map.get(int(dscp_value), f"Unknown/Custom ({dscp_value})")
+    
+    def _generate_qos_recommendations(self, insights: Dict[str, Any]) -> List[str]:
+        """Generate QoS improvement recommendations based on insights"""
+        recommendations = []
+        
+        # DSCP recommendations
+        dscp_analysis = insights.get('dscp_analysis', {})
+        for dscp, data in dscp_analysis.items():
+            if data['compliance_score'] < 1.0 and data['count'] > 5:
+                if dscp == '0':
+                    recommendations.append("Consider implementing DSCP marking for better traffic prioritization")
+                else:
+                    recommendations.append(f"Review DSCP {dscp} ({data['description']}) configuration - compliance issues detected")
+        
+        # Latency recommendations
+        if insights.get('latency_violations'):
+            for violation in insights['latency_violations']:
+                if violation['average_latency'] > 200:
+                    recommendations.append("Critical: Average latency exceeds 200ms - investigate network path optimization")
+                else:
+                    recommendations.append("Warning: Latency violations detected - consider QoS policy adjustments")
+        
+        # Bandwidth recommendations  
+        if insights.get('bandwidth_issues'):
+            recommendations.append("High bandwidth utilization detected - implement traffic shaping policies")
+            recommendations.append("Consider upgrading network capacity or implementing bandwidth limits per traffic class")
+        
+        # Traffic classification
+        if insights.get('traffic_classification_problems'):
+            recommendations.append("Traffic classification issues detected - review application identification rules")
+        
+        # General recommendations
+        if not recommendations:
+            recommendations.append("QoS compliance is good - continue monitoring for policy drift")
+        
+        return recommendations
     
     def _generate_capacity_recommendations(self, trends: Dict[str, Any], features_df: pd.DataFrame) -> List[str]:
         """

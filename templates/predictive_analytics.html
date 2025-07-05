@@ -450,6 +450,109 @@
     </div>
 </div>
 
+<!-- QoS Compliance Monitoring Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card prediction-card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-network-wired me-2"></i>QoS Compliance Monitoring
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="qosDestination" class="form-label">Destination</label>
+                        <input type="text" class="form-control" id="qosDestination" placeholder="e.g., google.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="qosTestId" class="form-label">Test ID (Optional)</label>
+                        <input type="number" class="form-control" id="qosTestId" placeholder="Leave blank for destination analysis">
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-info" onclick="analyzeQoSCompliance()">
+                    <i class="fas fa-chart-line me-2"></i>Analyze QoS Compliance
+                </button>
+                
+                <!-- Loading Spinner -->
+                <div id="qosLoading" class="loading-spinner mx-auto mt-3" style="display: none;"></div>
+                
+                <!-- Error Display -->
+                <div id="qosError" class="alert alert-danger mt-3" style="display: none;">
+                    <strong>Analysis Failed:</strong> <span id="qosErrorMessage"></span>
+                </div>
+                
+                <!-- Results Display -->
+                <div id="qosResults" class="mt-4" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h3 id="qosComplianceScore" class="performance-indicator text-info">-</h3>
+                                <p class="mb-0 text-muted">Overall Compliance</p>
+                                <small id="qosComplianceLevel" class="text-success">-</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h3 id="qosConfidence" class="performance-indicator text-secondary">-</h3>
+                                <p class="mb-0 text-muted">Confidence Score</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h3 id="qosSamples" class="performance-indicator text-primary">-</h3>
+                                <p class="mb-0 text-muted">Analyzed Samples</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Compliance Distribution -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Compliance Distribution</h6>
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div id="qosFullyCompliant" class="progress-bar bg-success" role="progressbar"></div>
+                                <div id="qosPartiallyCompliant" class="progress-bar bg-warning" role="progressbar"></div>
+                                <div id="qosNonCompliant" class="progress-bar bg-danger" role="progressbar"></div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-success">Fully Compliant</small>
+                                <small class="text-warning">Partially Compliant</small>
+                                <small class="text-danger">Non-Compliant</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- QoS Insights -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>DSCP Analysis</h6>
+                            <div id="qosDscpAnalysis" class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                <!-- DSCP analysis will be populated here -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Traffic Violations</h6>
+                            <div id="qosViolations" class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Violations will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- QoS Recommendations -->
+                    <div class="mt-3">
+                        <h6>QoS Recommendations</h6>
+                        <div id="qosRecommendations" class="bg-light p-3 rounded">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Performance Prediction
 document.getElementById('predictionForm').addEventListener('submit', function(e) {
@@ -767,6 +870,166 @@ function displayFailurePredictionResults(data) {
         });
     } else {
         recommendationsList.innerHTML = '<small class="text-muted">No specific recommendations available</small>';
+    }
+}
+
+// QoS Compliance Analysis
+function analyzeQoSCompliance() {
+    const destination = document.getElementById('qosDestination').value.trim();
+    const testId = document.getElementById('qosTestId').value.trim();
+    
+    if (!destination && !testId) {
+        alert('Please enter either a destination or test ID for analysis');
+        return;
+    }
+    
+    const qosResults = document.getElementById('qosResults');
+    const qosLoading = document.getElementById('qosLoading');
+    const qosError = document.getElementById('qosError');
+    
+    // Hide previous results
+    qosResults.style.display = 'none';
+    qosError.style.display = 'none';
+    qosLoading.style.display = 'block';
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (destination) params.append('destination', destination);
+    if (testId) params.append('test_id', testId);
+    
+    fetch(`/api/qos_compliance_analysis?${params}`)
+    .then(response => response.json())
+    .then(data => {
+        qosLoading.style.display = 'none';
+        
+        if (data.status === 'success') {
+            displayQoSResults(data);
+            qosResults.style.display = 'block';
+        } else {
+            document.getElementById('qosErrorMessage').textContent = data.error || 'Analysis failed';
+            qosError.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        qosLoading.style.display = 'none';
+        document.getElementById('qosErrorMessage').textContent = 'Network error: ' + error.message;
+        qosError.style.display = 'block';
+    });
+}
+
+function displayQoSResults(data) {
+    // Overall compliance metrics
+    document.getElementById('qosComplianceScore').textContent = data.overall_compliance_score.toFixed(2);
+    document.getElementById('qosComplianceLevel').textContent = data.compliance_level;
+    document.getElementById('qosConfidence').textContent = Math.round(data.confidence_score * 100) + '%';
+    document.getElementById('qosSamples').textContent = data.total_samples;
+    
+    // Set compliance level color
+    const levelElement = document.getElementById('qosComplianceLevel');
+    if (data.compliance_level === 'Excellent' || data.compliance_level === 'Good') {
+        levelElement.className = 'text-success';
+    } else if (data.compliance_level === 'Fair') {
+        levelElement.className = 'text-warning';
+    } else {
+        levelElement.className = 'text-danger';
+    }
+    
+    // Compliance distribution
+    const distribution = data.compliance_distribution;
+    const total = distribution.fully_compliant + distribution.partially_compliant + distribution.non_compliant;
+    
+    if (total > 0) {
+        const fullyPct = (distribution.fully_compliant / total) * 100;
+        const partiallyPct = (distribution.partially_compliant / total) * 100;
+        const nonPct = (distribution.non_compliant / total) * 100;
+        
+        document.getElementById('qosFullyCompliant').style.width = fullyPct + '%';
+        document.getElementById('qosFullyCompliant').textContent = fullyPct > 10 ? Math.round(fullyPct) + '%' : '';
+        
+        document.getElementById('qosPartiallyCompliant').style.width = partiallyPct + '%';
+        document.getElementById('qosPartiallyCompliant').textContent = partiallyPct > 10 ? Math.round(partiallyPct) + '%' : '';
+        
+        document.getElementById('qosNonCompliant').style.width = nonPct + '%';
+        document.getElementById('qosNonCompliant').textContent = nonPct > 10 ? Math.round(nonPct) + '%' : '';
+    }
+    
+    // DSCP Analysis
+    const dscpAnalysis = document.getElementById('qosDscpAnalysis');
+    dscpAnalysis.innerHTML = '';
+    
+    if (data.insights && data.insights.dscp_analysis) {
+        Object.entries(data.insights.dscp_analysis).forEach(([dscp, info]) => {
+            const dscpDiv = document.createElement('div');
+            dscpDiv.className = 'mb-2 p-2 border rounded';
+            
+            const complianceColor = info.compliance_score >= 1.5 ? 'success' : 
+                                  info.compliance_score >= 1.0 ? 'warning' : 'danger';
+            
+            dscpDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong>DSCP ${dscp}</strong>
+                    <span class="badge bg-${complianceColor}">${info.compliance_score.toFixed(2)}</span>
+                </div>
+                <small class="text-muted">${info.description}</small><br>
+                <small>Samples: ${info.count}</small>
+            `;
+            dscpAnalysis.appendChild(dscpDiv);
+        });
+    } else {
+        dscpAnalysis.innerHTML = '<small class="text-muted">No DSCP analysis data available</small>';
+    }
+    
+    // Traffic Violations
+    const violationsDiv = document.getElementById('qosViolations');
+    violationsDiv.innerHTML = '';
+    
+    if (data.insights) {
+        // Latency violations
+        if (data.insights.latency_violations && data.insights.latency_violations.length > 0) {
+            data.insights.latency_violations.forEach(violation => {
+                const violationDiv = document.createElement('div');
+                violationDiv.className = 'mb-2 p-2 bg-warning bg-opacity-25 rounded';
+                violationDiv.innerHTML = `
+                    <strong>Latency Violation</strong><br>
+                    <small>Average: ${violation.average_latency.toFixed(1)}ms</small><br>
+                    <small>Affected samples: ${violation.affected_samples}</small>
+                `;
+                violationsDiv.appendChild(violationDiv);
+            });
+        }
+        
+        // Bandwidth issues
+        if (data.insights.bandwidth_issues && data.insights.bandwidth_issues.length > 0) {
+            data.insights.bandwidth_issues.forEach(issue => {
+                const issueDiv = document.createElement('div');
+                issueDiv.className = 'mb-2 p-2 bg-danger bg-opacity-25 rounded';
+                issueDiv.innerHTML = `
+                    <strong>Bandwidth Issue</strong><br>
+                    <small>Average: ${issue.average_bandwidth.toFixed(1)} Mbps</small><br>
+                    <small>Risk: ${issue.potential_congestion_risk}</small>
+                `;
+                violationsDiv.appendChild(issueDiv);
+            });
+        }
+        
+        if (violationsDiv.children.length === 0) {
+            violationsDiv.innerHTML = '<small class="text-muted">No significant violations detected</small>';
+        }
+    }
+    
+    // Recommendations
+    const recommendationsDiv = document.getElementById('qosRecommendations');
+    recommendationsDiv.innerHTML = '';
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+        data.recommendations.forEach(rec => {
+            const recDiv = document.createElement('div');
+            recDiv.className = 'recommendation mb-2 p-2 bg-info bg-opacity-10 rounded';
+            recDiv.innerHTML = `<small><i class="fas fa-lightbulb text-info me-2"></i>${rec}</small>`;
+            recommendationsDiv.appendChild(recDiv);
+        });
+    } else {
+        recommendationsDiv.innerHTML = '<small class="text-muted">No specific recommendations available</small>';
     }
 }
 </script>

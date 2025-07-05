@@ -1953,6 +1953,25 @@ def predictive_analytics():
     """Predictive Analytics dashboard page"""
     return render_template('predictive_analytics.html')
 
+@app.route('/api/qos_compliance_analysis')
+@login_required_with_dev_bypass
+def api_qos_compliance_analysis():
+    """API endpoint for QoS compliance analysis"""
+    try:
+        test_id = request.args.get('test_id', type=int)
+        destination = request.args.get('destination', type=str)
+        
+        # Perform QoS compliance analysis
+        analysis_result = diagnostic_engine.analyze_qos_compliance(test_id=test_id, destination=destination)
+        
+        return jsonify(analysis_result)
+    except Exception as e:
+        logging.error(f"Error in QoS compliance analysis: {str(e)}")
+        return jsonify({
+            'error': f'Analysis failed: {str(e)}',
+            'status': 'error'
+        }), 500
+
 # ================================
 # AUTHENTICATION SYSTEM
 # ================================
