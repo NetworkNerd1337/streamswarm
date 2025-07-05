@@ -2555,71 +2555,87 @@ class NetworkDiagnosticEngine:
     def _create_time_series_features(self, features_df, results):
         """
         Create time series features from test results for failure prediction
-        Requires sufficient sequential data for quality predictions
+        Groups by destination for proper sequential analysis
         """
         try:
-            # Sort results by timestamp
-            result_data = []
+            # Get all test data in one query to avoid individual lookups
+            test_ids = [result.test_id for result in results if hasattr(result, 'test_id')]
+            tests_data = {test.id: test.destination for test in Test.query.filter(Test.id.in_(test_ids)).all()}
+            
+            # Group results by destination for proper time series analysis
+            destination_groups = {}
             for i, result in enumerate(results):
-                if hasattr(result, 'created_at') and result.created_at:
-                    result_data.append({
-                        'timestamp': result.created_at,
-                        'index': i
-                    })
+                if hasattr(result, 'timestamp') and result.timestamp and hasattr(result, 'test_id'):
+                    destination = tests_data.get(result.test_id)
+                    if destination:
+                        if destination not in destination_groups:
+                            destination_groups[destination] = []
+                        destination_groups[destination].append({
+                            'timestamp': result.timestamp,
+                            'index': i,
+                            'destination': destination
+                        })
             
-            if len(result_data) < 15:  # Minimum requirement for quality time series
-                logger.info(f"Insufficient sequential data for time series analysis: {len(result_data)} measurements (need 15+)")
-                return None
-                
-            # Sort by timestamp
-            result_data.sort(key=lambda x: x['timestamp'])
+            # Process each destination separately
+            all_time_series_features = []
+            destinations_with_sufficient_data = 0
             
-            # Create time series features with proper window size
-            time_series_features = []
-            window_size = 5  # Fixed window size for consistent feature dimensions
-            
-            for i in range(window_size, len(result_data)):
-                # Get window of past measurements
-                window_indices = [result_data[j]['index'] for j in range(i-window_size, i)]
-                current_index = result_data[i]['index']
-                
-                # Extract features for window
-                window_features = []
-                for idx in window_indices:
-                    if idx < len(features_df):
-                        row = features_df.iloc[idx]
-                        # Key failure indicators over time
-                        window_features.extend([
-                            row.get('tcp_retransmission_rate', 0),
-                            row.get('ping_packet_loss', 0),
-                            row.get('ping_latency', 0),
-                            row.get('jitter', 0),
-                            row.get('cpu_percent', 0),
-                            row.get('memory_percent', 0)
-                        ])
-                
-                if len(window_features) == window_size * 6:  # Ensure proper feature count
-                    # Add trend calculations
-                    retrans_trend = self._calculate_trend_slope([features_df.iloc[idx].get('tcp_retransmission_rate', 0) for idx in window_indices])
-                    latency_trend = self._calculate_trend_slope([features_df.iloc[idx].get('ping_latency', 0) for idx in window_indices])
-                    error_trend = self._calculate_trend_slope([features_df.iloc[idx].get('total_network_errors', 0) for idx in window_indices])
+            for destination, dest_results in destination_groups.items():
+                if len(dest_results) >= 15:  # Minimum requirement per destination
+                    destinations_with_sufficient_data += 1
+                    # Sort by timestamp for this destination
+                    dest_results.sort(key=lambda x: x['timestamp'])
                     
-                    window_features.extend([retrans_trend, latency_trend, error_trend])
-                    
-                    time_series_features.append({
-                        'features': window_features,
-                        'target_index': current_index
-                    })
+                    # Create time series features for this destination
+                    window_size = 5
+                    for i in range(window_size, len(dest_results)):
+                        # Get window of past measurements for this destination
+                        window_indices = [dest_results[j]['index'] for j in range(i-window_size, i)]
+                        current_index = dest_results[i]['index']
+                        
+                        # Extract features for window
+                        window_features = []
+                        for idx in window_indices:
+                            if idx < len(features_df):
+                                row = features_df.iloc[idx]
+                                # Key failure indicators over time
+                                window_features.extend([
+                                    row.get('tcp_retransmission_rate', 0),
+                                    row.get('ping_packet_loss', 0),
+                                    row.get('ping_latency', 0),
+                                    row.get('jitter', 0),
+                                    row.get('cpu_percent', 0),
+                                    row.get('memory_percent', 0)
+                                ])
+                        
+                        if len(window_features) == window_size * 6:  # Ensure proper feature count
+                            # Add trend calculations
+                            retrans_trend = self._calculate_trend_slope([features_df.iloc[idx].get('tcp_retransmission_rate', 0) for idx in window_indices])
+                            latency_trend = self._calculate_trend_slope([features_df.iloc[idx].get('ping_latency', 0) for idx in window_indices])
+                            error_trend = self._calculate_trend_slope([features_df.iloc[idx].get('total_network_errors', 0) for idx in window_indices])
+                            
+                            window_features.extend([retrans_trend, latency_trend, error_trend])
+                            
+                            all_time_series_features.append({
+                                'features': window_features,
+                                'target_index': current_index,
+                                'destination': destination
+                            })
             
-            if len(time_series_features) < 10:
-                logger.info(f"Insufficient time series features generated: {len(time_series_features)} (need 10+)")
+            logger.info(f"Found {destinations_with_sufficient_data} destinations with sufficient data (15+ measurements)")
+            logger.info(f"Destination breakdown: {[(dest, len(results)) for dest, results in destination_groups.items() if len(results) >= 15]}")
+            
+            if len(all_time_series_features) < 10:
+                logger.info(f"Insufficient time series features generated: {len(all_time_series_features)} (need 10+)")
                 return None
             
-            logger.info(f"Created {len(time_series_features)} time series features from {len(result_data)} sequential measurements")
-            return time_series_features
+            logger.info(f"Created {len(all_time_series_features)} time series features from {destinations_with_sufficient_data} destinations")
+            return all_time_series_features
             
         except Exception as e:
             logger.error(f"Error creating time series features: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
     
 
