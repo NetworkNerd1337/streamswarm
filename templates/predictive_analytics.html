@@ -79,472 +79,481 @@
         </div>
     </div>
 
-    <!-- Performance Prediction Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card prediction-card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Performance Prediction
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="mb-3">Test Configuration</h6>
-                            <form id="predictionForm">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="destination" class="form-label">Destination</label>
-                                        <input type="text" class="form-control" id="destination" value="google.com" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="packetSize" class="form-label">Packet Size (bytes)</label>
-                                        <select class="form-select" id="packetSize">
-                                            <option value="64">64 (Standard)</option>
-                                            <option value="128">128</option>
-                                            <option value="256">256</option>
-                                            <option value="512">512</option>
-                                            <option value="1024">1024</option>
-                                            <option value="1472">1472 (MTU)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="testCount" class="form-label">Test Count</label>
-                                        <select class="form-select" id="testCount">
-                                            <option value="4">4 (Quick)</option>
-                                            <option value="10" selected>10 (Standard)</option>
-                                            <option value="20">20 (Detailed)</option>
-                                            <option value="50">50 (Comprehensive)</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="testType" class="form-label">Test Type</label>
-                                        <select class="form-select" id="testType">
-                                            <option value="basic">Basic Ping</option>
-                                            <option value="comprehensive" selected>Comprehensive</option>
-                                            <option value="bandwidth">Bandwidth Focus</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-magic me-2"></i>
-                                    Predict Performance
-                                </button>
-                            </form>
+    <!-- Two-Column Layout for Cards -->
+    <div class="row">
+        <!-- Left Column: Prediction Cards -->
+        <div class="col-lg-6">
+            <!-- Performance Prediction Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card prediction-card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Performance Prediction
+                            </h5>
                         </div>
-                        
-                        <div class="col-md-6">
-                            <div id="predictionResults" style="display: none;">
-                                <h6 class="mb-3">Prediction Results</h6>
-                                
-                                <!-- Performance Category -->
-                                <div class="text-center mb-4">
-                                    <div id="performanceCategory" class="performance-indicator text-success">
-                                        Excellent
-                                    </div>
-                                    <div id="predictedLatency" class="h4 text-muted">
-                                        ~25ms
-                                    </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <h6 class="mb-3">Test Configuration</h6>
+                                    <form id="predictionForm">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="destination" class="form-label">Destination</label>
+                                                <input type="text" class="form-control" id="destination" value="google.com" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="packetSize" class="form-label">Packet Size (bytes)</label>
+                                                <select class="form-select" id="packetSize">
+                                                    <option value="64">64 (Standard)</option>
+                                                    <option value="128">128</option>
+                                                    <option value="256">256</option>
+                                                    <option value="512">512</option>
+                                                    <option value="1024">1024</option>
+                                                    <option value="1472">1472 (MTU)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="testCount" class="form-label">Test Count</label>
+                                                <select class="form-select" id="testCount">
+                                                    <option value="4">4 (Quick)</option>
+                                                    <option value="10" selected>10 (Standard)</option>
+                                                    <option value="20">20 (Detailed)</option>
+                                                    <option value="50">50 (Comprehensive)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="testType" class="form-label">Test Type</label>
+                                                <select class="form-select" id="testType">
+                                                    <option value="basic">Basic Ping</option>
+                                                    <option value="comprehensive" selected>Comprehensive</option>
+                                                    <option value="bandwidth">Bandwidth Focus</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-magic me-2"></i>
+                                            Predict Performance
+                                        </button>
+                                    </form>
                                 </div>
                                 
-                                <!-- Confidence Score -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="small">Confidence Score</span>
-                                        <span id="confidenceScore" class="small fw-bold">85%</span>
+                                <div class="col-12">
+                                    <div id="predictionResults" style="display: none;">
+                                        <h6 class="mb-3">Prediction Results</h6>
+                                        
+                                        <!-- Performance Category -->
+                                        <div class="text-center mb-4">
+                                            <div id="performanceCategory" class="performance-indicator text-success">
+                                                Excellent
+                                            </div>
+                                            <div id="predictedLatency" class="h4 text-muted">
+                                                ~25ms
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Confidence Score -->
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="small">Confidence Score</span>
+                                                <span id="confidenceScore" class="small fw-bold">85%</span>
+                                            </div>
+                                            <div class="confidence-bar bg-light">
+                                                <div id="confidenceBar" class="bg-success" style="width: 85%; height: 100%;"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Insights -->
+                                        <div id="predictionInsights">
+                                            <h6 class="mb-2">AI Insights</h6>
+                                            <div id="insightsList">
+                                                <!-- Insights will be populated here -->
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="confidence-bar bg-light">
-                                        <div id="confidenceBar" class="bg-success" style="width: 85%; height: 100%;"></div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Insights -->
-                                <div id="predictionInsights">
-                                    <h6 class="mb-2">AI Insights</h6>
-                                    <div id="insightsList">
-                                        <!-- Insights will be populated here -->
+                                    
+                                    <div id="predictionLoading" class="loading-spinner"></div>
+                                    
+                                    <div id="predictionError" class="alert alert-warning" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <span id="errorMessage">Prediction model not available</span>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div id="predictionLoading" class="loading-spinner"></div>
-                            
-                            <div id="predictionError" class="alert alert-warning" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Failure Prediction Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card prediction-card">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                <span id="errorMessage">Prediction model not available</span>
+                                Network Failure Prediction
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <h6 class="mb-3">Configuration</h6>
+                                    <form id="failurePredictionForm">
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <label for="failureDestination" class="form-label">Target Destination</label>
+                                                <select class="form-select" id="failureDestination" required>
+                                                    <option value="">Select destination with historical data...</option>
+                                                    <option value="tiktok.com">tiktok.com (587 measurements)</option>
+                                                    <option value="vimeo.com/groups/639164/videos/297263163?autoplay=1">vimeo.com (291 measurements)</option>
+                                                    <option value="yahoo.com">yahoo.com (259 measurements)</option>
+                                                    <option value="mfa.gov.ua/en">mfa.gov.ua/en (252 measurements)</option>
+                                                    <option value="spiegel.de">spiegel.de (153 measurements)</option>
+                                                    <option value="YouTube.com">YouTube.com (135 measurements)</option>
+                                                    <option value="ryanthomashuff.com">ryanthomashuff.com (102 measurements)</option>
+                                                    <option value="Snapchat.com">Snapchat.com (92 measurements)</option>
+                                                    <option value="flipkart.com">flipkart.com (64 measurements)</option>
+                                                    <option value="sports.yahoo.co.jp">sports.yahoo.co.jp (62 measurements)</option>
+                                                </select>
+                                                <div class="form-text">Only destinations with 15+ historical measurements support failure prediction</div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="predictionHorizon" class="form-label">Prediction Horizon</label>
+                                                <select class="form-select" id="predictionHorizon">
+                                                    <option value="6">Next 6 hours</option>
+                                                    <option value="12">Next 12 hours</option>
+                                                    <option value="24" selected>Next 24 hours</option>
+                                                    <option value="48">Next 48 hours</option>
+                                                    <option value="72">Next 72 hours</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="currentConditions" class="form-label">Current Network State</label>
+                                                <select class="form-select" id="currentConditions">
+                                                    <option value="normal" selected>Normal operations</option>
+                                                    <option value="stressed">Under stress</option>
+                                                    <option value="degraded">Degraded performance</option>
+                                                    <option value="maintenance">Maintenance mode</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-search me-2"></i>
+                                            Predict Failure Risk
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div id="failurePredictionResults" style="display: none;">
+                                        <h6 class="mb-3">Failure Risk Assessment</h6>
+                                        
+                                        <!-- Risk Level Display -->
+                                        <div class="text-center mb-4">
+                                            <div id="riskLevel" class="performance-indicator text-warning">
+                                                MODERATE
+                                            </div>
+                                            <div id="failureProbability" class="h4 text-muted">
+                                                15% probability
+                                            </div>
+                                            <small class="text-muted">Within <span id="timeHorizon">24</span> hours</small>
+                                        </div>
+                                        
+                                        <!-- Confidence Score -->
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="small">Model Confidence</span>
+                                                <span id="failureConfidenceScore" class="small fw-bold">78%</span>
+                                            </div>
+                                            <div class="confidence-bar bg-light">
+                                                <div id="failureConfidenceBar" class="bg-info" style="width: 78%; height: 100%;"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Contributing Factors -->
+                                        <div class="mb-3">
+                                            <h6 class="mb-2">Risk Factors</h6>
+                                            <div id="riskFactorsList">
+                                                <!-- Risk factors will be populated here -->
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Recommendations -->
+                                        <div id="failureRecommendations">
+                                            <h6 class="mb-2">Prevention Actions</h6>
+                                            <div id="recommendationsList">
+                                                <!-- Recommendations will be populated here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="failurePredictionLoading" class="loading-spinner"></div>
+                                    
+                                    <div id="failurePredictionError" class="alert alert-warning" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <span id="failureErrorMessage">Failure prediction model not available</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Network Failure Prediction Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card prediction-card">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Network Failure Prediction
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="mb-3">Configuration</h6>
-                            <form id="failurePredictionForm">
-                                <div class="row">
-                                    <div class="col-md-12 mb-3">
-                                        <label for="failureDestination" class="form-label">Target Destination</label>
-                                        <select class="form-select" id="failureDestination" required>
-                                            <option value="">Select destination with historical data...</option>
-                                            <option value="tiktok.com">tiktok.com (587 measurements)</option>
-                                            <option value="vimeo.com/groups/639164/videos/297263163?autoplay=1">vimeo.com (291 measurements)</option>
-                                            <option value="yahoo.com">yahoo.com (259 measurements)</option>
-                                            <option value="mfa.gov.ua/en">mfa.gov.ua/en (252 measurements)</option>
-                                            <option value="spiegel.de">spiegel.de (153 measurements)</option>
-                                            <option value="YouTube.com">YouTube.com (135 measurements)</option>
-                                            <option value="ryanthomashuff.com">ryanthomashuff.com (102 measurements)</option>
-                                            <option value="Snapchat.com">Snapchat.com (92 measurements)</option>
-                                            <option value="flipkart.com">flipkart.com (64 measurements)</option>
-                                            <option value="sports.yahoo.co.jp">sports.yahoo.co.jp (62 measurements)</option>
-                                        </select>
-                                        <div class="form-text">Only destinations with 15+ historical measurements support failure prediction</div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="predictionHorizon" class="form-label">Prediction Horizon</label>
-                                        <select class="form-select" id="predictionHorizon">
-                                            <option value="6">Next 6 hours</option>
-                                            <option value="12">Next 12 hours</option>
-                                            <option value="24" selected>Next 24 hours</option>
-                                            <option value="48">Next 48 hours</option>
-                                            <option value="72">Next 72 hours</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="currentConditions" class="form-label">Current Network State</label>
-                                        <select class="form-select" id="currentConditions">
-                                            <option value="normal" selected>Normal operations</option>
-                                            <option value="stressed">Under stress</option>
-                                            <option value="degraded">Degraded performance</option>
-                                            <option value="maintenance">Maintenance mode</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-danger">
-                                    <i class="fas fa-search me-2"></i>
-                                    Predict Failure Risk
-                                </button>
-                            </form>
+        <!-- Right Column: Capacity Planning and QoS Cards -->
+        <div class="col-lg-6">
+            <!-- Capacity Planning Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-area me-2"></i>
+                                Capacity Planning & Trends
+                            </h5>
                         </div>
-                        
-                        <div class="col-md-6">
-                            <div id="failurePredictionResults" style="display: none;">
-                                <h6 class="mb-3">Failure Risk Assessment</h6>
-                                
-                                <!-- Risk Level Display -->
-                                <div class="text-center mb-4">
-                                    <div id="riskLevel" class="performance-indicator text-warning">
-                                        MODERATE
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="analysisPeriod" class="form-label">Analysis Period</label>
+                                    <select class="form-select" id="analysisPeriod">
+                                        <option value="7">Last 7 days</option>
+                                        <option value="14">Last 2 weeks</option>
+                                        <option value="30" selected>Last 30 days</option>
+                                        <option value="60">Last 60 days</option>
+                                        <option value="90">Last 90 days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button id="analyzeTrends" class="btn btn-info">
+                                        <i class="fas fa-chart-line me-2"></i>
+                                        Analyze Trends
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="trendsResults" style="display: none;">
+                                <!-- Network Health Trend -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div id="healthTrend" class="capacity-metric bg-dark text-light">
+                                            <h6 class="mb-2 text-light">
+                                                <i class="fas fa-heartbeat me-2"></i>
+                                                Overall Network Health
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <div id="currentHealthScore" class="h3 text-success">85.2</div>
+                                                        <small class="text-light">Current Score</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <div id="healthTrendDirection" class="h5 text-light">
+                                                            Stable <span class="trend-arrow text-warning">↔</span>
+                                                        </div>
+                                                        <small class="text-light">Trend</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <div id="healthChange" class="h5 text-success">+2.1%</div>
+                                                        <small class="text-light">Change</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="failureProbability" class="h4 text-muted">
-                                        15% probability
-                                    </div>
-                                    <small class="text-muted">Within <span id="timeHorizon">24</span> hours</small>
                                 </div>
                                 
-                                <!-- Confidence Score -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <span class="small">Model Confidence</span>
-                                        <span id="failureConfidenceScore" class="small fw-bold">78%</span>
+                                <!-- Individual Metrics -->
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <div id="latencyTrend" class="capacity-metric">
+                                            <h6 class="mb-2">
+                                                <i class="fas fa-clock me-2"></i>
+                                                Latency Trend
+                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span id="latencyStatus" class="badge bg-success">Improving</span>
+                                                <span id="latencyChange" class="fw-bold">-5.2%</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">Avg: <span id="latencyAvg">42ms</span></small>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="confidence-bar bg-light">
-                                        <div id="failureConfidenceBar" class="bg-info" style="width: 78%; height: 100%;"></div>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <div id="bandwidthTrend" class="capacity-metric">
+                                            <h6 class="mb-2">
+                                                <i class="fas fa-download me-2"></i>
+                                                Bandwidth Trend
+                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span id="bandwidthStatus" class="badge bg-warning">Stable</span>
+                                                <span id="bandwidthChange" class="fw-bold">+1.1%</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">Avg: <span id="bandwidthAvg">245 Mbps</span></small>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <!-- Contributing Factors -->
-                                <div class="mb-3">
-                                    <h6 class="mb-2">Risk Factors</h6>
-                                    <div id="riskFactorsList">
-                                        <!-- Risk factors will be populated here -->
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <div id="packetLossTrend" class="capacity-metric">
+                                            <h6 class="mb-2">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                Packet Loss Trend
+                                            </h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span id="packetLossStatus" class="badge bg-success">Improving</span>
+                                                <span id="packetLossChange" class="fw-bold">-0.3%</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">Avg: <span id="packetLossAvg">0.8%</span></small>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
                                 <!-- Recommendations -->
-                                <div id="failureRecommendations">
-                                    <h6 class="mb-2">Prevention Actions</h6>
-                                    <div id="recommendationsList">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-lightbulb me-2"></i>
+                                                    Capacity Planning Recommendations
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="recommendationsList">
+                                                    <!-- Recommendations will be populated here -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="trendsLoading" class="loading-spinner"></div>
+                            
+                            <div id="trendsError" class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <span id="trendsErrorMessage">Insufficient data for trend analysis</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QoS Compliance Monitoring Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card prediction-card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-network-wired me-2"></i>QoS Compliance Analytics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="qosDestination" class="form-label">Destination</label>
+                                    <input type="text" class="form-control" id="qosDestination" placeholder="e.g., google.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="qosTestId" class="form-label">Test ID (Optional)</label>
+                                    <input type="number" class="form-control" id="qosTestId" placeholder="Leave blank for destination analysis">
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-info" onclick="analyzeQoSCompliance()">
+                                <i class="fas fa-chart-line me-2"></i>Analyze QoS Compliance
+                            </button>
+                            
+                            <!-- Loading Spinner -->
+                            <div id="qosLoading" class="loading-spinner mx-auto mt-3" style="display: none;"></div>
+                            
+                            <!-- Error Display -->
+                            <div id="qosError" class="alert alert-danger mt-3" style="display: none;">
+                                <strong>Analysis Failed:</strong> <span id="qosErrorMessage"></span>
+                            </div>
+                            
+                            <!-- Results Display -->
+                            <div id="qosResults" class="mt-4" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-dark rounded border">
+                                            <h3 id="qosComplianceScore" class="performance-indicator text-info">-</h3>
+                                            <p class="mb-0 text-light">Overall Compliance</p>
+                                            <small id="qosComplianceLevel" class="text-success">-</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-dark rounded border">
+                                            <h3 id="qosConfidence" class="performance-indicator text-secondary">-</h3>
+                                            <p class="mb-0 text-light">Confidence Score</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center p-3 bg-dark rounded border">
+                                            <h3 id="qosSamples" class="performance-indicator text-primary">-</h3>
+                                            <p class="mb-0 text-light">Analyzed Samples</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Compliance Distribution -->
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <h6>Compliance Distribution</h6>
+                                        <div class="progress mb-2" style="height: 20px;">
+                                            <div id="qosFullyCompliant" class="progress-bar bg-success" role="progressbar"></div>
+                                            <div id="qosPartiallyCompliant" class="progress-bar bg-warning" role="progressbar"></div>
+                                            <div id="qosNonCompliant" class="progress-bar bg-danger" role="progressbar"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-success">Fully Compliant</small>
+                                            <small class="text-warning">Partially Compliant</small>
+                                            <small class="text-danger">Non-Compliant</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- QoS Insights -->
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <h6>DSCP Analysis</h6>
+                                        <div id="qosDscpAnalysis" class="bg-dark p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
+                                            <!-- DSCP analysis will be populated here -->
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Traffic Violations</h6>
+                                        <div id="qosViolations" class="bg-dark p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
+                                            <!-- Violations will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- QoS Recommendations -->
+                                <div class="mt-3">
+                                    <h6>QoS Recommendations</h6>
+                                    <div id="qosRecommendations" class="bg-dark p-3 rounded border">
                                         <!-- Recommendations will be populated here -->
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div id="failurePredictionLoading" class="loading-spinner"></div>
-                            
-                            <div id="failurePredictionError" class="alert alert-warning" style="display: none;">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <span id="failureErrorMessage">Failure prediction model not available</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Capacity Planning Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-area me-2"></i>
-                        Capacity Planning & Trends
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="analysisPeriod" class="form-label">Analysis Period</label>
-                            <select class="form-select" id="analysisPeriod">
-                                <option value="7">Last 7 days</option>
-                                <option value="14">Last 2 weeks</option>
-                                <option value="30" selected>Last 30 days</option>
-                                <option value="60">Last 60 days</option>
-                                <option value="90">Last 90 days</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 d-flex align-items-end">
-                            <button id="analyzeTrends" class="btn btn-info">
-                                <i class="fas fa-chart-line me-2"></i>
-                                Analyze Trends
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="trendsResults" style="display: none;">
-                        <!-- Network Health Trend -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div id="healthTrend" class="capacity-metric bg-dark text-light">
-                                    <h6 class="mb-2 text-light">
-                                        <i class="fas fa-heartbeat me-2"></i>
-                                        Overall Network Health
-                                    </h6>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="text-center">
-                                                <div id="currentHealthScore" class="h3 text-success">85.2</div>
-                                                <small class="text-light">Current Score</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="text-center">
-                                                <div id="healthTrendDirection" class="h5 text-light">
-                                                    Stable <span class="trend-arrow text-warning">↔</span>
-                                                </div>
-                                                <small class="text-light">Trend</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="text-center">
-                                                <div id="healthChange" class="h5 text-success">+2.1%</div>
-                                                <small class="text-light">Change</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Individual Metrics -->
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div id="latencyTrend" class="capacity-metric">
-                                    <h6 class="mb-2">
-                                        <i class="fas fa-clock me-2"></i>
-                                        Latency Trend
-                                    </h6>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span id="latencyStatus" class="badge bg-success">Improving</span>
-                                        <span id="latencyChange" class="fw-bold">-5.2%</span>
-                                    </div>
-                                    <div class="mt-2">
-                                        <small class="text-muted">Avg: <span id="latencyAvg">42ms</span></small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <div id="bandwidthTrend" class="capacity-metric">
-                                    <h6 class="mb-2">
-                                        <i class="fas fa-download me-2"></i>
-                                        Bandwidth Trend
-                                    </h6>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span id="bandwidthStatus" class="badge bg-warning">Stable</span>
-                                        <span id="bandwidthChange" class="fw-bold">+1.1%</span>
-                                    </div>
-                                    <div class="mt-2">
-                                        <small class="text-muted">Avg: <span id="bandwidthAvg">245 Mbps</span></small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <div id="packetLossTrend" class="capacity-metric">
-                                    <h6 class="mb-2">
-                                        <i class="fas fa-exclamation-triangle me-2"></i>
-                                        Packet Loss Trend
-                                    </h6>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span id="packetLossStatus" class="badge bg-success">Improving</span>
-                                        <span id="packetLossChange" class="fw-bold">-0.3%</span>
-                                    </div>
-                                    <div class="mt-2">
-                                        <small class="text-muted">Avg: <span id="packetLossAvg">0.8%</span></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Recommendations -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">
-                                            <i class="fas fa-lightbulb me-2"></i>
-                                            Capacity Planning Recommendations
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div id="recommendationsList">
-                                            <!-- Recommendations will be populated here -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="trendsLoading" class="loading-spinner"></div>
-                    
-                    <div id="trendsError" class="alert alert-warning" style="display: none;">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <span id="trendsErrorMessage">Insufficient data for trend analysis</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- QoS Compliance Monitoring Section -->
-<div class="row mb-5">
-    <div class="col-12">
-        <div class="card prediction-card" style="max-width: 1200px; margin: 0 auto;">
-            <div class="card-header bg-info text-white">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-network-wired me-2"></i>QoS Compliance Analytics
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="qosDestination" class="form-label">Destination</label>
-                        <input type="text" class="form-control" id="qosDestination" placeholder="e.g., google.com">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="qosTestId" class="form-label">Test ID (Optional)</label>
-                        <input type="number" class="form-control" id="qosTestId" placeholder="Leave blank for destination analysis">
-                    </div>
-                </div>
-                
-                <button type="button" class="btn btn-info" onclick="analyzeQoSCompliance()">
-                    <i class="fas fa-chart-line me-2"></i>Analyze QoS Compliance
-                </button>
-                
-                <!-- Loading Spinner -->
-                <div id="qosLoading" class="loading-spinner mx-auto mt-3" style="display: none;"></div>
-                
-                <!-- Error Display -->
-                <div id="qosError" class="alert alert-danger mt-3" style="display: none;">
-                    <strong>Analysis Failed:</strong> <span id="qosErrorMessage"></span>
-                </div>
-                
-                <!-- Results Display -->
-                <div id="qosResults" class="mt-4" style="display: none;">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="text-center p-3 bg-dark rounded border">
-                                <h3 id="qosComplianceScore" class="performance-indicator text-info">-</h3>
-                                <p class="mb-0 text-light">Overall Compliance</p>
-                                <small id="qosComplianceLevel" class="text-success">-</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center p-3 bg-dark rounded border">
-                                <h3 id="qosConfidence" class="performance-indicator text-secondary">-</h3>
-                                <p class="mb-0 text-light">Confidence Score</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="text-center p-3 bg-dark rounded border">
-                                <h3 id="qosSamples" class="performance-indicator text-primary">-</h3>
-                                <p class="mb-0 text-light">Analyzed Samples</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Compliance Distribution -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <h6>Compliance Distribution</h6>
-                            <div class="progress mb-2" style="height: 20px;">
-                                <div id="qosFullyCompliant" class="progress-bar bg-success" role="progressbar"></div>
-                                <div id="qosPartiallyCompliant" class="progress-bar bg-warning" role="progressbar"></div>
-                                <div id="qosNonCompliant" class="progress-bar bg-danger" role="progressbar"></div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <small class="text-success">Fully Compliant</small>
-                                <small class="text-warning">Partially Compliant</small>
-                                <small class="text-danger">Non-Compliant</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- QoS Insights -->
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h6>DSCP Analysis</h6>
-                            <div id="qosDscpAnalysis" class="bg-dark p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
-                                <!-- DSCP analysis will be populated here -->
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Traffic Violations</h6>
-                            <div id="qosViolations" class="bg-dark p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
-                                <!-- Violations will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- QoS Recommendations -->
-                    <div class="mt-3">
-                        <h6>QoS Recommendations</h6>
-                        <div id="qosRecommendations" class="bg-dark p-3 rounded border">
-                            <!-- Recommendations will be populated here -->
                         </div>
                     </div>
                 </div>
