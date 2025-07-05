@@ -34,7 +34,7 @@ APP_DIR="/home/$(whoami)/Swarm"
 SCREEN_SESSION="streamswarm-client"
 
 # Log file location
-LOG_FILE="/var/log/streamswarm-client.log"
+LOG_FILE="/home/$(whoami)/Swarm/streamswarm-client.log"
 
 # =============================================================================
 # SCRIPT LOGIC - DO NOT MODIFY BELOW THIS LINE
@@ -142,7 +142,7 @@ cat > "$APP_DIR/client_status.sh" << 'EOF'
 # StreamSwarm Client Status Script
 
 SCREEN_SESSION="streamswarm-client"
-LOG_FILE="/var/log/streamswarm-client.log"
+LOG_FILE="/home/$(whoami)/Swarm/streamswarm-client.log"
 
 echo "=== StreamSwarm Client Status ==="
 echo "Screen session status:"
