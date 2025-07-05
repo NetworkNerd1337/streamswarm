@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 5, 2025: Successfully implemented QoS Compliance Monitoring Model as fifth ML model in StreamSwarm
+  - Added comprehensive QoS compliance analysis with DSCP value evaluation and traffic classification assessment
+  - Integrated QoS model training into existing ML pipeline with Random Forest algorithm and specialized feature extraction
+  - Created QoS Compliance Monitoring section in Predictive Analytics page with real-time analysis capabilities
+  - Implemented API endpoint for QoS analysis with detailed compliance scoring and violation detection
+  - Added QoS model card to ML Models Configuration page showing training status and requirements
+  - System now supports 5 complete ML models: anomaly detection, health classification, performance prediction, network failure prediction, and QoS compliance monitoring
+  - Maintains zero-trust architecture with all QoS processing running locally using trained compliance models
 - July 5, 2025: Successfully resolved Network Failure Prediction API bug and completed full integration
   - Fixed critical "string indices must be integers, not 'str'" error in failure prediction calculation logic
   - Updated _generate_failure_prevention_recommendations method to handle both string and dictionary factor formats

@@ -239,6 +239,26 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">QoS Compliance Monitoring</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> Random Forest<br>
+                                        <strong>Purpose:</strong> Monitor traffic QoS compliance<br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if 'qos_compliance_monitor' in model_status.models_available else 'secondary' }}">
+                                            {{ 'Trained' if 'qos_compliance_monitor' in model_status.models_available else 'Not Trained' }}
+                                        </span>
+                                    </p>
+                                    <small class="text-muted">
+                                        <strong>Training Requirement:</strong> 20+ test results with DSCP values and traffic classification data
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
