@@ -1456,8 +1456,8 @@ def get_test_progress(test_id):
 def download_linux_startup_script():
     """Download the Linux startup script for StreamSwarm clients"""
     try:
-        # Path to the startup script
-        script_path = os.path.join(os.getcwd(), 'start_streamswarm_client.sh')
+        # Path to the startup script in scripts folder
+        script_path = os.path.join(os.getcwd(), 'scripts', 'start_streamswarm_client.sh')
         
         # Check if file exists
         if not os.path.exists(script_path):

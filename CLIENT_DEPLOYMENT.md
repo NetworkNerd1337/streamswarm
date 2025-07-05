@@ -10,7 +10,7 @@ Download these files to your client machine:
 - `config.py` - Configuration module
 - `geolocation_service.py` - Geolocation analysis (optional)
 - `gnmi_client.py` - GNMI network analysis (optional)
-- `start_streamswarm_client.sh` - Startup script
+- `scripts/start_streamswarm_client.sh` - Startup script
 
 ### 2. Install Dependencies
 ```bash
