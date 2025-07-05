@@ -1381,6 +1381,9 @@ def stop_test(test_id):
     # Update all test clients to completed status
     TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})
     
+    # Handle recurring test logic for "Create New Tests" mode
+    _handle_recurring_test_completion(test)
+    
     db.session.commit()
     
     return jsonify({'status': 'success', 'message': 'Test stopped successfully'})
@@ -1434,6 +1437,10 @@ def get_test_progress(test_id):
             test.status = 'completed'
             test.completed_at = datetime.now(zoneinfo.ZoneInfo('America/New_York'))
             TestClient.query.filter_by(test_id=test_id, status='running').update({'status': 'completed'})
+            
+            # Handle recurring test logic for "Create New Tests" mode
+            _handle_recurring_test_completion(test)
+            
             db.session.commit()
             
         return jsonify({

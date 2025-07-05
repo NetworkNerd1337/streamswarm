@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 4, 2025: Fixed critical recurring test completion handler bug affecting multiple concurrent tests
+  - Identified and resolved timing conflicts between completion handler and recurring processor
+  - Fixed incorrect next_execution times that were causing 3+ hour delays instead of correct intervals
+  - Enhanced completion handler to be called from ALL test completion paths (client submission, manual stop, auto-completion)
+  - Resolved issue where tests completed via manual stopping or auto-completion didn't trigger new test creation
+  - Modified recurring processor to avoid conflicts with "Create New Tests" mode (handled by completion handler)
+  - Fixed Test 167 issue where completion handler wasn't triggered, preventing child test creation
+  - All recurring test modes now work reliably with multiple concurrent recurring tests
 - July 4, 2025: Enhanced recurring test system with 30-minute minimum intervals and validated authentication independence
   - Added support for 30-59 minute recurrence intervals (previously minimum was 1 hour)
   - Updated frontend interface with "Minutes" option in recurrence dropdown
