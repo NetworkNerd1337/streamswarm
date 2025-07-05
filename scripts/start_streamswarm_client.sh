@@ -4,37 +4,40 @@
 # This script is designed to be called from cron @reboot for automatic client startup
 # 
 # Usage: 
-#   1. Edit the configuration variables below
-#   2. Make executable: chmod +x start_streamswarm_client.sh
-#   3. Add to cron: @reboot /path/to/start_streamswarm_client.sh
+#   1. Copy streamswarm_config.sh to parent directory (outside git repo)
+#   2. Edit the configuration variables in ../streamswarm_config.sh
+#   3. Make executable: chmod +x start_streamswarm_client.sh
+#   4. Add to cron: @reboot /path/to/Swarm/scripts/start_streamswarm_client.sh
 #
 # Author: StreamSwarm Project
-# Version: 1.0
+# Version: 2.0
 
 # =============================================================================
-# CONFIGURATION - EDIT THESE VALUES FOR YOUR DEPLOYMENT
+# LOAD CONFIGURATION FROM PARENT DIRECTORY
 # =============================================================================
 
-# StreamSwarm server URL (include https:// and port if needed)
-SERVER_URL="https://swarmstreamserver-example.com"
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# API token for client authentication (get from server admin panel)
-API_TOKEN="your-api-token-here"
+# Configuration file should be in parent directory (outside git repo)
+CONFIG_FILE="$SCRIPT_DIR/../streamswarm_config.sh"
 
-# Client name (will be displayed in server dashboard)
-CLIENT_NAME="$(hostname)"
+# Check if configuration file exists
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: Configuration file not found at $CONFIG_FILE"
+    echo "Please copy streamswarm_config.sh to the parent directory and configure it."
+    echo "Example: cp $SCRIPT_DIR/streamswarm_config.sh $SCRIPT_DIR/../"
+    exit 1
+fi
 
-# Python virtual environment path
-VENV_PATH="/home/$(whoami)/streamswarm-env"
+# Source the configuration file
+source "$CONFIG_FILE"
 
-# Application directory path
-APP_DIR="/home/$(whoami)/Swarm"
-
-# Screen session name
-SCREEN_SESSION="streamswarm-client"
-
-# Log file location
-LOG_FILE="/home/$(whoami)/Swarm/streamswarm-client.log"
+# Verify configuration was loaded
+if [ "$CONFIG_LOADED" != "true" ]; then
+    echo "ERROR: Configuration file did not load properly"
+    exit 1
+fi
 
 # =============================================================================
 # SCRIPT LOGIC - DO NOT MODIFY BELOW THIS LINE
@@ -137,12 +140,12 @@ else
 fi
 
 # Create status script for easy monitoring
-cat > "$APP_DIR/client_status.sh" << 'EOF'
+cat > "$APP_DIR/client_status.sh" << EOF
 #!/bin/bash
 # StreamSwarm Client Status Script
 
-SCREEN_SESSION="streamswarm-client"
-LOG_FILE="/home/$(whoami)/Swarm/streamswarm-client.log"
+SCREEN_SESSION="$SCREEN_SESSION"
+LOG_FILE="$LOG_FILE"
 
 echo "=== StreamSwarm Client Status ==="
 echo "Screen session status:"
