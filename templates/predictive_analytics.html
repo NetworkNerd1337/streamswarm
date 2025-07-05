@@ -487,22 +487,22 @@
                 <div id="qosResults" class="mt-4" style="display: none;">
                     <div class="row">
                         <div class="col-md-4">
-                            <div class="text-center p-3 bg-light rounded">
+                            <div class="text-center p-3 bg-dark rounded border">
                                 <h3 id="qosComplianceScore" class="performance-indicator text-info">-</h3>
-                                <p class="mb-0 text-muted">Overall Compliance</p>
+                                <p class="mb-0 text-light">Overall Compliance</p>
                                 <small id="qosComplianceLevel" class="text-success">-</small>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="text-center p-3 bg-light rounded">
+                            <div class="text-center p-3 bg-dark rounded border">
                                 <h3 id="qosConfidence" class="performance-indicator text-secondary">-</h3>
-                                <p class="mb-0 text-muted">Confidence Score</p>
+                                <p class="mb-0 text-light">Confidence Score</p>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="text-center p-3 bg-light rounded">
+                            <div class="text-center p-3 bg-dark rounded border">
                                 <h3 id="qosSamples" class="performance-indicator text-primary">-</h3>
-                                <p class="mb-0 text-muted">Analyzed Samples</p>
+                                <p class="mb-0 text-light">Analyzed Samples</p>
                             </div>
                         </div>
                     </div>
@@ -528,13 +528,13 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <h6>DSCP Analysis</h6>
-                            <div id="qosDscpAnalysis" class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                            <div id="qosDscpAnalysis" class="bg-dark p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
                                 <!-- DSCP analysis will be populated here -->
                             </div>
                         </div>
                         <div class="col-md-6">
                             <h6>Traffic Violations</h6>
-                            <div id="qosViolations" class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;">
+                            <div id="qosViolations" class="bg-dark p-3 rounded border" style="max-height: 200px; overflow-y: auto;">
                                 <!-- Violations will be populated here -->
                             </div>
                         </div>
@@ -543,7 +543,7 @@
                     <!-- QoS Recommendations -->
                     <div class="mt-3">
                         <h6>QoS Recommendations</h6>
-                        <div id="qosRecommendations" class="bg-light p-3 rounded">
+                        <div id="qosRecommendations" class="bg-dark p-3 rounded border">
                             <!-- Recommendations will be populated here -->
                         </div>
                     </div>
@@ -967,16 +967,16 @@ function displayQoSResults(data) {
             
             dscpDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
-                    <strong>DSCP ${dscp}</strong>
+                    <strong class="text-light">DSCP ${dscp}</strong>
                     <span class="badge bg-${complianceColor}">${info.compliance_score.toFixed(2)}</span>
                 </div>
-                <small class="text-muted">${info.description}</small><br>
-                <small>Samples: ${info.count}</small>
+                <small class="text-light">${info.description}</small><br>
+                <small class="text-light">Samples: ${info.count}</small>
             `;
             dscpAnalysis.appendChild(dscpDiv);
         });
     } else {
-        dscpAnalysis.innerHTML = '<small class="text-muted">No DSCP analysis data available</small>';
+        dscpAnalysis.innerHTML = '<small class="text-light">No DSCP analysis data available</small>';
     }
     
     // Traffic Violations
@@ -1013,7 +1013,7 @@ function displayQoSResults(data) {
         }
         
         if (violationsDiv.children.length === 0) {
-            violationsDiv.innerHTML = '<small class="text-muted">No significant violations detected</small>';
+            violationsDiv.innerHTML = '<small class="text-light">No significant violations detected</small>';
         }
     }
     
@@ -1029,7 +1029,7 @@ function displayQoSResults(data) {
             recommendationsDiv.appendChild(recDiv);
         });
     } else {
-        recommendationsDiv.innerHTML = '<small class="text-muted">No specific recommendations available</small>';
+        recommendationsDiv.innerHTML = '<small class="text-light">No specific recommendations available</small>';
     }
 }
 </script>
