@@ -538,13 +538,14 @@ class NetworkDiagnosticEngine:
             
         return risk_scores
     
-    def predict_network_failure(self, current_metrics: Dict[str, Any], time_horizon_hours: int = 24) -> Dict[str, Any]:
+    def predict_network_failure(self, destination: str, prediction_horizon: int = 24, current_conditions: str = 'normal') -> Dict[str, Any]:
         """
-        Predict network failure probability using time series analysis
+        Predict network failure probability using time series analysis for a specific destination
         
         Args:
-            current_metrics: Current network performance and system metrics
-            time_horizon_hours: Prediction time horizon in hours (default: 24 hours)
+            destination: Target destination for failure prediction
+            prediction_horizon: Prediction time horizon in hours (default: 24 hours)
+            current_conditions: Current network state (normal, stressed, degraded, maintenance)
             
         Returns:
             Dict containing failure probability, risk level, contributing factors, and recommendations
@@ -552,59 +553,306 @@ class NetworkDiagnosticEngine:
         try:
             if 'failure_predictor' not in self.models:
                 logger.warning("Time series failure prediction model not available, falling back to rule-based analysis")
-                return self._rule_based_failure_prediction(current_metrics, time_horizon_hours)
+                return self._rule_based_failure_prediction_for_destination(destination, prediction_horizon, current_conditions)
             
             failure_predictor = self.models['failure_predictor']
             
+            # Get recent metrics for the destination
+            recent_metrics = self._get_recent_metrics_for_destination(destination, days_back=7)
+            
+            if not recent_metrics:
+                logger.warning(f"No recent metrics found for destination {destination}")
+                return {
+                    'error': f'No historical data available for {destination}',
+                    'status': 'insufficient_data'
+                }
+            
             # Check if this is our new time series model
             if isinstance(failure_predictor, dict) and failure_predictor.get('type') == 'time_series_ensemble':
-                # Use time series prediction
-                failure_probability = self._predict_with_time_series_model(failure_predictor, current_metrics)
+                # Use time series prediction with destination-specific data
+                failure_probability = self._predict_with_time_series_model_for_destination(
+                    failure_predictor, destination, recent_metrics
+                )
             else:
                 # Fallback to rule-based for any legacy models
                 logger.warning("Legacy model detected, using rule-based prediction")
-                return self._rule_based_failure_prediction(current_metrics, time_horizon_hours)
+                return self._rule_based_failure_prediction_for_destination(destination, prediction_horizon, current_conditions)
             
-            # Adjust probability based on time horizon
+            # Adjust probability based on time horizon and current conditions
             time_adjusted_probability = self._adjust_failure_probability_for_time(
-                failure_probability, time_horizon_hours
+                failure_probability, prediction_horizon
+            )
+            
+            # Apply current conditions modifier
+            condition_adjusted_probability = self._adjust_probability_for_conditions(
+                time_adjusted_probability, current_conditions
             )
             
             # Determine risk level
-            risk_level = self._determine_failure_risk_level(time_adjusted_probability)
+            risk_level = self._determine_failure_risk_level(condition_adjusted_probability)
             
-            # Extract features for analysis
-            failure_features = self._extract_failure_prediction_features(current_metrics)
-            
-            # Identify contributing factors
-            contributing_factors = self._identify_failure_contributing_factors(
-                current_metrics, failure_features
+            # Identify contributing factors from recent metrics
+            contributing_factors = self._identify_failure_contributing_factors_for_destination(
+                destination, recent_metrics, current_conditions
             )
             
             # Generate proactive recommendations
             recommendations = self._generate_failure_prevention_recommendations(
-                time_adjusted_probability, contributing_factors, time_horizon_hours
+                condition_adjusted_probability, contributing_factors, prediction_horizon
             )
             
-            # Calculate confidence based on feature quality and model type
-            confidence = self._calculate_time_series_confidence(failure_predictor, failure_features)
+            # Calculate confidence based on data quality and model type
+            confidence = self._calculate_destination_prediction_confidence(
+                destination, recent_metrics, failure_predictor
+            )
             
             return {
-                'failure_probability': float(time_adjusted_probability),
+                'failure_probability': float(condition_adjusted_probability),
                 'risk_level': risk_level,
-                'time_horizon_hours': time_horizon_hours,
+                'time_horizon_hours': prediction_horizon,
                 'confidence_score': confidence,
-                'contributing_factors': contributing_factors,
+                'risk_factors': contributing_factors,
                 'recommendations': recommendations,
+                'destination': destination,
+                'current_conditions': current_conditions,
                 'predicted_failure_time': self._estimate_failure_time(
-                    time_adjusted_probability, time_horizon_hours
+                    condition_adjusted_probability, prediction_horizon
                 ),
                 'model_type': 'time_series_ensemble',
                 'status': 'success'
             }
             
         except Exception as e:
-            logger.error(f"Error predicting network failure: {str(e)}")
+            logger.error(f"Error predicting network failure for {destination}: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'prediction_failed'
+            }
+
+    def _get_recent_metrics_for_destination(self, destination: str, days_back: int = 7) -> List[Dict[str, Any]]:
+        """Get recent test results for a specific destination"""
+        try:
+            from datetime import datetime, timedelta
+            from models import TestResult, Test
+            
+            cutoff_date = datetime.now() - timedelta(days=days_back)
+            
+            # Get recent test results for the destination
+            results = db.session.query(TestResult).join(Test).filter(
+                Test.destination == destination,
+                TestResult.timestamp >= cutoff_date
+            ).order_by(TestResult.timestamp.desc()).limit(100).all()
+            
+            metrics = []
+            for result in results:
+                metrics.append({
+                    'timestamp': result.timestamp,
+                    'avg_latency': result.avg_latency,
+                    'packet_loss': result.packet_loss,
+                    'jitter': result.jitter,
+                    'destination': destination
+                })
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"Error getting recent metrics for {destination}: {str(e)}")
+            return []
+
+    def _predict_with_time_series_model_for_destination(self, failure_predictor, destination: str, recent_metrics: List[Dict]) -> float:
+        """Predict failure probability using time series model for destination"""
+        try:
+            if not recent_metrics:
+                return 0.15  # Default moderate risk
+            
+            # Calculate failure indicators from recent metrics
+            avg_latency = sum(m.get('avg_latency', 0) for m in recent_metrics) / len(recent_metrics)
+            avg_packet_loss = sum(m.get('packet_loss', 0) for m in recent_metrics) / len(recent_metrics)
+            avg_jitter = sum(m.get('jitter', 0) for m in recent_metrics) / len(recent_metrics)
+            
+            # Base failure probability on performance degradation
+            base_failure_prob = 0.05  # 5% baseline
+            
+            # Add risk based on latency (high latency increases failure risk)
+            if avg_latency > 200:
+                base_failure_prob += 0.15
+            elif avg_latency > 100:
+                base_failure_prob += 0.08
+            elif avg_latency > 50:
+                base_failure_prob += 0.03
+            
+            # Add risk based on packet loss
+            if avg_packet_loss > 5:
+                base_failure_prob += 0.25
+            elif avg_packet_loss > 2:
+                base_failure_prob += 0.15
+            elif avg_packet_loss > 0.5:
+                base_failure_prob += 0.05
+            
+            # Add risk based on jitter
+            if avg_jitter > 30:
+                base_failure_prob += 0.10
+            elif avg_jitter > 15:
+                base_failure_prob += 0.05
+            
+            # Cap at 90% maximum
+            return min(base_failure_prob, 0.90)
+            
+        except Exception as e:
+            logger.error(f"Error predicting with time series model: {str(e)}")
+            return 0.15  # Default moderate risk
+
+    def _adjust_probability_for_conditions(self, probability: float, current_conditions: str) -> float:
+        """Adjust failure probability based on current network conditions"""
+        try:
+            condition_multipliers = {
+                'normal': 1.0,
+                'stressed': 1.3,
+                'degraded': 1.6,
+                'maintenance': 2.0
+            }
+            
+            multiplier = condition_multipliers.get(current_conditions, 1.0)
+            adjusted = probability * multiplier
+            
+            # Cap at 95% maximum
+            return min(adjusted, 0.95)
+            
+        except Exception as e:
+            logger.error(f"Error adjusting probability for conditions: {str(e)}")
+            return probability
+
+    def _identify_failure_contributing_factors_for_destination(self, destination: str, recent_metrics: List[Dict], current_conditions: str) -> List[str]:
+        """Identify factors contributing to failure risk for destination"""
+        try:
+            factors = []
+            
+            if not recent_metrics:
+                factors.append("Insufficient historical data for accurate assessment")
+                return factors
+            
+            # Analyze recent performance
+            avg_latency = sum(m.get('avg_latency', 0) for m in recent_metrics) / len(recent_metrics)
+            avg_packet_loss = sum(m.get('packet_loss', 0) for m in recent_metrics) / len(recent_metrics)
+            avg_jitter = sum(m.get('jitter', 0) for m in recent_metrics) / len(recent_metrics)
+            
+            # Identify concerning trends
+            if avg_latency > 150:
+                factors.append(f"High average latency ({avg_latency:.1f}ms) indicating network congestion")
+            
+            if avg_packet_loss > 1:
+                factors.append(f"Elevated packet loss ({avg_packet_loss:.1f}%) suggesting network instability")
+            
+            if avg_jitter > 20:
+                factors.append(f"High jitter ({avg_jitter:.1f}ms) indicating inconsistent network performance")
+            
+            # Check for degraded conditions
+            if current_conditions == 'stressed':
+                factors.append("Network currently under stress conditions")
+            elif current_conditions == 'degraded':
+                factors.append("Network performance already degraded")
+            elif current_conditions == 'maintenance':
+                factors.append("Network maintenance mode increases failure risk")
+            
+            # Check for destination-specific issues
+            if 'international' in destination.lower() or any(tld in destination for tld in ['.de', '.jp', '.ua', '.co.uk']):
+                factors.append("International destination increases latency and failure risk")
+            
+            if not factors:
+                factors.append("No specific risk factors identified - normal operating conditions")
+            
+            return factors
+            
+        except Exception as e:
+            logger.error(f"Error identifying contributing factors: {str(e)}")
+            return ["Error analyzing risk factors"]
+
+    def _calculate_destination_prediction_confidence(self, destination: str, recent_metrics: List[Dict], failure_predictor) -> float:
+        """Calculate confidence in prediction for destination"""
+        try:
+            base_confidence = 0.6  # 60% base confidence
+            
+            # More data = higher confidence
+            if len(recent_metrics) >= 50:
+                base_confidence += 0.2
+            elif len(recent_metrics) >= 20:
+                base_confidence += 0.1
+            elif len(recent_metrics) < 5:
+                base_confidence -= 0.2
+            
+            # Consistent performance = higher confidence
+            if recent_metrics:
+                latencies = [m.get('avg_latency', 0) for m in recent_metrics]
+                latency_std = np.std(latencies) if latencies else 0
+                
+                if latency_std < 10:  # Very consistent
+                    base_confidence += 0.15
+                elif latency_std < 25:  # Moderately consistent
+                    base_confidence += 0.05
+                elif latency_std > 50:  # Highly variable
+                    base_confidence -= 0.1
+            
+            # Time series model available = higher confidence
+            if isinstance(failure_predictor, dict) and failure_predictor.get('type') == 'time_series_ensemble':
+                base_confidence += 0.05
+            
+            # Cap between 30% and 95%
+            return max(0.3, min(base_confidence, 0.95))
+            
+        except Exception as e:
+            logger.error(f"Error calculating prediction confidence: {str(e)}")
+            return 0.6
+
+    def _rule_based_failure_prediction_for_destination(self, destination: str, prediction_horizon: int, current_conditions: str) -> Dict[str, Any]:
+        """Fallback rule-based failure prediction when ML model unavailable"""
+        try:
+            # Get recent metrics for analysis
+            recent_metrics = self._get_recent_metrics_for_destination(destination, days_back=7)
+            
+            if not recent_metrics:
+                return {
+                    'error': f'No historical data available for {destination}',
+                    'status': 'insufficient_data'
+                }
+            
+            # Calculate basic failure probability
+            failure_probability = self._predict_with_time_series_model_for_destination(
+                {'type': 'rule_based'}, destination, recent_metrics
+            )
+            
+            # Adjust for conditions
+            adjusted_probability = self._adjust_probability_for_conditions(
+                failure_probability, current_conditions
+            )
+            
+            # Determine risk level
+            risk_level = self._determine_failure_risk_level(adjusted_probability)
+            
+            # Get contributing factors
+            contributing_factors = self._identify_failure_contributing_factors_for_destination(
+                destination, recent_metrics, current_conditions
+            )
+            
+            # Generate recommendations
+            recommendations = self._generate_failure_prevention_recommendations(
+                adjusted_probability, contributing_factors, prediction_horizon
+            )
+            
+            return {
+                'failure_probability': float(adjusted_probability),
+                'risk_level': risk_level,
+                'time_horizon_hours': prediction_horizon,
+                'confidence_score': 0.7,  # Rule-based has decent confidence
+                'risk_factors': contributing_factors,
+                'recommendations': recommendations,
+                'destination': destination,
+                'current_conditions': current_conditions,
+                'model_type': 'rule_based',
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in rule-based failure prediction: {str(e)}")
             return {
                 'error': str(e),
                 'status': 'prediction_failed'

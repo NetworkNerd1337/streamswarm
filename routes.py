@@ -1909,17 +1909,21 @@ def predict_performance():
 @app.route('/api/predict-failure', methods=['POST'])
 @web_auth_required
 def predict_network_failure():
-    """Predict network failure probability based on current metrics"""
+    """Predict network failure probability based on destination and conditions"""
     try:
         data = request.get_json()
         
         if not data:
-            return jsonify({'error': 'No metrics provided'}), 400
+            return jsonify({'error': 'No configuration provided'}), 400
         
-        current_metrics = data.get('current_metrics', {})
-        time_horizon_hours = data.get('time_horizon_hours', 24)
+        destination = data.get('destination')
+        prediction_horizon = data.get('prediction_horizon', 24)
+        current_conditions = data.get('current_conditions', 'normal')
         
-        prediction = diagnostic_engine.predict_network_failure(current_metrics, time_horizon_hours)
+        if not destination:
+            return jsonify({'error': 'Destination is required'}), 400
+        
+        prediction = diagnostic_engine.predict_network_failure(destination, prediction_horizon, current_conditions)
         return jsonify(prediction)
         
     except Exception as e:

@@ -184,6 +184,124 @@
         </div>
     </div>
 
+    <!-- Network Failure Prediction Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card prediction-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Network Failure Prediction
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Configuration</h6>
+                            <form id="failurePredictionForm">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="failureDestination" class="form-label">Target Destination</label>
+                                        <select class="form-select" id="failureDestination" required>
+                                            <option value="">Select destination with historical data...</option>
+                                            <option value="tiktok.com">tiktok.com (587 measurements)</option>
+                                            <option value="vimeo.com/groups/639164/videos/297263163?autoplay=1">vimeo.com (291 measurements)</option>
+                                            <option value="yahoo.com">yahoo.com (259 measurements)</option>
+                                            <option value="mfa.gov.ua/en">mfa.gov.ua/en (252 measurements)</option>
+                                            <option value="spiegel.de">spiegel.de (153 measurements)</option>
+                                            <option value="YouTube.com">YouTube.com (135 measurements)</option>
+                                            <option value="ryanthomashuff.com">ryanthomashuff.com (102 measurements)</option>
+                                            <option value="Snapchat.com">Snapchat.com (92 measurements)</option>
+                                            <option value="flipkart.com">flipkart.com (64 measurements)</option>
+                                            <option value="sports.yahoo.co.jp">sports.yahoo.co.jp (62 measurements)</option>
+                                        </select>
+                                        <div class="form-text">Only destinations with 15+ historical measurements support failure prediction</div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="predictionHorizon" class="form-label">Prediction Horizon</label>
+                                        <select class="form-select" id="predictionHorizon">
+                                            <option value="6">Next 6 hours</option>
+                                            <option value="12">Next 12 hours</option>
+                                            <option value="24" selected>Next 24 hours</option>
+                                            <option value="48">Next 48 hours</option>
+                                            <option value="72">Next 72 hours</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="currentConditions" class="form-label">Current Network State</label>
+                                        <select class="form-select" id="currentConditions">
+                                            <option value="normal" selected>Normal operations</option>
+                                            <option value="stressed">Under stress</option>
+                                            <option value="degraded">Degraded performance</option>
+                                            <option value="maintenance">Maintenance mode</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-search me-2"></i>
+                                    Predict Failure Risk
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div id="failurePredictionResults" style="display: none;">
+                                <h6 class="mb-3">Failure Risk Assessment</h6>
+                                
+                                <!-- Risk Level Display -->
+                                <div class="text-center mb-4">
+                                    <div id="riskLevel" class="performance-indicator text-warning">
+                                        MODERATE
+                                    </div>
+                                    <div id="failureProbability" class="h4 text-muted">
+                                        15% probability
+                                    </div>
+                                    <small class="text-muted">Within <span id="timeHorizon">24</span> hours</small>
+                                </div>
+                                
+                                <!-- Confidence Score -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="small">Model Confidence</span>
+                                        <span id="failureConfidenceScore" class="small fw-bold">78%</span>
+                                    </div>
+                                    <div class="confidence-bar bg-light">
+                                        <div id="failureConfidenceBar" class="bg-info" style="width: 78%; height: 100%;"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contributing Factors -->
+                                <div class="mb-3">
+                                    <h6 class="mb-2">Risk Factors</h6>
+                                    <div id="riskFactorsList">
+                                        <!-- Risk factors will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Recommendations -->
+                                <div id="failureRecommendations">
+                                    <h6 class="mb-2">Prevention Actions</h6>
+                                    <div id="recommendationsList">
+                                        <!-- Recommendations will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="failurePredictionLoading" class="loading-spinner"></div>
+                            
+                            <div id="failurePredictionError" class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <span id="failureErrorMessage">Failure prediction model not available</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Capacity Planning Section -->
     <div class="row mb-5">
         <div class="col-12">
@@ -547,6 +665,108 @@ function updateMetricTrend(metricName, trendData) {
             avgText += '%';
         }
         avgElement.textContent = avgText;
+    }
+}
+
+// Network Failure Prediction
+document.getElementById('failurePredictionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const failurePredictionResults = document.getElementById('failurePredictionResults');
+    const failurePredictionLoading = document.getElementById('failurePredictionLoading');
+    const failurePredictionError = document.getElementById('failurePredictionError');
+    
+    // Hide previous results
+    failurePredictionResults.style.display = 'none';
+    failurePredictionError.style.display = 'none';
+    failurePredictionLoading.style.display = 'block';
+    
+    const formData = {
+        destination: document.getElementById('failureDestination').value,
+        prediction_horizon: parseInt(document.getElementById('predictionHorizon').value),
+        current_conditions: document.getElementById('currentConditions').value
+    };
+    
+    fetch('/api/predict-failure', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        failurePredictionLoading.style.display = 'none';
+        
+        if (data.status === 'success') {
+            displayFailurePredictionResults(data);
+            failurePredictionResults.style.display = 'block';
+        } else {
+            document.getElementById('failureErrorMessage').textContent = data.error || 'Failure prediction unavailable';
+            failurePredictionError.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        failurePredictionLoading.style.display = 'none';
+        document.getElementById('failureErrorMessage').textContent = 'Network error: ' + error.message;
+        failurePredictionError.style.display = 'block';
+    });
+});
+
+function displayFailurePredictionResults(data) {
+    // Risk Level and Probability
+    const riskLevel = document.getElementById('riskLevel');
+    const failureProbability = document.getElementById('failureProbability');
+    const timeHorizon = document.getElementById('timeHorizon');
+    
+    const riskColors = {
+        'low': 'text-success',
+        'moderate': 'text-warning',
+        'high': 'text-danger',
+        'critical': 'text-danger'
+    };
+    
+    const riskLevelText = data.risk_level || 'moderate';
+    riskLevel.className = `performance-indicator ${riskColors[riskLevelText] || 'text-warning'}`;
+    riskLevel.textContent = riskLevelText.toUpperCase();
+    
+    const probabilityPercent = Math.round((data.failure_probability || 0.15) * 100);
+    failureProbability.textContent = `${probabilityPercent}% probability`;
+    timeHorizon.textContent = document.getElementById('predictionHorizon').value;
+    
+    // Confidence Score
+    const confidencePercent = Math.round((data.confidence_score || 0.78) * 100);
+    document.getElementById('failureConfidenceScore').textContent = `${confidencePercent}%`;
+    document.getElementById('failureConfidenceBar').style.width = `${confidencePercent}%`;
+    
+    // Risk Factors
+    const riskFactorsList = document.getElementById('riskFactorsList');
+    riskFactorsList.innerHTML = '';
+    
+    if (data.risk_factors && data.risk_factors.length > 0) {
+        data.risk_factors.forEach(factor => {
+            const factorDiv = document.createElement('div');
+            factorDiv.className = 'risk-factor mb-1';
+            factorDiv.innerHTML = `<small><i class="fas fa-exclamation-circle text-warning me-2"></i>${factor}</small>`;
+            riskFactorsList.appendChild(factorDiv);
+        });
+    } else {
+        riskFactorsList.innerHTML = '<small class="text-muted">No specific risk factors identified</small>';
+    }
+    
+    // Recommendations
+    const recommendationsList = document.getElementById('recommendationsList');
+    recommendationsList.innerHTML = '';
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+        data.recommendations.forEach(rec => {
+            const recDiv = document.createElement('div');
+            recDiv.className = 'recommendation mb-1';
+            recDiv.innerHTML = `<small><i class="fas fa-shield-alt text-info me-2"></i>${rec}</small>`;
+            recommendationsList.appendChild(recDiv);
+        });
+    } else {
+        recommendationsList.innerHTML = '<small class="text-muted">No specific recommendations available</small>';
     }
 }
 </script>
