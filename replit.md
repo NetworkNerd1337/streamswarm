@@ -105,6 +105,12 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 5, 2025: Fixed QoS Traffic Violations logic to properly identify actual QoS issues instead of speed test results
+  - Removed misleading "bandwidth violations" that flagged high speed test results (>100 Mbps) as problems
+  - Replaced with proper QoS violation detection: jitter violations (>50ms) and packet loss violations (>1%)
+  - Speed test measurements (upload/download bandwidth) are now correctly interpreted as capacity indicators, not violations
+  - QoS analysis now focuses on actual network quality metrics: latency, jitter, packet loss, and DSCP classification
+  - Fixed frontend display to show meaningful QoS violations instead of confusing bandwidth "issues"
 - July 5, 2025: Successfully completed QoS Compliance Monitoring Model integration with proper visual styling
   - Fixed QoS section display issue on predictive analytics page (was not visible initially)
   - Corrected QoS card width styling to match other prediction cards (col-lg-8 mx-auto instead of col-12)

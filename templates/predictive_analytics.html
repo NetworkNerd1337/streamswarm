@@ -998,17 +998,31 @@ function displayQoSResults(data) {
             });
         }
         
-        // Bandwidth issues
-        if (data.insights.bandwidth_issues && data.insights.bandwidth_issues.length > 0) {
-            data.insights.bandwidth_issues.forEach(issue => {
-                const issueDiv = document.createElement('div');
-                issueDiv.className = 'mb-2 p-2 bg-danger bg-opacity-25 rounded';
-                issueDiv.innerHTML = `
-                    <strong>Bandwidth Issue</strong><br>
-                    <small>Average: ${issue.average_bandwidth.toFixed(1)} Mbps</small><br>
-                    <small>Risk: ${issue.potential_congestion_risk}</small>
+        // Jitter violations
+        if (data.insights.jitter_violations && data.insights.jitter_violations.length > 0) {
+            data.insights.jitter_violations.forEach(violation => {
+                const violationDiv = document.createElement('div');
+                violationDiv.className = 'mb-2 p-2 bg-danger bg-opacity-25 rounded';
+                violationDiv.innerHTML = `
+                    <strong>Jitter Violation</strong><br>
+                    <small>Average: ${violation.average_jitter.toFixed(1)}ms</small><br>
+                    <small>Impact: ${violation.qos_impact}</small>
                 `;
-                violationsDiv.appendChild(issueDiv);
+                violationsDiv.appendChild(violationDiv);
+            });
+        }
+        
+        // Packet loss violations
+        if (data.insights.packet_loss_violations && data.insights.packet_loss_violations.length > 0) {
+            data.insights.packet_loss_violations.forEach(violation => {
+                const violationDiv = document.createElement('div');
+                violationDiv.className = 'mb-2 p-2 bg-danger bg-opacity-25 rounded';
+                violationDiv.innerHTML = `
+                    <strong>Packet Loss Violation</strong><br>
+                    <small>Average: ${violation.average_packet_loss.toFixed(2)}%</small><br>
+                    <small>Impact: ${violation.qos_impact}</small>
+                `;
+                violationsDiv.appendChild(violationDiv);
             });
         }
         

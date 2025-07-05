@@ -3063,16 +3063,29 @@ class NetworkDiagnosticEngine:
                 }
             ]
         
-        # Bandwidth utilization issues
-        high_bandwidth_mask = qos_features['bandwidth_download'] > 100  # > 100 Mbps
-        if np.any(high_bandwidth_mask):
-            insights['bandwidth_issues'] = [
-                {
-                    'average_bandwidth': float(qos_features[high_bandwidth_mask]['bandwidth_download'].mean()),
-                    'affected_samples': int(np.sum(high_bandwidth_mask)),
-                    'potential_congestion_risk': 'High'
-                }
-            ]
+        # Jitter violations (high jitter indicates poor QoS)
+        if 'jitter' in qos_features.columns:
+            high_jitter_mask = qos_features['jitter'] > 50  # > 50ms jitter
+            if np.any(high_jitter_mask):
+                insights['jitter_violations'] = [
+                    {
+                        'average_jitter': float(qos_features[high_jitter_mask]['jitter'].mean()),
+                        'affected_samples': int(np.sum(high_jitter_mask)),
+                        'qos_impact': 'High jitter affects real-time applications'
+                    }
+                ]
+        
+        # Packet loss violations
+        if 'packet_loss' in qos_features.columns:
+            packet_loss_mask = qos_features['packet_loss'] > 1  # > 1% packet loss
+            if np.any(packet_loss_mask):
+                insights['packet_loss_violations'] = [
+                    {
+                        'average_packet_loss': float(qos_features[packet_loss_mask]['packet_loss'].mean()),
+                        'affected_samples': int(np.sum(packet_loss_mask)),
+                        'qos_impact': 'Packet loss degrades all traffic classes'
+                    }
+                ]
         
         return insights
     
