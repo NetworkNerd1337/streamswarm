@@ -20,7 +20,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Configuration file should be in parent directory (outside git repo)
-CONFIG_FILE="$SCRIPT_DIR/../streamswarm_config.sh"
+CONFIG_FILE="$SCRIPT_DIR/../../streamswarm_config.sh"
 
 # Check if configuration file exists
 if [ ! -f "$CONFIG_FILE" ]; then
