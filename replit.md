@@ -105,6 +105,18 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 5, 2025: Enhanced predictive analytics page with improved two-column layout and clear section headers
+  - Rearranged cards into logical two-column layout: prediction cards (left) and capacity/QoS cards (right)
+  - Added separate column titles: "Predictive Analytics" (left) and "Capacity and QoS Analytics" (right)
+  - Implemented centered subtitle spanning both columns for unified page description
+  - Improved visual organization and screen utilization with responsive design
+  - All functionality and interactive features preserved during layout reorganization
+- July 5, 2025: Split client deployment scripts for git-managed updates with protected configuration
+  - Created separate streamswarm_config.sh for user-editable variables (SERVER_URL, API_TOKEN, etc.)
+  - Updated start_streamswarm_client.sh to source configuration from parent directory (outside git repo)
+  - Enables cron-based startup from git repository while protecting user configuration from updates
+  - Added comprehensive deployment documentation with setup instructions and troubleshooting guide
+  - Automatic configuration sourcing prevents overwriting user settings during git pull updates
 - July 5, 2025: Fixed QoS Traffic Violations logic to properly identify actual QoS issues instead of speed test results
   - Removed misleading "bandwidth violations" that flagged high speed test results (>100 Mbps) as problems
   - Replaced with proper QoS violation detection: jitter violations (>50ms) and packet loss violations (>1%)
