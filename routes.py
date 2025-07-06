@@ -321,12 +321,18 @@ def test_results(test_id):
     """Test results view"""
     test = Test.query.get_or_404(test_id)
     results = TestResult.query.filter_by(test_id=test_id).order_by(TestResult.timestamp.asc()).all()
-    clients = db.session.query(Client).join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
-    # Get results with client information joined for handshake analysis
+    # Get clients that still exist for this test (exclude results with NULL client_id)
+    clients = db.session.query(Client).join(TestResult).filter(
+        TestResult.test_id == test_id,
+        TestResult.client_id.isnot(None)
+    ).distinct().all()
+    
+    # Get results with client information joined for handshake analysis (only for existing clients)
     handshake_analysis_results = db.session.query(TestResult).join(Client).filter(
         TestResult.test_id == test_id,
-        TestResult.tcp_handshake_analysis.isnot(None)
+        TestResult.tcp_handshake_analysis.isnot(None),
+        TestResult.client_id.isnot(None)
     ).order_by(TestResult.timestamp.desc()).all()
     
     return render_template('test_results.html', 
