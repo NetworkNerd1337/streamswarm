@@ -105,14 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- July 6, 2025: Successfully implemented Client Infrastructure Correlation model as 6th ML model in StreamSwarm
-  - Added comprehensive PCA + Linear Regression algorithm for correlating client system metrics with network performance
-  - Created model training methods analyzing CPU, memory, and network interface data with 25+ test result requirements
-  - Integrated model into ML models page with proper status tracking and warning-colored card display
-  - Added API endpoint /api/analyze-client-infrastructure for client infrastructure analysis and improvement recommendations
-  - Model provides client-side optimization suggestions like "Client X shows degraded performance when CPU >80%"
-  - Enhanced model training system to include client infrastructure analyzer alongside existing 5 ML models
-  - All 6 ML models now fully functional: anomaly detection, health classification, performance prediction, network failure prediction, QoS compliance monitoring, and client infrastructure correlation
+- July 6, 2025: Successfully completed Client Infrastructure Analysis UI integration on test results page
+  - Added comprehensive Client Infrastructure Analysis card to test results page alongside geolocation and GNMI analysis
+  - Created JavaScript functions to fetch and display correlation analysis with color-coded badges and priority-based recommendations
+  - Analysis shows correlation scores, risk levels, key system correlations, and client-side improvement recommendations
+  - Card automatically appears for tests from clients with sufficient recent data (10+ test results in last 30 days)
+  - Analysis correlates client CPU, memory, and network interface metrics with network performance using PCA + Linear Regression
+  - Display includes strongest correlations with visual indicators (red for high correlation >70%, warning for medium >50%, info for >30%)
+  - Complete 6th ML model integration: anomaly detection, health classification, performance prediction, network failure prediction, QoS compliance monitoring, and client infrastructure correlation
+  - Note: Analysis requires recent client data (last 30 days) and trained client infrastructure analyzer model, not available on historical tests without sufficient recent client activity
 - July 6, 2025: Fixed client deletion popup accuracy and added comprehensive Server Configuration Options tutorial
   - Fixed misleading client deletion popup that incorrectly stated "Keep all historical test data" when offline clients with tests cannot actually be deleted
   - Updated deletion message to accurately state "Clients with test data cannot be deleted to preserve historical records"
