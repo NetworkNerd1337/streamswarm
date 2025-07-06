@@ -2044,13 +2044,90 @@ def analyze_client_infrastructure():
         # Perform analysis
         analysis_result = diagnostic_engine.analyze_client_infrastructure_correlation(client_id, days_back)
         
+        # Debug logging
+        import logging
+        logging.info(f"Route handler - analysis_result type: {type(analysis_result)}")
+        logging.info(f"Route handler - analysis_result value: {str(analysis_result)[:200]}...")
+        
         # Add client information to response
-        if analysis_result.get('status') == 'success':
-            analysis_result['client_info'] = {
-                'hostname': client.hostname,
-                'platform': client.platform,
-                'client_version': client.client_version
-            }
+        logging.info(f"About to check analysis_result.get('status'): {type(analysis_result)}")
+        try:
+            status = analysis_result.get('status')
+            logging.info(f"Successfully got status: {status}")
+        except Exception as status_error:
+            logging.error(f"Error getting status: {status_error}")
+            logging.error(f"analysis_result type at error: {type(analysis_result)}")
+            raise status_error
+        
+        if status == 'success':
+            logging.info("Entering success block")
+            # Parse system_info JSON to get platform information - use fresh import to avoid namespace conflicts
+            import json as json_module
+            parsed_system_data = {}
+            if client.system_info:
+                logging.info(f"Raw client.system_info type: {type(client.system_info)}")
+                logging.info(f"Raw client.system_info value: {client.system_info}")
+                try:
+                    if isinstance(client.system_info, str):
+                        logging.info("About to call json_module.loads()")
+                        # Create a test dict to validate JSON parsing works
+                        test_dict = json_module.loads('{"test": "value"}')
+                        logging.info(f"Test JSON parsing result: {type(test_dict)} - {test_dict}")
+                        
+                        # Now try with actual data using fresh import
+                        first_parse = json_module.loads(client.system_info)
+                        logging.info(f"First parse result type: {type(first_parse)}")
+                        logging.info(f"First parse result: {first_parse}")
+                        
+                        # Check if first parse gives us a dict or string
+                        if isinstance(first_parse, dict):
+                            logging.info("First parse successfully returned dictionary")
+                            parsed_system_data = first_parse
+                        elif isinstance(first_parse, str):
+                            logging.info("First parse returned string - attempting double decode")
+                            # This might be double-encoded JSON
+                            second_parse = json_module.loads(first_parse)
+                            logging.info(f"Second parse result type: {type(second_parse)}")
+                            logging.info(f"Second parse result: {second_parse}")
+                            parsed_system_data = second_parse
+                        else:
+                            logging.error(f"Unexpected first parse type: {type(first_parse)}")
+                            parsed_system_data = {}
+                    else:
+                        logging.info("Using system_info as-is (not a string)")
+                        parsed_system_data = client.system_info
+                except (json_module.JSONDecodeError, TypeError) as json_error:
+                    logging.error(f"Failed to parse system_info JSON: {json_error}")
+                    logging.error(f"client.system_info type: {type(client.system_info)}")
+                    logging.error(f"client.system_info value: {client.system_info}")
+                    parsed_system_data = {}
+            
+            logging.info(f"Final parsed_system_data type: {type(parsed_system_data)}")
+            logging.info(f"Final parsed_system_data value: {parsed_system_data}")
+            
+            logging.info("About to modify analysis_result dict")
+            logging.info(f"analysis_result type before modification: {type(analysis_result)}")
+            
+            try:
+                logging.info(f"client.hostname: {client.hostname}")
+                logging.info(f"parsed_system_data: {parsed_system_data}")
+                logging.info(f"client.client_version: {client.client_version}")
+                
+                client_info_dict = {
+                    'hostname': client.hostname,
+                    'platform': parsed_system_data.get('platform', 'Unknown'),
+                    'client_version': client.client_version
+                }
+                logging.info(f"Created client_info_dict: {client_info_dict}")
+                
+                analysis_result['client_info'] = client_info_dict
+                logging.info("Successfully added client_info to analysis_result")
+            except Exception as modify_error:
+                logging.error(f"Error modifying analysis_result: {modify_error}")
+                logging.error(f"analysis_result type at modification error: {type(analysis_result)}")
+                import traceback
+                logging.error(f"Full traceback: {traceback.format_exc()}")
+                raise modify_error
         
         return jsonify(analysis_result)
     except Exception as e:

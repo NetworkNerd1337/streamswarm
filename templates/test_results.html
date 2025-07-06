@@ -3146,19 +3146,22 @@ function displayGNMIPathData() {
 function displayClientInfrastructureData() {
     console.log('Checking for client infrastructure analysis...');
     
-    // Get the first result that has client ID (all should have the same client)
-    if (!testData || testData.length === 0) {
+    // Get client ID from the testData structure
+    if (!testData || !testData.clients || Object.keys(testData.clients).length === 0) {
         console.log('No test data available for client infrastructure analysis');
         return;
     }
     
-    const firstResult = testData[0];
-    if (!firstResult.client_id) {
+    // Get the first client ID
+    const clientIds = Object.keys(testData.clients);
+    const clientId = clientIds[0];
+    
+    if (!clientId) {
         console.log('No client ID available for infrastructure analysis');
         return;
     }
     
-    console.log('Fetching client infrastructure analysis for client:', firstResult.client_id);
+    console.log('Fetching client infrastructure analysis for client:', clientId);
     
     // Fetch client infrastructure analysis
     fetch('/api/analyze-client-infrastructure', {
@@ -3167,7 +3170,7 @@ function displayClientInfrastructureData() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            client_id: firstResult.client_id,
+            client_id: clientId,
             days_back: 30
         })
     })

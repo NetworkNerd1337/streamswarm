@@ -6,6 +6,7 @@ Local machine learning models for network performance analysis and troubleshooti
 import os
 import json
 import logging
+import traceback
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -3673,10 +3674,18 @@ class NetworkDiagnosticEngine:
                 (infrastructure_features['total_network_errors'].max() + 1)
             ) * 100
             
-            infrastructure_features['performance_degradation'] = (
-                (infrastructure_features['ping_latency'] / infrastructure_features['ping_latency'].median()) * 
-                (1 + infrastructure_features['ping_packet_loss'] / 100)
-            )
+            # Check if ping_latency exists and has valid data
+            if 'ping_latency' in infrastructure_features.columns and not infrastructure_features['ping_latency'].empty:
+                latency_median = infrastructure_features['ping_latency'].median()
+                if latency_median > 0:
+                    infrastructure_features['performance_degradation'] = (
+                        (infrastructure_features['ping_latency'] / latency_median) * 
+                        (1 + infrastructure_features['ping_packet_loss'] / 100)
+                    )
+                else:
+                    infrastructure_features['performance_degradation'] = 1.0
+            else:
+                infrastructure_features['performance_degradation'] = 1.0
             
             # Handle NaN and infinite values
             infrastructure_features = infrastructure_features.replace([float('inf'), float('-inf')], 0).fillna(0)
@@ -3805,7 +3814,16 @@ class NetworkDiagnosticEngine:
                 }
             
             # Extract features
-            features_df = self.extract_features(client_results)
+            try:
+                features_df = self.extract_features(client_results)
+                logger.info(f"Extracted features_df type: {type(features_df)}, shape: {features_df.shape if hasattr(features_df, 'shape') else 'N/A'}")
+                logger.info(f"Features columns: {list(features_df.columns) if hasattr(features_df, 'columns') else 'N/A'}")
+            except Exception as e:
+                logger.error(f"Error extracting features: {str(e)}")
+                return {
+                    'error': f'Feature extraction failed: {str(e)}',
+                    'status': 'feature_extraction_error'
+                }
             
             if features_df.empty:
                 return {
@@ -3847,30 +3865,55 @@ class NetworkDiagnosticEngine:
             correlation_predictions = regressor.predict(X_pca)
             
             # Analyze correlations
-            correlation_analysis = self._analyze_client_correlations(
-                infrastructure_features, correlation_predictions, model
-            )
+            logger.info("About to call _analyze_client_correlations...")
+            try:
+                correlation_analysis = self._analyze_client_correlations(
+                    infrastructure_features, correlation_predictions, model
+                )
+                logger.info("Successfully completed _analyze_client_correlations")
+            except Exception as e:
+                logger.error(f"Error in _analyze_client_correlations: {str(e)}")
+                raise e
             
             # Generate recommendations
-            recommendations = self._generate_client_infrastructure_recommendations(
-                infrastructure_features, correlation_analysis, model
-            )
+            logger.info("About to call _generate_client_infrastructure_recommendations...")
+            try:
+                recommendations = self._generate_client_infrastructure_recommendations(
+                    infrastructure_features, correlation_analysis, model
+                )
+                logger.info("Successfully completed _generate_client_infrastructure_recommendations")
+            except Exception as e:
+                logger.error(f"Error in _generate_client_infrastructure_recommendations: {str(e)}")
+                raise e
             
-            return {
-                'client_id': client_id,
-                'analysis_period_days': days_back,
-                'total_samples': len(client_results),
-                'correlation_analysis': correlation_analysis,
-                'recommendations': recommendations,
-                'model_performance': {
-                    'r2_score': model['r2_score'],
-                    'training_samples': model['training_samples']
-                },
-                'status': 'success'
-            }
+            try:
+                logger.info("Building return dictionary...")
+                logger.info(f"correlation_analysis type: {type(correlation_analysis)}")
+                logger.info(f"recommendations type: {type(recommendations)}")
+                
+                result = {
+                    'client_id': client_id,
+                    'analysis_period_days': days_back,
+                    'total_samples': len(client_results),
+                    'correlation_analysis': correlation_analysis,
+                    'recommendations': recommendations,
+                    'model_performance': {
+                        'r2_score': float(model.get('r2_score', 0.0)),
+                        'training_samples': int(model.get('training_samples', 0))
+                    },
+                    'status': 'success'
+                }
+                logger.info("Successfully built return dictionary")
+                return result
+            except Exception as return_error:
+                logger.error(f"Error building return dictionary: {str(return_error)}")
+                logger.error(f"Full traceback: {traceback.format_exc()}")
+                raise return_error
             
         except Exception as e:
+            import traceback
             logger.error(f"Error analyzing client infrastructure correlation: {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return {
                 'error': str(e),
                 'status': 'analysis_failed'
@@ -3882,14 +3925,31 @@ class NetworkDiagnosticEngine:
         Analyze client correlations between infrastructure metrics and network performance
         """
         try:
-            thresholds = model['correlation_thresholds']
-            feature_importance = model['feature_importance']
+            logger.info(f"Model type: {type(model)}, Model keys: {model.keys() if hasattr(model, 'keys') else 'N/A'}")
+            raw_thresholds = model.get('correlation_thresholds', {'high_correlation': 0.7, 'medium_correlation': 0.4})
+            logger.info(f"Raw thresholds type: {type(raw_thresholds)}, value: {raw_thresholds}")
+            
+            # Handle case where thresholds might be a string
+            if isinstance(raw_thresholds, str):
+                try:
+                    import json
+                    thresholds = json.loads(raw_thresholds)
+                except:
+                    thresholds = {'high_correlation': 0.7, 'medium_correlation': 0.4}
+            else:
+                thresholds = raw_thresholds
+                
+            feature_importance = model.get('feature_importance', {})
             
             # Calculate correlation statistics
-            high_correlation_count = np.sum(predictions >= thresholds['high_correlation'])
+            high_thresh = float(thresholds['high_correlation'])
+            medium_thresh = float(thresholds['medium_correlation'])
+            logger.info(f"High threshold: {high_thresh}, Medium threshold: {medium_thresh}")
+            
+            high_correlation_count = np.sum(predictions >= high_thresh)
             medium_correlation_count = np.sum(
-                (predictions >= thresholds['medium_correlation']) & 
-                (predictions < thresholds['high_correlation'])
+                (predictions >= medium_thresh) & 
+                (predictions < high_thresh)
             )
             
             # Identify problem areas
@@ -3899,10 +3959,10 @@ class NetworkDiagnosticEngine:
             cpu_high_indices = infrastructure_features['cpu_percent'] > 80
             if np.any(cpu_high_indices):
                 cpu_correlations = predictions[cpu_high_indices]
-                if np.mean(cpu_correlations) > thresholds['medium_correlation']:
+                if np.mean(cpu_correlations) > medium_thresh:
                     problem_areas.append({
                         'area': 'CPU Utilization',
-                        'severity': 'high' if np.mean(cpu_correlations) > thresholds['high_correlation'] else 'medium',
+                        'severity': 'high' if np.mean(cpu_correlations) > high_thresh else 'medium',
                         'average_correlation': float(np.mean(cpu_correlations)),
                         'affected_samples': int(np.sum(cpu_high_indices)),
                         'description': 'High CPU usage correlates with network performance degradation'
@@ -3912,10 +3972,10 @@ class NetworkDiagnosticEngine:
             memory_high_indices = infrastructure_features['memory_percent'] > 75
             if np.any(memory_high_indices):
                 memory_correlations = predictions[memory_high_indices]
-                if np.mean(memory_correlations) > thresholds['medium_correlation']:
+                if np.mean(memory_correlations) > medium_thresh:
                     problem_areas.append({
                         'area': 'Memory Utilization',
-                        'severity': 'high' if np.mean(memory_correlations) > thresholds['high_correlation'] else 'medium',
+                        'severity': 'high' if np.mean(memory_correlations) > high_thresh else 'medium',
                         'average_correlation': float(np.mean(memory_correlations)),
                         'affected_samples': int(np.sum(memory_high_indices)),
                         'description': 'High memory usage correlates with network performance issues'
@@ -3925,10 +3985,10 @@ class NetworkDiagnosticEngine:
             network_error_indices = infrastructure_features['total_network_errors'] > 5
             if np.any(network_error_indices):
                 network_correlations = predictions[network_error_indices]
-                if np.mean(network_correlations) > thresholds['medium_correlation']:
+                if np.mean(network_correlations) > medium_thresh:
                     problem_areas.append({
                         'area': 'Network Interface',
-                        'severity': 'high' if np.mean(network_correlations) > thresholds['high_correlation'] else 'medium',
+                        'severity': 'high' if np.mean(network_correlations) > high_thresh else 'medium',
                         'average_correlation': float(np.mean(network_correlations)),
                         'affected_samples': int(np.sum(network_error_indices)),
                         'description': 'Network interface errors correlate with performance degradation'
