@@ -2006,6 +2006,60 @@ def api_qos_compliance_analysis():
             'status': 'error'
         }), 500
 
+@app.route('/api/analyze-client-infrastructure', methods=['POST'])
+@web_auth_required
+def analyze_client_infrastructure():
+    """Analyze client infrastructure correlation and provide improvement recommendations"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        client_id = data.get('client_id')
+        days_back = data.get('days_back', 30)  # Default to 30 days
+        
+        if not client_id:
+            return jsonify({'error': 'Client ID is required'}), 400
+        
+        # Validate client_id is integer
+        try:
+            client_id = int(client_id)
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid client ID format'}), 400
+        
+        # Validate days_back
+        try:
+            days_back = int(days_back)
+            if days_back < 1 or days_back > 365:
+                days_back = 30  # Default fallback
+        except (ValueError, TypeError):
+            days_back = 30
+        
+        # Check if client exists
+        client = Client.query.get(client_id)
+        if not client:
+            return jsonify({'error': f'Client {client_id} not found'}), 404
+        
+        # Perform analysis
+        analysis_result = diagnostic_engine.analyze_client_infrastructure_correlation(client_id, days_back)
+        
+        # Add client information to response
+        if analysis_result.get('status') == 'success':
+            analysis_result['client_info'] = {
+                'hostname': client.hostname,
+                'platform': client.platform,
+                'client_version': client.client_version
+            }
+        
+        return jsonify(analysis_result)
+    except Exception as e:
+        logging.error(f"Error in client infrastructure analysis: {str(e)}")
+        return jsonify({
+            'error': f'Analysis failed: {str(e)}',
+            'status': 'error'
+        }), 500
+
 # ================================
 # AUTHENTICATION SYSTEM
 # ================================

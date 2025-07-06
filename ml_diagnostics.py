@@ -19,6 +19,9 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, mean_squared_error
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
 import joblib
 
 from models import TestResult, Test, Client, db
@@ -50,10 +53,12 @@ class NetworkDiagnosticEngine:
             'performance_predictor': 'performance_predictor.joblib',
             'failure_predictor': 'failure_predictor.joblib',
             'qos_compliance_monitor': 'qos_compliance_monitor.joblib',
+            'client_infrastructure_analyzer': 'client_infrastructure_analyzer.joblib',
             'scaler': 'feature_scaler.joblib',
             'performance_scaler': 'performance_scaler.joblib',
             'failure_scaler': 'failure_scaler.joblib',
             'qos_scaler': 'qos_scaler.joblib',
+            'client_infrastructure_scaler': 'client_infrastructure_scaler.joblib',
             'health_encoder': 'health_encoder.joblib'
         }
         
@@ -69,6 +74,8 @@ class NetworkDiagnosticEngine:
                         self.scalers['failure'] = joblib.load(filepath)
                     elif model_name == 'qos_scaler':
                         self.scalers['qos'] = joblib.load(filepath)
+                    elif model_name == 'client_infrastructure_scaler':
+                        self.scalers['client_infrastructure'] = joblib.load(filepath)
                     elif model_name == 'health_encoder':
                         self.encoders['health'] = joblib.load(filepath)
                     else:
@@ -445,6 +452,28 @@ class NetworkDiagnosticEngine:
                         logger.warning("Failed to train time series failure predictor")
                 else:
                     logger.warning("Insufficient time series data for failure prediction")
+            
+            # Train Client Infrastructure Correlation Model
+            client_infrastructure_scores = self._calculate_client_infrastructure_scores(X, results)
+            if len(client_infrastructure_scores) > 25:  # Minimum samples for correlation analysis
+                # Extract client infrastructure features
+                infrastructure_features = self._extract_client_infrastructure_features(X, results)
+                
+                if infrastructure_features is not None and len(infrastructure_features) > 0:
+                    # Use PCA + Linear Regression for correlation analysis
+                    client_infrastructure_analyzer = self._train_client_infrastructure_analyzer(
+                        infrastructure_features, client_infrastructure_scores
+                    )
+                    
+                    if client_infrastructure_analyzer is not None:
+                        self.models['client_infrastructure_analyzer'] = client_infrastructure_analyzer
+                        logger.info("Client Infrastructure Correlation Model trained successfully")
+                    else:
+                        logger.warning("Failed to train client infrastructure analyzer")
+                else:
+                    logger.warning("Insufficient client infrastructure data for correlation analysis")
+            else:
+                logger.warning("Not enough client infrastructure samples for correlation analysis")
             
             # Train QoS Compliance Monitoring Model
             qos_compliance_scores = self._calculate_qos_compliance_scores(X, results)
@@ -1916,7 +1945,7 @@ class NetworkDiagnosticEngine:
         status['total_training_samples'] = total_results
         
         # Check for model files and get timestamps
-        model_files = ['anomaly_detector.joblib', 'health_classifier.joblib', 'performance_predictor.joblib', 'failure_predictor.joblib', 'qos_compliance_monitor.joblib']
+        model_files = ['anomaly_detector.joblib', 'health_classifier.joblib', 'performance_predictor.joblib', 'failure_predictor.joblib', 'qos_compliance_monitor.joblib', 'client_infrastructure_analyzer.joblib']
         for filename in model_files:
             filepath = os.path.join(self.models_dir, filename)
             if os.path.exists(filepath):
@@ -3539,6 +3568,494 @@ class NetworkDiagnosticEngine:
             
         except Exception:
             return 0.7  # Default confidence
+
+    def _calculate_client_infrastructure_scores(self, features_df: pd.DataFrame, results: List[TestResult]) -> List[float]:
+        """
+        Calculate client infrastructure correlation scores for training
+        Higher scores indicate stronger correlation between system metrics and network performance degradation
+        """
+        correlation_scores = []
+        
+        for i in range(len(features_df)):
+            row = features_df.iloc[i]
+            score = 0.0
+            
+            # CPU utilization impact on network performance
+            cpu_usage = row.get('cpu_percent', 0)
+            latency = row.get('ping_latency', 0)
+            
+            # High CPU correlation with performance degradation
+            if cpu_usage > 80 and latency > 100:
+                score += 0.25
+            elif cpu_usage > 60 and latency > 50:
+                score += 0.15
+            elif cpu_usage > 40 and latency > 30:
+                score += 0.1
+            
+            # Memory pressure impact
+            memory_usage = row.get('memory_percent', 0)
+            packet_loss = row.get('ping_packet_loss', 0)
+            
+            if memory_usage > 90 and packet_loss > 1:
+                score += 0.2
+            elif memory_usage > 75 and packet_loss > 0.5:
+                score += 0.15
+            elif memory_usage > 60 and packet_loss > 0.1:
+                score += 0.1
+            
+            # Network interface correlation
+            network_errors = row.get('total_network_errors', 0)
+            jitter = row.get('jitter', 0)
+            
+            if network_errors > 10 and jitter > 20:
+                score += 0.2
+            elif network_errors > 5 and jitter > 10:
+                score += 0.15
+            elif network_errors > 1 and jitter > 5:
+                score += 0.1
+            
+            # Bandwidth utilization vs system resources
+            bandwidth_util = row.get('bandwidth_utilization', 0)
+            tcp_retrans = row.get('tcp_retransmission_rate', 0)
+            
+            if bandwidth_util > 80 and tcp_retrans > 3:
+                score += 0.15
+            elif bandwidth_util > 60 and tcp_retrans > 1:
+                score += 0.1
+            
+            # Wireless signal correlation (if available)
+            if 'signal_strength' in row:
+                signal_strength = row.get('signal_strength', 0)
+                if signal_strength < -70 and latency > 50:  # Poor signal with high latency
+                    score += 0.1
+                elif signal_strength < -60 and latency > 30:
+                    score += 0.05
+            
+            # Ensure score is between 0 and 1
+            correlation_scores.append(min(1.0, max(0.0, score)))
+        
+        return correlation_scores
+    
+    def _extract_client_infrastructure_features(self, features_df: pd.DataFrame, results: List[TestResult]) -> Optional[pd.DataFrame]:
+        """
+        Extract client infrastructure specific features for correlation analysis
+        """
+        try:
+            # Infrastructure features for correlation analysis
+            infrastructure_columns = [
+                'cpu_percent', 'memory_percent', 'disk_io_read', 'disk_io_write',
+                'total_network_errors', 'network_interface_rx_errors', 'network_interface_tx_errors',
+                'tcp_retransmission_rate', 'bandwidth_utilization', 'compression_ratio',
+                'ping_latency', 'ping_packet_loss', 'jitter', 'bandwidth_download', 'bandwidth_upload'
+            ]
+            
+            # Add wireless features if available
+            if 'signal_strength' in features_df.columns:
+                infrastructure_columns.append('signal_strength')
+            
+            # Filter available columns
+            available_columns = [col for col in infrastructure_columns if col in features_df.columns]
+            
+            if len(available_columns) < 8:  # Need minimum features for correlation
+                logger.warning(f"Not enough infrastructure features available: {len(available_columns)}")
+                return None
+            
+            infrastructure_features = features_df[available_columns].copy()
+            
+            # Create derived features for better correlation analysis
+            infrastructure_features['cpu_memory_combined'] = (
+                infrastructure_features['cpu_percent'] * 0.6 + 
+                infrastructure_features['memory_percent'] * 0.4
+            )
+            
+            infrastructure_features['network_error_rate'] = (
+                infrastructure_features['total_network_errors'] / 
+                (infrastructure_features['total_network_errors'].max() + 1)
+            ) * 100
+            
+            infrastructure_features['performance_degradation'] = (
+                (infrastructure_features['ping_latency'] / infrastructure_features['ping_latency'].median()) * 
+                (1 + infrastructure_features['ping_packet_loss'] / 100)
+            )
+            
+            # Handle NaN and infinite values
+            infrastructure_features = infrastructure_features.replace([float('inf'), float('-inf')], 0).fillna(0)
+            
+            return infrastructure_features
+            
+        except Exception as e:
+            logger.error(f"Error extracting client infrastructure features: {str(e)}")
+            return None
+    
+    def _train_client_infrastructure_analyzer(self, infrastructure_features: pd.DataFrame, 
+                                           correlation_scores: List[float]) -> Optional[Dict[str, Any]]:
+        """
+        Train the client infrastructure correlation analyzer using PCA + Linear Regression
+        """
+        try:
+            # Prepare data
+            X = infrastructure_features.values
+            y = np.array(correlation_scores)
+            
+            # Scale features
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            
+            # Apply PCA for dimensionality reduction and correlation analysis
+            pca = PCA(n_components=min(8, X_scaled.shape[1]))  # Reduce to 8 components or less
+            X_pca = pca.fit_transform(X_scaled)
+            
+            # Train Linear Regression model
+            regressor = LinearRegression()
+            regressor.fit(X_pca, y)
+            
+            # Calculate model performance
+            r2 = r2_score(y, regressor.predict(X_pca))
+            
+            # Create comprehensive model dictionary
+            model_dict = {
+                'pca': pca,
+                'scaler': scaler,
+                'regressor': regressor,
+                'feature_names': list(infrastructure_features.columns),
+                'pca_components': pca.components_,
+                'explained_variance_ratio': pca.explained_variance_ratio_,
+                'r2_score': r2,
+                'training_samples': len(correlation_scores),
+                'feature_importance': self._calculate_feature_importance(pca, regressor, infrastructure_features.columns),
+                'correlation_thresholds': self._calculate_correlation_thresholds(correlation_scores)
+            }
+            
+            # Store scaler separately for the save system
+            self.scalers['client_infrastructure'] = scaler
+            
+            logger.info(f"Client Infrastructure Analyzer trained with R² score: {r2:.3f}")
+            return model_dict
+            
+        except Exception as e:
+            logger.error(f"Error training client infrastructure analyzer: {str(e)}")
+            return None
+    
+    def _calculate_feature_importance(self, pca: PCA, regressor: LinearRegression, 
+                                    feature_names: List[str]) -> Dict[str, float]:
+        """
+        Calculate feature importance by analyzing PCA components and regression coefficients
+        """
+        try:
+            # Get regression coefficients
+            coef = regressor.coef_
+            
+            # Calculate feature importance by combining PCA components with regression coefficients
+            feature_importance = {}
+            
+            for i, feature_name in enumerate(feature_names):
+                importance = 0.0
+                
+                # Weight by PCA components and regression coefficients
+                for j, (component_coef, variance_ratio) in enumerate(zip(coef, pca.explained_variance_ratio_)):
+                    component_weight = abs(pca.components_[j, i])
+                    importance += component_weight * abs(component_coef) * variance_ratio
+                
+                feature_importance[feature_name] = importance
+            
+            return feature_importance
+            
+        except Exception as e:
+            logger.error(f"Error calculating feature importance: {str(e)}")
+            return {}
+    
+    def _calculate_correlation_thresholds(self, correlation_scores: List[float]) -> Dict[str, float]:
+        """
+        Calculate correlation thresholds for different severity levels
+        """
+        scores_array = np.array(correlation_scores)
+        
+        return {
+            'high_correlation': np.percentile(scores_array, 75),
+            'medium_correlation': np.percentile(scores_array, 50),
+            'low_correlation': np.percentile(scores_array, 25),
+            'mean_correlation': np.mean(scores_array),
+            'std_correlation': np.std(scores_array)
+        }
+    
+    def analyze_client_infrastructure_correlation(self, client_id: int, days_back: int = 30) -> Dict[str, Any]:
+        """
+        Analyze client infrastructure correlation and provide improvement recommendations
+        """
+        try:
+            if 'client_infrastructure_analyzer' not in self.models:
+                return {
+                    'error': 'Client Infrastructure Correlation model not trained',
+                    'status': 'model_not_available'
+                }
+            
+            # Get client test results
+            from datetime import datetime, timedelta
+            cutoff_date = datetime.now() - timedelta(days=days_back)
+            
+            client_results = db.session.query(TestResult).join(Test).join(Client).filter(
+                Client.id == client_id,
+                TestResult.timestamp >= cutoff_date
+            ).all()
+            
+            if len(client_results) < 10:
+                return {
+                    'error': f'Insufficient data for client {client_id}. Need at least 10 test results.',
+                    'status': 'insufficient_data'
+                }
+            
+            # Extract features
+            features_df = self.extract_features(client_results)
+            
+            if features_df.empty:
+                return {
+                    'error': 'No features extracted from client test results',
+                    'status': 'feature_extraction_failed'
+                }
+            
+            # Get model components
+            model = self.models['client_infrastructure_analyzer']
+            pca = model['pca']
+            scaler = model['scaler']
+            regressor = model['regressor']
+            
+            # Extract infrastructure features
+            infrastructure_features = self._extract_client_infrastructure_features(features_df, client_results)
+            
+            if infrastructure_features is None:
+                return {
+                    'error': 'Failed to extract client infrastructure features',
+                    'status': 'infrastructure_feature_extraction_failed'
+                }
+            
+            # Prepare features for prediction
+            feature_names = model['feature_names']
+            available_features = [col for col in feature_names if col in infrastructure_features.columns]
+            
+            if len(available_features) < len(feature_names) * 0.7:  # Need at least 70% of features
+                return {
+                    'error': 'Insufficient feature overlap for analysis',
+                    'status': 'insufficient_features'
+                }
+            
+            # Align features and predict
+            X_client = infrastructure_features[available_features].values
+            X_scaled = scaler.transform(X_client)
+            X_pca = pca.transform(X_scaled)
+            
+            # Predict correlation scores
+            correlation_predictions = regressor.predict(X_pca)
+            
+            # Analyze correlations
+            correlation_analysis = self._analyze_client_correlations(
+                infrastructure_features, correlation_predictions, model
+            )
+            
+            # Generate recommendations
+            recommendations = self._generate_client_infrastructure_recommendations(
+                infrastructure_features, correlation_analysis, model
+            )
+            
+            return {
+                'client_id': client_id,
+                'analysis_period_days': days_back,
+                'total_samples': len(client_results),
+                'correlation_analysis': correlation_analysis,
+                'recommendations': recommendations,
+                'model_performance': {
+                    'r2_score': model['r2_score'],
+                    'training_samples': model['training_samples']
+                },
+                'status': 'success'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing client infrastructure correlation: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'analysis_failed'
+            }
+    
+    def _analyze_client_correlations(self, infrastructure_features: pd.DataFrame, 
+                                   predictions: np.ndarray, model: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze client correlations between infrastructure metrics and network performance
+        """
+        try:
+            thresholds = model['correlation_thresholds']
+            feature_importance = model['feature_importance']
+            
+            # Calculate correlation statistics
+            high_correlation_count = np.sum(predictions >= thresholds['high_correlation'])
+            medium_correlation_count = np.sum(
+                (predictions >= thresholds['medium_correlation']) & 
+                (predictions < thresholds['high_correlation'])
+            )
+            
+            # Identify problem areas
+            problem_areas = []
+            
+            # CPU correlation analysis
+            cpu_high_indices = infrastructure_features['cpu_percent'] > 80
+            if np.any(cpu_high_indices):
+                cpu_correlations = predictions[cpu_high_indices]
+                if np.mean(cpu_correlations) > thresholds['medium_correlation']:
+                    problem_areas.append({
+                        'area': 'CPU Utilization',
+                        'severity': 'high' if np.mean(cpu_correlations) > thresholds['high_correlation'] else 'medium',
+                        'average_correlation': float(np.mean(cpu_correlations)),
+                        'affected_samples': int(np.sum(cpu_high_indices)),
+                        'description': 'High CPU usage correlates with network performance degradation'
+                    })
+            
+            # Memory correlation analysis
+            memory_high_indices = infrastructure_features['memory_percent'] > 75
+            if np.any(memory_high_indices):
+                memory_correlations = predictions[memory_high_indices]
+                if np.mean(memory_correlations) > thresholds['medium_correlation']:
+                    problem_areas.append({
+                        'area': 'Memory Utilization',
+                        'severity': 'high' if np.mean(memory_correlations) > thresholds['high_correlation'] else 'medium',
+                        'average_correlation': float(np.mean(memory_correlations)),
+                        'affected_samples': int(np.sum(memory_high_indices)),
+                        'description': 'High memory usage correlates with network performance issues'
+                    })
+            
+            # Network interface correlation analysis
+            network_error_indices = infrastructure_features['total_network_errors'] > 5
+            if np.any(network_error_indices):
+                network_correlations = predictions[network_error_indices]
+                if np.mean(network_correlations) > thresholds['medium_correlation']:
+                    problem_areas.append({
+                        'area': 'Network Interface',
+                        'severity': 'high' if np.mean(network_correlations) > thresholds['high_correlation'] else 'medium',
+                        'average_correlation': float(np.mean(network_correlations)),
+                        'affected_samples': int(np.sum(network_error_indices)),
+                        'description': 'Network interface errors correlate with performance degradation'
+                    })
+            
+            return {
+                'high_correlation_samples': int(high_correlation_count),
+                'medium_correlation_samples': int(medium_correlation_count),
+                'average_correlation': float(np.mean(predictions)),
+                'max_correlation': float(np.max(predictions)),
+                'problem_areas': problem_areas,
+                'feature_importance': feature_importance,
+                'correlation_distribution': {
+                    'percentile_75': float(np.percentile(predictions, 75)),
+                    'percentile_50': float(np.percentile(predictions, 50)),
+                    'percentile_25': float(np.percentile(predictions, 25))
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing client correlations: {str(e)}")
+            return {}
+    
+    def _generate_client_infrastructure_recommendations(self, infrastructure_features: pd.DataFrame,
+                                                      correlation_analysis: Dict[str, Any],
+                                                      model: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Generate specific client infrastructure improvement recommendations
+        """
+        recommendations = []
+        
+        try:
+            problem_areas = correlation_analysis.get('problem_areas', [])
+            feature_importance = correlation_analysis.get('feature_importance', {})
+            
+            # CPU-based recommendations
+            cpu_problems = [area for area in problem_areas if area['area'] == 'CPU Utilization']
+            if cpu_problems:
+                severity = cpu_problems[0]['severity']
+                recommendations.append({
+                    'category': 'CPU Optimization',
+                    'severity': severity,
+                    'title': 'High CPU Usage Affecting Network Performance',
+                    'description': f'CPU utilization correlates with network degradation in {cpu_problems[0]["affected_samples"]} samples',
+                    'recommendations': [
+                        'Review running processes and identify CPU-intensive applications',
+                        'Consider upgrading CPU or optimizing application performance',
+                        'Monitor CPU usage during network tests to identify patterns',
+                        'Implement CPU throttling for non-critical processes during network operations'
+                    ],
+                    'impact': 'Network latency and throughput may improve with CPU optimization'
+                })
+            
+            # Memory-based recommendations
+            memory_problems = [area for area in problem_areas if area['area'] == 'Memory Utilization']
+            if memory_problems:
+                severity = memory_problems[0]['severity']
+                recommendations.append({
+                    'category': 'Memory Optimization',
+                    'severity': severity,
+                    'title': 'High Memory Usage Affecting Network Performance',
+                    'description': f'Memory pressure correlates with network issues in {memory_problems[0]["affected_samples"]} samples',
+                    'recommendations': [
+                        'Identify memory-intensive applications and optimize or close them',
+                        'Consider adding more RAM to the system',
+                        'Monitor memory usage patterns during network operations',
+                        'Implement memory cleanup routines before critical network tests'
+                    ],
+                    'impact': 'Reduced memory pressure can improve network stability and performance'
+                })
+            
+            # Network interface recommendations
+            network_problems = [area for area in problem_areas if area['area'] == 'Network Interface']
+            if network_problems:
+                severity = network_problems[0]['severity']
+                recommendations.append({
+                    'category': 'Network Interface Optimization',
+                    'severity': severity,
+                    'title': 'Network Interface Errors Affecting Performance',
+                    'description': f'Interface errors correlate with performance degradation in {network_problems[0]["affected_samples"]} samples',
+                    'recommendations': [
+                        'Check network cable connections and replace if necessary',
+                        'Update network interface drivers to latest versions',
+                        'Review network interface settings and buffer sizes',
+                        'Consider switching to a different network interface if available'
+                    ],
+                    'impact': 'Fixing interface issues can significantly improve network reliability'
+                })
+            
+            # Feature importance recommendations
+            sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
+            top_features = sorted_features[:3]
+            
+            if top_features:
+                recommendations.append({
+                    'category': 'Priority Optimization Areas',
+                    'severity': 'medium',
+                    'title': 'Key Infrastructure Metrics to Monitor',
+                    'description': 'Based on correlation analysis, focus on these areas for maximum impact',
+                    'recommendations': [
+                        f'Monitor {feature[0].replace("_", " ").title()}: High correlation with network performance' 
+                        for feature in top_features
+                    ],
+                    'impact': 'Focusing on high-correlation metrics provides maximum performance improvement'
+                })
+            
+            # General recommendations if no specific problems found
+            if not problem_areas:
+                recommendations.append({
+                    'category': 'General Optimization',
+                    'severity': 'low',
+                    'title': 'Infrastructure Performance Monitoring',
+                    'description': 'No significant correlation issues detected, but continuous monitoring is recommended',
+                    'recommendations': [
+                        'Continue monitoring system metrics during network tests',
+                        'Set up alerts for CPU usage > 80% and memory usage > 85%',
+                        'Regular maintenance of network interfaces and drivers',
+                        'Baseline system performance for future comparisons'
+                    ],
+                    'impact': 'Proactive monitoring helps prevent performance degradation'
+                })
+            
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"Error generating client infrastructure recommendations: {str(e)}")
+            return []
 
 # Global diagnostic engine instance
 diagnostic_engine = NetworkDiagnosticEngine()

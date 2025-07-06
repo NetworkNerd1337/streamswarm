@@ -141,6 +141,7 @@
                     <li><strong>Time Series Models:</strong> Require 15+ sequential measurements to the same destination with timestamps</li>
                     <li><strong>Performance Models:</strong> Need 10+ test results with latency measurements for accurate predictions</li>
                     <li><strong>QoS Compliance Models:</strong> Require 20+ test results with DSCP values and traffic classification data</li>
+                    <li><strong>Client Infrastructure Models:</strong> Require 25+ test results with system metrics (CPU, memory, network interface data)</li>
                     <li><strong>Quality Over Quantity:</strong> Models prioritize accuracy - insufficient data prevents training to maintain reliability</li>
                     <li><strong>Zero-Trust Architecture:</strong> All AI processing runs locally with no external dependencies</li>
                 </ul>
@@ -256,6 +257,26 @@
                                     </p>
                                     <small class="text-muted">
                                         <strong>Training Requirement:</strong> 20+ test results with DSCP values and traffic classification data
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">Client Infrastructure Correlation</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Algorithm:</strong> PCA + Linear Regression<br>
+                                        <strong>Purpose:</strong> Correlate client system metrics with network performance<br>
+                                        <strong>Status:</strong> 
+                                        <span class="badge bg-{{ 'success' if 'client_infrastructure_analyzer' in model_status.models_available else 'secondary' }}">
+                                            {{ 'Trained' if 'client_infrastructure_analyzer' in model_status.models_available else 'Not Trained' }}
+                                        </span>
+                                    </p>
+                                    <small class="text-muted">
+                                        <strong>Training Requirement:</strong> 25+ test results with system metrics (CPU, memory, network interface data)
                                     </small>
                                 </div>
                             </div>
