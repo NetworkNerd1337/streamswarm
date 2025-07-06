@@ -244,6 +244,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
 </div>
 {% endblock %}
 
@@ -620,11 +623,12 @@ async function deleteClient(clientId, hostname) {
             setTimeout(() => location.reload(), 1500);
         } else {
             const error = await response.json();
-            showToast(`Failed to delete client: ${error.error}`, 'danger');
+            console.log('Delete client error response:', error);
+            showToast(`${error.error || 'Failed to delete client'}`, 'danger');
         }
     } catch (error) {
         console.error('Error deleting client:', error);
-        showToast('Failed to delete client', 'danger');
+        showToast('Network error: Unable to delete client', 'danger');
     }
 }
 
