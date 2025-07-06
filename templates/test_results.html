@@ -447,6 +447,85 @@
         </div>
     </div>
     
+    <!-- Client Infrastructure Analysis -->
+    <div class="row mt-4 mb-4" id="clientInfrastructureSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-desktop me-2"></i>
+                        Client Infrastructure Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This analysis correlates client system metrics (CPU, memory, network interfaces) with network performance to identify client-side bottlenecks and optimization opportunities.
+                    </div>
+                    
+                    <!-- Infrastructure Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-chart-line text-primary fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">Correlation Score</h6>
+                                    <p class="mb-0 text-muted" id="infraCorrelationScore">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">Risk Level</h6>
+                                    <p class="mb-0 text-muted" id="infraRiskLevel">--</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-lightbulb text-success fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">Recommendations</h6>
+                                    <p class="mb-0 text-muted" id="infraRecommendationCount">--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Correlations -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-link me-2"></i>Key System Correlations
+                            </h6>
+                            <div id="infraCorrelations" class="row">
+                                <!-- Correlation cards will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Improvement Recommendations -->
+                    <div class="mt-3">
+                        <h6 class="text-primary">
+                            <i class="fas fa-tools me-2"></i>Client-Side Improvement Recommendations
+                        </h6>
+                        <div id="infraRecommendations" class="list-group list-group-flush">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Detailed Process Monitoring -->
     <div class="row mt-4">
         <div class="col-12">
@@ -1772,6 +1851,7 @@ async function loadTestData() {
             updateSummaryStats();
             updateClientSummary();
             displayGeolocationData();
+            displayClientInfrastructureData();
             console.log('All components initialized successfully');
         } catch (error) {
             console.error('Error during component initialization:', error);
@@ -3061,6 +3141,128 @@ function displayGNMIPathData() {
     } else {
         console.log('No GNMI analysis data available');
     }
+}
+
+function displayClientInfrastructureData() {
+    console.log('Checking for client infrastructure analysis...');
+    
+    // Get the first result that has client ID (all should have the same client)
+    if (!testData || testData.length === 0) {
+        console.log('No test data available for client infrastructure analysis');
+        return;
+    }
+    
+    const firstResult = testData[0];
+    if (!firstResult.client_id) {
+        console.log('No client ID available for infrastructure analysis');
+        return;
+    }
+    
+    console.log('Fetching client infrastructure analysis for client:', firstResult.client_id);
+    
+    // Fetch client infrastructure analysis
+    fetch('/api/analyze-client-infrastructure', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            client_id: firstResult.client_id,
+            days_back: 30
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Client infrastructure analysis response:', data);
+        
+        if (data.status === 'success' && data.correlation_analysis) {
+            displayClientInfrastructureAnalysis(data);
+            document.getElementById('clientInfrastructureSection').style.display = 'block';
+        } else {
+            console.log('No client infrastructure analysis available:', data.message || 'Unknown reason');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching client infrastructure analysis:', error);
+    });
+}
+
+function displayClientInfrastructureAnalysis(data) {
+    console.log('Displaying client infrastructure analysis data...');
+    
+    const analysis = data.correlation_analysis;
+    const recommendations = data.recommendations || [];
+    
+    // Update summary metrics
+    document.getElementById('infraCorrelationScore').textContent = 
+        analysis.overall_correlation ? (analysis.overall_correlation * 100).toFixed(1) + '%' : 'N/A';
+    
+    document.getElementById('infraRiskLevel').textContent = 
+        analysis.risk_level || 'Unknown';
+    
+    document.getElementById('infraRecommendationCount').textContent = 
+        recommendations.length + ' items';
+    
+    // Display key correlations
+    const correlationsContainer = document.getElementById('infraCorrelations');
+    correlationsContainer.innerHTML = '';
+    
+    if (analysis.strongest_correlations && analysis.strongest_correlations.length > 0) {
+        analysis.strongest_correlations.forEach(correlation => {
+            const correlationCard = document.createElement('div');
+            correlationCard.className = 'col-md-6 mb-3';
+            
+            let badgeClass = 'bg-secondary';
+            if (Math.abs(correlation.correlation) > 0.7) badgeClass = 'bg-danger';
+            else if (Math.abs(correlation.correlation) > 0.5) badgeClass = 'bg-warning';
+            else if (Math.abs(correlation.correlation) > 0.3) badgeClass = 'bg-info';
+            
+            correlationCard.innerHTML = `
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">${correlation.metric}</h6>
+                        <p class="card-text">${correlation.description}</p>
+                        <span class="badge ${badgeClass}">${(correlation.correlation * 100).toFixed(1)}% correlation</span>
+                    </div>
+                </div>
+            `;
+            correlationsContainer.appendChild(correlationCard);
+        });
+    } else {
+        correlationsContainer.innerHTML = '<div class="col-12"><p class="text-muted">No significant correlations detected</p></div>';
+    }
+    
+    // Display recommendations
+    const recommendationsContainer = document.getElementById('infraRecommendations');
+    recommendationsContainer.innerHTML = '';
+    
+    if (recommendations.length > 0) {
+        recommendations.forEach(rec => {
+            const recItem = document.createElement('div');
+            recItem.className = 'list-group-item';
+            
+            let iconClass = 'fas fa-info-circle text-info';
+            if (rec.priority === 'high') iconClass = 'fas fa-exclamation-triangle text-danger';
+            else if (rec.priority === 'medium') iconClass = 'fas fa-exclamation-circle text-warning';
+            
+            recItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            <i class="${iconClass} me-2"></i>${rec.title}
+                        </h6>
+                        <p class="mb-1">${rec.description}</p>
+                        <small class="text-muted">Priority: ${rec.priority} | Impact: ${rec.impact}</small>
+                    </div>
+                </div>
+            `;
+            recommendationsContainer.appendChild(recItem);
+        });
+    } else {
+        recommendationsContainer.innerHTML = '<div class="list-group-item"><p class="mb-0 text-muted">No specific recommendations available</p></div>';
+    }
+    
+    console.log('Client infrastructure analysis displayed successfully');
 }
 </script>
 {% endblock %}
