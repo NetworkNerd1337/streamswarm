@@ -4027,10 +4027,10 @@ class NetworkDiagnosticEngine:
             # CPU-based recommendations
             cpu_problems = [area for area in problem_areas if area['area'] == 'CPU Utilization']
             if cpu_problems:
-                severity = cpu_problems[0]['severity']
+                priority = cpu_problems[0]['severity']
                 recommendations.append({
                     'category': 'CPU Optimization',
-                    'severity': severity,
+                    'priority': priority,
                     'title': 'High CPU Usage Affecting Network Performance',
                     'description': f'CPU utilization correlates with network degradation in {cpu_problems[0]["affected_samples"]} samples',
                     'recommendations': [
@@ -4045,10 +4045,10 @@ class NetworkDiagnosticEngine:
             # Memory-based recommendations
             memory_problems = [area for area in problem_areas if area['area'] == 'Memory Utilization']
             if memory_problems:
-                severity = memory_problems[0]['severity']
+                priority = memory_problems[0]['severity']
                 recommendations.append({
                     'category': 'Memory Optimization',
-                    'severity': severity,
+                    'priority': priority,
                     'title': 'High Memory Usage Affecting Network Performance',
                     'description': f'Memory pressure correlates with network issues in {memory_problems[0]["affected_samples"]} samples',
                     'recommendations': [
@@ -4063,10 +4063,10 @@ class NetworkDiagnosticEngine:
             # Network interface recommendations
             network_problems = [area for area in problem_areas if area['area'] == 'Network Interface']
             if network_problems:
-                severity = network_problems[0]['severity']
+                priority = network_problems[0]['severity']
                 recommendations.append({
                     'category': 'Network Interface Optimization',
-                    'severity': severity,
+                    'priority': priority,
                     'title': 'Network Interface Errors Affecting Performance',
                     'description': f'Interface errors correlate with performance degradation in {network_problems[0]["affected_samples"]} samples',
                     'recommendations': [
@@ -4085,7 +4085,7 @@ class NetworkDiagnosticEngine:
             if top_features:
                 recommendations.append({
                     'category': 'Priority Optimization Areas',
-                    'severity': 'medium',
+                    'priority': 'medium',
                     'title': 'Key Infrastructure Metrics to Monitor',
                     'description': 'Based on correlation analysis, focus on these areas for maximum impact',
                     'recommendations': [
@@ -4099,7 +4099,7 @@ class NetworkDiagnosticEngine:
             if not problem_areas:
                 recommendations.append({
                     'category': 'General Optimization',
-                    'severity': 'low',
+                    'priority': 'low',
                     'title': 'Infrastructure Performance Monitoring',
                     'description': 'No significant correlation issues detected, but continuous monitoring is recommended',
                     'recommendations': [

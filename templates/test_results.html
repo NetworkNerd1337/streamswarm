@@ -3201,19 +3201,22 @@ function displayClientInfrastructureAnalysis(data) {
     document.getElementById('infraCorrelationScore').textContent = 
         correlationScore ? (correlationScore * 100).toFixed(1) + '%' : 'N/A';
     
-    // Calculate risk level based on correlation patterns and problem areas
+    // Calculate risk level based on actual correlation magnitudes, not just problem area existence
     let riskLevel = 'Low';
-    if (analysis.problem_areas && analysis.problem_areas.length > 0) {
-        const highSeverityProblems = analysis.problem_areas.filter(p => p.severity === 'high');
-        const mediumSeverityProblems = analysis.problem_areas.filter(p => p.severity === 'medium');
-        
-        if (highSeverityProblems.length > 0) {
-            riskLevel = 'High';
-        } else if (mediumSeverityProblems.length > 0) {
-            riskLevel = 'Medium';
-        }
-    } else if (correlationScore > 0.05) {
+    
+    // Use correlation score as primary risk indicator
+    if (correlationScore > 0.15) {  // >15% correlation indicates significant infrastructure impact
+        riskLevel = 'High';
+    } else if (correlationScore > 0.05) {  // >5% correlation indicates moderate infrastructure impact
         riskLevel = 'Medium';
+    } else {
+        // For very low correlations, check if there are any meaningful feature importance values
+        if (analysis.feature_importance) {
+            const maxImportance = Math.max(...Object.values(analysis.feature_importance));
+            if (maxImportance > 0.002) {  // >0.2% feature importance might indicate some infrastructure correlation
+                riskLevel = 'Low-Medium';
+            }
+        }
     }
     
     document.getElementById('infraRiskLevel').textContent = riskLevel;
