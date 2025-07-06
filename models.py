@@ -203,7 +203,7 @@ class Test(db.Model):
 class TestClient(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id', ondelete='SET NULL'), nullable=True)
     status = db.Column(db.String(20), default='assigned')  # assigned, running, completed, failed
     
     __table_args__ = (db.UniqueConstraint('test_id', 'client_id'),)
@@ -214,7 +214,7 @@ class ApiToken(db.Model):
     name = db.Column(db.String(255), nullable=False)  # Human-readable name for the token
     description = db.Column(Text)  # Optional description
     status = db.Column(db.String(20), default='available')  # available, consumed, revoked
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)  # Which client consumed it
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id', ondelete='SET NULL'), nullable=True)  # Which client consumed it
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     consumed_at = db.Column(db.DateTime, nullable=True)  # When token was consumed
     last_used = db.Column(db.DateTime, nullable=True)  # Last API request with this token
@@ -256,7 +256,7 @@ class ApiToken(db.Model):
 class TestResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id', ondelete='SET NULL'), nullable=True)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     
     # System metrics

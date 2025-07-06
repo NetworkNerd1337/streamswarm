@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 6, 2025: Enhanced client deletion capabilities to preserve historical test data
+  - Modified database foreign key constraints to use ON DELETE SET NULL instead of preventing deletion
+  - Clients can now be deleted without losing historical test results, TestClient assignments, or API token relationships
+  - Historical data preserves all test metrics while client_id fields are set to NULL for deleted clients
+  - UI templates already handle missing client references gracefully, displaying "Unknown Client" for deleted clients
+  - Maintains complete test history and analytics while allowing cleanup of inactive/decommissioned clients
+  - Database migration automatically applied: test_result, test_client, and api_token tables now support client deletion
 - July 6, 2025: Successfully implemented comprehensive client versioning system for deployment tracking
   - Added client_version field to Client database model and migration
   - Updated client registration process to send version information to server
