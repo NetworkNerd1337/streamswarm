@@ -431,6 +431,14 @@ def client_heartbeat(client_id):
     client = Client.query.get_or_404(client_id)
     client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
     client.status = 'online'
+    
+    # Update client version if provided in request
+    data = request.get_json()
+    if data and 'client_version' in data:
+        client_version = sanitize_string(data.get('client_version'), 20)
+        if client_version:
+            client.client_version = client_version
+    
     db.session.commit()
     
     return jsonify({'status': 'ok'})

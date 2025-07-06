@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 6, 2025: Successfully implemented comprehensive client versioning system for deployment tracking
+  - Added client_version field to Client database model and migration
+  - Updated client registration process to send version information to server
+  - Enhanced heartbeat mechanism to include version updates for real-time synchronization
+  - Added Version column to clients page with color-coded status indicators
+  - Green badges show clients with current version (1.0.0), yellow badges indicate outdated versions
+  - System configuration tracks expected client version for comparison
+  - Enables administrators to monitor whether distributed clients are running latest code
+  - Supports git-based deployment strategies with automatic version tracking
 - July 5, 2025: Enhanced predictive analytics page with improved two-column layout and clear section headers
   - Rearranged cards into logical two-column layout: prediction cards (left) and capacity/QoS cards (right)
   - Added separate column titles: "Predictive Analytics" (left) and "Capacity and QoS Analytics" (right)

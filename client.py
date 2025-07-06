@@ -224,8 +224,10 @@ class StreamSwarmClient:
         while self.running:
             try:
                 headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
+                data = {'client_version': CLIENT_VERSION}
                 response = requests.post(
                     urljoin(self.server_url, f'/api/client/{self.client_id}/heartbeat'),
+                    json=data,
                     headers=headers,
                     timeout=5
                 )
