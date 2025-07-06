@@ -273,7 +273,13 @@ def clients():
         client.is_busy = len(busy_tests) > 0
         client.active_tests = [test.name for test in busy_tests]
     
-    return render_template('clients.html', clients=clients)
+    # Get system configuration for version comparison
+    from models import SystemConfig
+    config = {
+        'expected_client_version': SystemConfig.get_setting('expected_client_version', '1.0.0')
+    }
+    
+    return render_template('clients.html', clients=clients, config=config)
 
 @app.route('/tests')
 @web_auth_required
@@ -366,6 +372,9 @@ def register_client():
         if not json_valid:
             return jsonify({'error': 'Invalid system_info format'}), 400
     
+    # Get client version (optional)
+    client_version = sanitize_string(data.get('client_version'), 20)
+    
     # Check if client already exists
     existing_client = Client.query.filter_by(hostname=hostname, ip_address=ip_address).first()
     
@@ -387,6 +396,7 @@ def register_client():
         existing_client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
         existing_client.status = 'online'
         existing_client.system_info = system_info
+        existing_client.client_version = client_version
         client = existing_client
     else:
         # Create new client
@@ -395,7 +405,8 @@ def register_client():
             ip_address=ip_address,
             status='online',
             last_seen=datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None),
-            system_info=system_info
+            system_info=system_info,
+            client_version=client_version
         )
         db.session.add(client)
         db.session.flush()  # Get client ID

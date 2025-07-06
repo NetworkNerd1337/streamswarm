@@ -3,6 +3,9 @@
 StreamSwarm Client - Network and system monitoring client
 """
 
+# Client version - increment when making changes
+CLIENT_VERSION = "1.0.0"
+
 import os
 import sys
 import time
@@ -192,6 +195,7 @@ class StreamSwarmClient:
                 'hostname': self.client_name,
                 'ip_address': ip_address,
                 'system_info': json.dumps(self.system_info),
+                'client_version': CLIENT_VERSION,
                 'token': self.api_token
             }
             

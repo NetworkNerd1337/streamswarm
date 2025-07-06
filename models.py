@@ -133,6 +133,7 @@ class Client(db.Model):
     status = db.Column(db.String(20), default='offline')  # online, offline, testing
     last_seen = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     system_info = db.Column(Text)  # JSON string for system information
+    client_version = db.Column(db.String(20), nullable=True)  # Version of client software
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     
     # Relationships
@@ -146,6 +147,7 @@ class Client(db.Model):
             'status': self.status,
             'last_seen': self.last_seen.isoformat() if self.last_seen else None,
             'system_info': json.loads(self.system_info) if self.system_info else {},
+            'client_version': self.client_version,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

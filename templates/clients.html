@@ -79,6 +79,7 @@
                                     <th>Hostname</th>
                                     <th>IP Address</th>
                                     <th>System Info</th>
+                                    <th>Version</th>
                                     <th>Last Seen</th>
                                     <th>Actions</th>
                                 </tr>
@@ -126,6 +127,27 @@
                                             </small>
                                         {% else %}
                                             <span class="text-muted">No info available</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if client.client_version %}
+                                            {% set expected_version = config.get('expected_client_version', '1.0.0') %}
+                                            {% if client.client_version == expected_version %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    {{ client.client_version }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    {{ client.client_version }}
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-question me-1"></i>
+                                                Unknown
+                                            </span>
                                         {% endif %}
                                     </td>
                                     <td>
