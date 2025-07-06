@@ -277,7 +277,12 @@ def clients():
         if client.system_info:
             try:
                 import json
-                client.parsed_system_info = json.loads(client.system_info)
+                # Handle double-escaped JSON by parsing twice if needed
+                parsed_data = json.loads(client.system_info)
+                if isinstance(parsed_data, str):
+                    # If result is still a string, parse again
+                    parsed_data = json.loads(parsed_data)
+                client.parsed_system_info = parsed_data
             except (json.JSONDecodeError, TypeError):
                 client.parsed_system_info = {}
         else:
@@ -2552,7 +2557,12 @@ def api_clients():
         if client.system_info:
             try:
                 import json
-                system_info = json.loads(client.system_info)
+                # Handle double-escaped JSON by parsing twice if needed
+                parsed_data = json.loads(client.system_info)
+                if isinstance(parsed_data, str):
+                    # If result is still a string, parse again
+                    parsed_data = json.loads(parsed_data)
+                system_info = parsed_data
             except Exception as e:
                 system_info = {}
         

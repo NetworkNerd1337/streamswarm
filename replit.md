@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 6, 2025: Successfully resolved System Info column display issue and completed client versioning system
+  - Fixed double-escaped JSON parsing in both server-side template rendering and API routes
+  - System Info column now properly displays platform, CPU count, and memory details for all clients
+  - Enhanced error handling for system information parsing with fallback mechanisms
+  - Maintained client version tracking functionality with color-coded status indicators
+  - Ensured consistent data handling between initial page load and infinite scroll loading
+  - Both server-rendered and JavaScript-loaded clients now show complete system information
 - July 6, 2025: Successfully implemented comprehensive client versioning system for deployment tracking
   - Added client_version field to Client database model and migration
   - Updated client registration process to send version information to server
