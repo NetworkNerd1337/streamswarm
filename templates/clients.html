@@ -136,17 +136,16 @@
                                         <code>{{ client.ip_address }}</code>
                                     </td>
                                     <td>
-                                        {% if client.system_info %}
-                                            {% set info = client.system_info | safe | tojsonfilter if client.system_info else {} %}
+                                        {% if client.parsed_system_info %}
                                             <small class="text-muted">
-                                                {% if info.platform %}
-                                                    {{ info.platform }}<br>
+                                                {% if client.parsed_system_info.platform %}
+                                                    <div>{{ client.parsed_system_info.platform.split('-')[0] }}</div>
                                                 {% endif %}
-                                                {% if info.cpu_count %}
-                                                    {{ info.cpu_count }} CPUs
+                                                {% if client.parsed_system_info.cpu_count %}
+                                                    <div>{{ client.parsed_system_info.cpu_count }} CPUs</div>
                                                 {% endif %}
-                                                {% if info.memory_total %}
-                                                    | {{ (info.memory_total / 1024 / 1024 / 1024) | round(1) }} GB RAM
+                                                {% if client.parsed_system_info.memory_total %}
+                                                    <div>{{ (client.parsed_system_info.memory_total / 1024 / 1024 / 1024) | round(1) }} GB RAM</div>
                                                 {% endif %}
                                             </small>
                                         {% else %}
@@ -252,6 +251,9 @@
 
 {% block scripts %}
 <script>
+// Global configuration
+window.expectedClientVersion = '{{ config.expected_client_version }}';
+
 // Infinite scroll and search variables
 let currentPage = 1;
 let isLoading = false;
@@ -433,10 +435,24 @@ function createClientRow(client) {
     if (client.system_info && Object.keys(client.system_info).length > 0) {
         const info = client.system_info;
         let infoLines = [];
-        if (info.platform) infoLines.push(info.platform);
-        if (info.cpu_count) infoLines.push(`${info.cpu_count} CPUs`);
-        if (info.memory_total) infoLines.push(`${(info.memory_total / 1024 / 1024 / 1024).toFixed(1)} GB RAM`);
-        systemInfo = `<small class="text-muted">${infoLines.join('<br>')}</small>`;
+        if (info.platform) infoLines.push(`<div>${info.platform.split('-')[0]}</div>`);
+        if (info.cpu_count) infoLines.push(`<div>${info.cpu_count} CPUs</div>`);
+        if (info.memory_total) infoLines.push(`<div>${(info.memory_total / 1024 / 1024 / 1024).toFixed(1)} GB RAM</div>`);
+        systemInfo = `<small class="text-muted">${infoLines.join('')}</small>`;
+    }
+    
+    // Version badge
+    let versionBadge = '';
+    if (client.client_version) {
+        // Get expected version from global variable (set by server)
+        const expectedVersion = window.expectedClientVersion || '1.0.0';
+        if (client.client_version === expectedVersion) {
+            versionBadge = `<span class="badge bg-success"><i class="fas fa-check me-1"></i>${client.client_version}</span>`;
+        } else {
+            versionBadge = `<span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>${client.client_version}</span>`;
+        }
+    } else {
+        versionBadge = '<span class="badge bg-secondary"><i class="fas fa-question me-1"></i>Unknown</span>';
     }
     
     // Last seen
@@ -477,6 +493,7 @@ function createClientRow(client) {
         <td><strong>${client.hostname}</strong></td>
         <td><code>${client.ip_address}</code></td>
         <td>${systemInfo}</td>
+        <td>${versionBadge}</td>
         <td>${lastSeen}</td>
         <td>${actionButtons}</td>
     `;

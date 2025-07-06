@@ -264,7 +264,7 @@ def clients():
     # Load initial batch of clients (most recent 20)
     clients = Client.query.order_by(Client.last_seen.desc()).limit(20).all()
     
-    # Mark clients as busy if they're assigned to running tests
+    # Mark clients as busy and parse system info
     for client in clients:
         busy_tests = db.session.query(Test).join(TestClient).filter(
             TestClient.client_id == client.id,
@@ -272,6 +272,16 @@ def clients():
         ).all()
         client.is_busy = len(busy_tests) > 0
         client.active_tests = [test.name for test in busy_tests]
+        
+        # Parse system info if available
+        if client.system_info:
+            try:
+                import json
+                client.parsed_system_info = json.loads(client.system_info)
+            except (json.JSONDecodeError, TypeError):
+                client.parsed_system_info = {}
+        else:
+            client.parsed_system_info = {}
     
     # Get system configuration for version comparison
     from models import SystemConfig
@@ -2552,6 +2562,7 @@ def api_clients():
             'ip_address': client.ip_address,
             'status': client.status,
             'system_info': system_info,
+            'client_version': client.client_version,
             'last_seen': client.last_seen.strftime('%Y-%m-%d %H:%M:%S') if client.last_seen else None,
             'is_busy': len(busy_tests) > 0,
             'active_tests': [test.name for test in busy_tests],
