@@ -39,6 +39,7 @@
                                 <li><a href="#firewall-requirements" class="text-decoration-none">Firewall Requirements</a></li>
                                 <li><a href="#database-setup" class="text-decoration-none">Database Setup</a></li>
                                 <li><a href="#authentication-setup" class="text-decoration-none">Authentication System</a></li>
+                                <li><a href="#server-configuration" class="text-decoration-none">Server Configuration Options</a></li>
                                 <li><a href="#architecture" class="text-decoration-none">Understanding the Architecture</a></li>
                                 <li><a href="#server-setup" class="text-decoration-none">Server Setup Guide</a></li>
                                 <li><a href="#client-deployment" class="text-decoration-none">Client Deployment</a></li>
@@ -1383,6 +1384,232 @@ psql "$DATABASE_URL" -c "SELECT version();"
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Configuration Options -->
+    <div class="row mb-4" id="server-configuration">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Server Configuration Options
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <p class="text-muted mb-4">
+                                StreamSwarm provides several system-wide configuration options accessible through the 
+                                <strong>System Configuration</strong> page (admin-only access). These settings control 
+                                server behavior, security, and deployment tracking.
+                            </p>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Access:</strong> Navigate to System Configuration from the admin dropdown menu or visit 
+                                <code>/system-configuration</code> (requires admin privileges).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Development & Testing Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-code me-2"></i>
+                                Development & Testing Settings
+                            </h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-toggle-on me-2"></i>
+                                        Development Mode
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small mb-2"><strong>Purpose:</strong> Temporarily disable authentication for development and testing</p>
+                                    <p class="small mb-2"><strong>When enabled:</strong></p>
+                                    <ul class="small mb-2">
+                                        <li>All web routes bypass login requirements</li>
+                                        <li>Admin functions are accessible without authentication</li>
+                                        <li>Warning banner appears on all pages</li>
+                                        <li>Useful for development, testing, and demos</li>
+                                    </ul>
+                                    <div class="alert alert-warning alert-sm mb-0">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        <strong>Security Warning:</strong> Never enable in production environments
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-code-branch me-2"></i>
+                                        Expected Client Version
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small mb-2"><strong>Purpose:</strong> Track client deployment status across your network</p>
+                                    <p class="small mb-2"><strong>How it works:</strong></p>
+                                    <ul class="small mb-2">
+                                        <li>Set the version that clients should be running</li>
+                                        <li>Clients page shows color-coded version badges</li>
+                                        <li>Green badges: clients with current version</li>
+                                        <li>Yellow badges: clients with outdated versions</li>
+                                    </ul>
+                                    <p class="small mb-2"><strong>Version format:</strong> <code>x.y.z</code> (e.g., 1.0.0, 2.1.3)</p>
+                                    <div class="alert alert-info alert-sm mb-0">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        <strong>Tip:</strong> Update this when deploying new client code to monitor rollout progress
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Authentication & Security Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Authentication & Security Settings
+                            </h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg-8 mx-auto">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-clock me-2"></i>
+                                        Session Timeout
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="small mb-2"><strong>Purpose:</strong> Automatically log out inactive users for security</p>
+                                    <p class="small mb-2"><strong>Available options:</strong></p>
+                                    <ul class="small mb-2">
+                                        <li><strong>Disabled:</strong> Users stay logged in indefinitely</li>
+                                        <li><strong>10 minutes:</strong> Quick timeout for high-security environments</li>
+                                        <li><strong>15 minutes:</strong> Balanced security and usability</li>
+                                        <li><strong>30 minutes:</strong> Standard business setting</li>
+                                        <li><strong>45 minutes:</strong> Extended sessions for long tasks</li>
+                                        <li><strong>60 minutes:</strong> Maximum timeout period</li>
+                                    </ul>
+                                    <p class="small mb-2"><strong>Behavior:</strong></p>
+                                    <ul class="small mb-0">
+                                        <li>Timer resets with each user activity (page loads, API calls)</li>
+                                        <li>Users receive automatic logout when timeout is reached</li>
+                                        <li>Background processes (recurring tests) are unaffected</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Management Interface Links -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-tools me-2"></i>
+                                Management Interface Access
+                            </h6>
+                            <p class="text-muted mb-3">
+                                The System Configuration page provides quick access to key management interfaces:
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-users me-2"></i>
+                                        User Management
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="small mb-0">
+                                        <li>Create, edit, and delete web GUI users</li>
+                                        <li>Assign admin or standard user roles</li>
+                                        <li>Reset passwords and manage accounts</li>
+                                        <li>View user activity and login history</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-key me-2"></i>
+                                        API Token Management
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="small mb-0">
+                                        <li>Generate new API tokens for clients</li>
+                                        <li>Track token usage and status</li>
+                                        <li>Revoke or regenerate compromised tokens</li>
+                                        <li>Monitor client authentication activity</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-brain me-2"></i>
+                                        AI Model Configuration
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="small mb-0">
+                                        <li>Train and manage ML diagnostic models</li>
+                                        <li>View model status and performance metrics</li>
+                                        <li>Configure predictive analytics settings</li>
+                                        <li>Access zero-trust ML architecture controls</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration Best Practices -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-thumbs-up me-2"></i>
+                                    Configuration Best Practices
+                                </h6>
+                                <ul class="mb-0">
+                                    <li><strong>Development Mode:</strong> Only enable during development/testing, never in production</li>
+                                    <li><strong>Session Timeout:</strong> Use 15-30 minutes for most environments, shorter for high-security</li>
+                                    <li><strong>Client Versioning:</strong> Update expected version when deploying client updates</li>
+                                    <li><strong>Regular Reviews:</strong> Periodically audit user accounts and API tokens</li>
+                                    <li><strong>Security:</strong> Always use HTTPS in production and enable session timeouts</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
