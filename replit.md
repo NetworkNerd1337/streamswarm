@@ -106,11 +106,10 @@ The system operates on a distributed client-server architecture where:
 ## Changelog
 
 - July 6, 2025: Created professional Apple touch icon for iOS home screen integration
-  - Designed custom StreamSwarm icon with network visualization theme featuring central hub with radiating connections
-  - Used blue gradient background with animated data flow elements and network grid pattern
-  - Generated both SVG and PNG (180x180) versions for optimal compatibility
+  - Updated to use custom StreamSwarm logo featuring dynamic triangular design with orange/purple gradient
+  - Resized user-provided logo to proper 180x180 pixels for Apple touch icon standards
   - Added proper HTML meta tags for Apple web app integration including touch icon, app-capable settings, and status bar styling
-  - Icon displays "StreamSwarm" branding and represents distributed network monitoring concept
+  - Icon displays "SWARM STREAM TRAFFIC GENERATOR" branding with modern geometric design
   - Enables professional appearance when users add web app to iOS home screen
 - July 6, 2025: Successfully completed Client Infrastructure Analysis UI integration on test results page
   - Added comprehensive Client Infrastructure Analysis card to test results page alongside geolocation and GNMI analysis
