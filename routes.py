@@ -2553,7 +2553,7 @@ def api_clients():
             try:
                 import json
                 system_info = json.loads(client.system_info)
-            except:
+            except Exception as e:
                 system_info = {}
         
         client_data.append({

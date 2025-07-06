@@ -432,13 +432,23 @@ function createClientRow(client) {
     
     // System info
     let systemInfo = '<span class="text-muted">No info available</span>';
-    if (client.system_info && Object.keys(client.system_info).length > 0) {
-        const info = client.system_info;
-        let infoLines = [];
-        if (info.platform) infoLines.push(`<div>${info.platform.split('-')[0]}</div>`);
-        if (info.cpu_count) infoLines.push(`<div>${info.cpu_count} CPUs</div>`);
-        if (info.memory_total) infoLines.push(`<div>${(info.memory_total / 1024 / 1024 / 1024).toFixed(1)} GB RAM</div>`);
-        systemInfo = `<small class="text-muted">${infoLines.join('')}</small>`;
+    if (client.system_info) {
+        try {
+            // Parse system_info if it's a string
+            const info = typeof client.system_info === 'string' ? 
+                        JSON.parse(client.system_info) : client.system_info;
+            
+            if (info && Object.keys(info).length > 0) {
+                let infoLines = [];
+                if (info.platform) infoLines.push(`<div>${info.platform.split('-')[0]}</div>`);
+                if (info.cpu_count) infoLines.push(`<div>${info.cpu_count} CPUs</div>`);
+                if (info.memory_total) infoLines.push(`<div>${(info.memory_total / 1024 / 1024 / 1024).toFixed(1)} GB RAM</div>`);
+                systemInfo = `<small class="text-muted">${infoLines.join('')}</small>`;
+            }
+        } catch (e) {
+            console.log('Failed to parse system_info for client:', client.hostname, e);
+            systemInfo = '<span class="text-muted">Parse error</span>';
+        }
     }
     
     // Version badge
