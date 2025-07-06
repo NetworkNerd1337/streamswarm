@@ -62,8 +62,15 @@
                             </div>
                             {% endif %}
                             
+                            <div class="d-grid mb-4">
+                                <a href="{{ url_for('dev_mode_settings') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Configure Development Mode
+                                </a>
+                            </div>
+                            
                             <!-- Expected Client Version Setting -->
-                            <div class="mb-4">
+                            <div class="mb-0">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <h6 class="mb-0">Expected Client Version</h6>
@@ -92,13 +99,6 @@
                                 <div class="form-text">
                                     Clients matching this version show green badges, others show yellow badges
                                 </div>
-                            </div>
-                            
-                            <div class="d-grid">
-                                <a href="{{ url_for('dev_mode_settings') }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-cog me-2"></i>
-                                    Configure Development Mode
-                                </a>
                             </div>
                         </div>
                     </div>
