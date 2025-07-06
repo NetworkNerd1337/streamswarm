@@ -3196,12 +3196,27 @@ function displayClientInfrastructureAnalysis(data) {
     const analysis = data.correlation_analysis;
     const recommendations = data.recommendations || [];
     
-    // Update summary metrics
+    // Update summary metrics with actual API response structure
+    const correlationScore = analysis.average_correlation || 0;
     document.getElementById('infraCorrelationScore').textContent = 
-        analysis.overall_correlation ? (analysis.overall_correlation * 100).toFixed(1) + '%' : 'N/A';
+        correlationScore ? (correlationScore * 100).toFixed(1) + '%' : 'N/A';
     
-    document.getElementById('infraRiskLevel').textContent = 
-        analysis.risk_level || 'Unknown';
+    // Calculate risk level based on correlation patterns and problem areas
+    let riskLevel = 'Low';
+    if (analysis.problem_areas && analysis.problem_areas.length > 0) {
+        const highSeverityProblems = analysis.problem_areas.filter(p => p.severity === 'high');
+        const mediumSeverityProblems = analysis.problem_areas.filter(p => p.severity === 'medium');
+        
+        if (highSeverityProblems.length > 0) {
+            riskLevel = 'High';
+        } else if (mediumSeverityProblems.length > 0) {
+            riskLevel = 'Medium';
+        }
+    } else if (correlationScore > 0.05) {
+        riskLevel = 'Medium';
+    }
+    
+    document.getElementById('infraRiskLevel').textContent = riskLevel;
     
     document.getElementById('infraRecommendationCount').textContent = 
         recommendations.length + ' items';
@@ -3210,22 +3225,31 @@ function displayClientInfrastructureAnalysis(data) {
     const correlationsContainer = document.getElementById('infraCorrelations');
     correlationsContainer.innerHTML = '';
     
-    if (analysis.strongest_correlations && analysis.strongest_correlations.length > 0) {
-        analysis.strongest_correlations.forEach(correlation => {
+    if (analysis.feature_importance && Object.keys(analysis.feature_importance).length > 0) {
+        // Sort features by importance and take top 6
+        const sortedFeatures = Object.entries(analysis.feature_importance)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 6);
+        
+        sortedFeatures.forEach(([feature, importance]) => {
             const correlationCard = document.createElement('div');
             correlationCard.className = 'col-md-6 mb-3';
             
             let badgeClass = 'bg-secondary';
-            if (Math.abs(correlation.correlation) > 0.7) badgeClass = 'bg-danger';
-            else if (Math.abs(correlation.correlation) > 0.5) badgeClass = 'bg-warning';
-            else if (Math.abs(correlation.correlation) > 0.3) badgeClass = 'bg-info';
+            let correlationPercent = importance * 100;
+            if (correlationPercent > 0.07) badgeClass = 'bg-danger';
+            else if (correlationPercent > 0.05) badgeClass = 'bg-warning';
+            else if (correlationPercent > 0.03) badgeClass = 'bg-info';
+            
+            // Format feature name for display
+            const displayName = feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
             
             correlationCard.innerHTML = `
                 <div class="card h-100">
                     <div class="card-body">
-                        <h6 class="card-title">${correlation.metric}</h6>
-                        <p class="card-text">${correlation.description}</p>
-                        <span class="badge ${badgeClass}">${(correlation.correlation * 100).toFixed(1)}% correlation</span>
+                        <h6 class="card-title">${displayName}</h6>
+                        <p class="card-text">This system metric shows correlation with network performance</p>
+                        <span class="badge ${badgeClass}">${correlationPercent.toFixed(2)}% importance</span>
                     </div>
                 </div>
             `;
