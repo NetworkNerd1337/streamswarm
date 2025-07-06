@@ -252,7 +252,7 @@ function createDoughnutChart(ctx, data, title) {
 
 // Client management functions
 function deleteClient(clientId, clientHostname) {
-    if (confirm(`Are you sure you want to delete client "${clientHostname}"?\n\nThis will remove the client from the system but preserve all historical test data for reporting purposes.`)) {
+    if (confirm(`Are you sure you want to delete client "${clientHostname}"?\n\nThis will:\n• Remove the client permanently\n• Prevent the client from reconnecting with the same ID\n\nNote: Clients with test data cannot be deleted to preserve historical records.\n\nThis action cannot be undone.`)) {
         apiRequest(`/api/clients/${clientId}`, {
             method: 'DELETE'
         })

@@ -632,7 +632,7 @@ function assignToTest(clientId) {
 }
 
 async function deleteClient(clientId, hostname) {
-    if (!confirm(`Are you sure you want to delete client "${hostname}"?\n\nThis will:\n• Remove the client permanently\n• Keep all historical test data\n• Prevent the client from reconnecting with the same ID\n\nThis action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete client "${hostname}"?\n\nThis will:\n• Remove the client permanently\n• Prevent the client from reconnecting with the same ID\n\nNote: Clients with test data cannot be deleted to preserve historical records.\n\nThis action cannot be undone.`)) {
         return;
     }
     
