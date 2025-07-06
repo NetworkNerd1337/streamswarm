@@ -20,6 +20,27 @@
         </div>
     </div>
 
+    <!-- Version Status Banner -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div>
+                    <strong>Expected Client Version:</strong> {{ config.expected_client_version }}
+                    <span class="ms-3 text-muted">
+                        <i class="fas fa-check text-success me-1"></i>Current
+                        <span class="ms-2">
+                            <i class="fas fa-exclamation-triangle text-danger me-1"></i>Outdated
+                        </span>
+                        <span class="ms-2">
+                            <i class="fas fa-question text-secondary me-1"></i>Unknown
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Search and Clients Table -->
     <div class="row mb-3">
         <div class="col-12">
@@ -138,7 +159,7 @@
                                                     {{ client.client_version }}
                                                 </span>
                                             {% else %}
-                                                <span class="badge bg-warning text-dark">
+                                                <span class="badge bg-danger">
                                                     <i class="fas fa-exclamation-triangle me-1"></i>
                                                     {{ client.client_version }}
                                                 </span>
