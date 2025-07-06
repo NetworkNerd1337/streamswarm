@@ -2342,6 +2342,11 @@ def system_configuration():
             'description': 'Temporarily disable authentication for development',
             'type': 'boolean'
         },
+        'expected_client_version': {
+            'current_value': SystemConfig.get_setting('expected_client_version', '1.0.0'),
+            'description': 'Version that clients should be running for deployment tracking',
+            'type': 'text'
+        },
         'session_timeout': {
             'current_value': SystemConfig.get_session_timeout_minutes(),
             'description': 'Automatically log out users after inactive period (minutes)',
@@ -2416,6 +2421,47 @@ def dev_mode_status():
     except Exception as e:
         logging.error(f"Error getting dev mode status: {str(e)}")
         return jsonify({'error': 'Failed to get development mode status'}), 500
+
+@app.route('/api/update-system-config', methods=['POST'])
+@admin_required
+def update_system_config():
+    """Update system configuration setting - admin only"""
+    try:
+        from models import SystemConfig
+        data = request.get_json()
+        
+        key = data.get('key')
+        value = data.get('value')
+        
+        if not key or value is None:
+            return jsonify({'error': 'Key and value are required'}), 400
+        
+        # Validate specific configuration keys
+        if key == 'expected_client_version':
+            # Validate version format
+            import re
+            if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+$', value):
+                return jsonify({'error': 'Version must be in format x.y.z (e.g., 1.0.0)'}), 400
+            
+            SystemConfig.set_setting(
+                key, 
+                value,
+                'Version that clients should be running for deployment tracking'
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': f'Expected client version updated to {value}',
+                'key': key,
+                'value': value
+            })
+        
+        else:
+            return jsonify({'error': f'Unknown configuration key: {key}'}), 400
+        
+    except Exception as e:
+        logging.error(f"Error updating system configuration: {str(e)}")
+        return jsonify({'error': 'Failed to update system configuration'}), 500
 
 @app.route('/api/session-timeout', methods=['POST'])
 @admin_required
