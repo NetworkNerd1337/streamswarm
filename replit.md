@@ -105,14 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- July 6, 2025: Added comprehensive Server Configuration Options tutorial section with detailed explanations
-  - Created new tutorial section explaining all system configuration settings available in the admin interface
-  - Documented Development Mode with security warnings and use cases for testing and development
-  - Explained Expected Client Version feature for deployment tracking with color-coded status indicators
-  - Detailed Session Timeout options with security recommendations and behavior descriptions  
+- July 6, 2025: Fixed client deletion popup accuracy and added comprehensive Server Configuration Options tutorial
+  - Fixed misleading client deletion popup that incorrectly stated "Keep all historical test data" when offline clients with tests cannot actually be deleted
+  - Updated deletion message to accurately state "Clients with test data cannot be deleted to preserve historical records"
+  - Applied consistent messaging across both deleteClient functions in clients.html and dashboard.js
+  - Created comprehensive Server Configuration Options tutorial section explaining all system configuration settings
+  - Documented Development Mode with security warnings, Expected Client Version for deployment tracking, Session Timeout options
   - Covered management interface access including User Management, API Token Management, and AI Model Configuration
   - Added configuration best practices and security recommendations for production environments
-  - Positioned Expected Client Version setting below Configure Development Mode button in system configuration interface
 - July 6, 2025: Successfully resolved System Info column display issue and completed client versioning system
   - Fixed double-escaped JSON parsing in both server-side template rendering and API routes
   - System Info column now properly displays platform, CPU count, and memory details for all clients
