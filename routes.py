@@ -321,18 +321,12 @@ def test_results(test_id):
     """Test results view"""
     test = Test.query.get_or_404(test_id)
     results = TestResult.query.filter_by(test_id=test_id).order_by(TestResult.timestamp.asc()).all()
+    clients = db.session.query(Client).join(TestResult).filter(TestResult.test_id == test_id).distinct().all()
     
-    # Get clients that still exist for this test (exclude results with NULL client_id)
-    clients = db.session.query(Client).join(TestResult).filter(
-        TestResult.test_id == test_id,
-        TestResult.client_id.isnot(None)
-    ).distinct().all()
-    
-    # Get results with client information joined for handshake analysis (only for existing clients)
+    # Get results with client information joined for handshake analysis
     handshake_analysis_results = db.session.query(TestResult).join(Client).filter(
         TestResult.test_id == test_id,
-        TestResult.tcp_handshake_analysis.isnot(None),
-        TestResult.client_id.isnot(None)
+        TestResult.tcp_handshake_analysis.isnot(None)
     ).order_by(TestResult.timestamp.desc()).all()
     
     return render_template('test_results.html', 
@@ -1625,9 +1619,8 @@ def export_test_pdf(test_id):
         return jsonify({'error': f'Failed to generate PDF report: {str(e)}'}), 500
 
 @app.route('/api/client/<int:client_id>', methods=['DELETE'])
-@admin_required
 def delete_client(client_id):
-    """Delete a client (only if offline) and clean up related data"""
+    """Delete a client (only if offline) while preserving historical data"""
     try:
         client = Client.query.get_or_404(client_id)
         
@@ -1635,43 +1628,33 @@ def delete_client(client_id):
         if client.status == 'online':
             return jsonify({'error': 'Cannot delete online client. Client must be offline first.'}), 400
         
-        # Store client info for logging
-        client_hostname = client.hostname
+        # Check for API token references
+        api_token_count = ApiToken.query.filter_by(client_id=client_id).count()
         
-        # Check for API token references and clean them up
-        api_tokens = ApiToken.query.filter_by(client_id=client_id).all()
-        api_token_count = len(api_tokens)
-        
-        # Get counts for logging purposes
+        # Check if client has test data
         result_count = TestResult.query.filter_by(client_id=client_id).count()
         test_client_count = TestClient.query.filter_by(client_id=client_id).count()
         
-        # Clean up API token references (set client_id to NULL)
-        for token in api_tokens:
-            token.client_id = None
-            
-        # Clean up test assignments (delete TestClient entries)
-        TestClient.query.filter_by(client_id=client_id).delete()
+        # Store client info for logging
+        client_hostname = client.hostname
         
-        # Set client_id to NULL in test results to preserve historical data
-        TestResult.query.filter_by(client_id=client_id).update({'client_id': None})
+        if api_token_count > 0:
+            # API tokens must be deleted first
+            return jsonify({
+                'error': f'Cannot delete client "{client_hostname}" because it has {api_token_count} API token(s) assigned. Please delete the API token(s) first in the Token Management section, then try deleting the client again.'
+            }), 400
         
-        # Delete the client
+        if result_count > 0 or test_client_count > 0:
+            # Cannot delete client with existing test data due to foreign key constraints
+            return jsonify({
+                'error': f'Cannot delete client "{client_hostname}" because it has {result_count} test results and {test_client_count} test assignments. Historical data must be preserved.'
+            }), 400
+        
+        # Only delete clients with no test data to maintain referential integrity
         db.session.delete(client)
         db.session.commit()
         
-        # Create detailed log message
-        cleanup_info = []
-        if api_token_count > 0:
-            cleanup_info.append(f"{api_token_count} API token(s) unlinked")
-        if result_count > 0:
-            cleanup_info.append(f"{result_count} test result(s) preserved")
-        if test_client_count > 0:
-            cleanup_info.append(f"{test_client_count} test assignment(s) removed")
-            
-        cleanup_details = ", ".join(cleanup_info) if cleanup_info else "no related data"
-        
-        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted successfully. Cleanup: {cleanup_details}")
+        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted successfully. No test data was associated with this client.")
         
         return jsonify({
             'status': 'success',
@@ -1679,7 +1662,6 @@ def delete_client(client_id):
         })
         
     except Exception as e:
-        db.session.rollback()
         logging.error(f"Error deleting client {client_id}: {str(e)}")
         return jsonify({'error': 'Failed to delete client'}), 500
 

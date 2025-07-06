@@ -256,7 +256,7 @@ class ApiToken(db.Model):
 class TestResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     
     # System metrics

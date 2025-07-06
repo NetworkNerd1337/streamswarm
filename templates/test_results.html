@@ -530,7 +530,7 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    {% set interface_clients = results|selectattr('network_interface_info')|selectattr('client_id')|groupby('client_id')|list %}
+                    {% set interface_clients = results|selectattr('network_interface_info')|groupby('client_id')|list %}
                     {% if interface_clients %}
                         {% for client_id, client_results in interface_clients %}
                             {% set client = clients|selectattr('id', 'equalto', client_id)|first %}
