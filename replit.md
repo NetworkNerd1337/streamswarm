@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 6, 2025: Successfully implemented Client Infrastructure Correlation model as 6th ML model in StreamSwarm
+  - Added comprehensive PCA + Linear Regression algorithm for correlating client system metrics with network performance
+  - Created model training methods analyzing CPU, memory, and network interface data with 25+ test result requirements
+  - Integrated model into ML models page with proper status tracking and warning-colored card display
+  - Added API endpoint /api/analyze-client-infrastructure for client infrastructure analysis and improvement recommendations
+  - Model provides client-side optimization suggestions like "Client X shows degraded performance when CPU >80%"
+  - Enhanced model training system to include client infrastructure analyzer alongside existing 5 ML models
+  - All 6 ML models now fully functional: anomaly detection, health classification, performance prediction, network failure prediction, QoS compliance monitoring, and client infrastructure correlation
 - July 6, 2025: Fixed client deletion popup accuracy and added comprehensive Server Configuration Options tutorial
   - Fixed misleading client deletion popup that incorrectly stated "Keep all historical test data" when offline clients with tests cannot actually be deleted
   - Updated deletion message to accurately state "Clients with test data cannot be deleted to preserve historical records"
