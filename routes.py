@@ -1613,37 +1613,39 @@ def delete_client(client_id):
         if client.status == 'online':
             return jsonify({'error': 'Cannot delete online client. Client must be offline first.'}), 400
         
-        # Check for API token references
-        api_token_count = ApiToken.query.filter_by(client_id=client_id).count()
-        
-        # Check if client has test data
-        result_count = TestResult.query.filter_by(client_id=client_id).count()
-        test_client_count = TestClient.query.filter_by(client_id=client_id).count()
-        
         # Store client info for logging
         client_hostname = client.hostname
         
-        if api_token_count > 0:
-            # API tokens must be deleted first
-            return jsonify({
-                'error': f'Cannot delete client "{client_hostname}" because it has {api_token_count} API token(s) assigned. Please delete the API token(s) first in the Token Management section, then try deleting the client again.'
-            }), 400
+        # Check counts for logging purposes only
+        result_count = TestResult.query.filter_by(client_id=client_id).count()
+        test_client_count = TestClient.query.filter_by(client_id=client_id).count()
+        api_token_count = ApiToken.query.filter_by(client_id=client_id).count()
         
-        if result_count > 0 or test_client_count > 0:
-            # Cannot delete client with existing test data due to foreign key constraints
-            return jsonify({
-                'error': f'Cannot delete client "{client_hostname}" because it has {result_count} test results and {test_client_count} test assignments. Historical data must be preserved.'
-            }), 400
-        
-        # Only delete clients with no test data to maintain referential integrity
+        # Delete the client - foreign keys are now set to ON DELETE SET NULL
+        # This will automatically set client_id to NULL in related tables
         db.session.delete(client)
         db.session.commit()
         
-        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted successfully. No test data was associated with this client.")
+        # Log the deletion with preserved data info
+        preserved_info = []
+        if result_count > 0:
+            preserved_info.append(f"{result_count} test results")
+        if test_client_count > 0:
+            preserved_info.append(f"{test_client_count} test assignments")
+        if api_token_count > 0:
+            preserved_info.append(f"{api_token_count} API tokens")
+        
+        preserved_text = f" (preserved: {', '.join(preserved_info)})" if preserved_info else ""
+        
+        logging.info(f"Client {client_hostname} (ID: {client_id}) deleted successfully{preserved_text}")
+        
+        success_message = f'Client "{client_hostname}" deleted successfully'
+        if preserved_info:
+            success_message += f". Historical data preserved: {', '.join(preserved_info)}"
         
         return jsonify({
             'status': 'success',
-            'message': f'Client "{client_hostname}" deleted successfully'
+            'message': success_message
         })
         
     except Exception as e:
