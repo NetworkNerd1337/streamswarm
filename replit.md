@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 7, 2025: Successfully completed comprehensive GNMI Client Manager system with centralized server-based device configuration
+  - Implemented complete GNMI Client Manager web interface with device and certificate management (admin-only access)
+  - Added GNMI Client Manager link to admin dropdown navigation for easy access from any page
+  - Created robust client-side GNMI synchronization that automatically downloads device configurations on startup
+  - Implemented secure certificate download and management with proper file permissions (600 for private keys)
+  - Enhanced GNMI client with device clearing functionality and connection management
+  - Added local configuration caching for offline operation and resilience
+  - Fixed template navigation error in GNMI manager interface
+  - Complete enterprise-grade GNMI management: server configures devices centrally, clients sync automatically on startup
 - July 6, 2025: Created professional Apple touch icon for iOS home screen integration
   - Updated to use custom StreamSwarm logo featuring dynamic triangular design with orange/purple gradient
   - Resized user-provided logo to proper 180x180 pixels for Apple touch icon standards
