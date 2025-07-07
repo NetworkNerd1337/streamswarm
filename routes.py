@@ -2957,9 +2957,16 @@ def create_gnmi_device():
         description = request.form.get('description')
         enabled = request.form.get('enabled') == 'on'
         
+        logging.info(f"Creating GNMI device: name={name}, ip={ip_address}, port={port}, auth_method={auth_method}, enabled={enabled}")
+        
         # Validate required fields
         if not name or not ip_address:
             return jsonify({'success': False, 'message': 'Name and IP address are required'}), 400
+        
+        # Check for duplicate device names
+        existing_device = GnmiDevice.query.filter_by(name=name).first()
+        if existing_device:
+            return jsonify({'success': False, 'message': f'Device name "{name}" already exists'}), 400
         
         # Validate IP address
         try:
@@ -2970,6 +2977,13 @@ def create_gnmi_device():
         # Validate authentication based on method
         if auth_method == 'password' and (not username or not password):
             return jsonify({'success': False, 'message': 'Username and password required for password authentication'}), 400
+        
+        # For certificate authentication, validate that required certificates are provided
+        if auth_method in ['certificate', 'cert_username']:
+            if 'client_cert' not in request.files or not request.files['client_cert'].filename:
+                return jsonify({'success': False, 'message': 'Client certificate file is required for certificate authentication'}), 400
+            if 'client_key' not in request.files or not request.files['client_key'].filename:
+                return jsonify({'success': False, 'message': 'Client private key file is required for certificate authentication'}), 400
         
         # Create device
         device = GnmiDevice(

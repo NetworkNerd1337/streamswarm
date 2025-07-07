@@ -366,23 +366,42 @@ function toggleEditAuthFields() {
 document.getElementById('addDeviceForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    
+    // Disable button and show loading state
+    submitButton.disabled = true;
+    submitButton.textContent = 'Adding Device...';
+    
     const formData = new FormData(this);
     
     fetch('/api/gnmi/devices', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
+            // Show success message and reload
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addDeviceModal'));
+            modal.hide();
             location.reload();
         } else {
-            alert('Error adding device: ' + data.message);
+            throw new Error(data.message || 'Unknown error occurred');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Error adding device');
+        console.error('Error adding device:', error);
+        alert('Error adding device: ' + error.message);
+        
+        // Re-enable button
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
     });
 });
 
