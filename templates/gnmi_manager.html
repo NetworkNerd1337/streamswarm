@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+
+{% block title %}GNMI Client Manager - StreamSwarm{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">GNMI Client Manager</h1>
+                    <p class="text-muted">Manage GNMI-enabled network devices for client telemetry collection</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('system_config') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to System Configuration
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDeviceModal">
+                        <i class="fas fa-plus"></i> Add Device
+                    </button>
+                </div>
+            </div>
+
+            <!-- Device List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-network-wired me-2"></i>
+                        GNMI Devices
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>IP Address</th>
+                                    <th>Port</th>
+                                    <th>Authentication</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deviceTableBody">
+                                {% for device in devices %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ device.name }}</strong>
+                                        {% if device.description %}
+                                        <br><small class="text-muted">{{ device.description }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ device.ip_address }}</td>
+                                    <td>{{ device.port }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'info' if device.auth_method == 'password' else 'success' }}">
+                                            {{ device.auth_method.replace('_', ' ').title() }}
+                                        </span>
+                                        {% if device.auth_method != 'password' %}
+                                        <br><small class="text-muted">{{ device.certificates|length }} certificates</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if device.enabled else 'secondary' }}">
+                                            {{ 'Enabled' if device.enabled else 'Disabled' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ device.created_at.strftime('%Y-%m-%d %H:%M') if device.created_at else 'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-primary" onclick="editDevice({{ device.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="viewCertificates({{ device.id }})">
+                                                <i class="fas fa-certificate"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" onclick="deleteDevice({{ device.id }}, '{{ device.name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if not devices %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-network-wired fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No GNMI devices configured</h5>
+                            <p class="text-muted">Add your first GNMI-enabled network device to start collecting telemetry data.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Device Modal -->
+<div class="modal fade" id="addDeviceModal" tabindex="-1" aria-labelledby="addDeviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDeviceModalLabel">Add GNMI Device</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addDeviceForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deviceName" class="form-label">Device Name</label>
+                                <input type="text" class="form-control" id="deviceName" name="name" required>
+                                <div class="form-text">Friendly name for identification</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="deviceIP" class="form-label">IP Address</label>
+                                <input type="text" class="form-control" id="deviceIP" name="ip_address" required>
+                                <div class="form-text">IPv4 or IPv6 address</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="devicePort" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="devicePort" name="port" value="830" min="1" max="65535" required>
+                                <div class="form-text">Common ports: 830, 32768, 6030, 57400</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="authMethod" class="form-label">Authentication Method</label>
+                                <select class="form-select" id="authMethod" name="auth_method" required onchange="toggleAuthFields()">
+                                    <option value="password">Username/Password</option>
+                                    <option value="certificate">Certificate Only</option>
+                                    <option value="cert_username">Certificate + Username</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Username/Password Fields -->
+                    <div id="credentialFields">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="deviceUsername" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="deviceUsername" name="username">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="devicePassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="devicePassword" name="password">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Certificate Fields -->
+                    <div id="certificateFields" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="clientCert" class="form-label">Client Certificate</label>
+                                    <input type="file" class="form-control" id="clientCert" name="client_cert" accept=".crt,.pem">
+                                    <div class="form-text">Client certificate file (.crt or .pem)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="clientKey" class="form-label">Client Key</label>
+                                    <input type="file" class="form-control" id="clientKey" name="client_key" accept=".key,.pem">
+                                    <div class="form-text">Private key file (.key or .pem)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="caCert" class="form-label">CA Certificate</label>
+                                    <input type="file" class="form-control" id="caCert" name="ca_cert" accept=".crt,.pem">
+                                    <div class="form-text">CA certificate (optional)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="deviceDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="deviceDescription" name="description" rows="2" placeholder="Optional description or notes"></textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="deviceEnabled" name="enabled" checked>
+                        <label class="form-check-label" for="deviceEnabled">
+                            Enable device for telemetry collection
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Device Modal -->
+<div class="modal fade" id="editDeviceModal" tabindex="-1" aria-labelledby="editDeviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editDeviceModalLabel">Edit GNMI Device</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editDeviceForm" enctype="multipart/form-data">
+                <input type="hidden" id="editDeviceId" name="id">
+                <div class="modal-body">
+                    <!-- Same form fields as add modal -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editDeviceName" class="form-label">Device Name</label>
+                                <input type="text" class="form-control" id="editDeviceName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editDeviceIP" class="form-label">IP Address</label>
+                                <input type="text" class="form-control" id="editDeviceIP" name="ip_address" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editDevicePort" class="form-label">Port</label>
+                                <input type="number" class="form-control" id="editDevicePort" name="port" min="1" max="65535" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editAuthMethod" class="form-label">Authentication Method</label>
+                                <select class="form-select" id="editAuthMethod" name="auth_method" required onchange="toggleEditAuthFields()">
+                                    <option value="password">Username/Password</option>
+                                    <option value="certificate">Certificate Only</option>
+                                    <option value="cert_username">Certificate + Username</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="editCredentialFields">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editDeviceUsername" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="editDeviceUsername" name="username">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editDevicePassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="editDevicePassword" name="password" placeholder="Leave blank to keep current">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editDeviceDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editDeviceDescription" name="description" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editDeviceEnabled" name="enabled">
+                        <label class="form-check-label" for="editDeviceEnabled">
+                            Enable device for telemetry collection
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Certificates Modal -->
+<div class="modal fade" id="certificatesModal" tabindex="-1" aria-labelledby="certificatesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="certificatesModalLabel">Device Certificates</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="certificatesContent">
+                    <!-- Certificate content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle authentication fields based on selected method
+function toggleAuthFields() {
+    const authMethod = document.getElementById('authMethod').value;
+    const credentialFields = document.getElementById('credentialFields');
+    const certificateFields = document.getElementById('certificateFields');
+    const usernameField = document.getElementById('deviceUsername');
+    const passwordField = document.getElementById('devicePassword');
+    
+    if (authMethod === 'password') {
+        credentialFields.style.display = 'block';
+        certificateFields.style.display = 'none';
+        usernameField.required = true;
+        passwordField.required = true;
+    } else if (authMethod === 'certificate') {
+        credentialFields.style.display = 'none';
+        certificateFields.style.display = 'block';
+        usernameField.required = false;
+        passwordField.required = false;
+    } else if (authMethod === 'cert_username') {
+        credentialFields.style.display = 'block';
+        certificateFields.style.display = 'block';
+        usernameField.required = true;
+        passwordField.required = false;
+    }
+}
+
+function toggleEditAuthFields() {
+    const authMethod = document.getElementById('editAuthMethod').value;
+    const credentialFields = document.getElementById('editCredentialFields');
+    const usernameField = document.getElementById('editDeviceUsername');
+    
+    if (authMethod === 'password') {
+        credentialFields.style.display = 'block';
+        usernameField.required = true;
+    } else if (authMethod === 'certificate') {
+        credentialFields.style.display = 'none';
+        usernameField.required = false;
+    } else if (authMethod === 'cert_username') {
+        credentialFields.style.display = 'block';
+        usernameField.required = true;
+    }
+}
+
+// Add device form submission
+document.getElementById('addDeviceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('/api/gnmi/devices', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error adding device: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding device');
+    });
+});
+
+// Edit device
+function editDevice(deviceId) {
+    fetch(`/api/gnmi/devices/${deviceId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const device = data.device;
+            document.getElementById('editDeviceId').value = device.id;
+            document.getElementById('editDeviceName').value = device.name;
+            document.getElementById('editDeviceIP').value = device.ip_address;
+            document.getElementById('editDevicePort').value = device.port;
+            document.getElementById('editAuthMethod').value = device.auth_method;
+            document.getElementById('editDeviceUsername').value = device.username || '';
+            document.getElementById('editDeviceDescription').value = device.description || '';
+            document.getElementById('editDeviceEnabled').checked = device.enabled;
+            
+            toggleEditAuthFields();
+            
+            const editModal = new bootstrap.Modal(document.getElementById('editDeviceModal'));
+            editModal.show();
+        } else {
+            alert('Error loading device: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error loading device');
+    });
+}
+
+// Update device form submission
+document.getElementById('editDeviceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const deviceId = document.getElementById('editDeviceId').value;
+    
+    fetch(`/api/gnmi/devices/${deviceId}`, {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error updating device: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating device');
+    });
+});
+
+// Delete device
+function deleteDevice(deviceId, deviceName) {
+    if (confirm(`Are you sure you want to delete the device "${deviceName}"? This will also delete all associated certificates.`)) {
+        fetch(`/api/gnmi/devices/${deviceId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting device: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting device');
+        });
+    }
+}
+
+// View certificates
+function viewCertificates(deviceId) {
+    fetch(`/api/gnmi/devices/${deviceId}/certificates`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const certificates = data.certificates;
+            let content = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Type</th><th>Filename</th><th>Size</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>';
+            
+            certificates.forEach(cert => {
+                content += `<tr>
+                    <td><span class="badge bg-secondary">${cert.cert_type.replace('_', ' ')}</span></td>
+                    <td>${cert.filename}</td>
+                    <td>${cert.size} bytes</td>
+                    <td>${cert.created_at}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="downloadCertificate(${cert.id})">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            
+            content += '</tbody></table></div>';
+            
+            if (certificates.length === 0) {
+                content = '<div class="text-center py-4"><i class="fas fa-certificate fa-3x text-muted mb-3"></i><h6 class="text-muted">No certificates uploaded</h6></div>';
+            }
+            
+            document.getElementById('certificatesContent').innerHTML = content;
+            
+            const certificatesModal = new bootstrap.Modal(document.getElementById('certificatesModal'));
+            certificatesModal.show();
+        } else {
+            alert('Error loading certificates: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error loading certificates');
+    });
+}
+
+// Download certificate
+function downloadCertificate(certificateId) {
+    window.open(`/api/gnmi/certificates/${certificateId}/download`, '_blank');
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleAuthFields();
+});
+</script>
+{% endblock %}

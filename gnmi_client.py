@@ -102,6 +102,25 @@ class GNMINetworkAnalyzer:
             logger.error(f"Error adding GNMI device {device_ip}: {str(e)}")
             return False
     
+    def clear_devices(self):
+        """Clear all configured devices and close connections"""
+        try:
+            # Close all existing connections
+            for device_key, client in self.connected_devices.items():
+                try:
+                    client.close()
+                except Exception as e:
+                    logger.warning(f"Error closing connection to {device_key}: {e}")
+            
+            # Clear storage
+            self.connected_devices.clear()
+            self.device_credentials.clear()
+            
+            logger.info("Cleared all GNMI devices and connections")
+            
+        except Exception as e:
+            logger.error(f"Error clearing GNMI devices: {e}")
+    
     def connect_to_device(self, device_key: str) -> Optional[gNMIclient]:
         """Establish GNMI connection to a network device"""
         try:

@@ -87,81 +87,32 @@ class StreamSwarmClient:
         # Initialize GNMI network analyzer for managed infrastructure analysis
         if GNMI_AVAILABLE:
             self.gnmi_analyzer = GNMINetworkAnalyzer()
-            
-            # Configure GNMI devices - Add your network devices here
-            # Multiple authentication methods are supported:
-            
-            # Method 1: Username/Password Authentication (Traditional)
-            # self.gnmi_analyzer.add_device("192.168.1.1", "admin", "cisco123", 830)
-            # self.gnmi_analyzer.add_device("10.0.1.5", "netconf", "juniper456", 32768)
-            
-            # Method 2: Certificate Authentication (Recommended for production)
-            # self.gnmi_analyzer.add_device(
-            #     device_ip="192.168.1.1",
-            #     port=830,
-            #     auth_method='certificate',
-            #     cert_file='/etc/streamswarm/certs/client.crt',
-            #     key_file='/etc/streamswarm/certs/client.key',
-            #     ca_file='/etc/streamswarm/certs/ca.crt'  # Optional for custom CAs
-            # )
-            
-            # Method 3: Certificate + Username Authentication (Hybrid)
-            # self.gnmi_analyzer.add_device(
-            #     device_ip="10.0.1.5",
-            #     username="admin",
-            #     port=32768,
-            #     auth_method='cert_username',
-            #     cert_file='/etc/streamswarm/certs/client.crt',
-            #     key_file='/etc/streamswarm/certs/client.key'
-            # )
-            
-            # Environment Variable Configuration (Production Recommended)
-            # Example: Load devices from environment variables
-            # import os
-            # devices = [
-            #     {
-            #         'ip': os.getenv('GNMI_DEVICE1_IP'),
-            #         'username': os.getenv('GNMI_DEVICE1_USER'),
-            #         'password': os.getenv('GNMI_DEVICE1_PASS'),
-            #         'port': int(os.getenv('GNMI_DEVICE1_PORT', '830')),
-            #         'auth_method': 'password'
-            #     },
-            #     {
-            #         'ip': os.getenv('GNMI_DEVICE2_IP'),
-            #         'port': int(os.getenv('GNMI_DEVICE2_PORT', '830')),
-            #         'auth_method': 'certificate',
-            #         'cert_file': os.getenv('GNMI_CERT_FILE'),
-            #         'key_file': os.getenv('GNMI_KEY_FILE'),
-            #         'ca_file': os.getenv('GNMI_CA_FILE')
-            #     }
-            # ]
-            # 
-            # for device in devices:
-            #     if device['ip']:
-            #         if device['auth_method'] == 'password':
-            #             self.gnmi_analyzer.add_device(
-            #                 device['ip'], device['username'], device['password'], device['port']
-            #             )
-            #         elif device['auth_method'] == 'certificate':
-            #             self.gnmi_analyzer.add_device(
-            #                 device_ip=device['ip'],
-            #                 port=device['port'],
-            #                 auth_method='certificate',
-            #                 cert_file=device['cert_file'],
-            #                 key_file=device['key_file'],
-            #                 ca_file=device.get('ca_file')
-            #             )
-            
-            logger.info("GNMI network analyzer initialized for managed infrastructure analysis")
+            # GNMI devices will be synchronized from server on startup
+            logger.info("GNMI network analyzer initialized - devices will sync from server")
         else:
             self.gnmi_analyzer = None
-            logger.warning("GNMI functionality not available - install pygnmi for network path analysis")
+            logger.warning("GNMI functionality not available - advanced network path analysis disabled")
+        
+        # GNMI device configuration storage
+        self.gnmi_devices = []
+        self.gnmi_config_file = 'gnmi_devices.json'
+        self.gnmi_certs_dir = 'gnmi_certs'
+        
+        # Create certificates directory
+        if not os.path.exists(self.gnmi_certs_dir):
+            os.makedirs(self.gnmi_certs_dir)
+            
+        logger.info("GNMI network analyzer initialized for managed infrastructure analysis")
         
         # Get system information
         self.system_info = self._get_system_info()
         
         # Register with server
         self._register()
+        
+        # Synchronize GNMI device configuration from server
+        if GNMI_AVAILABLE:
+            self._sync_gnmi_devices()
     
     def _get_system_info(self):
         """Get system information"""
@@ -2916,6 +2867,167 @@ class StreamSwarmClient:
         except KeyboardInterrupt:
             logger.info("Received interrupt, shutting down...")
             self.stop()
+    
+    def _sync_gnmi_devices(self):
+        """Synchronize GNMI device configuration from server"""
+        try:
+            logger.info("Synchronizing GNMI devices from server...")
+            
+            # Get device list from server
+            response = requests.get(
+                f"{self.server_url}/api/gnmi/devices",
+                headers={'Authorization': f'Bearer {self.api_token}'},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                devices = response.json()
+                logger.info(f"Retrieved {len(devices)} GNMI devices from server")
+                
+                # Clear existing devices
+                self.gnmi_devices = []
+                if self.gnmi_analyzer:
+                    self.gnmi_analyzer.clear_devices()
+                
+                # Configure each device
+                for device in devices:
+                    try:
+                        self._configure_gnmi_device(device)
+                        self.gnmi_devices.append(device)
+                    except Exception as e:
+                        logger.error(f"Failed to configure GNMI device {device.get('name', 'unknown')}: {e}")
+                
+                # Save configuration to local file
+                self._save_gnmi_config()
+                
+                logger.info(f"Successfully configured {len(self.gnmi_devices)} GNMI devices")
+                
+            else:
+                logger.warning(f"Failed to retrieve GNMI devices from server: {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Error synchronizing GNMI devices: {e}")
+            # Try to load from local cache
+            self._load_gnmi_config()
+    
+    def _configure_gnmi_device(self, device):
+        """Configure a GNMI device based on server configuration"""
+        if not self.gnmi_analyzer:
+            return
+            
+        device_config = {
+            'name': device.get('name'),
+            'host': device.get('host'),
+            'port': device.get('port', 830),
+            'username': device.get('username'),
+            'auth_method': device.get('auth_method', 'password')
+        }
+        
+        # Download and configure certificates if needed
+        if device_config['auth_method'] in ['certificate', 'cert_username']:
+            cert_info = self._download_certificates(device)
+            if cert_info:
+                device_config.update(cert_info)
+            else:
+                logger.warning(f"Failed to download certificates for device {device_config['name']}")
+                return
+        
+        # Add device to GNMI analyzer
+        try:
+            if device_config['auth_method'] == 'password':
+                self.gnmi_analyzer.add_device(
+                    device_config['host'],
+                    device_config['username'],
+                    device.get('password', ''),
+                    device_config['port']
+                )
+            elif device_config['auth_method'] == 'certificate':
+                self.gnmi_analyzer.add_device(
+                    device_ip=device_config['host'],
+                    port=device_config['port'],
+                    auth_method='certificate',
+                    cert_file=device_config.get('cert_file'),
+                    key_file=device_config.get('key_file'),
+                    ca_file=device_config.get('ca_file')
+                )
+            elif device_config['auth_method'] == 'cert_username':
+                self.gnmi_analyzer.add_device(
+                    device_ip=device_config['host'],
+                    username=device_config['username'],
+                    port=device_config['port'],
+                    auth_method='cert_username',
+                    cert_file=device_config.get('cert_file'),
+                    key_file=device_config.get('key_file')
+                )
+            
+            logger.info(f"✓ Configured GNMI device: {device_config['name']} ({device_config['host']})")
+            
+        except Exception as e:
+            logger.error(f"Failed to add GNMI device {device_config['name']}: {e}")
+            raise
+    
+    def _download_certificates(self, device):
+        """Download certificates for a GNMI device"""
+        try:
+            # Get device certificates from server
+            response = requests.get(
+                f"{self.server_url}/api/gnmi/certificates/{device['id']}",
+                headers={'Authorization': f'Bearer {self.api_token}'},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                cert_data = response.json()
+                cert_files = {}
+                
+                # Save certificates to local files
+                for cert_type in ['client_cert', 'client_key', 'ca_cert']:
+                    if cert_data.get(cert_type):
+                        cert_path = os.path.join(self.gnmi_certs_dir, f"{device['name']}_{cert_type}.pem")
+                        
+                        with open(cert_path, 'w') as f:
+                            f.write(cert_data[cert_type])
+                        
+                        # Set appropriate permissions for key files
+                        if cert_type == 'client_key':
+                            os.chmod(cert_path, 0o600)
+                        
+                        # Map to expected keys
+                        if cert_type == 'client_cert':
+                            cert_files['cert_file'] = cert_path
+                        elif cert_type == 'client_key':
+                            cert_files['key_file'] = cert_path
+                        elif cert_type == 'ca_cert':
+                            cert_files['ca_file'] = cert_path
+                
+                return cert_files
+            else:
+                logger.warning(f"Failed to download certificates for device {device['name']}: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error downloading certificates for device {device['name']}: {e}")
+            return None
+    
+    def _save_gnmi_config(self):
+        """Save GNMI configuration to local file"""
+        try:
+            with open(self.gnmi_config_file, 'w') as f:
+                json.dump(self.gnmi_devices, f, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving GNMI configuration: {e}")
+    
+    def _load_gnmi_config(self):
+        """Load GNMI configuration from local file"""
+        try:
+            if os.path.exists(self.gnmi_config_file):
+                with open(self.gnmi_config_file, 'r') as f:
+                    self.gnmi_devices = json.load(f)
+                logger.info(f"Loaded {len(self.gnmi_devices)} GNMI devices from local cache")
+            else:
+                logger.info("No local GNMI configuration found")
+        except Exception as e:
+            logger.error(f"Error loading GNMI configuration: {e}")
     
     def stop(self):
         """Stop the client"""

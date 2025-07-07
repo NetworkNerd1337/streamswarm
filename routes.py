@@ -2,7 +2,7 @@ from flask import render_template, request, jsonify, redirect, url_for, flash, s
 from functools import wraps
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db, login_required_with_dev_bypass, require_admin_or_dev_mode
-from models import Client, Test, TestResult, TestClient, ApiToken, User, SystemConfig
+from models import Client, Test, TestResult, TestClient, ApiToken, User, SystemConfig, GnmiDevice, GnmiCertificate
 from datetime import datetime, timezone, timedelta
 import zoneinfo
 import json
@@ -2915,3 +2915,280 @@ def _create_next_recurring_test(original_test):
     logging.info(f"Created next recurring test {new_test.id} from completed test with parent {original_test.id}")
     
     return new_test
+
+
+# ================================
+# GNMI DEVICE MANAGEMENT ROUTES
+# ================================
+
+@app.route('/gnmi-manager')
+@admin_required
+def gnmi_manager():
+    """GNMI Device Manager page"""
+    devices = GnmiDevice.query.order_by(GnmiDevice.created_at.desc()).all()
+    return render_template('gnmi_manager.html', devices=devices)
+
+@app.route('/api/gnmi/devices', methods=['GET'])
+@admin_required
+def get_gnmi_devices():
+    """Get all GNMI devices for client synchronization"""
+    try:
+        devices = GnmiDevice.query.filter_by(enabled=True).all()
+        return jsonify({
+            'success': True,
+            'devices': [device.to_dict() for device in devices]
+        })
+    except Exception as e:
+        logging.error(f"Error getting GNMI devices: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to fetch devices'}), 500
+
+@app.route('/api/gnmi/devices', methods=['POST'])
+@admin_required
+def create_gnmi_device():
+    """Create a new GNMI device"""
+    try:
+        # Get form data
+        name = request.form.get('name')
+        ip_address = request.form.get('ip_address')
+        port = int(request.form.get('port', 830))
+        auth_method = request.form.get('auth_method', 'password')
+        username = request.form.get('username')
+        password = request.form.get('password')
+        description = request.form.get('description')
+        enabled = request.form.get('enabled') == 'on'
+        
+        # Validate required fields
+        if not name or not ip_address:
+            return jsonify({'success': False, 'message': 'Name and IP address are required'}), 400
+        
+        # Validate IP address
+        try:
+            ipaddress.ip_address(ip_address)
+        except ValueError:
+            return jsonify({'success': False, 'message': 'Invalid IP address format'}), 400
+        
+        # Validate authentication based on method
+        if auth_method == 'password' and (not username or not password):
+            return jsonify({'success': False, 'message': 'Username and password required for password authentication'}), 400
+        
+        # Create device
+        device = GnmiDevice(
+            name=name,
+            ip_address=ip_address,
+            port=port,
+            auth_method=auth_method,
+            username=username if auth_method != 'certificate' else None,
+            password=password if auth_method == 'password' else None,
+            description=description,
+            enabled=enabled,
+            created_by=current_user.id if current_user.is_authenticated else None
+        )
+        
+        db.session.add(device)
+        db.session.flush()  # Get the device ID
+        
+        # Handle certificate uploads
+        if auth_method in ['certificate', 'cert_username']:
+            cert_files = ['client_cert', 'client_key', 'ca_cert']
+            cert_types = ['client_cert', 'client_key', 'ca_cert']
+            
+            for cert_file, cert_type in zip(cert_files, cert_types):
+                if cert_file in request.files and request.files[cert_file].filename:
+                    file = request.files[cert_file]
+                    certificate = GnmiCertificate(
+                        device_id=device.id,
+                        cert_type=cert_type,
+                        filename=file.filename,
+                        content=file.read(),
+                        uploaded_by=current_user.id if current_user.is_authenticated else None
+                    )
+                    db.session.add(certificate)
+        
+        db.session.commit()
+        
+        logging.info(f"GNMI device '{name}' created by user {current_user.username if current_user.is_authenticated else 'system'}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Device created successfully',
+            'device': device.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error creating GNMI device: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to create device'}), 500
+
+@app.route('/api/gnmi/devices/<int:device_id>', methods=['GET'])
+@admin_required
+def get_gnmi_device(device_id):
+    """Get a specific GNMI device"""
+    try:
+        device = GnmiDevice.query.get_or_404(device_id)
+        return jsonify({
+            'success': True,
+            'device': device.to_dict()
+        })
+    except Exception as e:
+        logging.error(f"Error getting GNMI device {device_id}: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to fetch device'}), 500
+
+@app.route('/api/gnmi/devices/<int:device_id>', methods=['PUT'])
+@admin_required
+def update_gnmi_device(device_id):
+    """Update a GNMI device"""
+    try:
+        device = GnmiDevice.query.get_or_404(device_id)
+        
+        # Update basic fields
+        device.name = request.form.get('name', device.name)
+        device.ip_address = request.form.get('ip_address', device.ip_address)
+        device.port = int(request.form.get('port', device.port))
+        device.auth_method = request.form.get('auth_method', device.auth_method)
+        device.username = request.form.get('username') if device.auth_method != 'certificate' else None
+        device.description = request.form.get('description', device.description)
+        device.enabled = request.form.get('enabled') == 'on'
+        
+        # Update password only if provided
+        password = request.form.get('password')
+        if password and device.auth_method == 'password':
+            device.password = password
+        
+        device.updated_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        
+        db.session.commit()
+        
+        logging.info(f"GNMI device '{device.name}' updated by user {current_user.username if current_user.is_authenticated else 'system'}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Device updated successfully',
+            'device': device.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error updating GNMI device {device_id}: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to update device'}), 500
+
+@app.route('/api/gnmi/devices/<int:device_id>', methods=['DELETE'])
+@admin_required
+def delete_gnmi_device(device_id):
+    """Delete a GNMI device and its certificates"""
+    try:
+        device = GnmiDevice.query.get_or_404(device_id)
+        device_name = device.name
+        
+        # Delete device (certificates will be deleted automatically due to cascade)
+        db.session.delete(device)
+        db.session.commit()
+        
+        logging.info(f"GNMI device '{device_name}' deleted by user {current_user.username if current_user.is_authenticated else 'system'}")
+        
+        return jsonify({
+            'success': True,
+            'message': f"Device '{device_name}' deleted successfully"
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error deleting GNMI device {device_id}: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to delete device'}), 500
+
+@app.route('/api/gnmi/devices/<int:device_id>/certificates', methods=['GET'])
+@admin_required
+def get_gnmi_device_certificates(device_id):
+    """Get certificates for a GNMI device"""
+    try:
+        device = GnmiDevice.query.get_or_404(device_id)
+        certificates = GnmiCertificate.query.filter_by(device_id=device_id).all()
+        
+        return jsonify({
+            'success': True,
+            'certificates': [cert.to_dict() for cert in certificates]
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting certificates for device {device_id}: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to fetch certificates'}), 500
+
+@app.route('/api/gnmi/certificates/<int:cert_id>/download', methods=['GET'])
+@admin_required
+def download_gnmi_certificate(cert_id):
+    """Download a GNMI certificate file"""
+    try:
+        certificate = GnmiCertificate.query.get_or_404(cert_id)
+        
+        # Create a temporary file-like object
+        from io import BytesIO
+        file_obj = BytesIO(certificate.content)
+        file_obj.seek(0)
+        
+        return send_file(
+            file_obj,
+            as_attachment=True,
+            download_name=certificate.filename,
+            mimetype='application/octet-stream'
+        )
+        
+    except Exception as e:
+        logging.error(f"Error downloading certificate {cert_id}: {str(e)}")
+        return jsonify({'error': 'Failed to download certificate'}), 500
+
+# Client API endpoints for GNMI configuration synchronization
+@app.route('/api/client/gnmi/devices', methods=['GET'])
+def get_client_gnmi_devices():
+    """Get GNMI devices for client synchronization (no auth required - used by clients)"""
+    try:
+        devices = GnmiDevice.query.filter_by(enabled=True).all()
+        
+        # Return devices without sensitive password data
+        device_list = []
+        for device in devices:
+            device_data = {
+                'id': device.id,
+                'name': device.name,
+                'ip_address': device.ip_address,
+                'port': device.port,
+                'auth_method': device.auth_method,
+                'username': device.username if device.auth_method != 'certificate' else None,
+                'description': device.description
+            }
+            device_list.append(device_data)
+        
+        return jsonify({
+            'success': True,
+            'devices': device_list
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting GNMI devices for client: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to fetch devices'}), 500
+
+@app.route('/api/client/gnmi/devices/<int:device_id>/certificates/<cert_type>', methods=['GET'])
+def get_client_gnmi_certificate(device_id, cert_type):
+    """Get a specific certificate for client download"""
+    try:
+        certificate = GnmiCertificate.query.filter_by(
+            device_id=device_id, 
+            cert_type=cert_type
+        ).first()
+        
+        if not certificate:
+            return jsonify({'error': 'Certificate not found'}), 404
+        
+        # Create a temporary file-like object
+        from io import BytesIO
+        file_obj = BytesIO(certificate.content)
+        file_obj.seek(0)
+        
+        return send_file(
+            file_obj,
+            as_attachment=True,
+            download_name=certificate.filename,
+            mimetype='application/octet-stream'
+        )
+        
+    except Exception as e:
+        logging.error(f"Error getting certificate for client: {str(e)}")
+        return jsonify({'error': 'Failed to get certificate'}), 500

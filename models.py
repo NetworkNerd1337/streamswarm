@@ -492,3 +492,66 @@ class TestResult(db.Model):
             'signal_strength_samples': self.signal_strength_samples,
             'signal_strength_data': self.signal_strength_data
         }
+
+
+class GnmiDevice(db.Model):
+    """GNMI-enabled network devices for client configuration"""
+    __tablename__ = 'gnmi_devices'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)  # Friendly name for device
+    ip_address = db.Column(db.String(45), nullable=False)  # IPv4 or IPv6 address
+    port = db.Column(db.Integer, nullable=False, default=830)  # GNMI port
+    auth_method = db.Column(db.String(20), nullable=False, default='password')  # password, certificate, cert_username
+    username = db.Column(db.String(100), nullable=True)  # Username for auth (optional for cert-only)
+    password = db.Column(db.String(255), nullable=True)  # Encrypted password
+    description = db.Column(db.Text, nullable=True)  # Admin notes
+    enabled = db.Column(db.Boolean, nullable=False, default=True)  # Enable/disable device
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None), onupdate=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    created_by = db.Column(db.Integer, db.ForeignKey('web_users.id'), nullable=True)
+    
+    # Relationships
+    certificates = db.relationship('GnmiCertificate', backref='device', lazy=True, cascade='all, delete-orphan')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'ip_address': self.ip_address,
+            'port': self.port,
+            'auth_method': self.auth_method,
+            'username': self.username,
+            'description': self.description,
+            'enabled': self.enabled,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'certificates': [cert.to_dict() for cert in self.certificates]
+        }
+
+
+class GnmiCertificate(db.Model):
+    """Certificate files for GNMI device authentication"""
+    __tablename__ = 'gnmi_certificates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.Integer, db.ForeignKey('gnmi_devices.id'), nullable=False)
+    cert_type = db.Column(db.String(20), nullable=False)  # client_cert, client_key, ca_cert
+    filename = db.Column(db.String(255), nullable=False)  # Original filename
+    content = db.Column(db.LargeBinary, nullable=False)  # Certificate content
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('web_users.id'), nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'device_id': self.device_id,
+            'cert_type': self.cert_type,
+            'filename': self.filename,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'size': len(self.content) if self.content else 0
+        }
