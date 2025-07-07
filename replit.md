@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 7, 2025: Added comprehensive client certificate generation documentation for enterprise GNMI authentication
+  - Enhanced README.md with detailed step-by-step certificate generation process using OpenSSL
+  - Added vendor-specific GNMI server configuration for Cisco IOS-XR, Juniper JUNOS, Nokia SR-OS, and Arista EOS
+  - Created comprehensive accordion-based certificate tutorial in /tutorial page with 4 detailed steps
+  - Covered complete mutual TLS (mTLS) workflow from certificate generation to server trust configuration
+  - Added production CA signing instructions and security best practices
+  - Enhanced GNMI device creation with improved validation and error handling to prevent double-submission issues
+  - Fixed device creation form with loading states, duplicate name validation, and certificate file validation
+  - Documentation now covers complete enterprise certificate lifecycle management
 - July 7, 2025: Successfully completed comprehensive GNMI Client Manager system with centralized server-based device configuration
   - Implemented complete GNMI Client Manager web interface with device and certificate management (admin-only access)
   - Added GNMI Client Manager link to admin dropdown navigation for easy access from any page

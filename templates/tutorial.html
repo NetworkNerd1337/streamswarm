@@ -2859,6 +2859,149 @@ gnmi_analyzer.add_device(<br>
 )
                                         </code>
                                     </div>
+                                    
+                                    <!-- Certificate Generation Section -->
+                                    <div class="mt-4">
+                                        <h6 class="text-primary"><i class="fas fa-certificate me-2"></i>Client Certificate Generation</h6>
+                                        <p class="small mb-2">GNMI uses mutual TLS (mTLS) for secure authentication. Generate client certificates that your GNMI servers will trust:</p>
+                                        
+                                        <div class="accordion" id="certificateAccordion">
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingOne">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                                        <i class="fas fa-key me-2"></i>Step 1: Generate Client Certificate and Private Key
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#certificateAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="bg-dark p-3 rounded">
+                                                            <code class="text-light small">
+# Create certificate directory<br>
+sudo mkdir -p /etc/streamswarm/certs<br>
+cd /etc/streamswarm/certs<br><br>
+# Generate client private key (keep this secure!)<br>
+openssl genrsa -out client.key 2048<br><br>
+# Generate certificate signing request (CSR)<br>
+openssl req -new -key client.key -out client.csr \<br>
+&nbsp;&nbsp;-subj "/CN=streamswarm-client/O=YourOrganization/C=US"<br><br>
+# Generate self-signed certificate (for testing)<br>
+openssl x509 -req -days 365 -in client.csr \<br>
+&nbsp;&nbsp;-signkey client.key -out client.crt<br><br>
+# Set secure permissions<br>
+sudo chmod 600 client.key<br>
+sudo chmod 644 client.crt<br>
+sudo chown root:root client.*
+                                                            </code>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingTwo">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                                        <i class="fas fa-shield-alt me-2"></i>Step 2: Production CA Signing
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#certificateAccordion">
+                                                    <div class="accordion-body">
+                                                        <div class="bg-dark p-3 rounded">
+                                                            <code class="text-light small">
+# For production environments, use your Certificate Authority<br>
+# Submit client.csr to your CA for signing<br>
+# Replace client.crt with CA-signed certificate<br><br>
+# Example with internal CA:<br>
+openssl ca -in client.csr -out client.crt \<br>
+&nbsp;&nbsp;-cert ca.crt -keyfile ca.key -days 365
+                                                            </code>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingThree">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                                        <i class="fas fa-server me-2"></i>Step 3: Configure GNMI Server Trust
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#certificateAccordion">
+                                                    <div class="accordion-body">
+                                                        <p class="small mb-2">Add the client certificate to your GNMI server's trusted certificates:</p>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <h6 class="text-info">Cisco IOS-XR:</h6>
+                                                                <div class="bg-dark p-2 rounded mb-2">
+                                                                    <code class="text-light small">
+crypto ca trustpoint streamswarm-client<br>
+&nbsp;certificate /path/to/client.crt<br>
+&nbsp;revocation-check none
+                                                                    </code>
+                                                                </div>
+                                                                
+                                                                <h6 class="text-info">Juniper JUNOS:</h6>
+                                                                <div class="bg-dark p-2 rounded">
+                                                                    <code class="text-light small">
+set security certificates trusted-ca-list \<br>
+&nbsp;&nbsp;streamswarm-client ca-name streamswarm-client
+                                                                    </code>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div class="col-md-6">
+                                                                <h6 class="text-info">Nokia SR-OS:</h6>
+                                                                <div class="bg-dark p-2 rounded mb-2">
+                                                                    <code class="text-light small">
+/admin certificate import type cert-ca \<br>
+&nbsp;&nbsp;input client.crt format pem
+                                                                    </code>
+                                                                </div>
+                                                                
+                                                                <h6 class="text-info">Arista EOS:</h6>
+                                                                <div class="bg-dark p-2 rounded">
+                                                                    <code class="text-light small">
+copy file://client.crt certificate:<br>
+security pki certificate import \<br>
+&nbsp;&nbsp;streamswarm-client certificate:client.crt
+                                                                    </code>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="headingFour">
+                                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                                        <i class="fas fa-upload me-2"></i>Step 4: Upload to StreamSwarm
+                                                    </button>
+                                                </h2>
+                                                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#certificateAccordion">
+                                                    <div class="accordion-body">
+                                                        <ol class="small">
+                                                            <li>Access <strong>GNMI Client Manager</strong> from the admin menu</li>
+                                                            <li>Create a new GNMI device with certificate authentication</li>
+                                                            <li>Upload your <code>client.crt</code> and <code>client.key</code> files</li>
+                                                            <li>StreamSwarm will distribute certificates to clients automatically</li>
+                                                        </ol>
+                                                        
+                                                        <div class="alert alert-info mt-3">
+                                                            <i class="fas fa-info-circle me-2"></i>
+                                                            <strong>Security Notes:</strong>
+                                                            <ul class="mb-0 mt-2">
+                                                                <li>Private keys are downloaded securely with 600 permissions</li>
+                                                                <li>Certificates are cached locally and synchronized on startup</li>
+                                                                <li>Use strong passphrases for production environments</li>
+                                                                <li>Rotate certificates regularly per security policy</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

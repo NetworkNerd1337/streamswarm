@@ -333,21 +333,74 @@ gnmi_analyzer.add_device(
 )
 ```
 
-#### Certificate Generation
+#### Client Certificate Generation for GNMI Authentication
+
+GNMI uses mutual TLS (mTLS) for secure authentication. StreamSwarm clients need certificates that are trusted by your GNMI servers.
+
+**Step 1: Generate Client Certificate and Private Key**
 ```bash
 # Create certificate directory
 sudo mkdir -p /etc/streamswarm/certs
 cd /etc/streamswarm/certs
 
-# Generate client certificate and key
+# Generate client private key (keep this secure!)
 openssl genrsa -out client.key 2048
+
+# Generate certificate signing request (CSR)
 openssl req -new -key client.key -out client.csr \
-  -subj "/CN=streamswarm-client/O=YourOrg/C=US"
+  -subj "/CN=streamswarm-client/O=YourOrganization/C=US"
+
+# Generate self-signed certificate (for testing)
 openssl x509 -req -days 365 -in client.csr \
   -signkey client.key -out client.crt
 
 # Set secure permissions
 sudo chmod 600 client.key
+sudo chmod 644 client.crt
+sudo chown root:root client.* 
+```
+
+**Step 2: For Production - Use Your CA**
+```bash
+# Instead of self-signed, have your CA sign the CSR
+# Submit client.csr to your Certificate Authority
+# Replace client.crt with CA-signed certificate
+```
+
+**Step 3: Configure GNMI Server Trust**
+Add the client certificate to your GNMI server's trusted certificates:
+
+**Cisco IOS-XR:**
+```bash
+# Copy client.crt to device
+crypto ca trustpoint streamswarm-client
+ certificate /path/to/client.crt
+ revocation-check none
+```
+
+**Juniper JUNOS:**
+```bash
+# Add to trusted certificates
+set security certificates trusted-ca-list streamswarm-client ca-name streamswarm-client
+```
+
+**Nokia SR-OS:**
+```bash
+# Import client certificate
+/admin certificate import type cert-ca input client.crt format pem
+```
+
+**Step 4: Upload Certificates to StreamSwarm**
+1. Access GNMI Client Manager from admin menu
+2. Create new GNMI device with certificate authentication
+3. Upload client.crt and client.key files
+4. StreamSwarm will distribute certificates to clients automatically
+
+**Security Notes:**
+- Private keys (client.key) are never stored permanently on clients
+- Certificates are downloaded securely and stored with 600 permissions
+- Use strong passphrases for production private keys
+- Rotate certificates regularly per your security policy
 sudo chmod 644 client.crt
 ```
 
