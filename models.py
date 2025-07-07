@@ -579,7 +579,7 @@ class ClientCertificate(db.Model):
         return {
             'id': self.id,
             'client_id': self.client_id,
-            'client_name': self.client.name if self.client else None,
+            'client_name': self.client.hostname if self.client else None,
             'cert_subject': self.cert_subject,
             'cert_expiry': self.cert_expiry.isoformat() if self.cert_expiry else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
