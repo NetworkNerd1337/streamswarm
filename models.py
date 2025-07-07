@@ -555,3 +555,35 @@ class GnmiCertificate(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'size': len(self.content) if self.content else 0
         }
+
+
+class ClientCertificate(db.Model):
+    """Client-generated certificates for GNMI authentication"""
+    __tablename__ = 'client_certificates'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False, unique=True)
+    client_cert = db.Column(db.LargeBinary, nullable=False)  # Client certificate (.crt)
+    client_key = db.Column(db.LargeBinary, nullable=False)   # Client private key (.key)
+    cert_subject = db.Column(db.String(255), nullable=True)  # Certificate subject (CN, O, etc.)
+    cert_expiry = db.Column(db.DateTime, nullable=True)      # Certificate expiration date
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None), onupdate=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
+    
+    # Relationship
+    client = db.relationship('Client', backref=db.backref('gnmi_certificate', uselist=False))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'cert_subject': self.cert_subject,
+            'cert_expiry': self.cert_expiry.isoformat() if self.cert_expiry else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'cert_size': len(self.client_cert) if self.client_cert else 0,
+            'key_size': len(self.client_key) if self.client_key else 0
+        }

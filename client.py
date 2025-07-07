@@ -98,6 +98,11 @@ class StreamSwarmClient:
         self.gnmi_config_file = 'gnmi_devices.json'
         self.gnmi_certs_dir = 'gnmi_certs'
         
+        # Client certificate storage for GNMI authentication
+        self.client_cert_dir = 'client_certs'
+        self.client_cert_file = os.path.join(self.client_cert_dir, 'client.crt')
+        self.client_key_file = os.path.join(self.client_cert_dir, 'client.key')
+        
         # Create certificates directory
         if not os.path.exists(self.gnmi_certs_dir):
             os.makedirs(self.gnmi_certs_dir)
@@ -113,6 +118,9 @@ class StreamSwarmClient:
         # Synchronize GNMI device configuration from server
         if GNMI_AVAILABLE:
             self._sync_gnmi_devices()
+        
+        # Ensure client certificates exist for GNMI authentication
+        self._ensure_client_certificates()
     
     def _get_system_info(self):
         """Get system information"""
@@ -3028,6 +3036,174 @@ class StreamSwarmClient:
                 logger.info("No local GNMI configuration found")
         except Exception as e:
             logger.error(f"Error loading GNMI configuration: {e}")
+    
+    def _ensure_client_certificates(self):
+        """Ensure client has generated certificates for GNMI authentication"""
+        try:
+            # Create client certificates directory if it doesn't exist
+            if not os.path.exists(self.client_cert_dir):
+                os.makedirs(self.client_cert_dir, mode=0o700)
+            
+            # Check if certificates already exist
+            if os.path.exists(self.client_cert_file) and os.path.exists(self.client_key_file):
+                logger.info("Client certificates already exist")
+                # Upload to server if not already uploaded
+                self._upload_client_certificates()
+                return
+            
+            # Generate new certificates
+            logger.info("Generating new client certificates for GNMI authentication...")
+            
+            cert_pem, key_pem = self._generate_client_certificates()
+            
+            # Save certificates to local files
+            with open(self.client_cert_file, 'w') as f:
+                f.write(cert_pem)
+            os.chmod(self.client_cert_file, 0o644)
+            
+            with open(self.client_key_file, 'w') as f:
+                f.write(key_pem)
+            os.chmod(self.client_key_file, 0o600)
+            
+            logger.info("Client certificates generated and saved successfully")
+            
+            # Upload certificates to server
+            self._upload_client_certificates()
+            
+        except Exception as e:
+            logger.error(f"Error ensuring client certificates: {e}")
+    
+    def _generate_client_certificates(self):
+        """Generate self-signed client certificate and private key"""
+        try:
+            import subprocess
+            import tempfile
+            
+            # Generate private key
+            key_result = subprocess.run([
+                'openssl', 'genrsa', '-out', '/dev/stdout', '2048'
+            ], capture_output=True, text=True, check=True)
+            
+            if key_result.returncode != 0:
+                raise Exception(f"Failed to generate private key: {key_result.stderr}")
+            
+            key_pem = key_result.stdout
+            
+            # Create certificate subject with client hostname
+            subject = f"/CN={self.client_name}/O=StreamSwarm/C=US"
+            
+            # Generate certificate signing request and self-signed certificate
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.key') as key_file:
+                key_file.write(key_pem)
+                key_file.flush()
+                
+                # Generate certificate
+                cert_result = subprocess.run([
+                    'openssl', 'req', '-new', '-x509', '-days', '365',
+                    '-key', key_file.name,
+                    '-out', '/dev/stdout',
+                    '-subj', subject
+                ], capture_output=True, text=True, check=True)
+                
+                # Clean up temporary key file
+                os.unlink(key_file.name)
+                
+                if cert_result.returncode != 0:
+                    raise Exception(f"Failed to generate certificate: {cert_result.stderr}")
+                
+                cert_pem = cert_result.stdout
+            
+            return cert_pem, key_pem
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"OpenSSL command failed: {e}")
+            raise Exception(f"Certificate generation failed: {e}")
+        except Exception as e:
+            logger.error(f"Error generating certificates: {e}")
+            raise
+    
+    def _upload_client_certificates(self):
+        """Upload client certificates to server"""
+        try:
+            if not os.path.exists(self.client_cert_file) or not os.path.exists(self.client_key_file):
+                logger.warning("Client certificates not found, cannot upload")
+                return
+            
+            # Read certificate files
+            with open(self.client_cert_file, 'r') as f:
+                cert_content = f.read()
+            
+            with open(self.client_key_file, 'r') as f:
+                key_content = f.read()
+            
+            # Extract certificate subject and expiry information
+            cert_info = self._extract_certificate_info(cert_content)
+            
+            # Upload to server
+            data = {
+                'client_cert': cert_content,
+                'client_key': key_content,
+                'cert_subject': cert_info.get('subject', ''),
+                'cert_expiry': cert_info.get('expiry', '')
+            }
+            
+            response = requests.post(
+                f"{self.server_url}/api/client/{self.client_id}/certificates",
+                json=data,
+                headers={'Authorization': f'Bearer {self.api_token}'},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                logger.info("Client certificates uploaded to server successfully")
+            else:
+                logger.warning(f"Failed to upload certificates to server: {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Error uploading client certificates: {e}")
+    
+    def _extract_certificate_info(self, cert_pem):
+        """Extract subject and expiry information from certificate"""
+        try:
+            import subprocess
+            import tempfile
+            from datetime import datetime
+            
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.crt') as cert_file:
+                cert_file.write(cert_pem)
+                cert_file.flush()
+                
+                # Extract subject
+                subject_result = subprocess.run([
+                    'openssl', 'x509', '-in', cert_file.name, '-noout', '-subject'
+                ], capture_output=True, text=True)
+                
+                # Extract expiry date
+                expiry_result = subprocess.run([
+                    'openssl', 'x509', '-in', cert_file.name, '-noout', '-enddate'
+                ], capture_output=True, text=True)
+                
+                # Clean up
+                os.unlink(cert_file.name)
+                
+                info = {}
+                if subject_result.returncode == 0:
+                    info['subject'] = subject_result.stdout.strip().replace('subject=', '')
+                
+                if expiry_result.returncode == 0:
+                    expiry_str = expiry_result.stdout.strip().replace('notAfter=', '')
+                    try:
+                        # Parse OpenSSL date format: MMM DD HH:MM:SS YYYY GMT
+                        expiry_date = datetime.strptime(expiry_str, '%b %d %H:%M:%S %Y %Z')
+                        info['expiry'] = expiry_date.isoformat()
+                    except ValueError:
+                        info['expiry'] = expiry_str
+                
+                return info
+                
+        except Exception as e:
+            logger.error(f"Error extracting certificate info: {e}")
+            return {}
     
     def stop(self):
         """Stop the client"""

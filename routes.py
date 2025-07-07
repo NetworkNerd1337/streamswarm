@@ -2,7 +2,7 @@ from flask import render_template, request, jsonify, redirect, url_for, flash, s
 from functools import wraps
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db, login_required_with_dev_bypass, require_admin_or_dev_mode
-from models import Client, Test, TestResult, TestClient, ApiToken, User, SystemConfig, GnmiDevice, GnmiCertificate
+from models import Client, Test, TestResult, TestClient, ApiToken, User, SystemConfig, GnmiDevice, GnmiCertificate, ClientCertificate
 from datetime import datetime, timezone, timedelta
 import zoneinfo
 import json
@@ -3206,3 +3206,138 @@ def get_client_gnmi_certificate(device_id, cert_type):
     except Exception as e:
         logging.error(f"Error getting certificate for client: {str(e)}")
         return jsonify({'error': 'Failed to get certificate'}), 500
+
+
+# ================================
+# CLIENT CERTIFICATE MANAGEMENT ROUTES
+# ================================
+
+@app.route('/api/client/<int:client_id>/certificates', methods=['POST'])
+def upload_client_certificates(client_id):
+    """Upload client-generated certificates for GNMI authentication"""
+    try:
+        # Verify client exists
+        client = Client.query.get_or_404(client_id)
+        
+        # Get certificate data from request
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No certificate data provided'}), 400
+        
+        client_cert = data.get('client_cert')
+        client_key = data.get('client_key')
+        cert_subject = data.get('cert_subject', '')
+        cert_expiry_str = data.get('cert_expiry', '')
+        
+        if not client_cert or not client_key:
+            return jsonify({'error': 'Both client certificate and private key are required'}), 400
+        
+        # Parse expiry date if provided
+        cert_expiry = None
+        if cert_expiry_str:
+            try:
+                from datetime import datetime
+                cert_expiry = datetime.fromisoformat(cert_expiry_str.replace('Z', '+00:00'))
+                # Convert to Eastern Time for consistency
+                cert_expiry = cert_expiry.astimezone(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+            except ValueError:
+                logging.warning(f"Could not parse certificate expiry date: {cert_expiry_str}")
+        
+        # Check if client certificate already exists
+        existing_cert = ClientCertificate.query.filter_by(client_id=client_id).first()
+        
+        if existing_cert:
+            # Update existing certificate
+            existing_cert.client_cert = client_cert.encode('utf-8')
+            existing_cert.client_key = client_key.encode('utf-8')
+            existing_cert.cert_subject = cert_subject
+            existing_cert.cert_expiry = cert_expiry
+            existing_cert.updated_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+            logging.info(f"Updated client certificate for client {client.hostname}")
+        else:
+            # Create new certificate record
+            client_certificate = ClientCertificate(
+                client_id=client_id,
+                client_cert=client_cert.encode('utf-8'),
+                client_key=client_key.encode('utf-8'),
+                cert_subject=cert_subject,
+                cert_expiry=cert_expiry
+            )
+            db.session.add(client_certificate)
+            logging.info(f"Created new client certificate for client {client.hostname}")
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Client certificates uploaded successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Error uploading client certificates for client {client_id}: {str(e)}")
+        return jsonify({'error': 'Failed to upload certificates'}), 500
+
+
+@app.route('/api/client/<int:client_id>/certificates', methods=['GET'])
+@admin_required
+def get_client_certificates(client_id):
+    """Get client certificate information"""
+    try:
+        client = Client.query.get_or_404(client_id)
+        client_cert = ClientCertificate.query.filter_by(client_id=client_id).first()
+        
+        if not client_cert:
+            return jsonify({
+                'success': False,
+                'message': 'No certificates found for this client'
+            }), 404
+        
+        return jsonify({
+            'success': True,
+            'certificate': client_cert.to_dict()
+        })
+        
+    except Exception as e:
+        logging.error(f"Error getting client certificates for client {client_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get certificates'}), 500
+
+
+@app.route('/api/client/<int:client_id>/certificates/download/<cert_type>', methods=['GET'])
+@admin_required
+def download_client_certificate(client_id, cert_type):
+    """Download client certificate files"""
+    try:
+        client = Client.query.get_or_404(client_id)
+        client_cert = ClientCertificate.query.filter_by(client_id=client_id).first()
+        
+        if not client_cert:
+            return jsonify({'error': 'No certificates found for this client'}), 404
+        
+        # Determine file content and name based on cert_type
+        if cert_type == 'cert':
+            content = client_cert.client_cert
+            filename = f"{client.hostname}_client.crt"
+            mimetype = 'application/x-x509-ca-cert'
+        elif cert_type == 'key':
+            content = client_cert.client_key
+            filename = f"{client.hostname}_client.key"
+            mimetype = 'application/x-pem-file'
+        else:
+            return jsonify({'error': 'Invalid certificate type. Use "cert" or "key"'}), 400
+        
+        # Create file-like object for download
+        from io import BytesIO
+        file_obj = BytesIO(content)
+        file_obj.seek(0)
+        
+        return send_file(
+            file_obj,
+            as_attachment=True,
+            download_name=filename,
+            mimetype=mimetype
+        )
+        
+    except Exception as e:
+        logging.error(f"Error downloading client certificate {cert_type} for client {client_id}: {str(e)}")
+        return jsonify({'error': 'Failed to download certificate'}), 500

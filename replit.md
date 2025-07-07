@@ -105,6 +105,16 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 7, 2025: Implemented comprehensive StreamSwarm client certificate management system with automatic generation and web-based distribution
+  - Added ClientCertificate database model for storing client-generated GNMI certificates with expiry tracking
+  - Enhanced client registration process to automatically generate self-signed certificates using OpenSSL
+  - Implemented secure certificate upload API endpoint with certificate parsing and metadata extraction
+  - Added certificate download functionality to clients page with detailed GNMI device configuration instructions
+  - Created comprehensive client certificate modal with vendor-specific installation guides (Cisco, Juniper, Arista)
+  - Integrated automatic certificate generation on client startup with local storage in client_certs/ directory
+  - Added certificate file validation, secure permissions (600 for keys, 644 for certificates), and automatic cleanup
+  - Complete workflow: clients generate certificates → upload to server → admins download from web interface → install on GNMI devices
+  - Enhanced security with proper certificate lifecycle management and vendor-specific trustpoint configuration examples
 - July 7, 2025: Added comprehensive client certificate generation documentation for enterprise GNMI authentication
   - Enhanced README.md with detailed step-by-step certificate generation process using OpenSSL
   - Added vendor-specific GNMI server configuration for Cisco IOS-XR, Juniper JUNOS, Nokia SR-OS, and Arista EOS
