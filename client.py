@@ -58,6 +58,14 @@ except ImportError:
     SCAPY_AVAILABLE = False
     print("Warning: scapy not available. Advanced QoS monitoring will be limited.")
 
+# Try to import wireless scanning capabilities
+try:
+    import iwlib
+    WIFI_SCANNING_AVAILABLE = True
+except ImportError:
+    WIFI_SCANNING_AVAILABLE = False
+    print("Warning: iwlib not available. WiFi environmental scanning will be limited.")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -97,6 +105,12 @@ class StreamSwarmClient:
         self.gnmi_devices = []
         self.gnmi_config_file = 'gnmi_devices.json'
         self.gnmi_certs_dir = 'gnmi_certs'
+        
+        # WiFi environmental scanning capabilities
+        self.wifi_interfaces = {}
+        self.primary_wifi_interface = None
+        self.spare_wifi_interfaces = []
+        self._detect_wifi_interfaces()
         
         # Client certificate storage for GNMI authentication
         self.client_cert_dir = 'client_certs'
@@ -604,15 +618,22 @@ class StreamSwarmClient:
         test_id = test_config['id']
         destination = test_config['destination']
         duration = test_config.get('duration', 300)
+        test_type = test_config.get('test_type', 'standard')
         interval = test_config.get('interval', 5)
         packet_size = test_config.get('packet_size', 64)
         
-        logger.info(f"Starting test {test_id} to {destination} for {duration}s")
+        logger.info(f"Starting test {test_id} to {destination} for {duration}s (type: {test_type})")
+        
+        # Handle standalone WiFi environmental test
+        if test_type == 'wifi_environment':
+            return self._wifi_environmental_test(test_id, destination, duration, interval)
         
         start_time = time.time()
         end_time = start_time + duration
+        iteration_count = 0
         
         while time.time() < end_time and self.running:
+            iteration_count += 1
             try:
                 # Check if test has been stopped on server
                 if not self._check_test_status(test_id):
@@ -695,6 +716,23 @@ class StreamSwarmClient:
                         logger.warning(f"GNMI network path analysis failed: {e}")
                         logger.debug("GNMI analysis error details:", exc_info=True)
                 
+                # Perform WiFi environmental scanning (integrated mode) if spare interface available
+                wifi_environment_data = {}
+                if self.spare_wifi_interfaces and iteration_count == 1:  # Only scan once per test
+                    try:
+                        logger.info("Performing integrated WiFi environmental scan...")
+                        wifi_environment = self._perform_wifi_environmental_scan()
+                        if wifi_environment:
+                            wifi_environment_data = {
+                                'wifi_environment_data': json.dumps(wifi_environment)
+                            }
+                            logger.info(f"WiFi environmental scan completed: {wifi_environment.get('total_networks', 0)} networks detected, pollution score: {wifi_environment.get('wifi_pollution_score', 0)}")
+                        else:
+                            logger.warning("WiFi environmental scan failed or returned no data")
+                    except Exception as e:
+                        logger.warning(f"WiFi environmental scanning failed: {e}")
+                        logger.debug("WiFi scan error details:", exc_info=True)
+                
                 # Prepare test result data
                 result_data = {
                     'client_id': self.client_id,
@@ -713,7 +751,8 @@ class StreamSwarmClient:
                     **application_metrics,
                     **infrastructure_metrics,
                     **geolocation_data,
-                    **gnmi_path_data
+                    **gnmi_path_data,
+                    **wifi_environment_data
                 }
                 
                 # Submit results to server
@@ -3204,6 +3243,251 @@ class StreamSwarmClient:
         except Exception as e:
             logger.error(f"Error extracting certificate info: {e}")
             return {}
+    
+    def _detect_wifi_interfaces(self):
+        """Detect available WiFi interfaces and classify them"""
+        try:
+            if not WIFI_SCANNING_AVAILABLE:
+                logger.info("WiFi scanning not available - iwlib not installed")
+                return
+            
+            # Get all wireless interfaces
+            interfaces = iwlib.get_iwconfig()
+            self.wifi_interfaces = {}
+            
+            for interface_name in interfaces:
+                try:
+                    # Get interface details
+                    interface_info = iwlib.get_iwconfig(interface_name)
+                    stats = iwlib.get_iwrange(interface_name)
+                    
+                    interface_data = {
+                        'name': interface_name,
+                        'connected': interface_info.get('ESSID', '') != '',
+                        'essid': interface_info.get('ESSID', ''),
+                        'frequency': interface_info.get('Frequency', ''),
+                        'access_point': interface_info.get('Access Point', ''),
+                        'capabilities': stats
+                    }
+                    
+                    self.wifi_interfaces[interface_name] = interface_data
+                    
+                    # Classify interfaces
+                    if interface_data['connected']:
+                        if not self.primary_wifi_interface:
+                            self.primary_wifi_interface = interface_name
+                            logger.info(f"Primary WiFi interface detected: {interface_name} (connected to {interface_data['essid']})")
+                    else:
+                        self.spare_wifi_interfaces.append(interface_name)
+                        logger.info(f"Spare WiFi interface detected: {interface_name}")
+                        
+                except Exception as e:
+                    logger.warning(f"Error analyzing WiFi interface {interface_name}: {e}")
+            
+            logger.info(f"WiFi interface detection complete - Primary: {self.primary_wifi_interface}, Spare: {len(self.spare_wifi_interfaces)}")
+            
+        except Exception as e:
+            logger.error(f"Error detecting WiFi interfaces: {e}")
+    
+    def _perform_wifi_environmental_scan(self, interface_name=None, scan_duration=30):
+        """Perform WiFi environmental scanning on specified interface"""
+        try:
+            if not WIFI_SCANNING_AVAILABLE:
+                return None
+            
+            # Use spare interface if available, otherwise use primary or specified
+            target_interface = interface_name
+            if not target_interface:
+                if self.spare_wifi_interfaces:
+                    target_interface = self.spare_wifi_interfaces[0]
+                elif self.primary_wifi_interface:
+                    target_interface = self.primary_wifi_interface
+                else:
+                    logger.warning("No WiFi interfaces available for environmental scanning")
+                    return None
+            
+            logger.info(f"Starting WiFi environmental scan on interface {target_interface}")
+            
+            # Perform wireless scan
+            scan_results = iwlib.scan(target_interface)
+            
+            # Process scan results into environmental metrics
+            environment_data = self._analyze_wifi_environment(scan_results, target_interface)
+            
+            logger.info(f"WiFi environmental scan completed on {target_interface}")
+            return environment_data
+            
+        except Exception as e:
+            logger.error(f"Error performing WiFi environmental scan: {e}")
+            return None
+    
+    def _analyze_wifi_environment(self, scan_results, interface_name):
+        """Analyze WiFi scan results to extract environmental metrics"""
+        try:
+            networks = []
+            channel_usage = {}
+            signal_strengths = []
+            
+            for network in scan_results:
+                try:
+                    # Extract network information
+                    ssid = network.get('ESSID', 'Hidden')
+                    channel = network.get('Channel', 0)
+                    signal = network.get('Signal level', -100)
+                    frequency = network.get('Frequency', '')
+                    encryption = network.get('Encryption key', 'off') == 'on'
+                    
+                    networks.append({
+                        'ssid': ssid,
+                        'channel': channel,
+                        'signal_strength': signal,
+                        'frequency': frequency,
+                        'encrypted': encryption
+                    })
+                    
+                    # Track channel usage
+                    if channel > 0:
+                        channel_usage[channel] = channel_usage.get(channel, 0) + 1
+                    
+                    # Collect signal strengths for analysis
+                    if signal > -100:
+                        signal_strengths.append(signal)
+                        
+                except Exception as e:
+                    logger.warning(f"Error processing network scan result: {e}")
+            
+            # Calculate environmental metrics
+            total_networks = len(networks)
+            avg_signal_strength = sum(signal_strengths) / len(signal_strengths) if signal_strengths else -100
+            
+            # Channel congestion analysis
+            most_congested_channel = max(channel_usage, key=channel_usage.get) if channel_usage else 0
+            max_congestion = max(channel_usage.values()) if channel_usage else 0
+            
+            # 2.4GHz vs 5GHz distribution
+            ghz_24_networks = len([n for n in networks if n['channel'] <= 14])
+            ghz_5_networks = total_networks - ghz_24_networks
+            
+            # Signal quality assessment
+            strong_signals = len([s for s in signal_strengths if s > -50])
+            weak_signals = len([s for s in signal_strengths if s < -70])
+            
+            # Calculate WiFi pollution score (0-100, higher = more polluted)
+            pollution_score = min(100, (total_networks * 2) + (max_congestion * 5) + (weak_signals * 3))
+            
+            environment_data = {
+                'interface_name': interface_name,
+                'scan_timestamp': datetime.now(timezone.utc).isoformat(),
+                'total_networks': total_networks,
+                'networks_24ghz': ghz_24_networks,
+                'networks_5ghz': ghz_5_networks,
+                'avg_signal_strength': round(avg_signal_strength, 1),
+                'strong_signals_count': strong_signals,
+                'weak_signals_count': weak_signals,
+                'channel_usage': channel_usage,
+                'most_congested_channel': most_congested_channel,
+                'max_channel_congestion': max_congestion,
+                'wifi_pollution_score': pollution_score,
+                'environment_quality': self._assess_environment_quality(pollution_score),
+                'detected_networks': networks[:20]  # Limit to top 20 for storage
+            }
+            
+            return environment_data
+            
+        except Exception as e:
+            logger.error(f"Error analyzing WiFi environment: {e}")
+            return None
+    
+    def _assess_environment_quality(self, pollution_score):
+        """Assess WiFi environment quality based on pollution score"""
+        if pollution_score < 20:
+            return 'excellent'
+        elif pollution_score < 40:
+            return 'good'
+        elif pollution_score < 60:
+            return 'fair'
+        elif pollution_score < 80:
+            return 'poor'
+        else:
+            return 'critical'
+    
+    def _wifi_environmental_test(self, test_id, destination, duration, interval):
+        """Run standalone WiFi environmental test"""
+        try:
+            logger.info(f"Starting WiFi environmental test {test_id} with {duration}s duration, {interval}s interval")
+            
+            if not WIFI_SCANNING_AVAILABLE:
+                logger.error("WiFi scanning not available - iwlib not installed")
+                return
+            
+            if not (self.wifi_interfaces):
+                logger.error("No WiFi interfaces available for environmental testing")
+                return
+            
+            start_time = time.time()
+            end_time = start_time + duration
+            scan_count = 0
+            
+            while time.time() < end_time and self.running:
+                try:
+                    # Check if test has been stopped on server
+                    if not self._check_test_status(test_id):
+                        logger.info(f"WiFi environmental test {test_id} was stopped on server")
+                        break
+                    
+                    scan_count += 1
+                    logger.info(f"WiFi environmental scan {scan_count} starting...")
+                    
+                    # Get system metrics
+                    system_metrics = self._get_system_metrics()
+                    
+                    # Perform WiFi environmental scan
+                    wifi_environment = self._perform_wifi_environmental_scan()
+                    
+                    # Prepare test result data
+                    result_data = {
+                        'client_id': self.client_id,
+                        'test_id': test_id,
+                        'timestamp': datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None).isoformat(),
+                        **system_metrics,
+                        'wifi_environment_data': json.dumps(wifi_environment) if wifi_environment else None,
+                        # Basic network metrics with null values for standalone WiFi test
+                        'ping_latency': None,
+                        'ping_packet_loss': None,
+                        'jitter': None,
+                        'traceroute_hops': None,
+                        'traceroute_data': [],
+                        'bandwidth_download': None,
+                        'bandwidth_upload': None
+                    }
+                    
+                    # Send results to server
+                    response = requests.post(
+                        f'{self.server_url}/api/test_results',
+                        json=result_data,
+                        headers={'Authorization': f'Bearer {self.api_token}'}
+                    )
+                    
+                    if response.status_code == 200:
+                        if wifi_environment:
+                            logger.info(f"WiFi scan {scan_count} completed: {wifi_environment.get('total_networks', 0)} networks, pollution score: {wifi_environment.get('wifi_pollution_score', 0)}")
+                        else:
+                            logger.warning(f"WiFi scan {scan_count} completed with no data")
+                    else:
+                        logger.error(f"Failed to send WiFi scan {scan_count} results: {response.status_code}")
+                    
+                    # Wait for next interval
+                    time.sleep(interval)
+                    
+                except Exception as e:
+                    logger.error(f"Error during WiFi environmental scan {scan_count}: {e}")
+                    time.sleep(interval)
+                    continue
+            
+            logger.info(f"WiFi environmental test {test_id} completed with {scan_count} scans")
+            
+        except Exception as e:
+            logger.error(f"Error in WiFi environmental test {test_id}: {e}")
     
     def stop(self):
         """Stop the client"""

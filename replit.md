@@ -105,6 +105,17 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 8, 2025: Completed comprehensive WiFi environmental scanning integration with dual-mode capability and rich visualization dashboard
+  - Added WiFi environmental test type with standalone and integrated scanning modes
+  - Implemented WiFiEnvironmentalAnalyzer class for wireless interface detection and comprehensive environmental scanning
+  - Enhanced database schema with wifi_environment_data field in TestResult model and test_type field in Test model
+  - Created dedicated WiFi environmental test creation option in web interface test modal
+  - Added comprehensive WiFi environmental analysis visualization with environment quality assessment, pollution scoring, and network detection
+  - Displays signal strength distribution, channel utilization analysis, congestion detection, and detailed network tables
+  - Integrates WiFi pollution metrics with existing ML models for network performance correlation analysis
+  - Supports multiple wireless interface detection with automatic fallback for single-interface clients
+  - Environmental metrics include RSSI monitoring, channel overlap analysis, RF interference detection, and network density assessment
+  - Complete workflow: clients detect WiFi interfaces → perform environmental scans → correlate with network performance → display comprehensive analysis
 - July 7, 2025: Implemented comprehensive StreamSwarm client certificate management system with automatic generation and web-based distribution
   - Added ClientCertificate database model for storing client-generated GNMI certificates with expiry tracking
   - Enhanced client registration process to automatically generate self-signed certificates using OpenSSL

@@ -268,6 +268,28 @@
                         </div>
                         
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="testType" class="form-label">Test Type</label>
+                                <select class="form-control" id="testType" onchange="updateTestTypeOptions()">
+                                    <option value="standard">Standard Network Test</option>
+                                    <option value="wifi_environment">WiFi Environmental Scan</option>
+                                </select>
+                                <div class="form-text">
+                                    <small class="text-muted" id="testTypeDescription">
+                                        Standard test includes ping, traceroute, bandwidth, and system monitoring.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="wifiTestInfo" style="display: none;">
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-wifi me-2"></i>
+                                    <strong>WiFi Environmental Scan</strong><br>
+                                    <small>Analyzes WiFi networks, channel congestion, signal interference, and RF pollution. Requires WiFi interface on client.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label for="testDuration" class="form-label">Duration (seconds)</label>
                                 <input type="number" class="form-control" id="testDuration" value="300" min="60">
@@ -489,6 +511,7 @@ document.getElementById('createTestForm').addEventListener('submit', function(e)
         duration: parseInt(document.getElementById('testDuration').value),
         interval: parseInt(document.getElementById('testInterval').value),
         packet_size: parseInt(document.getElementById('packetSize').value),
+        test_type: document.getElementById('testType').value,
         scheduled_time: document.getElementById('scheduledTime').value || null,
         is_recurring: document.getElementById('enableRecurrence').checked,
         recurrence_interval: document.getElementById('enableRecurrence').checked ? 
@@ -1292,6 +1315,21 @@ function showMessage(message, type) {
 // ================================
 // PERFORMANCE PREDICTION FUNCTIONS
 // ================================
+
+// Handle test type changes
+function updateTestTypeOptions() {
+    const testType = document.getElementById('testType').value;
+    const wifiTestInfo = document.getElementById('wifiTestInfo');
+    const testTypeDescription = document.getElementById('testTypeDescription');
+    
+    if (testType === 'wifi_environment') {
+        wifiTestInfo.style.display = 'block';
+        testTypeDescription.textContent = 'WiFi environmental scan analyzes RF pollution, channel congestion, and interference patterns.';
+    } else {
+        wifiTestInfo.style.display = 'none';
+        testTypeDescription.textContent = 'Standard test includes ping, traceroute, bandwidth, and system monitoring.';
+    }
+}
 
 // Auto-update prediction when form fields change
 document.addEventListener('DOMContentLoaded', function() {

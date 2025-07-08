@@ -831,6 +831,11 @@ def create_test():
     except (ValueError, TypeError):
         return jsonify({'error': 'Invalid packet size format'}), 400
     
+    # Validate test type
+    test_type = sanitize_string(data.get('test_type', 'standard'), 50)
+    if test_type not in ['standard', 'wifi_environment']:
+        return jsonify({'error': 'Invalid test type. Must be "standard" or "wifi_environment"'}), 400
+    
     # Validate client IDs
     client_ids = data.get('client_ids', [])
     if not isinstance(client_ids, list):
@@ -904,6 +909,7 @@ def create_test():
             duration=duration,
             interval=interval,
             packet_size=packet_size,
+            test_type=test_type,
             is_recurring=is_recurring,
             recurrence_interval=recurrence_interval,
             recurrence_type=recurrence_type,

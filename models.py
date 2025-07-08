@@ -161,6 +161,7 @@ class Test(db.Model):
     interval = db.Column(db.Integer, default=5)  # Measurement interval in seconds
     packet_size = db.Column(db.Integer, default=64)  # Packet size in bytes for ping/network tests
     test_config = db.Column(Text)  # JSON string for additional test configuration
+    test_type = db.Column(db.String(50), default='standard')  # standard, wifi_environment
     status = db.Column(db.String(20), default='pending')  # pending, running, completed, failed
     
     # Recurrence fields
@@ -189,6 +190,7 @@ class Test(db.Model):
             'interval': self.interval,
             'packet_size': self.packet_size,
             'test_config': json.loads(self.test_config) if self.test_config else {},
+            'test_type': self.test_type,
             'status': self.status,
             'is_recurring': self.is_recurring,
             'recurrence_interval': self.recurrence_interval,
@@ -415,6 +417,9 @@ class TestResult(db.Model):
     path_total_distance_km = db.Column(db.Float)  # Total geographic distance of network path
     path_geographic_efficiency = db.Column(db.Float)  # Network path efficiency vs. great circle distance (percentage)
     gnmi_path_analysis = db.Column(Text)  # JSON string of GNMI-based network path analysis data
+    
+    # WiFi environmental scanning data
+    wifi_environment_data = db.Column(Text)  # JSON string of WiFi environmental analysis
     
     def to_dict(self):
         return {

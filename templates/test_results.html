@@ -526,6 +526,139 @@
         </div>
     </div>
     
+    <!-- WiFi Environmental Analysis -->
+    <div class="row mt-4" id="wifiEnvironmentCard" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-wifi me-2"></i>
+                        WiFi Environmental Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Environment Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge me-2" id="wifiQualityBadge">Good</span>
+                                <h6 class="mb-0">Environment Quality</h6>
+                            </div>
+                            <p class="text-muted small mb-3" id="wifiQualityDescription">
+                                WiFi environment assessment based on pollution score
+                            </p>
+                            
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h4 mb-1" id="wifiNetworkCount">0</div>
+                                        <small class="text-muted">Networks Detected</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h4 mb-1" id="wifiPollutionScore">0</div>
+                                        <small class="text-muted">Pollution Score</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-signal me-2"></i>Signal Quality Distribution
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-success fw-bold" id="wifiStrongSignals">0</div>
+                                        <small class="text-muted">Strong</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-warning fw-bold" id="wifiWeakSignals">0</div>
+                                        <small class="text-muted">Weak</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-info fw-bold" id="wifiAvgSignal">0</div>
+                                        <small class="text-muted">Avg dBm</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Channel Analysis -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-chart-bar me-2"></i>Channel Distribution
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-primary fw-bold" id="wifi24GhzCount">0</div>
+                                        <small class="text-muted">2.4 GHz</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-success fw-bold" id="wifi5GhzCount">0</div>
+                                        <small class="text-muted">5 GHz</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Channel Congestion
+                            </h6>
+                            <div class="alert alert-info mb-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Most Congested Channel:</span>
+                                    <span class="badge bg-warning" id="wifiCongestedChannel">N/A</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span>Networks on Channel:</span>
+                                    <span class="fw-bold" id="wifiCongestionCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detected Networks (Top 10) -->
+                    <div class="mt-3">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-list me-2"></i>Detected Networks (Top 10)
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>SSID</th>
+                                        <th>Channel</th>
+                                        <th>Signal (dBm)</th>
+                                        <th>Frequency</th>
+                                        <th>Security</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wifiNetworksTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No WiFi scan data available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Detailed Process Monitoring -->
     <div class="row mt-4">
         <div class="col-12">
@@ -1852,6 +1985,7 @@ async function loadTestData() {
             updateClientSummary();
             displayGeolocationData();
             displayClientInfrastructureData();
+            displayWiFiEnvironmentalAnalysis();
             console.log('All components initialized successfully');
         } catch (error) {
             console.error('Error during component initialization:', error);
@@ -3293,6 +3427,147 @@ function displayClientInfrastructureAnalysis(data) {
     }
     
     console.log('Client infrastructure analysis displayed successfully');
+}
+
+function displayWiFiEnvironmentalAnalysis() {
+    console.log('Checking for WiFi environmental data...');
+    
+    // Check if any test results contain WiFi environmental data
+    let wifiData = null;
+    
+    if (testData && testData.metrics && testData.metrics.wifi_environment_data) {
+        // Get the latest WiFi scan data
+        const clientIds = Object.keys(testData.metrics.wifi_environment_data);
+        for (const clientId of clientIds) {
+            const clientData = testData.metrics.wifi_environment_data[clientId];
+            if (clientData && clientData.length > 0) {
+                // Get the most recent scan data
+                const latestScan = clientData[clientData.length - 1];
+                if (latestScan && latestScan.y) {
+                    try {
+                        wifiData = JSON.parse(latestScan.y);
+                        break;
+                    } catch (e) {
+                        console.warn('Failed to parse WiFi environmental data:', e);
+                    }
+                }
+            }
+        }
+    }
+    
+    if (!wifiData) {
+        console.log('No WiFi environmental data found');
+        return;
+    }
+    
+    console.log('Found WiFi environmental data:', wifiData);
+    
+    // Display WiFi environmental analysis card
+    document.getElementById('wifiEnvironmentCard').style.display = 'block';
+    
+    // Update environment quality
+    const quality = wifiData.environment_quality || 'Unknown';
+    const pollutionScore = wifiData.pollution_score || 0;
+    const qualityBadge = document.getElementById('wifiQualityBadge');
+    const qualityDescription = document.getElementById('wifiQualityDescription');
+    
+    if (quality === 'Excellent') {
+        qualityBadge.className = 'badge bg-success me-2';
+        qualityDescription.textContent = 'Excellent WiFi environment with minimal interference';
+    } else if (quality === 'Good') {
+        qualityBadge.className = 'badge bg-success me-2';
+        qualityDescription.textContent = 'Good WiFi environment with low interference';
+    } else if (quality === 'Fair') {
+        qualityBadge.className = 'badge bg-warning me-2';
+        qualityDescription.textContent = 'Fair WiFi environment with moderate interference';
+    } else if (quality === 'Poor') {
+        qualityBadge.className = 'badge bg-danger me-2';
+        qualityDescription.textContent = 'Poor WiFi environment with high interference';
+    } else {
+        qualityBadge.className = 'badge bg-secondary me-2';
+        qualityDescription.textContent = 'WiFi environment quality assessment';
+    }
+    
+    qualityBadge.textContent = quality;
+    
+    // Update network count and pollution score
+    document.getElementById('wifiNetworkCount').textContent = wifiData.network_count || 0;
+    document.getElementById('wifiPollutionScore').textContent = pollutionScore.toFixed(1);
+    
+    // Update signal quality distribution
+    const networks = wifiData.networks || [];
+    let strongSignals = 0;
+    let weakSignals = 0;
+    let totalSignal = 0;
+    
+    networks.forEach(network => {
+        const signal = network.signal || 0;
+        totalSignal += signal;
+        if (signal > -50) {
+            strongSignals++;
+        } else if (signal < -70) {
+            weakSignals++;
+        }
+    });
+    
+    document.getElementById('wifiStrongSignals').textContent = strongSignals;
+    document.getElementById('wifiWeakSignals').textContent = weakSignals;
+    document.getElementById('wifiAvgSignal').textContent = networks.length > 0 ? 
+        (totalSignal / networks.length).toFixed(0) : '0';
+    
+    // Update channel distribution
+    let ghz24Count = 0;
+    let ghz5Count = 0;
+    
+    networks.forEach(network => {
+        const freq = network.frequency || 0;
+        if (freq >= 2400 && freq <= 2500) {
+            ghz24Count++;
+        } else if (freq >= 5000 && freq <= 6000) {
+            ghz5Count++;
+        }
+    });
+    
+    document.getElementById('wifi24GhzCount').textContent = ghz24Count;
+    document.getElementById('wifi5GhzCount').textContent = ghz5Count;
+    
+    // Update channel congestion
+    const channelCounts = {};
+    networks.forEach(network => {
+        const channel = network.channel || 0;
+        channelCounts[channel] = (channelCounts[channel] || 0) + 1;
+    });
+    
+    let mostCongestedChannel = 'N/A';
+    let maxCount = 0;
+    
+    Object.entries(channelCounts).forEach(([channel, count]) => {
+        if (count > maxCount) {
+            maxCount = count;
+            mostCongestedChannel = channel;
+        }
+    });
+    
+    document.getElementById('wifiCongestedChannel').textContent = mostCongestedChannel;
+    document.getElementById('wifiCongestionCount').textContent = maxCount;
+    
+    // Update networks table (top 10 by signal strength)
+    const sortedNetworks = networks.sort((a, b) => (b.signal || 0) - (a.signal || 0)).slice(0, 10);
+    const tableBody = document.getElementById('wifiNetworksTable');
+    
+    if (sortedNetworks.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No WiFi networks detected</td></tr>';
+    } else {
+        tableBody.innerHTML = sortedNetworks.map(network => `
+            <tr>
+                <td>${network.ssid || 'Hidden'}</td>
+                <td>${network.channel || 'N/A'}</td>
+                <td>${network.signal || 'N/A'}</td>
+                <td>${network.frequency || 'N/A'} MHz</td>
+                <td>${network.security || 'Open'}</td>
+            </tr>
+        `).join('');
+    }
 }
 </script>
 {% endblock %}
