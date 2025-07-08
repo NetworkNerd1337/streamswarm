@@ -3646,15 +3646,6 @@ function displayWiFiEnvironmentalAnalysis() {
         }
     });
     
-    networks.forEach(network => {
-        const freq = network.frequency || 0;
-        if (freq >= 2400 && freq <= 2500) {
-            ghz24Count++;
-        } else if (freq >= 5000 && freq <= 6000) {
-            ghz5Count++;
-        }
-    });
-    
     document.getElementById('wifi24GhzCount').textContent = ghz24Count;
     document.getElementById('wifi5GhzCount').textContent = ghz5Count;
     
@@ -3677,26 +3668,7 @@ function displayWiFiEnvironmentalAnalysis() {
         document.getElementById('wifiCongestedChannel').textContent = 'None';
         document.getElementById('wifiCongestionCount').textContent = 'No congestion detected';
     }
-    
-    // Update channel congestion
-    const channelCounts = {};
-    networks.forEach(network => {
-        const channel = network.channel || 0;
-        channelCounts[channel] = (channelCounts[channel] || 0) + 1;
-    });
-    
-    let mostCongestedChannel = 'N/A';
-    let maxCount = 0;
-    
-    Object.entries(channelCounts).forEach(([channel, count]) => {
-        if (count > maxCount) {
-            maxCount = count;
-            mostCongestedChannel = channel;
-        }
-    });
-    
-    document.getElementById('wifiCongestedChannel').textContent = mostCongestedChannel;
-    document.getElementById('wifiCongestionCount').textContent = maxCount;
+
     
     // Update networks table (top 10 by signal strength)
     const sortedNetworks = networks.sort((a, b) => (b.signal_strength || 0) - (a.signal_strength || 0)).slice(0, 10);
