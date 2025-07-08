@@ -609,6 +609,9 @@ def submit_test_results():
         path_total_distance_km = safe_float(data.get('path_total_distance_km'), 'path_total_distance_km')
         path_geographic_efficiency = safe_float(data.get('path_geographic_efficiency'), 'path_geographic_efficiency')
         
+        # WiFi environmental data
+        wifi_environment_data = data.get('wifi_environment_data') if data.get('wifi_environment_data') else None
+        
         result = TestResult(
             test_id=test_id,
             client_id=client_id,
@@ -746,7 +749,8 @@ def submit_test_results():
             path_geolocation_data=path_geolocation_data,
             path_map_html=path_map_html,
             path_total_distance_km=path_total_distance_km,
-            path_geographic_efficiency=path_geographic_efficiency
+            path_geographic_efficiency=path_geographic_efficiency,
+            wifi_environment_data=wifi_environment_data
         )
         
     except ValueError as e:
@@ -1142,7 +1146,8 @@ def get_test_data(test_id):
             'traceroute_data': {},
             'path_map_html': {},
             'path_total_distance_km': {},
-            'path_geographic_efficiency': {}
+            'path_geographic_efficiency': {},
+            'wifi_environment_data': {}
         }
     }
     
@@ -1290,6 +1295,10 @@ def get_test_data(test_id):
         data['metrics']['path_geographic_efficiency'][client_id].append({
             'x': timestamp,
             'y': result.path_geographic_efficiency
+        })
+        data['metrics']['wifi_environment_data'][client_id].append({
+            'x': timestamp,
+            'y': result.wifi_environment_data
         })
         data['metrics']['bandwidth_upload'][client_id].append({
             'x': timestamp,

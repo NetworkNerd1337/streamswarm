@@ -213,9 +213,90 @@ class NetworkDiagnosticEngine:
                 ),
             }
             
+            # Add WiFi Environmental Features if available
+            if result.wifi_environment_data:
+                try:
+                    wifi_data = json.loads(result.wifi_environment_data)
+                    features.update({
+                        'wifi_network_count': wifi_data.get('network_count', 0),
+                        'wifi_pollution_score': wifi_data.get('pollution_score', 0),
+                        'wifi_channel_congestion': wifi_data.get('channel_congestion', 0),
+                        'wifi_signal_quality': wifi_data.get('average_signal_strength', 0),
+                        'wifi_interference_level': wifi_data.get('interference_level', 0),
+                        'wifi_24ghz_networks': wifi_data.get('networks_24ghz', 0),
+                        'wifi_5ghz_networks': wifi_data.get('networks_5ghz', 0),
+                        'wifi_channel_overlap': wifi_data.get('channel_overlap_score', 0),
+                        'wifi_environment_quality_score': self._calculate_wifi_environment_score(wifi_data)
+                    })
+                except (json.JSONDecodeError, TypeError):
+                    # If WiFi data is malformed, add zero values for consistency
+                    features.update({
+                        'wifi_network_count': 0,
+                        'wifi_pollution_score': 0,
+                        'wifi_channel_congestion': 0,
+                        'wifi_signal_quality': 0,
+                        'wifi_interference_level': 0,
+                        'wifi_24ghz_networks': 0,
+                        'wifi_5ghz_networks': 0,
+                        'wifi_channel_overlap': 0,
+                        'wifi_environment_quality_score': 0
+                    })
+            else:
+                # Add zero values for WiFi features when no WiFi data is available
+                features.update({
+                    'wifi_network_count': 0,
+                    'wifi_pollution_score': 0,
+                    'wifi_channel_congestion': 0,
+                    'wifi_signal_quality': 0,
+                    'wifi_interference_level': 0,
+                    'wifi_24ghz_networks': 0,
+                    'wifi_5ghz_networks': 0,
+                    'wifi_channel_overlap': 0,
+                    'wifi_environment_quality_score': 0
+                })
+            
             features_list.append(features)
         
         return pd.DataFrame(features_list)
+    
+    def _calculate_wifi_environment_score(self, wifi_data: dict) -> float:
+        """
+        Calculate a comprehensive WiFi environment quality score (0-100)
+        """
+        if not wifi_data:
+            return 0.0
+        
+        score = 100.0
+        
+        # Pollution score impact (higher pollution = lower score)
+        pollution_score = wifi_data.get('pollution_score', 0)
+        if pollution_score > 0:
+            score -= min(pollution_score * 20, 40)  # Max 40 point penalty
+        
+        # Network congestion impact (too many networks = interference)
+        network_count = wifi_data.get('network_count', 0)
+        if network_count > 20:
+            score -= min((network_count - 20) * 2, 30)  # Max 30 point penalty
+        
+        # Channel congestion impact
+        channel_congestion = wifi_data.get('channel_congestion', 0)
+        if channel_congestion > 5:
+            score -= min((channel_congestion - 5) * 3, 25)  # Max 25 point penalty
+        
+        # Signal quality bonus (good average signal = better environment)
+        avg_signal = wifi_data.get('average_signal_strength', -70)
+        if avg_signal > -50:
+            score += 10  # Bonus for strong signals
+        elif avg_signal < -80:
+            score -= 15  # Penalty for weak signals
+        
+        # Channel diversity bonus (mix of 2.4 and 5 GHz is good)
+        networks_24ghz = wifi_data.get('networks_24ghz', 0)
+        networks_5ghz = wifi_data.get('networks_5ghz', 0)
+        if networks_24ghz > 0 and networks_5ghz > 0:
+            score += 5  # Bonus for frequency diversity
+        
+        return max(0.0, min(100.0, score))
     
     def calculate_health_score(self, features: pd.DataFrame) -> float:
         """
@@ -226,11 +307,12 @@ class NetworkDiagnosticEngine:
             
         # Define weights for different metric categories
         weights = {
-            'network': 0.3,
-            'system': 0.25,
-            'reliability': 0.2,
+            'network': 0.25,
+            'system': 0.2,
+            'reliability': 0.15,
             'efficiency': 0.1,
-            'handshake': 0.15  # New category for TCP handshake performance
+            'handshake': 0.15,  # TCP handshake performance
+            'wifi_environment': 0.15  # WiFi environment quality
         }
         
         # Network health (lower latency, packet loss, jitter is better)
@@ -297,12 +379,26 @@ class NetworkDiagnosticEngine:
             efficiency_score -= 10
         
         # Calculate weighted average
+        # WiFi Environment health (higher WiFi environment quality score is better)
+        wifi_environment_score = 100
+        if 'wifi_environment_quality_score' in features.columns:
+            avg_wifi_score = features['wifi_environment_quality_score'].mean()
+            wifi_environment_score = avg_wifi_score if avg_wifi_score > 0 else 100
+            
+            # Additional WiFi-specific penalties
+            if 'wifi_pollution_score' in features.columns and features['wifi_pollution_score'].mean() > 2.0:
+                wifi_environment_score -= min(features['wifi_pollution_score'].mean() * 10, 30)
+            
+            if 'wifi_network_count' in features.columns and features['wifi_network_count'].mean() > 25:
+                wifi_environment_score -= 15  # High network density penalty
+        
         total_score = (
             network_score * weights['network'] +
             system_score * weights['system'] +
             reliability_score * weights['reliability'] +
             efficiency_score * weights['efficiency'] +
-            handshake_score * weights['handshake']
+            handshake_score * weights['handshake'] +
+            wifi_environment_score * weights['wifi_environment']
         )
         
         return max(0, min(100, total_score))
