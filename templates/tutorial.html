@@ -465,6 +465,11 @@ pip install requests psutil speedtest-cli
                                     <div class="alert alert-info small">
                                         <strong>Note:</strong> Some packages like scapy may require system-level dependencies. WiFi scanning requires the 'iw' command: sudo apt-get install iw
                                     </div>
+                                    <div class="alert alert-warning small">
+                                        <strong>WiFi Environmental Scanning Setup:</strong> To enable WiFi environmental scanning without sudo, the client user must be added to the netdev group:
+                                        <br><code>sudo usermod -a -G netdev $USER</code>
+                                        <br>Then log out and log back in for the change to take effect.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2009,7 +2014,11 @@ cd Swarm
 # 2. Install system dependencies (Ubuntu/Debian)
 sudo apt install iputils-ping traceroute iw network-manager
 
-# 3. Install Python dependencies
+# 3. Add user to netdev group for WiFi environmental scanning
+sudo usermod -a -G netdev $USER
+# Note: Log out and log back in for group change to take effect
+
+# 4. Install Python dependencies
 pip install psutil requests
 
 # 4. Get API token from administrator
@@ -2030,6 +2039,10 @@ cd Swarm
 
 # Install system dependencies for wireless detection
 sudo apt install iputils-ping traceroute iw network-manager
+
+# Add user to netdev group for WiFi environmental scanning
+sudo usermod -a -G netdev $USER
+# Note: Log out and log back in for group change to take effect
 pip install psutil requests
 
 # New York Office (external deployment)
