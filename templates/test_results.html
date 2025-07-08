@@ -3360,6 +3360,13 @@ function displayGNMIPathData() {
 function displayClientInfrastructureData() {
     console.log('Checking for client infrastructure analysis...');
     
+    // Check if this is a WiFi-only test - skip infrastructure analysis for WiFi environmental tests
+    const isWifiOnly = {{ 'true' if is_wifi_only else 'false' }};
+    if (isWifiOnly) {
+        console.log('WiFi-only test detected - skipping client infrastructure analysis');
+        return;
+    }
+    
     // Get client ID from the testData structure
     if (!testData || !testData.clients || Object.keys(testData.clients).length === 0) {
         console.log('No test data available for client infrastructure analysis');
