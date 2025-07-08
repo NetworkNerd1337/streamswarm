@@ -3560,7 +3560,7 @@ class StreamSwarmClient:
             logger.info(f"Starting WiFi environmental test {test_id} with {duration}s duration, {interval}s interval")
             
             if not WIFI_SCANNING_AVAILABLE:
-                logger.error("WiFi scanning not available - iwlib not installed")
+                logger.error("WiFi scanning not available - iw command not found (install with: sudo apt-get install iw)")
                 return
             
             if not (self.wifi_interfaces):
