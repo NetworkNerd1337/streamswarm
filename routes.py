@@ -462,6 +462,7 @@ def client_heartbeat(client_id):
 @require_api_token
 def get_client_tests(client_id):
     """Get pending tests for a client"""
+    logging.info(f"DEBUG: Client {client_id} requesting tests")
     # Find tests assigned to this client that are ready to run
     assigned_tests = db.session.query(Test).join(TestClient).filter(
         TestClient.client_id == client_id,
@@ -496,6 +497,7 @@ def get_client_tests(client_id):
     
     db.session.commit()
     
+    logging.info(f"DEBUG: Returning {len(ready_tests)} tests to client {client_id}")
     return jsonify({'tests': ready_tests})
 
 @app.route('/api/test/results', methods=['POST'])

@@ -5,14 +5,18 @@
 - **Server**: Correct ✓ (test created with wifi_environment type)
 - **Client**: ISSUE IDENTIFIED - Not executing WiFi environmental test path
 
-## Root Cause Analysis
+## Root Cause Analysis - BUGS IDENTIFIED AND FIXED
 
-Based on Test 191 and 192 results:
-1. Both tests created correctly as `wifi_environment` type in database
-2. Both tests show network metrics (ping, bandwidth) instead of WiFi-only data
-3. `wifi_environment_data` field is empty in all results
+Based on Test 191, 192, 193, 194 analysis:
+1. **Database**: All tests correctly stored as `wifi_environment` type ✓
+2. **Server API**: Sending wrong `test_type: 'standard'` to clients ❌ (debugging added)
+3. **Client Logic**: Executing standard test path despite WiFi test selection ❌ (FIXED)
+4. **Hardcoded WiFi Scan**: Standard tests had automatic WiFi scanning ❌ (FIXED)
 
-**Conclusion**: Client is executing standard network test instead of `_wifi_environmental_test`
+**BUGS FOUND**:
+- Client had hardcoded WiFi environmental scanning in standard test path (lines 744-759)
+- WiFi scanning failed due to "Operation not permitted" (needs sudo for iw scan)
+- Server may be sending wrong test_type (debugging added to verify)
 
 ## Debug Steps Added
 

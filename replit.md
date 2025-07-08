@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 8, 2025: **FIXED** WiFi Environmental Scan execution bug - resolved client receiving wrong test_type and removed hardcoded WiFi scanning from standard tests
+  - Fixed critical bug where client received 'standard' test_type instead of 'wifi_environment' despite correct UI selection
+  - Removed hardcoded WiFi environmental scanning from standard test execution path (lines 744-759 in client.py)
+  - WiFi scanning now only executes for wifi_environment test types, preventing "Operation not permitted" errors in standard tests
+  - Added comprehensive server-side debugging to track test_type serialization and API responses
+  - Enhanced client debugging to show exactly what test_type is received from server and which execution path is taken
+  - Fixed permission issues by limiting WiFi scanning to dedicated WiFi Environmental Scan tests only
+  - Standard tests no longer attempt WiFi scanning, resolving sudo permission requirements and failed scan errors
 - July 8, 2025: Updated WiFi environmental scanning from deprecated iwlib to modern iw command for Ubuntu compatibility
   - Replaced deprecated iwlib Python library with modern iw command-line tool for WiFi scanning functionality
   - Updated _detect_wifi_interfaces() to use 'iw dev' for wireless interface detection

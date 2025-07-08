@@ -741,9 +741,10 @@ class StreamSwarmClient:
                         logger.warning(f"GNMI network path analysis failed: {e}")
                         logger.debug("GNMI analysis error details:", exc_info=True)
                 
-                # Perform WiFi environmental scanning (integrated mode) if spare interface available
+                # Only perform WiFi environmental scanning for wifi_environment test types
                 wifi_environment_data = {}
-                if self.spare_wifi_interfaces and iteration_count == 1:  # Only scan once per test
+                test_type = test_config.get('test_type', 'standard')
+                if test_type == 'wifi_environment' and self.spare_wifi_interfaces and iteration_count == 1:
                     try:
                         logger.info("Performing integrated WiFi environmental scan...")
                         wifi_environment = self._perform_wifi_environmental_scan()
@@ -757,6 +758,8 @@ class StreamSwarmClient:
                     except Exception as e:
                         logger.warning(f"WiFi environmental scanning failed: {e}")
                         logger.debug("WiFi scan error details:", exc_info=True)
+                elif test_type == 'standard' and self.spare_wifi_interfaces:
+                    logger.debug("Standard test - WiFi environmental scanning disabled (use WiFi Environmental Scan test type for WiFi analysis)")
                 
                 # Prepare test result data
                 result_data = {
