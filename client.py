@@ -3472,19 +3472,36 @@ class StreamSwarmClient:
                         'Bitrates': []
                     }
                     
-                    # Extract frequency if present
-                    freq_match = re.search(r'(\d+\.\d+) MHz', line)
-                    if freq_match:
+                    # Extract frequency if present (handle both MHz and GHz formats)
+                    freq_match = re.search(r'(\d+\.?\d*)\s*MHz', line)
+                    if not freq_match:
+                        freq_match = re.search(r'(\d+\.?\d*)\s*GHz', line)
+                        if freq_match:
+                            freq_mhz = float(freq_match.group(1)) * 1000  # Convert GHz to MHz
+                        else:
+                            freq_mhz = None
+                    else:
                         freq_mhz = float(freq_match.group(1))
-                        current_network['Frequency'] = f"{freq_mhz} GHz"
+                    
+                    if freq_mhz:
+                        current_network['Frequency'] = f"{freq_mhz} MHz"
                         
-                        # Convert frequency to channel (approximate)
-                        if 2400 <= freq_mhz <= 2500:
-                            # 2.4 GHz channels
-                            current_network['Channel'] = int((freq_mhz - 2412) / 5) + 1
-                        elif 5000 <= freq_mhz <= 6000:
-                            # 5 GHz channels (simplified)
-                            current_network['Channel'] = int((freq_mhz - 5000) / 5) + 36
+                        # Convert frequency to channel (improved accuracy)
+                        if 2412 <= freq_mhz <= 2484:
+                            # 2.4 GHz channels (1-14)
+                            if freq_mhz == 2484:
+                                current_network['Channel'] = 14
+                            else:
+                                current_network['Channel'] = int((freq_mhz - 2412) / 5) + 1
+                        elif 5000 <= freq_mhz <= 5925:
+                            # 5 GHz channels (36-165)
+                            if freq_mhz >= 5735:
+                                current_network['Channel'] = int((freq_mhz - 5000) / 5)
+                            else:
+                                current_network['Channel'] = int((freq_mhz - 5000) / 5) + 36
+                        elif 5945 <= freq_mhz <= 7125:
+                            # 6 GHz channels (WiFi 6E)
+                            current_network['Channel'] = int((freq_mhz - 5945) / 20) + 1
                 
                 elif current_network:
                     # Parse signal strength
@@ -3504,6 +3521,27 @@ class StreamSwarmClient:
                             current_network['Encryption key'] = 'on'
                         else:
                             current_network['Encryption key'] = 'off'
+                    
+                    # Parse frequency from freq: lines (alternative location)
+                    elif line.startswith('freq:'):
+                        freq_match = re.search(r'freq:\s*(\d+)', line)
+                        if freq_match:
+                            freq_mhz = float(freq_match.group(1))
+                            current_network['Frequency'] = f"{freq_mhz} MHz"
+                            
+                            # Convert frequency to channel
+                            if 2412 <= freq_mhz <= 2484:
+                                if freq_mhz == 2484:
+                                    current_network['Channel'] = 14
+                                else:
+                                    current_network['Channel'] = int((freq_mhz - 2412) / 5) + 1
+                            elif 5000 <= freq_mhz <= 5925:
+                                if freq_mhz >= 5735:
+                                    current_network['Channel'] = int((freq_mhz - 5000) / 5)
+                                else:
+                                    current_network['Channel'] = int((freq_mhz - 5000) / 5) + 36
+                            elif 5945 <= freq_mhz <= 7125:
+                                current_network['Channel'] = int((freq_mhz - 5945) / 20) + 1
                     
                     # Parse supported rates
                     elif 'Supported rates:' in line:
@@ -3554,9 +3592,11 @@ class StreamSwarmClient:
                         'mac_address': network.get('mac_address', '')
                     })
                     
-                    # Track channel usage
+                    # Track channel usage (improved filtering)
                     if channel and int(channel) > 0:
                         channel_usage[int(channel)] = channel_usage.get(int(channel), 0) + 1
+                    else:
+                        logger.debug(f"Network {ssid} has invalid channel: {channel}")
                     
                     # Collect signal strengths for analysis
                     if signal > -100:
@@ -3574,16 +3614,21 @@ class StreamSwarmClient:
             most_congested_channel = max(channel_usage, key=channel_usage.get) if channel_usage else 0
             max_congestion = max(channel_usage.values()) if channel_usage else 0
             
-            # 2.4GHz vs 5GHz distribution
-            ghz_24_networks = len([n for n in networks if n['channel'] <= 14])
-            ghz_5_networks = total_networks - ghz_24_networks
+            # 2.4GHz vs 5GHz distribution (improved classification)
+            ghz_24_networks = len([n for n in networks if 1 <= n['channel'] <= 14])
+            ghz_5_networks = len([n for n in networks if n['channel'] >= 36])
+            ghz_6_networks = len([n for n in networks if n['channel'] >= 1 and n['channel'] <= 233 and n['channel'] not in range(1, 15) and n['channel'] not in range(36, 200)])
             
             # Signal quality assessment
             strong_signals = len([s for s in signal_strengths if s > -50])
             weak_signals = len([s for s in signal_strengths if s < -70])
             
             # Calculate WiFi pollution score (0-100, higher = more polluted)
-            pollution_score = min(100, (total_networks * 2) + (max_congestion * 5) + (weak_signals * 3))
+            # Improved calculation considering channel overlap and interference
+            base_score = min(50, total_networks * 1.5)  # Base score from network count
+            congestion_score = min(30, max_congestion * 3)  # Channel congestion impact
+            interference_score = min(20, weak_signals * 0.5)  # Weak signal interference
+            pollution_score = int(base_score + congestion_score + interference_score)
             
             environment_data = {
                 'interface_name': interface_name,

@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 8, 2025: **FIXED** WiFi Environmental Scanning accuracy and channel detection - resolved critical issues with frequency parsing and congestion analysis
+  - Fixed WiFi frequency parsing to properly handle both MHz and GHz formats in `iw scan` output
+  - Enhanced channel detection logic with improved frequency-to-channel conversion for 2.4GHz (1-14), 5GHz (36-165), and 6GHz (1-233) bands
+  - Added alternative frequency parsing from `freq:` lines to catch missed frequency data
+  - Improved 2.4GHz vs 5GHz classification to properly handle channel ranges instead of defaulting all networks to 2.4GHz
+  - Enhanced pollution score calculation with weighted factors: network count (50%), channel congestion (30%), interference (20%)
+  - Fixed channel congestion detection - now properly identifies most congested channels instead of showing "None"
+  - Added debugging for invalid channel detection to improve scanning reliability
+  - WiFi environmental tests now provide accurate channel distribution, congestion analysis, and pollution scoring
 - July 8, 2025: **FIXED** WiFi Environmental Test UI improvements - comprehensive cleanup of WiFi-only test display components
   - Fixed pollution score legend from light theme (`bg-light`) to dark theme (`bg-dark border`) for proper dark mode compatibility
   - Resolved "Show All" modal empty data issue by correcting data source from `wifiData.networks` to `wifiData.detected_networks`
