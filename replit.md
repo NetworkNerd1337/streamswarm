@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 8, 2025: **FIXED** Test results display regression - resolved critical JavaScript function call mismatch causing both standard and WiFi environmental tests to fail
+  - Fixed JavaScript function call mismatch: `displayClientInfrastructureData()` was being called instead of `displayClientInfrastructureAnalysis()`
+  - Added missing `displayGNMIPathData()` function call to initialization sequence
+  - Standard tests now properly display: metrics dropdown with CPU/Memory/Disk graphs, geolocation analysis, GNMI path analysis, and client infrastructure analysis
+  - WiFi environmental tests now properly display: WiFi environmental analysis card with network count, pollution score, signal quality distribution, and environment quality assessment
+  - Fixed WiFi-only detection logic to properly hide standard network charts for WiFi environmental tests while showing WiFi-specific analysis
+  - All test result visualization components now initialize correctly with proper error handling and data validation
+  - Resolved console errors and ensured both test types work independently with their respective analysis features
 - July 8, 2025: **FIXED** WiFi Environmental Scan API endpoint bug - resolved 404 errors preventing WiFi scan results from reaching server
   - Fixed critical API endpoint mismatch: client was sending to `/api/test_results` while server expected `/api/test/results`
   - WiFi environmental scanning now successfully submits scan results (77, 63, 59 networks detected in Test 196)
