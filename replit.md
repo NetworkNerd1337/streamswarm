@@ -105,6 +105,12 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 8, 2025: **FIXED** WiFi Environmental Scan API endpoint bug - resolved 404 errors preventing WiFi scan results from reaching server
+  - Fixed critical API endpoint mismatch: client was sending to `/api/test_results` while server expected `/api/test/results`
+  - WiFi environmental scanning now successfully submits scan results (77, 63, 59 networks detected in Test 196)
+  - Enhanced graceful permission handling with automatic sudo fallback for WiFi scanning
+  - Added netdev group setup instructions to tutorial for passwordless WiFi scanning
+  - Created setup_wifi_scanning.sh script for automated WiFi permission configuration
 - July 8, 2025: **FIXED** WiFi Environmental Scan execution bug - resolved client receiving wrong test_type and removed hardcoded WiFi scanning from standard tests
   - Fixed critical bug where client received 'standard' test_type instead of 'wifi_environment' despite correct UI selection
   - Removed hardcoded WiFi environmental scanning from standard test execution path (lines 744-759 in client.py)

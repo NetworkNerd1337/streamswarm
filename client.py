@@ -3680,7 +3680,7 @@ class StreamSwarmClient:
                     
                     # Send results to server
                     response = requests.post(
-                        f'{self.server_url}/api/test_results',
+                        f'{self.server_url}/api/test/results',
                         json=result_data,
                         headers={'Authorization': f'Bearer {self.api_token}'}
                     )
