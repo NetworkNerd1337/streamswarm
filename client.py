@@ -3383,15 +3383,47 @@ class StreamSwarmClient:
             
             logger.info(f"Starting WiFi environmental scan on interface {target_interface}")
             
-            # Perform wireless scan using modern iw command
+            # Perform wireless scan using modern iw command with graceful permission handling
+            scan_result = None
             try:
+                # Strategy 1: Try regular iw scan first
                 result = subprocess.run(['iw', 'dev', target_interface, 'scan'], 
                                       capture_output=True, text=True, timeout=30)
-                if result.returncode != 0:
+                
+                if result.returncode == 0:
+                    scan_result = result
+                    logger.debug(f"WiFi scan successful on {target_interface}")
+                elif "Operation not permitted" in result.stderr:
+                    logger.info(f"WiFi scan requires elevated permissions on {target_interface}, trying sudo...")
+                    
+                    # Strategy 2: Try with passwordless sudo
+                    try:
+                        result = subprocess.run(['sudo', '-n', 'iw', 'dev', target_interface, 'scan'],
+                                              capture_output=True, text=True, timeout=30)
+                        
+                        if result.returncode == 0:
+                            scan_result = result
+                            logger.info(f"WiFi scan successful with sudo on {target_interface}")
+                        else:
+                            logger.warning(f"Sudo WiFi scan failed on {target_interface}: {result.stderr}")
+                    except subprocess.TimeoutExpired:
+                        logger.warning(f"Sudo scan timed out - may require password authentication")
+                    except Exception as e:
+                        logger.warning(f"Sudo not available or failed: {e}")
+                        
+                    # Strategy 3: If sudo failed, provide helpful instructions
+                    if scan_result is None:
+                        logger.error(f"WiFi environmental scan failed on {target_interface}. Solutions:")
+                        logger.error(f"1. Run client with sudo: sudo python3 client.py")
+                        logger.error(f"2. Configure passwordless sudo for WiFi scanning:")
+                        logger.error(f"   echo '$(whoami) ALL=(ALL) NOPASSWD: /usr/sbin/iw' | sudo tee /etc/sudoers.d/wifi-scan")
+                        logger.error(f"3. Add user to netdev group: sudo usermod -a -G netdev $(whoami)")
+                        return None
+                else:
                     logger.error(f"WiFi scan failed on {target_interface}: {result.stderr}")
                     return None
                 
-                scan_output = result.stdout
+                scan_output = scan_result.stdout
                 scan_results = self._parse_iw_scan_output(scan_output)
                 
                 # Process scan results into environmental metrics
