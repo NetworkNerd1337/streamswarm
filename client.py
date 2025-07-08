@@ -116,7 +116,17 @@ class StreamSwarmClient:
         self.wifi_interfaces = {}
         self.primary_wifi_interface = None
         self.spare_wifi_interfaces = []
+        
+        # Debug: Log WiFi scanning availability at startup
+        logger.info(f"DEBUG: WIFI_SCANNING_AVAILABLE at startup: {WIFI_SCANNING_AVAILABLE}")
+        
         self._detect_wifi_interfaces()
+        
+        # Debug: Log final WiFi interface detection results
+        logger.info(f"DEBUG: Final WiFi detection - Primary: {self.primary_wifi_interface}")
+        logger.info(f"DEBUG: Final WiFi detection - Spare interfaces: {self.spare_wifi_interfaces}")
+        logger.info(f"DEBUG: Final WiFi detection - Total interfaces: {len(self.wifi_interfaces)}")
+        logger.info(f"DEBUG: Final WiFi detection - All interfaces: {list(self.wifi_interfaces.keys())}")
         
         # Client certificate storage for GNMI authentication
         self.client_cert_dir = 'client_certs'
@@ -3276,10 +3286,14 @@ class StreamSwarmClient:
                     return
                 
                 current_interface = None
+                logger.info(f"DEBUG: Raw iw dev output:\n{result.stdout}")
+                
                 for line in result.stdout.split('\n'):
                     line = line.strip()
+                    logger.debug(f"DEBUG: Processing line: '{line}'")
                     if line.startswith('Interface '):
                         current_interface = line.split('Interface ')[1]
+                        logger.info(f"DEBUG: Found interface: {current_interface}")
                         
                         # Initialize interface data
                         interface_data = {
@@ -3576,9 +3590,16 @@ class StreamSwarmClient:
                 logger.error("WiFi scanning not available - iw command not found (install with: sudo apt-get install iw)")
                 return
             
+            logger.info(f"DEBUG: WiFi interfaces available: {len(self.wifi_interfaces)} - {list(self.wifi_interfaces.keys())}")
+            logger.info(f"DEBUG: Spare WiFi interfaces: {len(self.spare_wifi_interfaces)} - {self.spare_wifi_interfaces}")
+            
             if not (self.wifi_interfaces):
                 logger.error("No WiFi interfaces available for environmental testing")
                 return
+            
+            if not (self.spare_wifi_interfaces):
+                logger.warning("No spare WiFi interfaces available, will attempt to use primary interface")
+                # Continue execution but with warning
             
             start_time = time.time()
             end_time = start_time + duration
