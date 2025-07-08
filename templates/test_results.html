@@ -3045,8 +3045,8 @@ function exportDataPoint(clientId, dataIndex) {
 }
 
 function displayGeolocationData() {
-    // Check if this is a WiFi-only test
-    const isWifiOnly = document.querySelector('[data-wifi-only="hide"]') !== null;
+    // Check if this is a WiFi-only test by checking if we're on a WiFi environmental test
+    const isWifiOnly = {{ 'true' if is_wifi_only else 'false' }};
     if (isWifiOnly) {
         console.log('WiFi-only test detected - skipping geolocation analysis');
         return;
@@ -3249,8 +3249,8 @@ function displayGNMIPathData() {
         return;
     }
     
-    // Check if this is a WiFi-only test
-    const isWifiOnly = document.querySelector('[data-wifi-only="hide"]') !== null;
+    // Check if this is a WiFi-only test by checking if we're on a WiFi environmental test
+    const isWifiOnly = {{ 'true' if is_wifi_only else 'false' }};
     if (isWifiOnly) {
         console.log('WiFi-only test detected - skipping GNMI analysis');
         return;
@@ -3406,8 +3406,8 @@ function displayClientInfrastructureData() {
 function displayClientInfrastructureAnalysis(data) {
     console.log('Displaying client infrastructure analysis data...');
     
-    // Check if this is a WiFi-only test
-    const isWifiOnly = document.querySelector('[data-wifi-only="hide"]') !== null;
+    // Check if this is a WiFi-only test by checking if we're on a WiFi environmental test
+    const isWifiOnly = {{ 'true' if is_wifi_only else 'false' }};
     if (isWifiOnly) {
         console.log('WiFi-only test detected - skipping client infrastructure analysis');
         return;
