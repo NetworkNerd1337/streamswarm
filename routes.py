@@ -475,7 +475,14 @@ def get_client_tests(client_id):
     
     for test in assigned_tests:
         if test.scheduled_time is None or test.scheduled_time <= now:
-            ready_tests.append(test.to_dict())
+            test_dict = test.to_dict()
+            
+            # Debug: Log what we're sending to client
+            logging.info(f"DEBUG: Sending test {test.id} to client {client_id}")
+            logging.info(f"DEBUG: Database test_type: {test.test_type}")
+            logging.info(f"DEBUG: Serialized test_type: {test_dict.get('test_type')}")
+            
+            ready_tests.append(test_dict)
             
             # Update test status if it's the first time it's being started
             if test.status == 'pending':
