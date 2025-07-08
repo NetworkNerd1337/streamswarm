@@ -1963,6 +1963,11 @@ class StreamSwarmClient:
                     data = response.json()
                     tests = data.get('tests', [])
                     
+                    # Debug: Log the full API response
+                    logger.info(f"DEBUG: API response received: {len(tests)} tests")
+                    for i, test in enumerate(tests):
+                        logger.info(f"DEBUG: Test {i}: ID={test.get('id')}, type={test.get('test_type')}, name={test.get('name')}")
+                    
                     for test in tests:
                         test_id = test['id']
                         
