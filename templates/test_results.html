@@ -55,7 +55,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-3" {% if is_wifi_only %}style="display: none;"{% endif %}>
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Avg Latency</h5>
@@ -63,7 +63,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-3 mb-3" {% if is_wifi_only %}style="display: none;"{% endif %}>
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Packet Loss</h5>
@@ -74,7 +74,7 @@
     </div>
 
     <!-- Charts -->
-    <div class="row mb-4">
+    <div class="row mb-4" {% if is_wifi_only %}style="display: none;"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -360,7 +360,7 @@
     </div>
     
     <!-- GNMI Network Path Analysis -->
-    <div class="row mt-4 mb-4" id="gnmiPathSection" style="display: none;">
+    <div class="row mt-4 mb-4" id="gnmiPathSection" style="display: none;" {% if is_wifi_only %}data-wifi-only="hide"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -448,7 +448,7 @@
     </div>
     
     <!-- Client Infrastructure Analysis -->
-    <div class="row mt-4 mb-4" id="clientInfrastructureSection" style="display: none;">
+    <div class="row mt-4 mb-4" id="clientInfrastructureSection" style="display: none;" {% if is_wifi_only %}data-wifi-only="hide"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -2980,6 +2980,13 @@ function exportDataPoint(clientId, dataIndex) {
 }
 
 function displayGeolocationData() {
+    // Check if this is a WiFi-only test
+    const isWifiOnly = document.querySelector('[data-wifi-only="hide"]') !== null;
+    if (isWifiOnly) {
+        console.log('WiFi-only test detected - skipping geolocation analysis');
+        return;
+    }
+    
     // Check if we have geolocation data in any of the test results
     let hasGeolocationData = false;
     let mapHtml = null;
@@ -3177,6 +3184,13 @@ function displayGNMIPathData() {
         return;
     }
     
+    // Check if this is a WiFi-only test
+    const isWifiOnly = document.querySelector('[data-wifi-only="hide"]') !== null;
+    if (isWifiOnly) {
+        console.log('WiFi-only test detected - skipping GNMI analysis');
+        return;
+    }
+    
     let hasGNMIData = false;
     let gnmiAnalysis = null;
     
@@ -3327,6 +3341,13 @@ function displayClientInfrastructureData() {
 function displayClientInfrastructureAnalysis(data) {
     console.log('Displaying client infrastructure analysis data...');
     
+    // Check if this is a WiFi-only test
+    const isWifiOnly = document.querySelector('[data-wifi-only="hide"]') !== null;
+    if (isWifiOnly) {
+        console.log('WiFi-only test detected - skipping client infrastructure analysis');
+        return;
+    }
+    
     const analysis = data.correlation_analysis;
     const recommendations = data.recommendations || [];
     
@@ -3465,9 +3486,9 @@ function displayWiFiEnvironmentalAnalysis() {
     // Display WiFi environmental analysis card
     document.getElementById('wifiEnvironmentCard').style.display = 'block';
     
-    // Update environment quality
+    // Update environment quality (fix property names)
     const quality = wifiData.environment_quality || 'Unknown';
-    const pollutionScore = wifiData.pollution_score || 0;
+    const pollutionScore = wifiData.wifi_pollution_score || 0;
     const qualityBadge = document.getElementById('wifiQualityBadge');
     const qualityDescription = document.getElementById('wifiQualityDescription');
     
@@ -3490,18 +3511,18 @@ function displayWiFiEnvironmentalAnalysis() {
     
     qualityBadge.textContent = quality;
     
-    // Update network count and pollution score
-    document.getElementById('wifiNetworkCount').textContent = wifiData.network_count || 0;
-    document.getElementById('wifiPollutionScore').textContent = pollutionScore.toFixed(1);
+    // Update network count and pollution score (fix property names)
+    document.getElementById('wifiNetworkCount').textContent = wifiData.total_networks || 0;
+    document.getElementById('wifiPollutionScore').textContent = (wifiData.wifi_pollution_score || 0).toFixed(1);
     
-    // Update signal quality distribution
-    const networks = wifiData.networks || [];
+    // Update signal quality distribution (fix property names)  
+    const networks = wifiData.detected_networks || [];
     let strongSignals = 0;
     let weakSignals = 0;
     let totalSignal = 0;
     
     networks.forEach(network => {
-        const signal = network.signal || 0;
+        const signal = network.signal_strength || 0;
         totalSignal += signal;
         if (signal > -50) {
             strongSignals++;
@@ -3552,7 +3573,7 @@ function displayWiFiEnvironmentalAnalysis() {
     document.getElementById('wifiCongestionCount').textContent = maxCount;
     
     // Update networks table (top 10 by signal strength)
-    const sortedNetworks = networks.sort((a, b) => (b.signal || 0) - (a.signal || 0)).slice(0, 10);
+    const sortedNetworks = networks.sort((a, b) => (b.signal_strength || 0) - (a.signal_strength || 0)).slice(0, 10);
     const tableBody = document.getElementById('wifiNetworksTable');
     
     if (sortedNetworks.length === 0) {
@@ -3562,9 +3583,9 @@ function displayWiFiEnvironmentalAnalysis() {
             <tr>
                 <td>${network.ssid || 'Hidden'}</td>
                 <td>${network.channel || 'N/A'}</td>
-                <td>${network.signal || 'N/A'}</td>
-                <td>${network.frequency || 'N/A'} MHz</td>
-                <td>${network.security || 'Open'}</td>
+                <td>${network.signal_strength || 'N/A'} dBm</td>
+                <td>${network.frequency || 'N/A'}</td>
+                <td>${network.encrypted ? 'Encrypted' : 'Open'}</td>
             </tr>
         `).join('');
     }
