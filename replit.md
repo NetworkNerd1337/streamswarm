@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 8, 2025: Updated WiFi environmental scanning from deprecated iwlib to modern iw command for Ubuntu compatibility
+  - Replaced deprecated iwlib Python library with modern iw command-line tool for WiFi scanning functionality
+  - Updated _detect_wifi_interfaces() to use 'iw dev' for wireless interface detection
+  - Replaced _perform_wifi_environmental_scan() to use 'iw dev scan' for network scanning
+  - Added _parse_iw_scan_output() function to parse modern iw scan output format
+  - Enhanced _analyze_wifi_environment() for better compatibility with both iwlib and iw data formats
+  - Updated all documentation and tutorials to reference 'sudo apt-get install iw' instead of 'pip install iwlib'
+  - Fixed WIFI_SCANNING_AVAILABLE detection to check for iw command availability instead of iwlib import
+  - Maintains backward compatibility while providing full Ubuntu/Debian support for WiFi environmental scanning
 - July 8, 2025: Completed comprehensive WiFi environmental scanning integration with dual-mode capability and rich visualization dashboard
   - Added WiFi environmental test type with standalone and integrated scanning modes
   - Implemented WiFiEnvironmentalAnalyzer class for wireless interface detection and comprehensive environmental scanning

@@ -58,13 +58,19 @@ except ImportError:
     SCAPY_AVAILABLE = False
     print("Warning: scapy not available. Advanced QoS monitoring will be limited.")
 
-# Try to import wireless scanning capabilities
+# Check for modern iw command (replacement for deprecated iwlib)
 try:
-    import iwlib
-    WIFI_SCANNING_AVAILABLE = True
-except ImportError:
+    import subprocess
+    result = subprocess.run(['iw', '--version'], capture_output=True, text=True, timeout=5)
+    if result.returncode == 0:
+        WIFI_SCANNING_AVAILABLE = True
+        print("iw command available - WiFi environmental scanning enabled")
+    else:
+        WIFI_SCANNING_AVAILABLE = False
+        print("Warning: iw command not available. Install with: sudo apt-get install iw")
+except (subprocess.TimeoutExpired, FileNotFoundError):
     WIFI_SCANNING_AVAILABLE = False
-    print("Warning: iwlib not available. WiFi environmental scanning will be limited.")
+    print("Warning: iw command not available. WiFi environmental scanning will be limited.")
 
 # Configure logging
 logging.basicConfig(
@@ -3245,44 +3251,78 @@ class StreamSwarmClient:
             return {}
     
     def _detect_wifi_interfaces(self):
-        """Detect available WiFi interfaces and classify them"""
+        """Detect available WiFi interfaces and classify them using modern iw command"""
         try:
             if not WIFI_SCANNING_AVAILABLE:
-                logger.info("WiFi scanning not available - iwlib not installed")
+                logger.info("WiFi scanning not available - iw command not found")
                 return
             
-            # Get all wireless interfaces
-            interfaces = iwlib.get_iwconfig()
             self.wifi_interfaces = {}
             
-            for interface_name in interfaces:
-                try:
-                    # Get interface details
-                    interface_info = iwlib.get_iwconfig(interface_name)
-                    stats = iwlib.get_iwrange(interface_name)
-                    
-                    interface_data = {
-                        'name': interface_name,
-                        'connected': interface_info.get('ESSID', '') != '',
-                        'essid': interface_info.get('ESSID', ''),
-                        'frequency': interface_info.get('Frequency', ''),
-                        'access_point': interface_info.get('Access Point', ''),
-                        'capabilities': stats
-                    }
-                    
-                    self.wifi_interfaces[interface_name] = interface_data
-                    
-                    # Classify interfaces
-                    if interface_data['connected']:
-                        if not self.primary_wifi_interface:
-                            self.primary_wifi_interface = interface_name
-                            logger.info(f"Primary WiFi interface detected: {interface_name} (connected to {interface_data['essid']})")
-                    else:
-                        self.spare_wifi_interfaces.append(interface_name)
-                        logger.info(f"Spare WiFi interface detected: {interface_name}")
+            # Get all wireless interfaces using iw
+            try:
+                result = subprocess.run(['iw', 'dev'], capture_output=True, text=True, timeout=10)
+                if result.returncode != 0:
+                    logger.warning("Failed to get wireless interfaces with iw dev")
+                    return
+                
+                current_interface = None
+                for line in result.stdout.split('\n'):
+                    line = line.strip()
+                    if line.startswith('Interface '):
+                        current_interface = line.split('Interface ')[1]
                         
-                except Exception as e:
-                    logger.warning(f"Error analyzing WiFi interface {interface_name}: {e}")
+                        # Initialize interface data
+                        interface_data = {
+                            'name': current_interface,
+                            'connected': False,
+                            'essid': '',
+                            'frequency': '',
+                            'access_point': '',
+                            'signal_strength': '',
+                            'type': 'wireless'
+                        }
+                        
+                        # Get connection details
+                        try:
+                            link_result = subprocess.run(['iw', 'dev', current_interface, 'link'], 
+                                                       capture_output=True, text=True, timeout=5)
+                            if link_result.returncode == 0:
+                                link_output = link_result.stdout
+                                
+                                # Check if connected
+                                if 'Connected to' in link_output:
+                                    interface_data['connected'] = True
+                                    
+                                    # Extract SSID
+                                    for link_line in link_output.split('\n'):
+                                        if 'SSID:' in link_line:
+                                            interface_data['essid'] = link_line.split('SSID:')[1].strip()
+                                        elif 'freq:' in link_line:
+                                            freq_match = re.search(r'freq:\s*(\d+)', link_line)
+                                            if freq_match:
+                                                interface_data['frequency'] = f"{freq_match.group(1)} MHz"
+                                        elif 'signal:' in link_line:
+                                            signal_match = re.search(r'signal:\s*(-?\d+(?:\.\d+)?)', link_line)
+                                            if signal_match:
+                                                interface_data['signal_strength'] = f"{signal_match.group(1)} dBm"
+                        except Exception as e:
+                            logger.debug(f"Error getting link info for {current_interface}: {e}")
+                        
+                        self.wifi_interfaces[current_interface] = interface_data
+                        
+                        # Classify interfaces
+                        if interface_data['connected']:
+                            if not self.primary_wifi_interface:
+                                self.primary_wifi_interface = current_interface
+                                logger.info(f"Primary WiFi interface detected: {current_interface} (connected to {interface_data['essid']})")
+                        else:
+                            self.spare_wifi_interfaces.append(current_interface)
+                            logger.info(f"Spare WiFi interface detected: {current_interface}")
+                            
+            except Exception as e:
+                logger.error(f"Error running iw dev command: {e}")
+                return
             
             logger.info(f"WiFi interface detection complete - Primary: {self.primary_wifi_interface}, Spare: {len(self.spare_wifi_interfaces)}")
             
@@ -3290,7 +3330,7 @@ class StreamSwarmClient:
             logger.error(f"Error detecting WiFi interfaces: {e}")
     
     def _perform_wifi_environmental_scan(self, interface_name=None, scan_duration=30):
-        """Perform WiFi environmental scanning on specified interface"""
+        """Perform WiFi environmental scanning on specified interface using modern iw command"""
         try:
             if not WIFI_SCANNING_AVAILABLE:
                 return None
@@ -3308,18 +3348,109 @@ class StreamSwarmClient:
             
             logger.info(f"Starting WiFi environmental scan on interface {target_interface}")
             
-            # Perform wireless scan
-            scan_results = iwlib.scan(target_interface)
-            
-            # Process scan results into environmental metrics
-            environment_data = self._analyze_wifi_environment(scan_results, target_interface)
-            
-            logger.info(f"WiFi environmental scan completed on {target_interface}")
-            return environment_data
+            # Perform wireless scan using modern iw command
+            try:
+                result = subprocess.run(['iw', 'dev', target_interface, 'scan'], 
+                                      capture_output=True, text=True, timeout=30)
+                if result.returncode != 0:
+                    logger.error(f"WiFi scan failed on {target_interface}: {result.stderr}")
+                    return None
+                
+                scan_output = result.stdout
+                scan_results = self._parse_iw_scan_output(scan_output)
+                
+                # Process scan results into environmental metrics
+                environment_data = self._analyze_wifi_environment(scan_results, target_interface)
+                
+                logger.info(f"WiFi environmental scan completed on {target_interface}: found {len(scan_results)} networks")
+                return environment_data
+                
+            except subprocess.TimeoutExpired:
+                logger.error(f"WiFi scan timeout on {target_interface}")
+                return None
+            except Exception as e:
+                logger.error(f"Error running iw scan on {target_interface}: {e}")
+                return None
             
         except Exception as e:
             logger.error(f"Error performing WiFi environmental scan: {e}")
             return None
+    
+    def _parse_iw_scan_output(self, scan_output):
+        """Parse iw scan output into network information"""
+        networks = []
+        current_network = None
+        
+        try:
+            for line in scan_output.split('\n'):
+                line = line.strip()
+                
+                # Start of a new BSS (network)
+                if line.startswith('BSS '):
+                    if current_network:
+                        networks.append(current_network)
+                    
+                    # Extract MAC address and frequency
+                    bss_parts = line.split()
+                    mac_address = bss_parts[1].rstrip(':')
+                    
+                    current_network = {
+                        'mac_address': mac_address,
+                        'ESSID': '',
+                        'Channel': 0,
+                        'Signal level': -100,
+                        'Frequency': '',
+                        'Encryption key': 'off',
+                        'Quality': '',
+                        'Bitrates': []
+                    }
+                    
+                    # Extract frequency if present
+                    freq_match = re.search(r'(\d+\.\d+) MHz', line)
+                    if freq_match:
+                        freq_mhz = float(freq_match.group(1))
+                        current_network['Frequency'] = f"{freq_mhz} GHz"
+                        
+                        # Convert frequency to channel (approximate)
+                        if 2400 <= freq_mhz <= 2500:
+                            # 2.4 GHz channels
+                            current_network['Channel'] = int((freq_mhz - 2412) / 5) + 1
+                        elif 5000 <= freq_mhz <= 6000:
+                            # 5 GHz channels (simplified)
+                            current_network['Channel'] = int((freq_mhz - 5000) / 5) + 36
+                
+                elif current_network:
+                    # Parse signal strength
+                    if line.startswith('signal:'):
+                        signal_match = re.search(r'signal:\s*(-?\d+(?:\.\d+)?)', line)
+                        if signal_match:
+                            current_network['Signal level'] = float(signal_match.group(1))
+                    
+                    # Parse SSID
+                    elif line.startswith('SSID:'):
+                        ssid = line.split('SSID: ', 1)[1] if 'SSID: ' in line else ''
+                        current_network['ESSID'] = ssid if ssid else 'Hidden'
+                    
+                    # Parse privacy/encryption
+                    elif 'Privacy:' in line:
+                        if 'Privacy: yes' in line:
+                            current_network['Encryption key'] = 'on'
+                        else:
+                            current_network['Encryption key'] = 'off'
+                    
+                    # Parse supported rates
+                    elif 'Supported rates:' in line:
+                        rates_part = line.split('Supported rates: ')[1]
+                        current_network['Bitrates'] = rates_part.split()
+            
+            # Don't forget the last network
+            if current_network:
+                networks.append(current_network)
+                
+        except Exception as e:
+            logger.error(f"Error parsing iw scan output: {e}")
+        
+        return networks
     
     def _analyze_wifi_environment(self, scan_results, interface_name):
         """Analyze WiFi scan results to extract environmental metrics"""
@@ -3330,24 +3461,35 @@ class StreamSwarmClient:
             
             for network in scan_results:
                 try:
-                    # Extract network information
+                    # Extract network information (compatible with both iwlib and iw formats)
                     ssid = network.get('ESSID', 'Hidden')
+                    if not ssid or ssid == '':
+                        ssid = 'Hidden'
+                    
                     channel = network.get('Channel', 0)
                     signal = network.get('Signal level', -100)
                     frequency = network.get('Frequency', '')
                     encryption = network.get('Encryption key', 'off') == 'on'
                     
+                    # Handle different data types for signal strength
+                    if isinstance(signal, str):
+                        try:
+                            signal = float(signal.replace('dBm', '').strip())
+                        except (ValueError, AttributeError):
+                            signal = -100
+                    
                     networks.append({
                         'ssid': ssid,
-                        'channel': channel,
+                        'channel': int(channel) if channel else 0,
                         'signal_strength': signal,
                         'frequency': frequency,
-                        'encrypted': encryption
+                        'encrypted': encryption,
+                        'mac_address': network.get('mac_address', '')
                     })
                     
                     # Track channel usage
-                    if channel > 0:
-                        channel_usage[channel] = channel_usage.get(channel, 0) + 1
+                    if channel and int(channel) > 0:
+                        channel_usage[int(channel)] = channel_usage.get(int(channel), 0) + 1
                     
                     # Collect signal strengths for analysis
                     if signal > -100:
@@ -3355,6 +3497,7 @@ class StreamSwarmClient:
                         
                 except Exception as e:
                     logger.warning(f"Error processing network scan result: {e}")
+                    continue
             
             # Calculate environmental metrics
             total_networks = len(networks)
