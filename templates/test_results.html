@@ -1030,7 +1030,7 @@
     </div>
     
     <!-- Comprehensive Metrics Analysis -->
-    {% if results and results|length > 0 %}
+    {% if results and results|length > 0 and not is_wifi_only %}
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">

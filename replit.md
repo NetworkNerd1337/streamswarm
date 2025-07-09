@@ -119,6 +119,7 @@ The system operates on a distributed client-server architecture where:
   - Resolved "Show All" modal empty data issue by correcting data source from `wifiData.networks` to `wifiData.detected_networks`
   - Hidden client infrastructure analysis card for WiFi environmental tests (skipped API call to prevent empty card display)
   - Hidden client performance summary card for WiFi environmental tests since network performance metrics aren't collected during WiFi scanning
+  - Hidden comprehensive metrics analysis card for WiFi environmental tests as it shows 65+ network performance metrics not collected during WiFi scanning
   - WiFi environmental tests now show only relevant analysis: WiFi environmental data card with pollution scoring, signal quality, and network detection
   - Standard tests continue to show all components: metrics charts, geolocation analysis, GNMI analysis, and client infrastructure analysis
 - July 8, 2025: **FIXED** Test results display regression - resolved critical JavaScript function call mismatch causing both standard and WiFi environmental tests to fail
