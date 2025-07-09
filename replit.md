@@ -116,6 +116,7 @@ The system operates on a distributed client-server architecture where:
   - WiFi environmental tests now provide accurate channel distribution, congestion analysis, and pollution scoring
 - July 8, 2025: **FIXED** WiFi Environmental Test UI improvements - comprehensive cleanup of WiFi-only test display components
   - Fixed pollution score legend from light theme (`bg-light`) to dark theme (`bg-dark border`) for proper dark mode compatibility
+  - Fixed Channel Congestion section from light theme (`alert alert-info`) to dark theme (`bg-dark border`) for consistent dark mode styling
   - Resolved "Show All" modal empty data issue by correcting data source from `wifiData.networks` to `wifiData.detected_networks`
   - Hidden client infrastructure analysis card for WiFi environmental tests (skipped API call to prevent empty card display)
   - Hidden client performance summary card for WiFi environmental tests since network performance metrics aren't collected during WiFi scanning
