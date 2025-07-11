@@ -32,7 +32,7 @@ APP_DIR="/home/$(whoami)/Swarm"
 SCREEN_SESSION="streamswarm-client"
 
 # Log file location
-LOG_FILE="/home/$(whoami)/Swarm/streamswarm-client.log"
+LOG_FILE="/home/$(whoami)/streamswarm-client.log"
 
 # =============================================================================
 # CONFIGURATION VALIDATION (DO NOT MODIFY)
