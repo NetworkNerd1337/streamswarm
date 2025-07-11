@@ -3587,6 +3587,9 @@ class StreamSwarmClient:
             most_congested_channel = max(channel_usage, key=channel_usage.get) if channel_usage else 0
             max_congestion = max(channel_usage.values()) if channel_usage else 0
             
+            # Advanced RF Analysis
+            rf_analysis = self._perform_advanced_rf_analysis(networks, interface_name)
+            
             # 2.4GHz vs 5GHz distribution (improved classification)
             ghz_24_networks = len([n for n in networks if 1 <= n['channel'] <= 14])
             ghz_5_networks = len([n for n in networks if n['channel'] >= 36])
@@ -3617,7 +3620,9 @@ class StreamSwarmClient:
                 'max_channel_congestion': max_congestion,
                 'wifi_pollution_score': pollution_score,
                 'environment_quality': self._assess_environment_quality(pollution_score),
-                'detected_networks': networks[:20]  # Limit to top 20 for storage
+                'detected_networks': networks[:20],  # Limit to top 20 for storage
+                # Advanced RF Analysis
+                'rf_analysis': rf_analysis
             }
             
             return environment_data
@@ -3625,6 +3630,295 @@ class StreamSwarmClient:
         except Exception as e:
             logger.error(f"Error analyzing WiFi environment: {e}")
             return None
+    
+    def _perform_advanced_rf_analysis(self, networks, interface_name):
+        """Perform advanced RF analysis for enhanced WiFi environmental assessment"""
+        try:
+            # Noise Floor Measurement
+            noise_floor = self._measure_noise_floor(interface_name)
+            
+            # Channel Utilization Analysis
+            channel_utilization = self._calculate_channel_utilization(networks)
+            
+            # Signal-to-Noise Ratio calculations
+            snr_analysis = self._calculate_snr_metrics(networks, noise_floor)
+            
+            # Interference Source Classification
+            interference_analysis = self._classify_interference_sources(networks)
+            
+            return {
+                'noise_floor': noise_floor,
+                'channel_utilization': channel_utilization,
+                'snr_analysis': snr_analysis,
+                'interference_analysis': interference_analysis,
+                'rf_quality_score': self._calculate_rf_quality_score(noise_floor, channel_utilization, snr_analysis, interference_analysis)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in advanced RF analysis: {e}")
+            return {
+                'noise_floor': {'avg_noise_floor': -95, 'measurement_method': 'estimated'},
+                'channel_utilization': {},
+                'snr_analysis': {'avg_snr': 0, 'poor_snr_count': 0},
+                'interference_analysis': {'total_interference_sources': 0, 'interference_types': {}},
+                'rf_quality_score': 50
+            }
+    
+    def _measure_noise_floor(self, interface_name):
+        """Measure background RF noise levels"""
+        try:
+            # Use iw to get interface statistics and estimate noise floor
+            result = subprocess.run(['iw', 'dev', interface_name, 'survey', 'dump'], 
+                                  capture_output=True, text=True, timeout=10)
+            
+            noise_measurements = []
+            in_use_channel = None
+            
+            if result.returncode == 0:
+                current_freq = None
+                for line in result.stdout.split('\n'):
+                    line = line.strip()
+                    if line.startswith('frequency:'):
+                        current_freq = line.split(':')[1].strip().split()[0]
+                    elif line.startswith('noise:') and current_freq:
+                        noise_match = re.search(r'noise:\s*(-?\d+)', line)
+                        if noise_match:
+                            noise_measurements.append(int(noise_match.group(1)))
+                    elif '[in use]' in line and current_freq:
+                        in_use_channel = current_freq
+            
+            if noise_measurements:
+                avg_noise_floor = sum(noise_measurements) / len(noise_measurements)
+                return {
+                    'avg_noise_floor': round(avg_noise_floor, 1),
+                    'noise_measurements': noise_measurements,
+                    'in_use_channel': in_use_channel,
+                    'measurement_method': 'survey_dump'
+                }
+            else:
+                # Fallback estimation based on band
+                return {
+                    'avg_noise_floor': -95,  # Typical 2.4GHz noise floor
+                    'noise_measurements': [],
+                    'in_use_channel': None,
+                    'measurement_method': 'estimated'
+                }
+                
+        except Exception as e:
+            logger.debug(f"Error measuring noise floor: {e}")
+            return {
+                'avg_noise_floor': -95,
+                'noise_measurements': [],
+                'in_use_channel': None,
+                'measurement_method': 'error_fallback'
+            }
+    
+    def _calculate_channel_utilization(self, networks):
+        """Calculate actual airtime usage per channel"""
+        try:
+            channel_stats = {}
+            
+            for network in networks:
+                channel = network.get('channel', 0)
+                signal = network.get('signal_strength', -100)
+                
+                if channel > 0:
+                    if channel not in channel_stats:
+                        channel_stats[channel] = {
+                            'network_count': 0,
+                            'total_signal_power': 0,
+                            'utilization_estimate': 0,
+                            'strongest_signal': -100
+                        }
+                    
+                    channel_stats[channel]['network_count'] += 1
+                    channel_stats[channel]['strongest_signal'] = max(channel_stats[channel]['strongest_signal'], signal)
+                    
+                    # Convert dBm to linear power for utilization calculation
+                    power_mw = 10 ** (signal / 10)
+                    channel_stats[channel]['total_signal_power'] += power_mw
+            
+            # Calculate utilization percentage based on signal strength and network density
+            for channel, stats in channel_stats.items():
+                # Estimate utilization based on network count and signal strength
+                base_utilization = min(stats['network_count'] * 15, 80)  # 15% per network, max 80%
+                
+                # Adjust for signal strength (stronger signals = more utilization)
+                signal_factor = max(0, (stats['strongest_signal'] + 100) / 50)  # 0-1 scale
+                estimated_utilization = min(base_utilization * (1 + signal_factor), 100)
+                
+                stats['utilization_estimate'] = round(estimated_utilization, 1)
+            
+            return channel_stats
+            
+        except Exception as e:
+            logger.error(f"Error calculating channel utilization: {e}")
+            return {}
+    
+    def _calculate_snr_metrics(self, networks, noise_floor_data):
+        """Calculate Signal-to-Noise Ratio for each network"""
+        try:
+            noise_floor = noise_floor_data.get('avg_noise_floor', -95)
+            snr_values = []
+            poor_snr_count = 0
+            
+            network_snr = []
+            for network in networks:
+                signal = network.get('signal_strength', -100)
+                if signal > -100:
+                    snr = signal - noise_floor
+                    snr_values.append(snr)
+                    
+                    # Add SNR to network data for detailed analysis
+                    network_snr.append({
+                        'ssid': network.get('ssid', 'Hidden'),
+                        'signal_strength': signal,
+                        'snr': round(snr, 1),
+                        'channel': network.get('channel', 0),
+                        'connection_quality': self._assess_connection_quality(snr)
+                    })
+                    
+                    if snr < 20:  # Poor SNR threshold
+                        poor_snr_count += 1
+            
+            avg_snr = sum(snr_values) / len(snr_values) if snr_values else 0
+            
+            return {
+                'avg_snr': round(avg_snr, 1),
+                'snr_values': snr_values,
+                'poor_snr_count': poor_snr_count,
+                'network_snr': network_snr[:10],  # Top 10 for storage
+                'noise_floor_used': noise_floor
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating SNR metrics: {e}")
+            return {'avg_snr': 0, 'poor_snr_count': 0, 'network_snr': []}
+    
+    def _classify_interference_sources(self, networks):
+        """Identify interference sources beyond WiFi networks"""
+        try:
+            interference_sources = {
+                'wifi_congestion': 0,
+                'bluetooth_interference': 0,
+                'microwave_interference': 0,
+                'other_rf_sources': 0
+            }
+            
+            # Analyze channel patterns for interference detection
+            channel_24ghz = [n for n in networks if 1 <= n.get('channel', 0) <= 14]
+            channel_5ghz = [n for n in networks if n.get('channel', 0) >= 36]
+            
+            # WiFi congestion analysis
+            if channel_24ghz:
+                # Check for overlapping channels in 2.4GHz
+                channels_24 = [n['channel'] for n in channel_24ghz]
+                overlapping_channels = [ch for ch in [1, 6, 11] if channels_24.count(ch) > 3]
+                interference_sources['wifi_congestion'] = len(overlapping_channels) * 10
+            
+            # Bluetooth interference (typically affects 2.4GHz)
+            if len(channel_24ghz) > 10:
+                # High density of 2.4GHz networks suggests possible Bluetooth interference
+                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -75]
+                if len(weak_24ghz) > 5:
+                    interference_sources['bluetooth_interference'] = min(len(weak_24ghz) * 2, 30)
+            
+            # Microwave interference detection (2.4GHz band disruption patterns)
+            if channel_24ghz:
+                # Look for networks with very poor signal quality in 2.4GHz
+                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -80]
+                if len(very_weak) > 3:
+                    interference_sources['microwave_interference'] = min(len(very_weak) * 3, 25)
+            
+            # Other RF sources (unusual patterns)
+            total_networks = len(networks)
+            if total_networks > 20:
+                # High network density might indicate other RF sources
+                signal_variance = self._calculate_signal_variance(networks)
+                if signal_variance > 400:  # High variance suggests interference
+                    interference_sources['other_rf_sources'] = min(signal_variance / 20, 20)
+            
+            total_interference = sum(interference_sources.values())
+            
+            return {
+                'total_interference_sources': round(total_interference, 1),
+                'interference_types': interference_sources,
+                'interference_level': self._assess_interference_level(total_interference)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error classifying interference sources: {e}")
+            return {'total_interference_sources': 0, 'interference_types': {}, 'interference_level': 'unknown'}
+    
+    def _calculate_signal_variance(self, networks):
+        """Calculate variance in signal strengths"""
+        try:
+            signals = [n.get('signal_strength', -100) for n in networks if n.get('signal_strength', -100) > -100]
+            if len(signals) < 2:
+                return 0
+            
+            mean_signal = sum(signals) / len(signals)
+            variance = sum((s - mean_signal) ** 2 for s in signals) / len(signals)
+            return variance
+            
+        except Exception as e:
+            return 0
+    
+    def _assess_connection_quality(self, snr):
+        """Assess connection quality based on SNR"""
+        if snr >= 40:
+            return 'excellent'
+        elif snr >= 25:
+            return 'good'
+        elif snr >= 15:
+            return 'fair'
+        elif snr >= 10:
+            return 'poor'
+        else:
+            return 'unusable'
+    
+    def _assess_interference_level(self, total_interference):
+        """Assess overall interference level"""
+        if total_interference < 10:
+            return 'minimal'
+        elif total_interference < 25:
+            return 'low'
+        elif total_interference < 50:
+            return 'moderate'
+        elif total_interference < 75:
+            return 'high'
+        else:
+            return 'severe'
+    
+    def _calculate_rf_quality_score(self, noise_floor, channel_utilization, snr_analysis, interference_analysis):
+        """Calculate overall RF quality score (0-100, higher is better)"""
+        try:
+            score = 100
+            
+            # Noise floor impact (0-25 points deduction)
+            noise_floor_dbm = noise_floor.get('avg_noise_floor', -95)
+            if noise_floor_dbm > -90:
+                score -= min(25, (noise_floor_dbm + 90) * 2)
+            
+            # Channel utilization impact (0-30 points deduction)
+            if channel_utilization:
+                avg_utilization = sum(ch.get('utilization_estimate', 0) for ch in channel_utilization.values()) / len(channel_utilization)
+                score -= min(30, avg_utilization * 0.3)
+            
+            # SNR impact (0-25 points deduction)
+            avg_snr = snr_analysis.get('avg_snr', 0)
+            if avg_snr < 25:
+                score -= min(25, (25 - avg_snr))
+            
+            # Interference impact (0-20 points deduction)
+            total_interference = interference_analysis.get('total_interference_sources', 0)
+            score -= min(20, total_interference * 0.25)
+            
+            return max(0, round(score, 1))
+            
+        except Exception as e:
+            logger.error(f"Error calculating RF quality score: {e}")
+            return 50
     
     def _assess_environment_quality(self, pollution_score):
         """Assess WiFi environment quality based on pollution score"""
