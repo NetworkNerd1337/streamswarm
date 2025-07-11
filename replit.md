@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 11, 2025: **CLEANED UP** Client debugging messages - removed all DEBUG-level messages from client.py while preserving INFO-level messages
+  - Removed debug output from WiFi interface detection startup logging
+  - Removed debug output from test execution path logging 
+  - Removed debug output from API response logging in _check_for_tests method
+  - Removed debug output from WiFi interface detection and classification
+  - Removed debug output from WiFi environmental test initialization
+  - Client now provides clean INFO-level logging output for operational monitoring while removing verbose debugging messages
+  - Fixed API token page security warning message from misleading "cannot be retrieved once window closed" to accurate "store safely as it provides full client access"
 - July 8, 2025: **FIXED** WiFi Environmental Scanning accuracy and channel detection - resolved critical issues with frequency parsing and congestion analysis
   - Fixed WiFi frequency parsing to properly handle both MHz and GHz formats in `iw scan` output
   - Enhanced channel detection logic with improved frequency-to-channel conversion for 2.4GHz (1-14), 5GHz (36-165), and 6GHz (1-233) bands

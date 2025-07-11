@@ -117,16 +117,7 @@ class StreamSwarmClient:
         self.primary_wifi_interface = None
         self.spare_wifi_interfaces = []
         
-        # Debug: Log WiFi scanning availability at startup
-        logger.info(f"DEBUG: WIFI_SCANNING_AVAILABLE at startup: {WIFI_SCANNING_AVAILABLE}")
-        
         self._detect_wifi_interfaces()
-        
-        # Debug: Log final WiFi interface detection results
-        logger.info(f"DEBUG: Final WiFi detection - Primary: {self.primary_wifi_interface}")
-        logger.info(f"DEBUG: Final WiFi detection - Spare interfaces: {self.spare_wifi_interfaces}")
-        logger.info(f"DEBUG: Final WiFi detection - Total interfaces: {len(self.wifi_interfaces)}")
-        logger.info(f"DEBUG: Final WiFi detection - All interfaces: {list(self.wifi_interfaces.keys())}")
         
         # Client certificate storage for GNMI authentication
         self.client_cert_dir = 'client_certs'
@@ -640,18 +631,12 @@ class StreamSwarmClient:
         
         logger.info(f"Starting test {test_id} to {destination} for {duration}s (type: {test_type})")
         
-        # Debug: Log test type and WiFi interface status
-        logger.info(f"DEBUG: Test type received: '{test_type}' (type: {type(test_type)})")
-        logger.info(f"DEBUG: WiFi scanning available: {WIFI_SCANNING_AVAILABLE}")
-        logger.info(f"DEBUG: WiFi interfaces detected: {len(self.wifi_interfaces)}")
-        logger.info(f"DEBUG: Spare WiFi interfaces: {len(self.spare_wifi_interfaces)} - {self.spare_wifi_interfaces}")
-        
         # Handle standalone WiFi environmental test
         if test_type == 'wifi_environment':
-            logger.info(f"DEBUG: Executing standalone WiFi environmental test for test {test_id}")
+            logger.info(f"Executing WiFi environmental test for test {test_id}")
             return self._wifi_environmental_test(test_id, destination, duration, interval)
         else:
-            logger.info(f"DEBUG: Executing standard network test for test {test_id}")
+            logger.info(f"Executing standard network test for test {test_id}")
         
         start_time = time.time()
         end_time = start_time + duration
@@ -1965,11 +1950,6 @@ class StreamSwarmClient:
                 if response.status_code == 200:
                     data = response.json()
                     tests = data.get('tests', [])
-                    
-                    # Debug: Log the full API response
-                    logger.info(f"DEBUG: API response received: {len(tests)} tests")
-                    for i, test in enumerate(tests):
-                        logger.info(f"DEBUG: Test {i}: ID={test.get('id')}, type={test.get('test_type')}, name={test.get('name')}")
                     
                     for test in tests:
                         test_id = test['id']
@@ -3294,14 +3274,11 @@ class StreamSwarmClient:
                     return
                 
                 current_interface = None
-                logger.info(f"DEBUG: Raw iw dev output:\n{result.stdout}")
                 
                 for line in result.stdout.split('\n'):
                     line = line.strip()
-                    logger.debug(f"DEBUG: Processing line: '{line}'")
                     if line.startswith('Interface '):
                         current_interface = line.split('Interface ')[1]
-                        logger.info(f"DEBUG: Found interface: {current_interface}")
                         
                         # Initialize interface data
                         interface_data = {
@@ -3356,10 +3333,6 @@ class StreamSwarmClient:
                 return
             
             logger.info(f"WiFi interface detection complete - Primary: {self.primary_wifi_interface}, Spare: {len(self.spare_wifi_interfaces)}")
-            logger.info(f"DEBUG: All WiFi interfaces detected: {list(self.wifi_interfaces.keys())}")
-            for interface_name, data in self.wifi_interfaces.items():
-                logger.info(f"DEBUG: Interface {interface_name} - Connected: {data['connected']}, SSID: '{data['essid']}'")
-            logger.info(f"DEBUG: Spare interface list: {self.spare_wifi_interfaces}")
             
         except Exception as e:
             logger.error(f"Error detecting WiFi interfaces: {e}")
@@ -3674,9 +3647,6 @@ class StreamSwarmClient:
             if not WIFI_SCANNING_AVAILABLE:
                 logger.error("WiFi scanning not available - iw command not found (install with: sudo apt-get install iw)")
                 return
-            
-            logger.info(f"DEBUG: WiFi interfaces available: {len(self.wifi_interfaces)} - {list(self.wifi_interfaces.keys())}")
-            logger.info(f"DEBUG: Spare WiFi interfaces: {len(self.spare_wifi_interfaces)} - {self.spare_wifi_interfaces}")
             
             if not (self.wifi_interfaces):
                 logger.error("No WiFi interfaces available for environmental testing")
