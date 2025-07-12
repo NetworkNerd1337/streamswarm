@@ -3877,7 +3877,16 @@ class StreamSwarmClient:
                     }
                     
                     for network in weak_24ghz:
-                        freq = network.get('frequency', 0)
+                        freq_str = network.get('frequency', '0')
+                        try:
+                            # Parse frequency from string format like "2422.0 MHz"
+                            if isinstance(freq_str, str):
+                                freq = float(freq_str.replace(' MHz', '').replace('MHz', ''))
+                            else:
+                                freq = float(freq_str)
+                        except (ValueError, TypeError):
+                            freq = 0
+                        
                         if 2402 <= freq <= 2420:
                             bluetooth_ranges['2.402-2.420 GHz'].append(network)
                         elif 2420 <= freq <= 2440:
@@ -3960,7 +3969,16 @@ class StreamSwarmClient:
                     }
                     
                     for network in networks:
-                        freq = network.get('frequency', 0)
+                        freq_str = network.get('frequency', '0')
+                        try:
+                            # Parse frequency from string format like "2422.0 MHz"
+                            if isinstance(freq_str, str):
+                                freq = float(freq_str.replace(' MHz', '').replace('MHz', ''))
+                            else:
+                                freq = float(freq_str)
+                        except (ValueError, TypeError):
+                            freq = 0
+                        
                         if 2400 <= freq <= 2500:
                             frequency_bands['2.4 GHz'].append(network)
                         elif 5000 <= freq <= 6000:
