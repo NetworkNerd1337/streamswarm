@@ -259,7 +259,7 @@ def dashboard():
                          recent_results=recent_results)
 
 @app.route('/clients')
-@web_auth_required
+@admin_required
 def clients():
     """Client management view"""
     # Load initial batch of clients (most recent 20)
@@ -1375,6 +1375,7 @@ def get_test_data(test_id):
     return jsonify(data)
 
 @app.route('/api/client/<int:client_id>/details', methods=['GET'])
+@admin_required
 def get_client_details(client_id):
     """Get detailed client information"""
     client = Client.query.get_or_404(client_id)
@@ -1653,6 +1654,7 @@ def export_test_pdf(test_id):
         return jsonify({'error': f'Failed to generate PDF report: {str(e)}'}), 500
 
 @app.route('/api/client/<int:client_id>', methods=['DELETE'])
+@admin_required
 def delete_client(client_id):
     """Delete a client (only if offline) while preserving historical data"""
     try:
@@ -2732,7 +2734,7 @@ def api_tests():
     })
 
 @app.route('/api/clients', methods=['GET'])
-@web_auth_required
+@admin_required
 def api_clients():
     """Get paginated clients for infinite scroll with optional search"""
     page = request.args.get('page', 1, type=int)
@@ -3252,6 +3254,7 @@ def get_client_gnmi_certificate(device_id, cert_type):
 # ================================
 
 @app.route('/api/client/<int:client_id>/certificates', methods=['POST'])
+@admin_required
 def upload_client_certificates(client_id):
     """Upload client-generated certificates for GNMI authentication"""
     try:

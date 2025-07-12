@@ -105,6 +105,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **FIXED** Critical security vulnerability - restricted /clients page access to admin users only
+  - Added admin_required decorator to /clients route and all client management API endpoints
+  - Fixed unauthorized access where non-admin users could access client management functionality
+  - Hidden "Clients" menu option from non-admin users in both header navigation and footer
+  - Updated tutorial page to hide client management links for non-admin users
+  - All client-related operations now require admin privileges: viewing clients, client details, deletion, certificate management, and rebooting
+  - Maintains development mode bypass for testing while enforcing proper security in production
 - July 12, 2025: **ENHANCED** Client monitoring with Last Restart and Uptime tracking columns plus improved reboot confirmation dialog
   - Added "Last Restart" and "Uptime" columns to clients table for better monitoring visibility
   - Updated database schema with last_restart and uptime_seconds fields in Client model

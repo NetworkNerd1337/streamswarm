@@ -3698,7 +3698,9 @@ psql $DATABASE_URL -c "SELECT pg_size_pretty(pg_database_size('streamswarm'));"<
                             <h6><i class="fas fa-question-circle me-2"></i>Application</h6>
                             <ul class="list-unstyled">
                                 <li><a href="/" class="text-decoration-none">Dashboard</a></li>
+                                {% if current_user.is_authenticated and current_user.is_admin() %}
                                 <li><a href="/clients" class="text-decoration-none">Client Management</a></li>
+                                {% endif %}
                                 <li><a href="/tests" class="text-decoration-none">Test Management</a></li>
                             </ul>
                         </div>
