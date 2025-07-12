@@ -4247,8 +4247,9 @@ class StreamSwarmClient:
             # Wait a moment for cleanup
             time.sleep(3)
             
-            # Execute the reboot command
-            subprocess.run(['sudo', 'reboot'], check=True)
+            # Execute the reboot command using shutdown -r now (more reliable than reboot)
+            subprocess.run(['sudo', 'shutdown', '-r', 'now'], check=True)
+            logger.info("System reboot initiated successfully.")
             
         except subprocess.CalledProcessError as e:
             logger.error(f"Reboot command failed: {e}")

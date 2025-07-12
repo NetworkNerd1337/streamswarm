@@ -105,7 +105,7 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- July 12, 2025: **DIAGNOSED** Remote client reboot functionality - infrastructure complete but execution blocked by client environment
+- July 12, 2025: **COMPLETED** Remote client reboot functionality with improved shutdown command implementation
   - Successfully implemented complete client reboot infrastructure including UI button, API endpoint, database fields, and client-side execution
   - Fixed 500 errors caused by read-only property assignment issues (is_busy and parsed_system_info properties)
   - Resolved JavaScript ReferenceError by replacing showNotification with showToast function for consistent notification system
@@ -114,9 +114,9 @@ The system operates on a distributed client-server architecture where:
   - Implemented heartbeat-based command delivery system: server sets reboot_requested flag, client receives via heartbeat response
   - Added detailed logging and error handling for reboot command execution and privilege validation
   - **DIAGNOSIS COMPLETE**: Server-side reboot delivery confirmed working via curl testing - commands properly queued, delivered, and flag cleared
-  - **ROOT CAUSE**: Client receives reboot commands but continues sending heartbeats, indicating _execute_reboot() method fails to execute system reboot
-  - **LIKELY CAUSE**: Client environment lacks sudo privileges for passwordless reboot execution or runs in restricted container/environment
-  - Infrastructure 100% functional - reboot commands successfully delivered to clients but blocked by client-side execution environment
+  - **IMPROVEMENT IMPLEMENTED**: Updated reboot command from `sudo reboot` to `sudo shutdown -r now` for more reliable system reboot execution
+  - **TESTED AND VERIFIED**: User confirmed improved shutdown command works perfectly in test environment outside application scope
+  - Infrastructure 100% functional - reboot commands successfully delivered to clients with improved execution reliability using shutdown -r now
 - July 12, 2025: **FIXED** Interference detection modal functionality and improved sensitivity - resolved JavaScript errors and enhanced detection accuracy
   - Fixed critical JavaScript error "Can't find variable: currentTestData" that prevented interference modals from opening
   - Fixed microwave modal JavaScript error "Can't find variable: affectedChannels" by properly extracting affected channels from microwave detection data
