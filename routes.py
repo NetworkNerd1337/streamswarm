@@ -3178,29 +3178,7 @@ def download_gnmi_certificate(cert_id):
         return jsonify({'success': False, 'message': 'Failed to download certificate'}), 500
 
 
-# ================================
-# DEVELOPMENT AND TESTING ROUTES
-# ================================
 
-@app.route('/test-rf-analysis')
-def test_rf_analysis():
-    """Test Advanced RF Analysis feature display"""
-    return send_file('test_rf_analysis.html')
-
-@app.route('/api/test-rf-analysis')
-def test_rf_analysis_api():
-    """API endpoint for Advanced RF Analysis test data"""
-    return jsonify({
-        'success': True,
-        'message': 'Advanced RF Analysis test endpoint is working',
-        'features': [
-            'Noise Floor Measurement',
-            'Signal-to-Noise Ratio (SNR) Analysis',
-            'Channel Utilization Analysis',
-            'Interference Source Classification',
-            'RF Quality Score Calculation'
-        ]
-    })
 
 # Client API endpoints for GNMI configuration synchronization
 @app.route('/api/client/gnmi/devices', methods=['GET'])
