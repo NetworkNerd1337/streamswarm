@@ -216,10 +216,15 @@ class StreamSwarmClient:
                     # Check if the server sent a reboot request
                     try:
                         result = response.json()
+                        logger.info(f"HEARTBEAT: Received response from server - {result}")
                         if result.get('reboot_requested'):
-                            logger.info("Server requested client reboot. Executing reboot command...")
+                            logger.info("REBOOT: Server requested client reboot. Executing reboot command...")
                             self._execute_reboot()
-                    except:
+                        else:
+                            logger.info("HEARTBEAT: No reboot requested in server response")
+                    except Exception as e:
+                        logger.warning(f"HEARTBEAT: Failed to parse server response as JSON: {e}")
+                        logger.warning(f"HEARTBEAT: Raw response: {response.text}")
                         pass  # Response might not be JSON, that's OK
                 else:
                     logger.warning(f"Heartbeat failed: {response.status_code}")
@@ -4221,40 +4226,55 @@ class StreamSwarmClient:
     def _execute_reboot(self):
         """Execute system reboot with proper checks"""
         try:
+            logger.info("REBOOT: Starting reboot execution process")
+            
             # Verify we're on Linux
-            if not platform.system().lower() == 'linux':
-                logger.error("Reboot command only supported on Linux systems")
+            platform_name = platform.system().lower()
+            logger.info(f"REBOOT: Detected platform: {platform_name}")
+            if not platform_name == 'linux':
+                logger.error("REBOOT: Reboot command only supported on Linux systems")
                 return
             
             # Check if we have sudo privileges
+            logger.info("REBOOT: Checking sudo privileges...")
             try:
                 result = subprocess.run(['sudo', '-n', 'true'], capture_output=True, timeout=5)
+                logger.info(f"REBOOT: Sudo check result - returncode: {result.returncode}, stdout: {result.stdout.decode()}, stderr: {result.stderr.decode()}")
                 if result.returncode != 0:
-                    logger.error("Reboot failed: sudo privileges required. Configure passwordless sudo or run client with sudo.")
+                    logger.error("REBOOT: Sudo privileges required. Configure passwordless sudo or run client with sudo.")
+                    logger.error(f"REBOOT: Sudo check failed with returncode {result.returncode}")
                     return
             except subprocess.TimeoutExpired:
-                logger.error("Reboot failed: sudo privilege check timed out")
+                logger.error("REBOOT: Sudo privilege check timed out")
                 return
             
-            logger.info("Executing system reboot in 5 seconds...")
+            logger.info("REBOOT: Sudo privileges confirmed. Executing system reboot in 5 seconds...")
             
             # Give time for the log message to be processed
             time.sleep(2)
             
             # Stop the client cleanly
+            logger.info("REBOOT: Stopping client cleanly...")
             self.stop()
             
             # Wait a moment for cleanup
             time.sleep(3)
             
             # Execute the reboot command using shutdown -r now (more reliable than reboot)
+            logger.info("REBOOT: Executing 'sudo shutdown -r now' command...")
             subprocess.run(['sudo', 'shutdown', '-r', 'now'], check=True)
-            logger.info("System reboot initiated successfully.")
+            logger.info("REBOOT: System reboot initiated successfully.")
             
         except subprocess.CalledProcessError as e:
-            logger.error(f"Reboot command failed: {e}")
+            logger.error(f"REBOOT: Command failed with CalledProcessError: {e}")
+            logger.error(f"REBOOT: Command returncode: {e.returncode}")
+            logger.error(f"REBOOT: Command stdout: {e.stdout}")
+            logger.error(f"REBOOT: Command stderr: {e.stderr}")
         except Exception as e:
-            logger.error(f"Error during reboot execution: {e}")
+            logger.error(f"REBOOT: Error during reboot execution: {e}")
+            logger.error(f"REBOOT: Exception type: {type(e)}")
+            import traceback
+            logger.error(f"REBOOT: Full traceback: {traceback.format_exc()}")
     
     def stop(self):
         """Stop the client"""
