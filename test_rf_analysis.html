@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced RF Analysis Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #1a1a1a; color: #ffffff; }
+        .card { background-color: #2d2d2d; border: 1px solid #444; }
+        .bg-dark { background-color: #343a40 !important; }
+        .border { border-color: #444 !important; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Advanced RF Analysis Test</h1>
+        
+        <!-- Test Button -->
+        <div class="text-center mb-4">
+            <button class="btn btn-primary" onclick="testAdvancedRFAnalysis()">
+                Test Advanced RF Analysis Display
+            </button>
+        </div>
+        
+        <!-- Advanced RF Analysis Section (from test_results.html) -->
+        <div class="row mb-4" id="advancedRFSection" style="display: none;">
+            <div class="col-12">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-broadcast-tower me-2"></i>Advanced RF Analysis
+                </h6>
+                <div class="row g-3">
+                    <!-- Noise Floor -->
+                    <div class="col-md-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Noise Floor</h6>
+                                <h5 class="mb-1" id="rfNoiseFloor">-95 dBm</h5>
+                                <small class="text-muted" id="rfNoiseMethod">Estimated</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Average SNR -->
+                    <div class="col-md-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Average SNR</h6>
+                                <h5 class="mb-1" id="rfAvgSNR">0 dB</h5>
+                                <small class="text-muted" id="rfPoorSNR">0 poor connections</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Interference Level -->
+                    <div class="col-md-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Interference</h6>
+                                <h5 class="mb-1" id="rfInterferenceLevel">Minimal</h5>
+                                <small class="text-muted" id="rfInterferenceScore">0 sources</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RF Quality Score -->
+                    <div class="col-md-3">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">RF Quality</h6>
+                                <h5 class="mb-1" id="rfQualityScore">100</h5>
+                                <small class="text-muted">Score (0-100)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Channel Utilization -->
+                <div class="mt-3">
+                    <h6 class="text-secondary mb-2">Channel Utilization Analysis</h6>
+                    <div class="row" id="channelUtilizationCards">
+                        <div class="col-12 text-center text-muted">
+                            <small>No channel utilization data available</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interference Sources -->
+                <div class="mt-3">
+                    <h6 class="text-secondary mb-2">Interference Source Classification</h6>
+                    <div class="row" id="interferenceSourceCards">
+                        <div class="col-3">
+                            <div class="text-center p-2 border rounded">
+                                <div class="text-warning fw-bold" id="wifiCongestionInterference">0</div>
+                                <small class="text-muted">WiFi Congestion</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-center p-2 border rounded">
+                                <div class="text-info fw-bold" id="bluetoothInterference">0</div>
+                                <small class="text-muted">Bluetooth</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-center p-2 border rounded">
+                                <div class="text-danger fw-bold" id="microwaveInterference">0</div>
+                                <small class="text-muted">Microwave</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-center p-2 border rounded">
+                                <div class="text-secondary fw-bold" id="otherRFInterference">0</div>
+                                <small class="text-muted">Other RF</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Console Output -->
+        <div class="mt-4">
+            <h6 class="text-primary">Console Output</h6>
+            <div id="consoleOutput" class="bg-dark p-3 rounded" style="font-family: monospace; white-space: pre-wrap;">
+                Ready for testing...
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Test data to verify Advanced RF Analysis display
+        const testRFAnalysis = {
+            noise_floor: {
+                avg_noise_floor: -92.5,
+                measurement_method: 'survey_dump',
+                noise_measurements: [-95, -90, -92, -94],
+                in_use_channel: '36'
+            },
+            channel_utilization: {
+                '1': { network_count: 3, utilization_estimate: 45.2, strongest_signal: -35 },
+                '6': { network_count: 2, utilization_estimate: 30.8, strongest_signal: -42 },
+                '11': { network_count: 1, utilization_estimate: 15.3, strongest_signal: -28 },
+                '36': { network_count: 4, utilization_estimate: 62.7, strongest_signal: -29 },
+                '40': { network_count: 2, utilization_estimate: 25.4, strongest_signal: -38 },
+                '44': { network_count: 1, utilization_estimate: 12.1, strongest_signal: -45 },
+                '149': { network_count: 3, utilization_estimate: 41.9, strongest_signal: -33 },
+                '153': { network_count: 2, utilization_estimate: 28.6, strongest_signal: -39 }
+            },
+            snr_analysis: {
+                avg_snr: 28.3,
+                snr_values: [35, 42, 28, 25, 31, 29, 38, 22, 33, 27],
+                poor_snr_count: 2,
+                network_snr: [
+                    { ssid: 'RTHNET', signal_strength: -25, snr: 35.5, channel: 36, connection_quality: 'Excellent' },
+                    { ssid: 'MyWiFi', signal_strength: -32, snr: 28.3, channel: 1, connection_quality: 'Good' }
+                ],
+                noise_floor_used: -92.5
+            },
+            interference_analysis: {
+                total_interference_sources: 35.8,
+                interference_types: {
+                    wifi_congestion: 18.5,
+                    bluetooth_interference: 8.2,
+                    microwave_interference: 5.1,
+                    other_rf_sources: 4.0
+                },
+                interference_level: 'Moderate'
+            },
+            rf_quality_score: 72
+        };
+
+        // Copy of the Advanced RF Analysis display function from test_results.html
+        function displayAdvancedRFAnalysis(rfAnalysis) {
+            console.log('Displaying Advanced RF Analysis:', rfAnalysis);
+            log('Starting Advanced RF Analysis display...');
+            
+            // Show the Advanced RF Analysis section
+            document.getElementById('advancedRFSection').style.display = 'block';
+            
+            // Update noise floor information
+            const noiseFloor = rfAnalysis.noise_floor || {};
+            document.getElementById('rfNoiseFloor').textContent = 
+                `${noiseFloor.avg_noise_floor || -95} dBm`;
+            document.getElementById('rfNoiseMethod').textContent = 
+                noiseFloor.measurement_method === 'survey_dump' ? 'Measured' : 'Estimated';
+            
+            // Update SNR information
+            const snrAnalysis = rfAnalysis.snr_analysis || {};
+            document.getElementById('rfAvgSNR').textContent = 
+                `${snrAnalysis.avg_snr || 0} dB`;
+            document.getElementById('rfPoorSNR').textContent = 
+                `${snrAnalysis.poor_snr_count || 0} poor connections`;
+            
+            // Update interference information
+            const interferenceAnalysis = rfAnalysis.interference_analysis || {};
+            document.getElementById('rfInterferenceLevel').textContent = 
+                interferenceAnalysis.interference_level || 'Unknown';
+            document.getElementById('rfInterferenceScore').textContent = 
+                `${interferenceAnalysis.total_interference_sources || 0} sources`;
+            
+            // Update RF Quality Score
+            const rfQualityScore = rfAnalysis.rf_quality_score || 50;
+            document.getElementById('rfQualityScore').textContent = rfQualityScore;
+            
+            // Update Channel Utilization
+            const channelUtilization = rfAnalysis.channel_utilization || {};
+            const channelUtilizationContainer = document.getElementById('channelUtilizationCards');
+            
+            if (Object.keys(channelUtilization).length > 0) {
+                const channelCards = Object.entries(channelUtilization)
+                    .sort(([,a], [,b]) => (b.utilization_estimate || 0) - (a.utilization_estimate || 0))
+                    .slice(0, 8) // Show top 8 channels
+                    .map(([channel, data]) => `
+                        <div class="col-md-3 mb-2">
+                            <div class="text-center p-2 border rounded">
+                                <div class="fw-bold text-warning">Ch ${channel}</div>
+                                <div class="small text-muted">${data.utilization_estimate || 0}% used</div>
+                                <div class="small text-info">${data.network_count || 0} networks</div>
+                            </div>
+                        </div>
+                    `).join('');
+                
+                channelUtilizationContainer.innerHTML = channelCards;
+                log(`Channel utilization updated: ${Object.keys(channelUtilization).length} channels`);
+            } else {
+                channelUtilizationContainer.innerHTML = '<div class="col-12 text-center text-muted"><small>No channel utilization data available</small></div>';
+            }
+            
+            // Update interference sources
+            const interferenceTypes = interferenceAnalysis.interference_types || {};
+            document.getElementById('wifiCongestionInterference').textContent = 
+                Math.round(interferenceTypes.wifi_congestion || 0);
+            document.getElementById('bluetoothInterference').textContent = 
+                Math.round(interferenceTypes.bluetooth_interference || 0);
+            document.getElementById('microwaveInterference').textContent = 
+                Math.round(interferenceTypes.microwave_interference || 0);
+            document.getElementById('otherRFInterference').textContent = 
+                Math.round(interferenceTypes.other_rf_sources || 0);
+            
+            log('Advanced RF Analysis display completed successfully!');
+            console.log('Advanced RF Analysis display completed');
+        }
+
+        function testAdvancedRFAnalysis() {
+            log('Testing Advanced RF Analysis with sample data...');
+            displayAdvancedRFAnalysis(testRFAnalysis);
+        }
+
+        function log(message) {
+            const output = document.getElementById('consoleOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+    </script>
+</body>
+</html>

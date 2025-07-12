@@ -1,4 +1,5 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, send_file, Blueprint
+import io
 from functools import wraps
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db, login_required_with_dev_bypass, require_admin_or_dev_mode
@@ -3158,21 +3159,48 @@ def download_gnmi_certificate(cert_id):
     try:
         certificate = GnmiCertificate.query.get_or_404(cert_id)
         
-        # Create a temporary file-like object
-        from io import BytesIO
-        file_obj = BytesIO(certificate.content)
-        file_obj.seek(0)
+        # Set appropriate content type based on file extension
+        content_type = 'application/x-pem-file'
+        if certificate.filename.endswith('.key'):
+            content_type = 'application/x-pem-file'
+        elif certificate.filename.endswith('.crt') or certificate.filename.endswith('.pem'):
+            content_type = 'application/x-x509-ca-cert'
         
         return send_file(
-            file_obj,
-            as_attachment=True,
+            io.BytesIO(certificate.content),
             download_name=certificate.filename,
-            mimetype='application/octet-stream'
+            as_attachment=True,
+            mimetype=content_type
         )
         
     except Exception as e:
         logging.error(f"Error downloading certificate {cert_id}: {str(e)}")
-        return jsonify({'error': 'Failed to download certificate'}), 500
+        return jsonify({'success': False, 'message': 'Failed to download certificate'}), 500
+
+
+# ================================
+# DEVELOPMENT AND TESTING ROUTES
+# ================================
+
+@app.route('/test-rf-analysis')
+def test_rf_analysis():
+    """Test Advanced RF Analysis feature display"""
+    return send_file('test_rf_analysis.html')
+
+@app.route('/api/test-rf-analysis')
+def test_rf_analysis_api():
+    """API endpoint for Advanced RF Analysis test data"""
+    return jsonify({
+        'success': True,
+        'message': 'Advanced RF Analysis test endpoint is working',
+        'features': [
+            'Noise Floor Measurement',
+            'Signal-to-Noise Ratio (SNR) Analysis',
+            'Channel Utilization Analysis',
+            'Interference Source Classification',
+            'RF Quality Score Calculation'
+        ]
+    })
 
 # Client API endpoints for GNMI configuration synchronization
 @app.route('/api/client/gnmi/devices', methods=['GET'])
