@@ -3862,10 +3862,10 @@ class StreamSwarmClient:
                             })
             
             # Bluetooth interference with detailed analysis
-            if len(channel_24ghz) > 5:
+            if len(channel_24ghz) > 3:
                 # High density of 2.4GHz networks suggests possible Bluetooth interference
-                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -70]
-                if len(weak_24ghz) > 2:
+                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -65]
+                if len(weak_24ghz) > 1:
                     interference_sources['bluetooth_interference'] = min(len(weak_24ghz) * 3, 30)
                     
                     # Group by frequency ranges for Bluetooth analysis
@@ -3909,7 +3909,7 @@ class StreamSwarmClient:
                             })
                 
                 # Additional Bluetooth detection based on network density
-                if len(channel_24ghz) > 15:
+                if len(channel_24ghz) > 8:
                     interference_sources['bluetooth_interference'] += 5
                     interference_details['bluetooth_details'].append({
                         'frequency_range': '2.4 GHz Band',
@@ -3922,8 +3922,8 @@ class StreamSwarmClient:
             # Microwave interference with detailed tracking
             if channel_24ghz:
                 # Look for networks with very poor signal quality in 2.4GHz
-                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -85]
-                if len(very_weak) > 1:
+                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -80]
+                if len(very_weak) > 0:
                     interference_sources['microwave_interference'] = min(len(very_weak) * 4, 25)
                     
                     # Focus on channels 6-11 (2.45GHz microwave overlap)
@@ -3940,7 +3940,7 @@ class StreamSwarmClient:
                         })
                 
                 # Additional microwave detection from signal patterns
-                if len(channel_24ghz) > 10:
+                if len(channel_24ghz) > 6:
                     microwave_overlap = [n for n in channel_24ghz if n.get('channel', 0) in [2, 3, 4, 5, 7, 8, 9, 10]]
                     if len(microwave_overlap) > 3:
                         interference_sources['microwave_interference'] += 3

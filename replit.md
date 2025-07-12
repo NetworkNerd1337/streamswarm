@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **FIXED** Interference detection modal functionality and improved sensitivity - resolved JavaScript errors and enhanced detection accuracy
+  - Fixed critical JavaScript error "Can't find variable: currentTestData" that prevented interference modals from opening
+  - Added global `currentWifiData` variable to properly store WiFi scan data for modal access
+  - Updated all interference modal functions to use correct data source (`currentWifiData` instead of `currentTestData`)
+  - Improved Bluetooth interference detection sensitivity: reduced minimum 2.4GHz network threshold from 5 to 3 networks, signal threshold from -70dBm to -65dBm
+  - Enhanced microwave interference detection: lowered signal threshold from -85dBm to -80dBm, reduced minimum network requirements
+  - Fixed network density thresholds: Bluetooth detection now triggers with 8+ networks (was 15+), microwave detection with 6+ networks (was 10+)
+  - All interference source modals now open correctly with detailed analysis: WiFi congestion, Bluetooth interference, microwave sources, and other RF interference
+  - Maintains all previous enhancements: color-coded badges, contextual guidance, clickable channel counts, consistent theming
 - July 12, 2025: **ENHANCED** Clickable interference source details with comprehensive analysis modals - added detailed interference breakdowns for each category
   - Made WiFi Congestion, Bluetooth, Microwave, and Other RF labels clickable to open detailed analysis modals
   - WiFi Congestion Modal: Shows channel-by-channel breakdown with competing networks, signal strengths, and congestion levels
