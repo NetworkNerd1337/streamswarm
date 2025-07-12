@@ -814,6 +814,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <small class="text-muted me-auto">
+                        Showing <span id="modalNetworkCount">0</span> networks
+                    </small>
                 </div>
             </div>
         </div>
@@ -3658,6 +3661,7 @@ function displayWiFiEnvironmentalAnalysis() {
     allWifiNetworks = wifiData.detected_networks || [];
     console.log('Storing networks for modal - count:', allWifiNetworks.length);
     console.log('Sample networks:', allWifiNetworks.slice(0, 3));
+    console.log('Full network list length check:', allWifiNetworks.length, 'vs total networks:', wifiData.total_networks);
     
     // Update environment quality (fix property names)
     const quality = wifiData.environment_quality || 'Unknown';
@@ -3904,6 +3908,11 @@ function showAllNetworks() {
         `).join('');
         
         console.log('Modal table updated with', sortedNetworks.length, 'networks');
+        console.log('First 5 networks in modal:', sortedNetworks.slice(0, 5).map(n => n.ssid || 'Hidden'));
+        console.log('Last 5 networks in modal:', sortedNetworks.slice(-5).map(n => n.ssid || 'Hidden'));
+        
+        // Update modal footer count
+        document.getElementById('modalNetworkCount').textContent = sortedNetworks.length;
     }
     
     modal.show();
