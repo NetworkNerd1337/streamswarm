@@ -3802,7 +3802,8 @@ function displayWiFiEnvironmentalAnalysis() {
     // Display WiFi environmental analysis card
     document.getElementById('wifiEnvironmentCard').style.display = 'block';
     
-    // Store all networks for modal
+    // Store complete WiFi data and networks for modals
+    currentWifiData = wifiData;
     allWifiNetworks = wifiData.detected_networks || [];
     console.log('Storing networks for modal - count:', allWifiNetworks.length);
     console.log('Sample networks:', allWifiNetworks.slice(0, 3));
@@ -3951,8 +3952,9 @@ function displayWiFiEnvironmentalAnalysis() {
     }
 }
 
-// Global variable to store all networks for modal
+// Global variables to store WiFi data for modals
 let allWifiNetworks = [];
+let currentWifiData = null;
 
 // Function to display Advanced RF Analysis data
 function displayAdvancedRFAnalysis(rfAnalysis) {
@@ -4237,13 +4239,13 @@ function showWiFiCongestionDetails(contentElement, countElement) {
 }
 
 function showWifiCongestionDetails(contentElement, countElement) {
-    // Check if we have detailed interference data from the RF analysis
-    const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
+    // Access the global currentWifiData that's already loaded
+    const rfAnalysis = currentWifiData?.rf_analysis;
     const wifiCongestionDetails = rfAnalysis?.interference_analysis?.interference_details?.wifi_congestion_details;
     
     // Fallback to existing channel utilization data if detailed data isn't available
     const channelUtilization = rfAnalysis?.channel_utilization;
-    const detectedNetworks = currentTestData?.wifi_environment_data?.detected_networks || [];
+    const detectedNetworks = currentWifiData?.detected_networks || [];
     
     if (wifiCongestionDetails && wifiCongestionDetails.length > 0) {
         // Use new detailed data structure
@@ -4356,12 +4358,12 @@ function showWifiCongestionDetails(contentElement, countElement) {
 }
 
 function showBluetoothDetails(contentElement, countElement) {
-    // Check if we have detailed interference data from the RF analysis
-    const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
+    // Access the global currentWifiData that's already loaded
+    const rfAnalysis = currentWifiData?.rf_analysis;
     const bluetoothDetails = rfAnalysis?.interference_analysis?.interference_details?.bluetooth_details;
     
     // Check for existing interference count as fallback
-    const bluetoothCount = rfAnalysis?.interference_analysis?.interference_sources?.bluetooth_interference || 0;
+    const bluetoothCount = rfAnalysis?.interference_analysis?.interference_types?.bluetooth_interference || 0;
     
     if (!bluetoothDetails || bluetoothDetails.length === 0) {
         // Fallback to basic analysis if no detailed data
@@ -4461,10 +4463,10 @@ function showBluetoothDetails(contentElement, countElement) {
 }
 
 function showMicrowaveDetails(contentElement, countElement) {
-    // Check if we have detailed interference data from the RF analysis
-    const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
+    // Access the global currentWifiData that's already loaded
+    const rfAnalysis = currentWifiData?.rf_analysis;
     const microwaveDetails = rfAnalysis?.interference_analysis?.interference_details?.microwave_details;
-    const microwaveCount = rfAnalysis?.interference_analysis?.interference_sources?.microwave_interference || 0;
+    const microwaveCount = rfAnalysis?.interference_analysis?.interference_types?.microwave_interference || 0;
     
     if (!microwaveDetails || microwaveDetails.length === 0) {
         // Fallback to basic analysis if no detailed data
@@ -4581,10 +4583,10 @@ function showMicrowaveDetails(contentElement, countElement) {
 }
 
 function showOtherRFDetails(contentElement, countElement) {
-    // Check if we have detailed interference data from the RF analysis
-    const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
+    // Access the global currentWifiData that's already loaded
+    const rfAnalysis = currentWifiData?.rf_analysis;
     const otherRFDetails = rfAnalysis?.interference_analysis?.interference_details?.other_rf_details;
-    const otherRFCount = rfAnalysis?.interference_analysis?.interference_sources?.other_rf_sources || 0;
+    const otherRFCount = rfAnalysis?.interference_analysis?.interference_types?.other_rf_sources || 0;
     
     if (!otherRFDetails || otherRFDetails.length === 0) {
         // Fallback to basic analysis if no detailed data
