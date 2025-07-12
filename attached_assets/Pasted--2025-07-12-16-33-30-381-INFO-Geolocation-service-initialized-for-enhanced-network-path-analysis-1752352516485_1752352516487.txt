@@ -1,0 +1,26 @@
+
+2025-07-12 16:33:30,381 - INFO - Geolocation service initialized for enhanced network path analysis
+2025-07-12 16:33:30,381 - INFO - GNMI network analyzer initialized - devices will sync from server
+2025-07-12 16:33:30,388 - INFO - Primary WiFi interface detected: wlan0 (connected to RTHNET)
+2025-07-12 16:33:30,388 - INFO - WiFi interface detection complete - Primary: wlan0, Spare: 0
+2025-07-12 16:33:30,388 - INFO - GNMI network analyzer initialized for managed infrastructure analysis
+2025-07-12 16:33:31,049 - INFO - Registered with server. Client ID: 14
+2025-07-12 16:33:31,050 - INFO - Synchronizing GNMI devices from server...
+2025-07-12 16:33:31,405 - INFO - Retrieved 2 GNMI devices from server
+2025-07-12 16:33:31,405 - INFO - Cleared all GNMI devices and connections
+2025-07-12 16:33:31,405 - ERROR - Error synchronizing GNMI devices: 'str' object has no attribute 'get'
+2025-07-12 16:33:31,405 - INFO - No local GNMI configuration found
+2025-07-12 16:33:31,406 - INFO - Client certificates already exist
+2025-07-12 16:33:31,850 - INFO - Client certificates uploaded to server successfully
+2025-07-12 16:33:31,850 - INFO - Starting StreamSwarm client...
+2025-07-12 16:33:31,851 - INFO - ✓ Client connected and ready! Monitoring server for tests...
+2025-07-12 16:33:31,852 - INFO - ✓ Client ID: 14 | Server: https://swarm.ryanthomashuff.com
+2025-07-12 16:33:31,852 - INFO - ✓ Heartbeat active | Test monitoring active
+2025-07-12 16:33:32,399 - INFO - HEARTBEAT: Received response from server - {'status': 'ok'}
+2025-07-12 16:33:32,399 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-12 16:34:03,017 - INFO - HEARTBEAT: Received response from server - {'status': 'ok'}
+2025-07-12 16:34:03,017 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-12 16:34:33,528 - INFO - HEARTBEAT: Received response from server - {'status': 'ok'}
+2025-07-12 16:34:33,528 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-12 16:35:04,083 - INFO - HEARTBEAT: Received response from server - {'status': 'ok'}
+2025-07-12 16:35:04,083 - INFO - HEARTBEAT: No reboot requested in server response

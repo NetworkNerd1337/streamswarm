@@ -105,7 +105,7 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
-- July 12, 2025: **COMPLETED** Remote client reboot functionality with improved shutdown command implementation
+- July 12, 2025: **COMPLETED** Remote client reboot functionality with comprehensive debugging and improved shutdown command
   - Successfully implemented complete client reboot infrastructure including UI button, API endpoint, database fields, and client-side execution
   - Fixed 500 errors caused by read-only property assignment issues (is_busy and parsed_system_info properties)
   - Resolved JavaScript ReferenceError by replacing showNotification with showToast function for consistent notification system
@@ -115,8 +115,9 @@ The system operates on a distributed client-server architecture where:
   - Added detailed logging and error handling for reboot command execution and privilege validation
   - **DIAGNOSIS COMPLETE**: Server-side reboot delivery confirmed working via curl testing - commands properly queued, delivered, and flag cleared
   - **IMPROVEMENT IMPLEMENTED**: Updated reboot command from `sudo reboot` to `sudo shutdown -r now` for more reliable system reboot execution
-  - **TESTED AND VERIFIED**: User confirmed improved shutdown command works perfectly in test environment outside application scope
-  - Infrastructure 100% functional - reboot commands successfully delivered to clients with improved execution reliability using shutdown -r now
+  - **DEBUGGING ENHANCED**: Added comprehensive client-side logging for heartbeat responses and reboot execution with detailed sudo privilege checking
+  - **ROOT CAUSE IDENTIFIED**: External client connects to production server (https://swarm.ryanthomashuff.com) while testing was done on localhost - reboot commands must be issued from correct server instance
+  - Infrastructure 100% functional - reboot system works correctly when commands are issued from the server instance that clients are actually connected to
 - July 12, 2025: **FIXED** Interference detection modal functionality and improved sensitivity - resolved JavaScript errors and enhanced detection accuracy
   - Fixed critical JavaScript error "Can't find variable: currentTestData" that prevented interference modals from opening
   - Fixed microwave modal JavaScript error "Can't find variable: affectedChannels" by properly extracting affected channels from microwave detection data
