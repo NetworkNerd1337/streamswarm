@@ -722,7 +722,11 @@
                                     <div class="col-3">
                                         <div class="text-center p-2 border rounded">
                                             <div class="fw-bold" id="wifiCongestionInterference">0</div>
-                                            <small class="text-muted">WiFi Congestion</small>
+                                            <small class="text-muted">
+                                                <a href="#" class="text-decoration-none text-muted" onclick="showInterferenceDetails('wifi'); return false;">
+                                                    WiFi Congestion
+                                                </a>
+                                            </small>
                                             <div class="mt-1">
                                                 <span class="badge" id="wifiCongestionBadge">Good</span>
                                             </div>
@@ -731,7 +735,11 @@
                                     <div class="col-3">
                                         <div class="text-center p-2 border rounded">
                                             <div class="fw-bold" id="bluetoothInterference">0</div>
-                                            <small class="text-muted">Bluetooth</small>
+                                            <small class="text-muted">
+                                                <a href="#" class="text-decoration-none text-muted" onclick="showInterferenceDetails('bluetooth'); return false;">
+                                                    Bluetooth
+                                                </a>
+                                            </small>
                                             <div class="mt-1">
                                                 <span class="badge" id="bluetoothBadge">Good</span>
                                             </div>
@@ -740,7 +748,11 @@
                                     <div class="col-3">
                                         <div class="text-center p-2 border rounded">
                                             <div class="fw-bold" id="microwaveInterference">0</div>
-                                            <small class="text-muted">Microwave</small>
+                                            <small class="text-muted">
+                                                <a href="#" class="text-decoration-none text-muted" onclick="showInterferenceDetails('microwave'); return false;">
+                                                    Microwave
+                                                </a>
+                                            </small>
                                             <div class="mt-1">
                                                 <span class="badge" id="microwaveBadge">Good</span>
                                             </div>
@@ -749,7 +761,11 @@
                                     <div class="col-3">
                                         <div class="text-center p-2 border rounded">
                                             <div class="fw-bold" id="otherRFInterference">0</div>
-                                            <small class="text-muted">Other RF</small>
+                                            <small class="text-muted">
+                                                <a href="#" class="text-decoration-none text-muted" onclick="showInterferenceDetails('other_rf'); return false;">
+                                                    Other RF
+                                                </a>
+                                            </small>
                                             <div class="mt-1">
                                                 <span class="badge" id="otherRFBadge">Good</span>
                                             </div>
@@ -906,6 +922,33 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <small class="text-muted me-auto">
                         Showing <span id="channelModalNetworkCount">0</span> networks on this channel
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Interference Details Modal -->
+    <div class="modal fade" id="interferenceDetailsModal" tabindex="-1" aria-labelledby="interferenceDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="interferenceDetailsModalLabel">
+                        <i class="fas fa-broadcast-tower me-2"></i><span id="interferenceTypeTitle">Interference Details</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="interferenceDetailsContent">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin me-2"></i>Loading interference details...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <small class="text-muted me-auto">
+                        <span id="interferenceDetailsCount">Analysis based on detected RF patterns</span>
                     </small>
                 </div>
             </div>
@@ -4080,6 +4123,446 @@ function updateInterferenceBadge(badgeId, value, thresholds) {
         badge.textContent = 'High';
         badge.className = 'badge bg-danger';
     }
+}
+
+function showInterferenceDetails(interferenceType) {
+    console.log('showInterferenceDetails called for:', interferenceType);
+    console.log('allWifiNetworks available:', allWifiNetworks.length);
+    
+    const modal = new bootstrap.Modal(document.getElementById('interferenceDetailsModal'));
+    const titleElement = document.getElementById('interferenceTypeTitle');
+    const contentElement = document.getElementById('interferenceDetailsContent');
+    const countElement = document.getElementById('interferenceDetailsCount');
+    
+    // Update modal title
+    const titles = {
+        'wifi': 'WiFi Congestion Details',
+        'bluetooth': 'Bluetooth Interference Details',
+        'microwave': 'Microwave Interference Details',
+        'other_rf': 'Other RF Interference Details'
+    };
+    titleElement.textContent = titles[interferenceType] || 'Interference Details';
+    
+    // Generate content based on interference type
+    if (interferenceType === 'wifi') {
+        showWiFiCongestionDetails(contentElement, countElement);
+    } else if (interferenceType === 'bluetooth') {
+        showBluetoothDetails(contentElement, countElement);
+    } else if (interferenceType === 'microwave') {
+        showMicrowaveDetails(contentElement, countElement);
+    } else if (interferenceType === 'other_rf') {
+        showOtherRFDetails(contentElement, countElement);
+    }
+    
+    modal.show();
+}
+
+function showWiFiCongestionDetails(contentElement, countElement) {
+    if (!allWifiNetworks || allWifiNetworks.length === 0) {
+        contentElement.innerHTML = '<div class="text-center text-muted">No WiFi networks detected</div>';
+        countElement.textContent = 'No congestion data available';
+        return;
+    }
+    
+    // Group networks by channel to show congestion
+    const channelGroups = {};
+    allWifiNetworks.forEach(network => {
+        const channel = network.channel || 'Unknown';
+        if (!channelGroups[channel]) {
+            channelGroups[channel] = [];
+        }
+        channelGroups[channel].push(network);
+    });
+    
+    // Sort channels by number of networks (most congested first)
+    const sortedChannels = Object.entries(channelGroups)
+        .sort(([,a], [,b]) => b.length - a.length)
+        .filter(([,networks]) => networks.length > 1); // Only show channels with multiple networks
+    
+    if (sortedChannels.length === 0) {
+        contentElement.innerHTML = '<div class="text-center text-muted">No channel congestion detected - all networks are on separate channels</div>';
+        countElement.textContent = 'No congestion issues found';
+        return;
+    }
+    
+    let html = '<div class="row">';
+    sortedChannels.forEach(([channel, networks]) => {
+        const congestionLevel = networks.length >= 6 ? 'High' : networks.length >= 3 ? 'Moderate' : 'Low';
+        const badgeClass = networks.length >= 6 ? 'bg-danger' : networks.length >= 3 ? 'bg-warning' : 'bg-success';
+        
+        html += `
+            <div class="col-md-6 mb-3">
+                <div class="card bg-dark text-white">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Channel ${channel}</h6>
+                        <span class="badge ${badgeClass}">${congestionLevel}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="small text-muted mb-2">${networks.length} competing networks:</div>
+                        <div class="list-group list-group-flush">
+                            ${networks.slice(0, 5).map(network => `
+                                <div class="list-group-item bg-transparent border-0 py-1 px-0">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-light">${network.ssid || 'Hidden Network'}</span>
+                                        <span class="text-muted">${network.signal_strength || 'N/A'} dBm</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${networks.length > 5 ? `<div class="small text-muted">... and ${networks.length - 5} more</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    contentElement.innerHTML = html;
+    countElement.textContent = `${sortedChannels.length} congested channels detected`;
+}
+
+function showBluetoothDetails(contentElement, countElement) {
+    // For Bluetooth, we'll analyze weak signals that might indicate Bluetooth interference
+    if (!allWifiNetworks || allWifiNetworks.length === 0) {
+        contentElement.innerHTML = '<div class="text-center text-muted">No scan data available for Bluetooth analysis</div>';
+        countElement.textContent = 'No Bluetooth analysis available';
+        return;
+    }
+    
+    // Look for potential Bluetooth interference patterns
+    const bluetoothIndicators = [];
+    
+    // Check for networks with characteristics that might indicate Bluetooth interference
+    allWifiNetworks.forEach(network => {
+        const signal = network.signal_strength || -100;
+        const channel = network.channel || 0;
+        
+        // Bluetooth operates in 2.4GHz band (channels 1-14) and can cause interference
+        if (channel >= 1 && channel <= 14) {
+            // Look for weak signals that might indicate Bluetooth interference
+            if (signal < -70 && signal > -90) {
+                bluetoothIndicators.push({
+                    type: 'Potential Bluetooth interference',
+                    details: `Weak signal on channel ${channel} (${signal} dBm)`,
+                    frequency: network.frequency || 'Unknown',
+                    impact: 'May cause intermittent connectivity issues'
+                });
+            }
+        }
+    });
+    
+    // Add some general Bluetooth interference patterns
+    const bluetoothPatterns = [
+        {
+            type: 'Bluetooth Classic (BR/EDR)',
+            details: 'Frequency hopping across 2.4GHz band',
+            frequency: '2.402-2.480 GHz',
+            impact: 'Can interfere with WiFi channels 1-11'
+        },
+        {
+            type: 'Bluetooth Low Energy (BLE)',
+            details: 'Uses 40 channels in 2.4GHz band',
+            frequency: '2.402-2.480 GHz', 
+            impact: 'Generally less interference than Classic'
+        }
+    ];
+    
+    let html = '<div class="row">';
+    
+    if (bluetoothIndicators.length > 0) {
+        html += `
+            <div class="col-12 mb-3">
+                <h6 class="text-warning">Detected Interference Patterns</h6>
+                <div class="list-group">
+                    ${bluetoothIndicators.map(indicator => `
+                        <div class="list-group-item bg-dark text-white border-secondary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${indicator.type}</h6>
+                                    <p class="mb-1">${indicator.details}</p>
+                                    <small class="text-muted">${indicator.impact}</small>
+                                </div>
+                                <small class="text-info">${indicator.frequency}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="col-12">
+            <h6 class="text-info">Common Bluetooth Interference Sources</h6>
+            <div class="list-group">
+                ${bluetoothPatterns.map(pattern => `
+                    <div class="list-group-item bg-dark text-white border-secondary">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${pattern.type}</h6>
+                                <p class="mb-1">${pattern.details}</p>
+                                <small class="text-muted">${pattern.impact}</small>
+                            </div>
+                            <small class="text-info">${pattern.frequency}</small>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    html += '</div>';
+    
+    contentElement.innerHTML = html;
+    countElement.textContent = bluetoothIndicators.length > 0 ? 
+        `${bluetoothIndicators.length} potential interference patterns detected` : 
+        'Bluetooth analysis based on 2.4GHz band activity';
+}
+
+function showMicrowaveDetails(contentElement, countElement) {
+    // Microwave ovens operate at 2.45GHz and can cause interference
+    if (!allWifiNetworks || allWifiNetworks.length === 0) {
+        contentElement.innerHTML = '<div class="text-center text-muted">No scan data available for microwave analysis</div>';
+        countElement.textContent = 'No microwave analysis available';
+        return;
+    }
+    
+    // Look for potential microwave interference
+    const microwaveIndicators = [];
+    const affectedChannels = [];
+    
+    allWifiNetworks.forEach(network => {
+        const frequency = network.frequency || 0;
+        const signal = network.signal_strength || -100;
+        const channel = network.channel || 0;
+        
+        // Microwave ovens operate at 2.45GHz, affecting channels 6-11 most severely
+        if (frequency >= 2400 && frequency <= 2500 && channel >= 6 && channel <= 11) {
+            if (signal < -75) {
+                microwaveIndicators.push({
+                    ssid: network.ssid || 'Hidden Network',
+                    channel: channel,
+                    frequency: frequency,
+                    signal: signal,
+                    impact: 'High - Direct microwave frequency range'
+                });
+            }
+        }
+        
+        // Track affected channels
+        if (channel >= 6 && channel <= 11 && !affectedChannels.includes(channel)) {
+            affectedChannels.push(channel);
+        }
+    });
+    
+    const microwaveInfo = [
+        {
+            type: 'Microwave Oven Interference',
+            frequency: '2.45 GHz (ISM Band)',
+            details: 'Operates at same frequency as WiFi channel 6-11',
+            impact: 'Can cause complete signal loss when active',
+            distance: 'Effective up to 10-15 feet from microwave'
+        },
+        {
+            type: 'Industrial Microwave Equipment',
+            frequency: '2.4-2.5 GHz',
+            details: 'Higher power than consumer microwaves',
+            impact: 'Can affect wider frequency range',
+            distance: 'Effective up to 30-50 feet from source'
+        }
+    ];
+    
+    let html = '<div class="row">';
+    
+    if (microwaveIndicators.length > 0) {
+        html += `
+            <div class="col-12 mb-3">
+                <h6 class="text-danger">Potential Microwave Interference</h6>
+                <div class="alert alert-warning" style="background-color: #2d1b0e; border-color: #664d03;">
+                    <div class="text-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Networks on channels 6-11 showing weak signals that may indicate microwave interference
+                    </div>
+                </div>
+                <div class="list-group">
+                    ${microwaveIndicators.map(indicator => `
+                        <div class="list-group-item bg-dark text-white border-secondary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${indicator.ssid}</h6>
+                                    <p class="mb-1">Channel ${indicator.channel} (${indicator.frequency} MHz)</p>
+                                    <small class="text-muted">${indicator.impact}</small>
+                                </div>
+                                <span class="badge bg-warning">${indicator.signal} dBm</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="col-12">
+            <h6 class="text-info">Microwave Interference Analysis</h6>
+            <div class="list-group">
+                ${microwaveInfo.map(info => `
+                    <div class="list-group-item bg-dark text-white border-secondary">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${info.type}</h6>
+                                <p class="mb-1">${info.details}</p>
+                                <small class="text-muted">Impact: ${info.impact}</small>
+                                <br><small class="text-muted">Range: ${info.distance}</small>
+                            </div>
+                            <small class="text-info">${info.frequency}</small>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            ${affectedChannels.length > 0 ? `
+                <div class="mt-3">
+                    <h6 class="text-warning">Potentially Affected Channels</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        ${affectedChannels.map(channel => `
+                            <span class="badge bg-warning text-dark">Channel ${channel}</span>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    html += '</div>';
+    
+    contentElement.innerHTML = html;
+    countElement.textContent = microwaveIndicators.length > 0 ? 
+        `${microwaveIndicators.length} networks potentially affected by microwave interference` : 
+        'Microwave interference analysis for 2.45GHz band';
+}
+
+function showOtherRFDetails(contentElement, countElement) {
+    // Analyze other potential RF interference sources
+    if (!allWifiNetworks || allWifiNetworks.length === 0) {
+        contentElement.innerHTML = '<div class="text-center text-muted">No scan data available for RF analysis</div>';
+        countElement.textContent = 'No RF analysis available';
+        return;
+    }
+    
+    // Analyze for various RF interference patterns
+    const rfSources = [];
+    const frequencyPatterns = {};
+    
+    allWifiNetworks.forEach(network => {
+        const frequency = network.frequency || 0;
+        const signal = network.signal_strength || -100;
+        
+        // Group by frequency bands
+        if (frequency > 0) {
+            const band = Math.floor(frequency / 100) * 100; // Group into 100MHz bands
+            if (!frequencyPatterns[band]) {
+                frequencyPatterns[band] = [];
+            }
+            frequencyPatterns[band].push(network);
+        }
+    });
+    
+    // Common RF interference sources
+    const commonRFSources = [
+        {
+            type: 'Cordless Phones (2.4GHz)',
+            frequency: '2.4 GHz',
+            details: 'DECT phones can interfere with WiFi',
+            impact: 'Intermittent interference during calls',
+            distance: '10-30 feet from base station'
+        },
+        {
+            type: 'Baby Monitors',
+            frequency: '2.4 GHz / 5.8 GHz',
+            details: 'Video baby monitors often use WiFi frequencies',
+            impact: 'Continuous interference when active',
+            distance: '20-50 feet from monitor'
+        },
+        {
+            type: 'Wireless Security Cameras',
+            frequency: '2.4 GHz / 5 GHz',
+            details: 'Constant transmission can saturate channels',
+            impact: 'High bandwidth usage, channel congestion',
+            distance: '50-100 feet from camera'
+        },
+        {
+            type: 'RC/Drone Controllers',
+            frequency: '2.4 GHz / 5.8 GHz',
+            details: 'Remote control devices using same frequencies',
+            impact: 'Burst interference during operation',
+            distance: '100-500 feet from controller'
+        },
+        {
+            type: 'Amateur Radio',
+            frequency: '2.3-2.45 GHz',
+            details: 'Licensed ham radio operations',
+            impact: 'High power can cause wide-area interference',
+            distance: '0.5-2 miles from transmitter'
+        }
+    ];
+    
+    // Analyze frequency distribution
+    const frequencyAnalysis = Object.entries(frequencyPatterns)
+        .map(([band, networks]) => ({
+            band: parseInt(band),
+            count: networks.length,
+            networks: networks.slice(0, 3) // Show first 3 networks
+        }))
+        .sort((a, b) => b.count - a.count);
+    
+    let html = '<div class="row">';
+    
+    if (frequencyAnalysis.length > 0) {
+        html += `
+            <div class="col-12 mb-3">
+                <h6 class="text-primary">Frequency Distribution Analysis</h6>
+                <div class="list-group">
+                    ${frequencyAnalysis.slice(0, 5).map(analysis => `
+                        <div class="list-group-item bg-dark text-white border-secondary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">${analysis.band}-${analysis.band + 100} MHz Band</h6>
+                                    <p class="mb-1">${analysis.count} networks detected</p>
+                                    <small class="text-muted">
+                                        Examples: ${analysis.networks.map(n => n.ssid || 'Hidden').join(', ')}
+                                    </small>
+                                </div>
+                                <span class="badge bg-secondary">${analysis.count} networks</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div class="col-12">
+            <h6 class="text-info">Common RF Interference Sources</h6>
+            <div class="list-group">
+                ${commonRFSources.map(source => `
+                    <div class="list-group-item bg-dark text-white border-secondary">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${source.type}</h6>
+                                <p class="mb-1">${source.details}</p>
+                                <small class="text-muted">Impact: ${source.impact}</small>
+                                <br><small class="text-muted">Range: ${source.distance}</small>
+                            </div>
+                            <small class="text-info">${source.frequency}</small>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    html += '</div>';
+    
+    contentElement.innerHTML = html;
+    countElement.textContent = `Analysis of ${allWifiNetworks.length} detected signals across frequency spectrum`;
 }
 </script>
 {% endblock %}

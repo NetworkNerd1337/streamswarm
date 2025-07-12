@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **ENHANCED** Clickable interference source details with comprehensive analysis modals - added detailed interference breakdowns for each category
+  - Made WiFi Congestion, Bluetooth, Microwave, and Other RF labels clickable to open detailed analysis modals
+  - WiFi Congestion Modal: Shows channel-by-channel breakdown with competing networks, signal strengths, and congestion levels
+  - Bluetooth Modal: Analyzes potential Bluetooth interference patterns, frequency hopping impact, and common device types
+  - Microwave Modal: Identifies networks affected by 2.45GHz microwave interference with frequency analysis and distance estimates
+  - Other RF Modal: Comprehensive frequency distribution analysis and common RF interference sources (cordless phones, baby monitors, security cameras, RC controllers, amateur radio)
+  - Each modal provides specific device details, frequency ranges, impact assessments, and effective interference distances
+  - Enhanced professional RF analysis with actionable insights for network optimization
+  - Maintains all previous enhancements: color-coded badges, contextual guidance, clickable channel counts, consistent theming
 - July 12, 2025: **ENHANCED** Interference Source Classification with contextual guidance and color-coded indicators - added comprehensive interference level explanations
   - Added color-coded badges (Good/Moderate/High) to WiFi Congestion, Bluetooth, Microwave, and Other RF interference values
   - Implemented contextual guidance panel explaining what each interference number means and acceptable ranges
