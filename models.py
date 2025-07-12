@@ -179,7 +179,9 @@ class Client(db.Model):
             'client_version': self.client_version,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_restart': self.last_restart.isoformat() if self.last_restart else None,
-            'uptime_seconds': self.uptime_seconds
+            'uptime_seconds': self.uptime_seconds,
+            'reboot_requested': self.reboot_requested,
+            'is_busy': self.is_busy
         }
 
 class Test(db.Model):

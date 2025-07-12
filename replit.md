@@ -105,6 +105,16 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **ENHANCED** Client monitoring with Last Restart and Uptime tracking columns plus improved reboot confirmation dialog
+  - Added "Last Restart" and "Uptime" columns to clients table for better monitoring visibility
+  - Updated database schema with last_restart and uptime_seconds fields in Client model
+  - Enhanced client heartbeat to automatically send system uptime information (calculated from boot time)
+  - Server records restart timestamp when reboot command is issued for audit trail
+  - Improved reboot confirmation dialog with 5-10 minute estimated completion time
+  - Added prevention of multiple reboot requests - button shows spinner when reboot is in progress
+  - Enhanced reboot command description to use "sudo shutdown -r now" for better reliability
+  - Frontend displays uptime in human-readable format (e.g., "2d 5h 30m") with responsive design
+  - Comprehensive UI updates for both server-rendered and JavaScript-loaded client rows
 - July 12, 2025: **COMPLETED** Remote client reboot functionality with comprehensive debugging and improved shutdown command
   - Successfully implemented complete client reboot infrastructure including UI button, API endpoint, database fields, and client-side execution
   - Fixed 500 errors caused by read-only property assignment issues (is_busy and parsed_system_info properties)

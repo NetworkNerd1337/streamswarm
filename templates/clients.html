@@ -225,10 +225,17 @@
                                             </button>
                                             {% endif %}
                                             {% if client.status == 'online' and not client.is_busy and client.parsed_system_info and client.parsed_system_info.platform and 'linux' in client.parsed_system_info.platform.lower() %}
-                                            <button class="btn btn-outline-warning" onclick="rebootClient({{ client.id }}, '{{ client.hostname }}')" 
-                                                    title="Reboot Linux client (requires sudo privileges)">
-                                                <i class="fas fa-power-off"></i>
-                                            </button>
+                                                {% if client.reboot_requested %}
+                                                <button class="btn btn-outline-warning" disabled
+                                                        title="Reboot in progress - please wait 5-10 minutes for completion">
+                                                    <i class="fas fa-spinner fa-spin"></i>
+                                                </button>
+                                                {% else %}
+                                                <button class="btn btn-outline-warning" onclick="rebootClient({{ client.id }}, '{{ client.hostname }}')" 
+                                                        title="Reboot Linux client (requires sudo privileges)">
+                                                    <i class="fas fa-power-off"></i>
+                                                </button>
+                                                {% endif %}
                                             {% endif %}
                                             {% if client.status == 'offline' %}
                                             <button class="btn btn-outline-danger delete-client-btn" 
@@ -558,6 +565,9 @@ function createClientRow(client) {
             <button class="btn btn-outline-info" onclick="viewClientDetails(${client.id})">
                 <i class="fas fa-info-circle"></i>
             </button>
+            <button class="btn btn-outline-warning" onclick="viewClientCertificates(${client.id}, '${client.hostname}')">
+                <i class="fas fa-certificate"></i>
+            </button>
     `;
     
     if (client.status === 'online') {
@@ -566,6 +576,28 @@ function createClientRow(client) {
                 <i class="fas fa-flask"></i>
             </button>
         `;
+        
+        // Check if client is Linux and can be rebooted
+        if (client.system_info && client.system_info.platform && 
+            client.system_info.platform.toLowerCase().includes('linux') && 
+            !client.is_busy) {
+            
+            if (client.reboot_requested) {
+                actionButtons += `
+                    <button class="btn btn-outline-warning" disabled
+                            title="Reboot in progress - please wait 5-10 minutes for completion">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </button>
+                `;
+            } else {
+                actionButtons += `
+                    <button class="btn btn-outline-warning" onclick="rebootClient(${client.id}, '${client.hostname}')" 
+                            title="Reboot Linux client (requires sudo privileges)">
+                        <i class="fas fa-power-off"></i>
+                    </button>
+                `;
+            }
+        }
     }
     
     if (client.status === 'offline') {
@@ -890,7 +922,7 @@ function assignToTest(clientId) {
 }
 
 async function rebootClient(clientId, hostname) {
-    if (!confirm(`Are you sure you want to reboot client "${hostname}"?\n\nThis will:\n- Execute "sudo reboot" on the Linux client\n- Cause the client to disconnect temporarily\n- Trigger automatic application update via git pull on restart\n- Require the client to have sudo privileges`)) {
+    if (!confirm(`Are you sure you want to reboot client "${hostname}"?\n\nThis will:\n- Execute "sudo shutdown -r now" on the Linux client\n- Cause the client to disconnect temporarily\n- Trigger automatic application update via git pull on restart\n- Require the client to have sudo privileges\n- Take approximately 5-10 minutes for a complete reboot and reconnection`)) {
         return;
     }
     
@@ -905,7 +937,15 @@ async function rebootClient(clientId, hostname) {
         if (response.ok) {
             const result = await response.json();
             if (result.success) {
-                showToast(`Reboot command sent to ${hostname}. The client will restart shortly and may take 1-2 minutes to reconnect.`, 'success');
+                showToast(`Reboot command sent to ${hostname}. The client will restart shortly and may take 5-10 minutes to reconnect.`, 'success');
+                
+                // Immediately disable the reboot button for this client
+                const rebootButton = document.querySelector(`button[onclick="rebootClient(${clientId}, '${hostname}')"]`);
+                if (rebootButton) {
+                    rebootButton.disabled = true;
+                    rebootButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    rebootButton.title = 'Reboot in progress - please wait 5-10 minutes for completion';
+                }
                 
                 // Refresh the clients table after a short delay
                 setTimeout(refreshClients, 2000);
