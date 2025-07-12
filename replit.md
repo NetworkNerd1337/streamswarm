@@ -105,6 +105,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **ENHANCED** Interference Source Classification with contextual guidance and color-coded indicators - added comprehensive interference level explanations
+  - Added color-coded badges (Good/Moderate/High) to WiFi Congestion, Bluetooth, Microwave, and Other RF interference values
+  - Implemented contextual guidance panel explaining what each interference number means and acceptable ranges
+  - WiFi Congestion: Good (0-2), Moderate (3-5), High (6+) competing networks
+  - Bluetooth: Good (0-1), Moderate (2-3), High (4+) detected devices
+  - Microwave: Good (0), Moderate (1), High (2+) detected sources
+  - Other RF: Good (0-1), Moderate (2-3), High (4+) unidentified sources
+  - Enhanced user experience with clear understanding of interference impact on network performance
+  - Maintains all previous enhancements: clickable channel counts, consistent theming, enhanced detection sensitivity
 - July 12, 2025: **ENHANCED** Advanced RF Analysis with clickable channel network counts - added comprehensive channel-specific network analysis modal
   - Added clickable channel network counts in Channel Utilization Analysis section that open dedicated modal showing networks for specific channels
   - Implemented channel-specific network filtering and display with signal strength sorting and strongest network badges
