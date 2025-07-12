@@ -452,6 +452,9 @@ def client_heartbeat(client_id):
         client.reboot_requested = False
         client.reboot_requested_at = None
     
+    # Debug logging to track heartbeat activity
+    logging.info(f"Heartbeat from client {client.hostname} (ID: {client.id}) - reboot_requested: {reboot_requested}")
+    
     db.session.commit()
     
     return jsonify({
