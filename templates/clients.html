@@ -853,20 +853,20 @@ async function rebootClient(clientId, hostname) {
         if (response.ok) {
             const result = await response.json();
             if (result.success) {
-                showNotification('success', `Reboot command sent to ${hostname}. The client will restart shortly and may take 1-2 minutes to reconnect.`);
+                showToast(`Reboot command sent to ${hostname}. The client will restart shortly and may take 1-2 minutes to reconnect.`, 'success');
                 
                 // Refresh the clients table after a short delay
                 setTimeout(refreshClients, 2000);
             } else {
-                showNotification('error', `Failed to reboot ${hostname}: ${result.message}`);
+                showToast(`Failed to reboot ${hostname}: ${result.message}`, 'danger');
             }
         } else {
             const error = await response.json();
-            showNotification('error', `Failed to reboot ${hostname}: ${error.message || 'Unknown error'}`);
+            showToast(`Failed to reboot ${hostname}: ${error.message || 'Unknown error'}`, 'danger');
         }
     } catch (error) {
         console.error('Error rebooting client:', error);
-        showNotification('error', `Failed to reboot ${hostname}: Network error`);
+        showToast(`Failed to reboot ${hostname}: Network error`, 'danger');
     }
 }
 
