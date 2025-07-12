@@ -212,7 +212,16 @@ class StreamSwarmClient:
                     timeout=5
                 )
                 
-                if response.status_code != 200:
+                if response.status_code == 200:
+                    # Check if the server sent a reboot request
+                    try:
+                        result = response.json()
+                        if result.get('reboot_requested'):
+                            logger.info("Server requested client reboot. Executing reboot command...")
+                            self._execute_reboot()
+                    except:
+                        pass  # Response might not be JSON, that's OK
+                else:
                     logger.warning(f"Heartbeat failed: {response.status_code}")
                     
             except Exception as e:
@@ -4208,6 +4217,43 @@ class StreamSwarmClient:
             
         except Exception as e:
             logger.error(f"Error in WiFi environmental test {test_id}: {e}")
+    
+    def _execute_reboot(self):
+        """Execute system reboot with proper checks"""
+        try:
+            # Verify we're on Linux
+            if not platform.system().lower() == 'linux':
+                logger.error("Reboot command only supported on Linux systems")
+                return
+            
+            # Check if we have sudo privileges
+            try:
+                result = subprocess.run(['sudo', '-n', 'true'], capture_output=True, timeout=5)
+                if result.returncode != 0:
+                    logger.error("Reboot failed: sudo privileges required. Configure passwordless sudo or run client with sudo.")
+                    return
+            except subprocess.TimeoutExpired:
+                logger.error("Reboot failed: sudo privilege check timed out")
+                return
+            
+            logger.info("Executing system reboot in 5 seconds...")
+            
+            # Give time for the log message to be processed
+            time.sleep(2)
+            
+            # Stop the client cleanly
+            self.stop()
+            
+            # Wait a moment for cleanup
+            time.sleep(3)
+            
+            # Execute the reboot command
+            subprocess.run(['sudo', 'reboot'], check=True)
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Reboot command failed: {e}")
+        except Exception as e:
+            logger.error(f"Error during reboot execution: {e}")
     
     def stop(self):
         """Stop the client"""

@@ -456,9 +456,22 @@ def client_heartbeat(client_id):
         if client_version:
             client.client_version = client_version
     
+    # Check for reboot request
+    reboot_requested = False
+    if client.reboot_requested:
+        reboot_requested = True
+        logging.info(f"Sending reboot command to client {client.hostname} (ID: {client.id})")
+        
+        # Clear the reboot flag since we're sending it to the client
+        client.reboot_requested = False
+        client.reboot_requested_at = None
+    
     db.session.commit()
     
-    return jsonify({'status': 'ok'})
+    return jsonify({
+        'status': 'ok',
+        'reboot_requested': reboot_requested
+    })
 
 @app.route('/api/client/<int:client_id>/tests', methods=['GET'])
 @require_api_token
@@ -3372,3 +3385,71 @@ def download_client_certificate(client_id, cert_type):
     except Exception as e:
         logging.error(f"Error downloading client certificate {cert_type} for client {client_id}: {str(e)}")
         return jsonify({'error': 'Failed to download certificate'}), 500
+
+
+@app.route('/api/client/<int:client_id>/reboot', methods=['POST'])
+@admin_required
+def reboot_client(client_id):
+    """Queue a reboot command for a Linux client"""
+    try:
+        client = Client.query.get_or_404(client_id)
+        
+        # Validate client can be rebooted
+        if client.status != 'online':
+            return jsonify({'success': False, 'message': 'Client must be online to reboot'}), 400
+        
+        # Check if client is busy with tests
+        busy_tests = db.session.query(Test).join(TestClient).filter(
+            TestClient.client_id == client.id,
+            Test.status.in_(['running', 'pending'])
+        ).all()
+        
+        if busy_tests:
+            return jsonify({
+                'success': False, 
+                'message': f'Client is busy with {len(busy_tests)} active test(s). Stop tests before rebooting.'
+            }), 400
+        
+        # Verify client is Linux
+        if client.system_info:
+            try:
+                import json
+                # Handle double-escaped JSON by parsing twice if needed
+                parsed_data = json.loads(client.system_info)
+                if isinstance(parsed_data, str):
+                    parsed_data = json.loads(parsed_data)
+                
+                platform = parsed_data.get('platform', '').lower()
+                if 'linux' not in platform:
+                    return jsonify({
+                        'success': False, 
+                        'message': f'Client reboot is only supported on Linux systems. Client reports: {platform}'
+                    }), 400
+            except (json.JSONDecodeError, TypeError):
+                return jsonify({
+                    'success': False, 
+                    'message': 'Unable to verify client platform. System info not available.'
+                }), 400
+        else:
+            return jsonify({
+                'success': False, 
+                'message': 'Client system information not available. Cannot verify Linux compatibility.'
+            }), 400
+        
+        # Queue the reboot command by setting a flag in the client record
+        client.reboot_requested = True
+        client.reboot_requested_at = datetime.now(timezone.utc)
+        db.session.commit()
+        
+        logging.info(f"Reboot requested for client {client.hostname} (ID: {client.id}) by admin")
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Reboot command queued for {client.hostname}. The client will execute "sudo reboot" on next heartbeat.',
+            'client_id': client.id,
+            'hostname': client.hostname
+        })
+        
+    except Exception as e:
+        logging.error(f"Error requesting reboot for client {client_id}: {str(e)}")
+        return jsonify({'success': False, 'message': 'Failed to queue reboot command'}), 500

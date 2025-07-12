@@ -136,8 +136,35 @@ class Client(db.Model):
     client_version = db.Column(db.String(20), nullable=True)  # Version of client software
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None))
     
+    # Reboot management fields
+    reboot_requested = db.Column(db.Boolean, default=False)  # Whether a reboot has been requested
+    reboot_requested_at = db.Column(db.DateTime, nullable=True)  # When reboot was requested
+    
     # Relationships
     test_results = db.relationship('TestResult', backref='client', lazy=True)
+    
+    @property
+    def is_busy(self):
+        """Check if client is currently running tests"""
+        busy_tests = db.session.query(Test).join(TestClient).filter(
+            TestClient.client_id == self.id,
+            Test.status.in_(['running', 'pending'])
+        ).first()
+        return busy_tests is not None
+    
+    @property
+    def parsed_system_info(self):
+        """Parse system info JSON with proper error handling"""
+        if not self.system_info:
+            return None
+        try:
+            # Handle double-escaped JSON by parsing twice if needed
+            parsed_data = json.loads(self.system_info)
+            if isinstance(parsed_data, str):
+                parsed_data = json.loads(parsed_data)
+            return parsed_data
+        except (json.JSONDecodeError, TypeError):
+            return None
     
     def to_dict(self):
         return {
