@@ -265,29 +265,15 @@ def clients():
     # Load initial batch of clients (most recent 20)
     clients = Client.query.order_by(Client.last_seen.desc()).limit(20).all()
     
-    # Mark clients as busy and parse system info
+    # Add active tests info for each client
     for client in clients:
         busy_tests = db.session.query(Test).join(TestClient).filter(
             TestClient.client_id == client.id,
             Test.status.in_(['running', 'pending'])
         ).all()
-        client.is_busy = len(busy_tests) > 0
         client.active_tests = [test.name for test in busy_tests]
         
-        # Parse system info if available
-        if client.system_info:
-            try:
-                import json
-                # Handle double-escaped JSON by parsing twice if needed
-                parsed_data = json.loads(client.system_info)
-                if isinstance(parsed_data, str):
-                    # If result is still a string, parse again
-                    parsed_data = json.loads(parsed_data)
-                client.parsed_system_info = parsed_data
-            except (json.JSONDecodeError, TypeError):
-                client.parsed_system_info = {}
-        else:
-            client.parsed_system_info = {}
+        # Note: parsed_system_info is now a property that handles parsing automatically
     
     # Get system configuration for version comparison
     from models import SystemConfig
