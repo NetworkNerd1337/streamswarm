@@ -204,7 +204,18 @@ class StreamSwarmClient:
         while self.running:
             try:
                 headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
-                data = {'client_version': CLIENT_VERSION}
+                
+                # Get system uptime
+                uptime_seconds = None
+                try:
+                    uptime_seconds = int(time.time() - psutil.boot_time())
+                except Exception as e:
+                    logger.debug(f"Unable to get system uptime: {e}")
+                
+                data = {
+                    'client_version': CLIENT_VERSION,
+                    'uptime_seconds': uptime_seconds
+                }
                 response = requests.post(
                     urljoin(self.server_url, f'/api/client/{self.client_id}/heartbeat'),
                     json=data,

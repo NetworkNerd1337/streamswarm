@@ -139,6 +139,8 @@ class Client(db.Model):
     # Reboot management fields
     reboot_requested = db.Column(db.Boolean, default=False)  # Whether a reboot has been requested
     reboot_requested_at = db.Column(db.DateTime, nullable=True)  # When reboot was requested
+    last_restart = db.Column(db.DateTime, nullable=True)  # When server last issued a restart command
+    uptime_seconds = db.Column(db.Integer, nullable=True)  # Current uptime in seconds from client
     
     # Relationships
     test_results = db.relationship('TestResult', backref='client', lazy=True)
@@ -175,7 +177,9 @@ class Client(db.Model):
             'last_seen': self.last_seen.isoformat() if self.last_seen else None,
             'system_info': json.loads(self.system_info) if self.system_info else {},
             'client_version': self.client_version,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'last_restart': self.last_restart.isoformat() if self.last_restart else None,
+            'uptime_seconds': self.uptime_seconds
         }
 
 class Test(db.Model):

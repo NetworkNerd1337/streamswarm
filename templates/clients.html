@@ -105,6 +105,8 @@
                                     <th>System Info</th>
                                     <th>Version</th>
                                     <th>Last Seen</th>
+                                    <th>Last Restart</th>
+                                    <th>Uptime</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -180,6 +182,33 @@
                                             </small>
                                         {% else %}
                                             <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if client.last_restart %}
+                                            <small class="text-muted">
+                                                {{ client.last_restart.strftime('%Y-%m-%d %H:%M:%S') }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if client.uptime_seconds %}
+                                            <small class="text-muted">
+                                                {% set days = client.uptime_seconds // 86400 %}
+                                                {% set hours = (client.uptime_seconds % 86400) // 3600 %}
+                                                {% set minutes = (client.uptime_seconds % 3600) // 60 %}
+                                                {% if days > 0 %}
+                                                    {{ days }}d {{ hours }}h {{ minutes }}m
+                                                {% elif hours > 0 %}
+                                                    {{ hours }}h {{ minutes }}m
+                                                {% else %}
+                                                    {{ minutes }}m
+                                                {% endif %}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">Unknown</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -502,6 +531,27 @@ function createClientRow(client) {
         `<small class="text-muted">${client.last_seen}</small>` : 
         '<span class="text-muted">Never</span>';
     
+    // Last restart
+    const lastRestart = client.last_restart ? 
+        `<small class="text-muted">${client.last_restart}</small>` : 
+        '<span class="text-muted">Never</span>';
+    
+    // Uptime
+    let uptime = '<span class="text-muted">Unknown</span>';
+    if (client.uptime_seconds) {
+        const days = Math.floor(client.uptime_seconds / 86400);
+        const hours = Math.floor((client.uptime_seconds % 86400) / 3600);
+        const minutes = Math.floor((client.uptime_seconds % 3600) / 60);
+        
+        if (days > 0) {
+            uptime = `<small class="text-muted">${days}d ${hours}h ${minutes}m</small>`;
+        } else if (hours > 0) {
+            uptime = `<small class="text-muted">${hours}h ${minutes}m</small>`;
+        } else {
+            uptime = `<small class="text-muted">${minutes}m</small>`;
+        }
+    }
+    
     // Action buttons
     let actionButtons = `
         <div class="btn-group btn-group-sm">
@@ -537,6 +587,8 @@ function createClientRow(client) {
         <td>${systemInfo}</td>
         <td>${versionBadge}</td>
         <td>${lastSeen}</td>
+        <td>${lastRestart}</td>
+        <td>${uptime}</td>
         <td>${actionButtons}</td>
     `;
     

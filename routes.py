@@ -435,12 +435,18 @@ def client_heartbeat(client_id):
     client.last_seen = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
     client.status = 'online'
     
-    # Update client version if provided in request
+    # Update client version and uptime if provided in request
     data = request.get_json()
-    if data and 'client_version' in data:
-        client_version = sanitize_string(data.get('client_version'), 20)
-        if client_version:
-            client.client_version = client_version
+    if data:
+        if 'client_version' in data:
+            client_version = sanitize_string(data.get('client_version'), 20)
+            if client_version:
+                client.client_version = client_version
+        
+        if 'uptime_seconds' in data:
+            uptime_seconds = data.get('uptime_seconds')
+            if isinstance(uptime_seconds, (int, float)) and uptime_seconds >= 0:
+                client.uptime_seconds = int(uptime_seconds)
     
     # Check for reboot request
     reboot_requested = False
@@ -3427,7 +3433,8 @@ def reboot_client(client_id):
         
         # Queue the reboot command by setting a flag in the client record
         client.reboot_requested = True
-        client.reboot_requested_at = datetime.now(timezone.utc)
+        client.reboot_requested_at = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
+        client.last_restart = datetime.now(zoneinfo.ZoneInfo('America/New_York')).replace(tzinfo=None)
         db.session.commit()
         
         logging.info(f"Reboot requested for client {client.hostname} (ID: {client.id}) by admin")
