@@ -3809,34 +3809,54 @@ class StreamSwarmClient:
             channel_24ghz = [n for n in networks if 1 <= n.get('channel', 0) <= 14]
             channel_5ghz = [n for n in networks if n.get('channel', 0) >= 36]
             
-            # WiFi congestion analysis
+            # WiFi congestion analysis (improved sensitivity)
             if channel_24ghz:
-                # Check for overlapping channels in 2.4GHz
+                # Check for overlapping channels in 2.4GHz (lowered threshold)
                 channels_24 = [n['channel'] for n in channel_24ghz]
-                overlapping_channels = [ch for ch in [1, 6, 11] if channels_24.count(ch) > 3]
-                interference_sources['wifi_congestion'] = len(overlapping_channels) * 10
+                overlapping_channels = [ch for ch in [1, 6, 11] if channels_24.count(ch) > 1]  # Reduced from 3 to 1
+                interference_sources['wifi_congestion'] = len(overlapping_channels) * 5  # Reduced multiplier
+                
+                # Additional congestion from non-standard channels
+                non_standard_channels = [ch for ch in channels_24 if ch not in [1, 6, 11]]
+                if non_standard_channels:
+                    interference_sources['wifi_congestion'] += len(non_standard_channels) * 2
             
-            # Bluetooth interference (typically affects 2.4GHz)
-            if len(channel_24ghz) > 10:
+            # Bluetooth interference (improved detection)
+            if len(channel_24ghz) > 5:  # Reduced threshold from 10 to 5
                 # High density of 2.4GHz networks suggests possible Bluetooth interference
-                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -75]
-                if len(weak_24ghz) > 5:
-                    interference_sources['bluetooth_interference'] = min(len(weak_24ghz) * 2, 30)
+                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -70]  # Raised threshold from -75 to -70
+                if len(weak_24ghz) > 2:  # Reduced from 5 to 2
+                    interference_sources['bluetooth_interference'] = min(len(weak_24ghz) * 3, 30)
+                
+                # Additional Bluetooth detection based on network density
+                if len(channel_24ghz) > 15:
+                    interference_sources['bluetooth_interference'] += 5
             
-            # Microwave interference detection (2.4GHz band disruption patterns)
+            # Microwave interference detection (improved sensitivity)
             if channel_24ghz:
                 # Look for networks with very poor signal quality in 2.4GHz
-                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -80]
-                if len(very_weak) > 3:
-                    interference_sources['microwave_interference'] = min(len(very_weak) * 3, 25)
+                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -85]  # Lowered from -80 to -85
+                if len(very_weak) > 1:  # Reduced from 3 to 1
+                    interference_sources['microwave_interference'] = min(len(very_weak) * 4, 25)
+                
+                # Additional microwave detection from signal patterns
+                if len(channel_24ghz) > 10:
+                    # Check for channels 2-5 and 7-10 which overlap with microwave
+                    microwave_overlap = [n for n in channel_24ghz if n.get('channel', 0) in [2, 3, 4, 5, 7, 8, 9, 10]]
+                    if len(microwave_overlap) > 3:
+                        interference_sources['microwave_interference'] += 3
             
-            # Other RF sources (unusual patterns)
+            # Other RF sources (improved detection)
             total_networks = len(networks)
-            if total_networks > 20:
+            if total_networks > 10:  # Reduced threshold from 20 to 10
                 # High network density might indicate other RF sources
                 signal_variance = self._calculate_signal_variance(networks)
-                if signal_variance > 400:  # High variance suggests interference
-                    interference_sources['other_rf_sources'] = min(signal_variance / 20, 20)
+                if signal_variance > 200:  # Reduced from 400 to 200
+                    interference_sources['other_rf_sources'] = min(signal_variance / 15, 25)  # Adjusted calculation
+                
+                # Additional RF source detection
+                if total_networks > 30:
+                    interference_sources['other_rf_sources'] += 5
             
             total_interference = sum(interference_sources.values())
             
