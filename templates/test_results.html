@@ -4241,55 +4241,118 @@ function showWifiCongestionDetails(contentElement, countElement) {
     const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
     const wifiCongestionDetails = rfAnalysis?.interference_analysis?.interference_details?.wifi_congestion_details;
     
-    if (!wifiCongestionDetails || wifiCongestionDetails.length === 0) {
-        contentElement.innerHTML = '<div class="text-center text-muted">No significant WiFi congestion detected in this scan</div>';
-        countElement.textContent = 'No WiFi congestion detected';
-        return;
-    }
+    // Fallback to existing channel utilization data if detailed data isn't available
+    const channelUtilization = rfAnalysis?.channel_utilization;
+    const detectedNetworks = currentTestData?.wifi_environment_data?.detected_networks || [];
     
-    // Sort by network count (most congested first)
-    const sortedChannels = wifiCongestionDetails.sort((a, b) => b.network_count - a.network_count);
-    
-    let html = '<div class="row">';
-    
-    html += `
-        <div class="col-12">
-            <h6 class="text-warning">WiFi Channel Congestion Analysis</h6>
-            <div class="list-group">
-                ${sortedChannels.map(channel => `
-                    <div class="list-group-item bg-dark text-white border-secondary">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">Channel ${channel.channel}</h6>
-                                <p class="mb-1">${channel.network_count} competing networks</p>
-                                <p class="mb-1">Strongest Signal: ${channel.strongest_signal} dBm</p>
-                                <small class="text-muted">Congestion Level: ${channel.congestion_level}</small>
-                                ${channel.networks && channel.networks.length > 0 ? `
-                                    <div class="mt-2">
-                                        <small class="text-info">Networks on this channel:</small>
-                                        ${channel.networks.map(network => `
-                                            <div class="ms-2 small">
-                                                <span class="text-light">${network.ssid || 'Hidden'}</span> - 
-                                                <span class="text-muted">${network.signal || -100} dBm</span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : ''}
+    if (wifiCongestionDetails && wifiCongestionDetails.length > 0) {
+        // Use new detailed data structure
+        const sortedChannels = wifiCongestionDetails.sort((a, b) => b.network_count - a.network_count);
+        
+        let html = '<div class="row">';
+        html += `
+            <div class="col-12">
+                <h6 class="text-warning">WiFi Channel Congestion Analysis</h6>
+                <div class="list-group">
+                    ${sortedChannels.map(channel => `
+                        <div class="list-group-item bg-dark text-white border-secondary">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Channel ${channel.channel}</h6>
+                                    <p class="mb-1">${channel.network_count} competing networks</p>
+                                    <p class="mb-1">Strongest Signal: ${channel.strongest_signal} dBm</p>
+                                    <small class="text-muted">Congestion Level: ${channel.congestion_level}</small>
+                                    ${channel.networks && channel.networks.length > 0 ? `
+                                        <div class="mt-2">
+                                            <small class="text-info">Networks on this channel:</small>
+                                            ${channel.networks.map(network => `
+                                                <div class="ms-2 small">
+                                                    <span class="text-light">${network.ssid || 'Hidden'}</span> - 
+                                                    <span class="text-muted">${network.signal || -100} dBm</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <span class="badge bg-${channel.congestion_level === 'High' ? 'danger' : 
+                                    channel.congestion_level === 'Moderate' ? 'warning' : 
+                                    channel.congestion_level === 'Non-standard channel' ? 'info' : 'secondary'}">${channel.congestion_level}</span>
                             </div>
-                            <span class="badge bg-${channel.congestion_level === 'High' ? 'danger' : 
-                                channel.congestion_level === 'Moderate' ? 'warning' : 
-                                channel.congestion_level === 'Non-standard channel' ? 'info' : 'secondary'}">${channel.congestion_level}</span>
                         </div>
-                    </div>
-                `).join('')}
+                    `).join('')}
+                </div>
             </div>
-        </div>
-    `;
-    
-    html += '</div>';
-    
-    contentElement.innerHTML = html;
-    countElement.textContent = `${sortedChannels.length} congested channels detected`;
+        `;
+        html += '</div>';
+        
+        contentElement.innerHTML = html;
+        countElement.textContent = `${sortedChannels.length} congested channels detected`;
+        
+    } else if (channelUtilization && Object.keys(channelUtilization).length > 0) {
+        // Fallback to existing channel utilization data
+        const channelGroups = {};
+        detectedNetworks.forEach(network => {
+            const channel = network.channel || 'Unknown';
+            if (!channelGroups[channel]) {
+                channelGroups[channel] = [];
+            }
+            channelGroups[channel].push(network);
+        });
+        
+        const sortedChannels = Object.entries(channelGroups)
+            .sort(([,a], [,b]) => b.length - a.length)
+            .filter(([,networks]) => networks.length > 1);
+        
+        if (sortedChannels.length === 0) {
+            contentElement.innerHTML = '<div class="text-center text-muted">No channel congestion detected - all networks are on separate channels</div>';
+            countElement.textContent = 'No congestion issues found';
+            return;
+        }
+        
+        let html = '<div class="row">';
+        html += `
+            <div class="col-12">
+                <h6 class="text-warning">WiFi Channel Congestion Analysis</h6>
+                <div class="list-group">
+                    ${sortedChannels.map(([channel, networks]) => {
+                        const congestionLevel = networks.length >= 6 ? 'High' : networks.length >= 3 ? 'Moderate' : 'Low';
+                        const strongestSignal = Math.max(...networks.map(n => n.signal_strength || -100));
+                        return `
+                            <div class="list-group-item bg-dark text-white border-secondary">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">Channel ${channel}</h6>
+                                        <p class="mb-1">${networks.length} competing networks</p>
+                                        <p class="mb-1">Strongest Signal: ${strongestSignal} dBm</p>
+                                        <small class="text-muted">Congestion Level: ${congestionLevel}</small>
+                                        <div class="mt-2">
+                                            <small class="text-info">Networks on this channel:</small>
+                                            ${networks.map(network => `
+                                                <div class="ms-2 small">
+                                                    <span class="text-light">${network.ssid || 'Hidden'}</span> - 
+                                                    <span class="text-muted">${network.signal_strength || -100} dBm</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-${congestionLevel === 'High' ? 'danger' : 
+                                        congestionLevel === 'Moderate' ? 'warning' : 'secondary'}">${congestionLevel}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        html += '</div>';
+        
+        contentElement.innerHTML = html;
+        countElement.textContent = `${sortedChannels.length} congested channels detected`;
+        
+    } else {
+        contentElement.innerHTML = '<div class="text-center text-muted">No WiFi congestion data available</div>';
+        countElement.textContent = 'No congestion analysis available';
+    }
 }
 
 function showBluetoothDetails(contentElement, countElement) {
@@ -4297,10 +4360,24 @@ function showBluetoothDetails(contentElement, countElement) {
     const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
     const bluetoothDetails = rfAnalysis?.interference_analysis?.interference_details?.bluetooth_details;
     
+    // Check for existing interference count as fallback
+    const bluetoothCount = rfAnalysis?.interference_analysis?.interference_sources?.bluetooth_interference || 0;
+    
     if (!bluetoothDetails || bluetoothDetails.length === 0) {
         // Fallback to basic analysis if no detailed data
-        contentElement.innerHTML = '<div class="text-center text-muted">No specific Bluetooth interference patterns detected in this scan</div>';
-        countElement.textContent = 'No Bluetooth interference detected';
+        if (bluetoothCount > 0) {
+            contentElement.innerHTML = `
+                <div class="text-center text-muted">
+                    <p>Bluetooth interference detected: ${bluetoothCount} potential sources</p>
+                    <p>Detailed pattern analysis not available in this scan.</p>
+                    <p>Run a new WiFi environmental scan with updated client for detailed interference patterns.</p>
+                </div>
+            `;
+            countElement.textContent = `${bluetoothCount} Bluetooth interference sources detected`;
+        } else {
+            contentElement.innerHTML = '<div class="text-center text-muted">No Bluetooth interference detected in this scan</div>';
+            countElement.textContent = 'No Bluetooth interference detected';
+        }
         return;
     }
     
@@ -4387,10 +4464,23 @@ function showMicrowaveDetails(contentElement, countElement) {
     // Check if we have detailed interference data from the RF analysis
     const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
     const microwaveDetails = rfAnalysis?.interference_analysis?.interference_details?.microwave_details;
+    const microwaveCount = rfAnalysis?.interference_analysis?.interference_sources?.microwave_interference || 0;
     
     if (!microwaveDetails || microwaveDetails.length === 0) {
-        contentElement.innerHTML = '<div class="text-center text-muted">No microwave interference patterns detected in this scan</div>';
-        countElement.textContent = 'No microwave interference detected';
+        // Fallback to basic analysis if no detailed data
+        if (microwaveCount > 0) {
+            contentElement.innerHTML = `
+                <div class="text-center text-muted">
+                    <p>Microwave interference detected: ${microwaveCount} potential sources</p>
+                    <p>Detailed pattern analysis not available in this scan.</p>
+                    <p>Run a new WiFi environmental scan with updated client for detailed interference patterns.</p>
+                </div>
+            `;
+            countElement.textContent = `${microwaveCount} microwave interference sources detected`;
+        } else {
+            contentElement.innerHTML = '<div class="text-center text-muted">No microwave interference detected in this scan</div>';
+            countElement.textContent = 'No microwave interference detected';
+        }
         return;
     }
     
@@ -4494,10 +4584,23 @@ function showOtherRFDetails(contentElement, countElement) {
     // Check if we have detailed interference data from the RF analysis
     const rfAnalysis = currentTestData?.wifi_environment_data?.rf_analysis;
     const otherRFDetails = rfAnalysis?.interference_analysis?.interference_details?.other_rf_details;
+    const otherRFCount = rfAnalysis?.interference_analysis?.interference_sources?.other_rf_sources || 0;
     
     if (!otherRFDetails || otherRFDetails.length === 0) {
-        contentElement.innerHTML = '<div class="text-center text-muted">No other RF interference sources detected in this scan</div>';
-        countElement.textContent = 'No other RF interference detected';
+        // Fallback to basic analysis if no detailed data
+        if (otherRFCount > 0) {
+            contentElement.innerHTML = `
+                <div class="text-center text-muted">
+                    <p>Other RF interference detected: ${otherRFCount} potential sources</p>
+                    <p>Detailed pattern analysis not available in this scan.</p>
+                    <p>Run a new WiFi environmental scan with updated client for detailed interference patterns.</p>
+                </div>
+            `;
+            countElement.textContent = `${otherRFCount} other RF interference sources detected`;
+        } else {
+            contentElement.innerHTML = '<div class="text-center text-muted">No other RF interference detected in this scan</div>';
+            countElement.textContent = 'No other RF interference detected';
+        }
         return;
     }
     
