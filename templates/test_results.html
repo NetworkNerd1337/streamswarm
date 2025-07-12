@@ -3656,6 +3656,8 @@ function displayWiFiEnvironmentalAnalysis() {
     
     // Store all networks for modal
     allWifiNetworks = wifiData.detected_networks || [];
+    console.log('Storing networks for modal - count:', allWifiNetworks.length);
+    console.log('Sample networks:', allWifiNetworks.slice(0, 3));
     
     // Update environment quality (fix property names)
     const quality = wifiData.environment_quality || 'Unknown';
@@ -3683,8 +3685,11 @@ function displayWiFiEnvironmentalAnalysis() {
     qualityBadge.textContent = quality;
     
     // Update network count and pollution score (fix property names)
-    document.getElementById('wifiNetworkCount').textContent = wifiData.total_networks || 0;
-    document.getElementById('totalNetworksCount').textContent = wifiData.total_networks || 0;
+    const totalNetworks = wifiData.total_networks || 0;
+    const detectedNetworks = (wifiData.detected_networks || []).length;
+    document.getElementById('wifiNetworkCount').textContent = totalNetworks;
+    document.getElementById('totalNetworksCount').textContent = detectedNetworks;
+    console.log('Total networks:', totalNetworks, 'Detected networks stored:', detectedNetworks);
     document.getElementById('wifiPollutionScore').textContent = (wifiData.wifi_pollution_score || 0).toFixed(1);
     
     // Update pollution score badge with color coding
@@ -3871,14 +3876,19 @@ function displayAdvancedRFAnalysis(rfAnalysis) {
 
 // Function to show all networks modal
 function showAllNetworks() {
+    console.log('showAllNetworks called - allWifiNetworks length:', allWifiNetworks.length);
+    console.log('allWifiNetworks sample:', allWifiNetworks.slice(0, 5));
+    
     const modal = new bootstrap.Modal(document.getElementById('allNetworksModal'));
     const tableBody = document.getElementById('allNetworksTable');
     
     if (allWifiNetworks.length === 0) {
+        console.log('No WiFi networks available for modal');
         tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No WiFi networks detected</td></tr>';
     } else {
         // Sort all networks by signal strength (strongest first)
         const sortedNetworks = allWifiNetworks.sort((a, b) => (b.signal_strength || -100) - (a.signal_strength || -100));
+        console.log('Sorted networks for modal:', sortedNetworks.length);
         
         tableBody.innerHTML = sortedNetworks.map((network, index) => `
             <tr>
@@ -3892,6 +3902,8 @@ function showAllNetworks() {
                 <td>${network.encrypted ? 'Encrypted' : 'Open'}</td>
             </tr>
         `).join('');
+        
+        console.log('Modal table updated with', sortedNetworks.length, 'networks');
     }
     
     modal.show();

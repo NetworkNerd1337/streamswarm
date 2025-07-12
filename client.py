@@ -3620,7 +3620,7 @@ class StreamSwarmClient:
                 'max_channel_congestion': max_congestion,
                 'wifi_pollution_score': pollution_score,
                 'environment_quality': self._assess_environment_quality(pollution_score),
-                'detected_networks': networks[:20],  # Limit to top 20 for storage
+                'detected_networks': networks,  # Store all detected networks
                 # Advanced RF Analysis
                 'rf_analysis': rf_analysis
             }
