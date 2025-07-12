@@ -4000,7 +4000,10 @@ function displayAdvancedRFAnalysis(rfAnalysis) {
                         <div class="fw-bold text-warning">Ch ${channel}</div>
                         <div class="small text-muted">${data.utilization_estimate || 0}% used</div>
                         <div class="small text-info">
-                            <a href="#" class="text-decoration-none text-info" onclick="showChannelNetworks(${channel}); return false;">
+                            <a href="#" class="text-decoration-none text-info channel-link" onclick="showChannelNetworks(${channel}); return false;" 
+                               style="cursor: pointer; border-bottom: 1px dotted #0dcaf0;" 
+                               onmouseover="this.style.color='#0d6efd'; this.style.borderBottom='1px dotted #0d6efd';" 
+                               onmouseout="this.style.color='#0dcaf0'; this.style.borderBottom='1px dotted #0dcaf0';">
                                 ${data.network_count || 0} networks
                             </a>
                         </div>
