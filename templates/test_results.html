@@ -4528,6 +4528,20 @@ function showMicrowaveDetails(contentElement, countElement) {
         </div>
     `;
     
+    // Extract affected channels from microwave details
+    const affectedChannels = [];
+    if (microwaveDetails && microwaveDetails.length > 0) {
+        microwaveDetails.forEach(detail => {
+            if (detail.affected_channels) {
+                detail.affected_channels.forEach(channel => {
+                    if (!affectedChannels.includes(channel)) {
+                        affectedChannels.push(channel);
+                    }
+                });
+            }
+        });
+    }
+    
     // Add general microwave interference information
     const microwaveInfo = [
         {

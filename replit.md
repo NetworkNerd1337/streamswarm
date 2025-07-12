@@ -107,6 +107,7 @@ The system operates on a distributed client-server architecture where:
 
 - July 12, 2025: **FIXED** Interference detection modal functionality and improved sensitivity - resolved JavaScript errors and enhanced detection accuracy
   - Fixed critical JavaScript error "Can't find variable: currentTestData" that prevented interference modals from opening
+  - Fixed microwave modal JavaScript error "Can't find variable: affectedChannels" by properly extracting affected channels from microwave detection data
   - Added global `currentWifiData` variable to properly store WiFi scan data for modal access
   - Updated all interference modal functions to use correct data source (`currentWifiData` instead of `currentTestData`)
   - Improved Bluetooth interference detection sensitivity: reduced minimum 2.4GHz network threshold from 5 to 3 networks, signal threshold from -70dBm to -65dBm
