@@ -3796,7 +3796,7 @@ class StreamSwarmClient:
             return {'avg_snr': 0, 'poor_snr_count': 0, 'network_snr': []}
     
     def _classify_interference_sources(self, networks):
-        """Identify interference sources beyond WiFi networks"""
+        """Identify interference sources beyond WiFi networks with detailed analysis"""
         try:
             interference_sources = {
                 'wifi_congestion': 0,
@@ -3805,70 +3805,226 @@ class StreamSwarmClient:
                 'other_rf_sources': 0
             }
             
+            # Detailed interference data for display
+            interference_details = {
+                'wifi_congestion_details': [],
+                'bluetooth_details': [],
+                'microwave_details': [],
+                'other_rf_details': []
+            }
+            
             # Analyze channel patterns for interference detection
             channel_24ghz = [n for n in networks if 1 <= n.get('channel', 0) <= 14]
             channel_5ghz = [n for n in networks if n.get('channel', 0) >= 36]
             
-            # WiFi congestion analysis (improved sensitivity)
+            # WiFi congestion analysis with detailed tracking
             if channel_24ghz:
-                # Check for overlapping channels in 2.4GHz (lowered threshold)
+                # Check for overlapping channels in 2.4GHz
                 channels_24 = [n['channel'] for n in channel_24ghz]
-                overlapping_channels = [ch for ch in [1, 6, 11] if channels_24.count(ch) > 1]  # Reduced from 3 to 1
-                interference_sources['wifi_congestion'] = len(overlapping_channels) * 5  # Reduced multiplier
+                channel_counts = {}
+                for ch in channels_24:
+                    channel_counts[ch] = channel_counts.get(ch, 0) + 1
+                
+                # Find congested channels
+                congested_channels = []
+                for ch, count in channel_counts.items():
+                    if count > 1:  # More than one network on channel
+                        congested_channels.append(ch)
+                        # Get networks on this channel
+                        networks_on_channel = [n for n in channel_24ghz if n.get('channel') == ch]
+                        strongest_signal = max(n.get('signal_strength', -100) for n in networks_on_channel)
+                        
+                        interference_details['wifi_congestion_details'].append({
+                            'channel': ch,
+                            'network_count': count,
+                            'networks': [{'ssid': n.get('ssid', 'Hidden'), 'signal': n.get('signal_strength', -100)} 
+                                       for n in networks_on_channel[:5]],  # Top 5 networks
+                            'strongest_signal': strongest_signal,
+                            'congestion_level': 'High' if count >= 6 else 'Moderate' if count >= 3 else 'Low'
+                        })
+                
+                interference_sources['wifi_congestion'] = len(congested_channels) * 5
                 
                 # Additional congestion from non-standard channels
                 non_standard_channels = [ch for ch in channels_24 if ch not in [1, 6, 11]]
                 if non_standard_channels:
                     interference_sources['wifi_congestion'] += len(non_standard_channels) * 2
+                    for ch in non_standard_channels:
+                        networks_on_channel = [n for n in channel_24ghz if n.get('channel') == ch]
+                        if networks_on_channel:
+                            interference_details['wifi_congestion_details'].append({
+                                'channel': ch,
+                                'network_count': len(networks_on_channel),
+                                'networks': [{'ssid': n.get('ssid', 'Hidden'), 'signal': n.get('signal_strength', -100)} 
+                                           for n in networks_on_channel[:3]],
+                                'strongest_signal': max(n.get('signal_strength', -100) for n in networks_on_channel),
+                                'congestion_level': 'Non-standard channel'
+                            })
             
-            # Bluetooth interference (improved detection)
-            if len(channel_24ghz) > 5:  # Reduced threshold from 10 to 5
+            # Bluetooth interference with detailed analysis
+            if len(channel_24ghz) > 5:
                 # High density of 2.4GHz networks suggests possible Bluetooth interference
-                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -70]  # Raised threshold from -75 to -70
-                if len(weak_24ghz) > 2:  # Reduced from 5 to 2
+                weak_24ghz = [n for n in channel_24ghz if n.get('signal_strength', -100) < -70]
+                if len(weak_24ghz) > 2:
                     interference_sources['bluetooth_interference'] = min(len(weak_24ghz) * 3, 30)
+                    
+                    # Group by frequency ranges for Bluetooth analysis
+                    bluetooth_ranges = {
+                        '2.402-2.420 GHz': [],
+                        '2.420-2.440 GHz': [],
+                        '2.440-2.460 GHz': [],
+                        '2.460-2.480 GHz': []
+                    }
+                    
+                    for network in weak_24ghz:
+                        freq = network.get('frequency', 0)
+                        if 2402 <= freq <= 2420:
+                            bluetooth_ranges['2.402-2.420 GHz'].append(network)
+                        elif 2420 <= freq <= 2440:
+                            bluetooth_ranges['2.420-2.440 GHz'].append(network)
+                        elif 2440 <= freq <= 2460:
+                            bluetooth_ranges['2.440-2.460 GHz'].append(network)
+                        elif 2460 <= freq <= 2480:
+                            bluetooth_ranges['2.460-2.480 GHz'].append(network)
+                    
+                    # Add detailed Bluetooth interference patterns
+                    for freq_range, networks_in_range in bluetooth_ranges.items():
+                        if networks_in_range:
+                            interference_details['bluetooth_details'].append({
+                                'frequency_range': freq_range,
+                                'affected_networks': len(networks_in_range),
+                                'networks': [{'ssid': n.get('ssid', 'Hidden'), 'signal': n.get('signal_strength', -100),
+                                            'channel': n.get('channel', 0)} for n in networks_in_range[:3]],
+                                'interference_type': 'Bluetooth Classic/BLE frequency hopping',
+                                'impact': 'Intermittent interference during Bluetooth activity'
+                            })
                 
                 # Additional Bluetooth detection based on network density
                 if len(channel_24ghz) > 15:
                     interference_sources['bluetooth_interference'] += 5
+                    interference_details['bluetooth_details'].append({
+                        'frequency_range': '2.4 GHz Band',
+                        'affected_networks': len(channel_24ghz),
+                        'networks': [{'ssid': 'High density environment', 'signal': -70, 'channel': 'Multiple'}],
+                        'interference_type': 'High 2.4GHz network density',
+                        'impact': 'Increased likelihood of Bluetooth interference'
+                    })
             
-            # Microwave interference detection (improved sensitivity)
+            # Microwave interference with detailed tracking
             if channel_24ghz:
                 # Look for networks with very poor signal quality in 2.4GHz
-                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -85]  # Lowered from -80 to -85
-                if len(very_weak) > 1:  # Reduced from 3 to 1
+                very_weak = [n for n in channel_24ghz if n.get('signal_strength', -100) < -85]
+                if len(very_weak) > 1:
                     interference_sources['microwave_interference'] = min(len(very_weak) * 4, 25)
+                    
+                    # Focus on channels 6-11 (2.45GHz microwave overlap)
+                    microwave_channels = [n for n in very_weak if 6 <= n.get('channel', 0) <= 11]
+                    if microwave_channels:
+                        interference_details['microwave_details'].append({
+                            'frequency_range': '2.45 GHz (Microwave ISM Band)',
+                            'affected_channels': list(set(n.get('channel', 0) for n in microwave_channels)),
+                            'networks': [{'ssid': n.get('ssid', 'Hidden'), 'signal': n.get('signal_strength', -100),
+                                        'channel': n.get('channel', 0)} for n in microwave_channels[:3]],
+                            'interference_type': 'Microwave oven interference',
+                            'impact': 'Signal degradation during microwave operation',
+                            'distance_estimate': '10-15 feet from microwave source'
+                        })
                 
                 # Additional microwave detection from signal patterns
                 if len(channel_24ghz) > 10:
-                    # Check for channels 2-5 and 7-10 which overlap with microwave
                     microwave_overlap = [n for n in channel_24ghz if n.get('channel', 0) in [2, 3, 4, 5, 7, 8, 9, 10]]
                     if len(microwave_overlap) > 3:
                         interference_sources['microwave_interference'] += 3
+                        interference_details['microwave_details'].append({
+                            'frequency_range': '2.4-2.5 GHz (Extended microwave range)',
+                            'affected_channels': list(set(n.get('channel', 0) for n in microwave_overlap)),
+                            'networks': [{'ssid': n.get('ssid', 'Hidden'), 'signal': n.get('signal_strength', -100),
+                                        'channel': n.get('channel', 0)} for n in microwave_overlap[:3]],
+                            'interference_type': 'Industrial/Commercial microwave equipment',
+                            'impact': 'Broader frequency interference',
+                            'distance_estimate': '30-50 feet from source'
+                        })
             
-            # Other RF sources (improved detection)
+            # Other RF sources with detailed frequency analysis
             total_networks = len(networks)
-            if total_networks > 10:  # Reduced threshold from 20 to 10
-                # High network density might indicate other RF sources
+            if total_networks > 10:
                 signal_variance = self._calculate_signal_variance(networks)
-                if signal_variance > 200:  # Reduced from 400 to 200
-                    interference_sources['other_rf_sources'] = min(signal_variance / 15, 25)  # Adjusted calculation
+                if signal_variance > 200:
+                    interference_sources['other_rf_sources'] = min(signal_variance / 15, 25)
+                    
+                    # Analyze frequency distribution for other RF sources
+                    frequency_bands = {
+                        '2.4 GHz': [],
+                        '5 GHz': [],
+                        '6 GHz': []
+                    }
+                    
+                    for network in networks:
+                        freq = network.get('frequency', 0)
+                        if 2400 <= freq <= 2500:
+                            frequency_bands['2.4 GHz'].append(network)
+                        elif 5000 <= freq <= 6000:
+                            frequency_bands['5 GHz'].append(network)
+                        elif 6000 <= freq <= 7000:
+                            frequency_bands['6 GHz'].append(network)
+                    
+                    for band, networks_in_band in frequency_bands.items():
+                        if len(networks_in_band) > 5:
+                            interference_details['other_rf_details'].append({
+                                'frequency_range': band,
+                                'network_count': len(networks_in_band),
+                                'signal_variance': round(signal_variance, 1),
+                                'potential_sources': self._identify_potential_rf_sources(band, len(networks_in_band)),
+                                'impact': 'Variable interference depending on device activity',
+                                'distance_estimate': 'Varies by device type (10-500 feet)'
+                            })
                 
                 # Additional RF source detection
                 if total_networks > 30:
                     interference_sources['other_rf_sources'] += 5
+                    interference_details['other_rf_details'].append({
+                        'frequency_range': 'Multi-band',
+                        'network_count': total_networks,
+                        'signal_variance': round(signal_variance, 1),
+                        'potential_sources': ['High-density environment', 'Multiple RF sources'],
+                        'impact': 'Complex interference environment',
+                        'distance_estimate': 'Multiple overlapping sources'
+                    })
             
             total_interference = sum(interference_sources.values())
             
             return {
                 'total_interference_sources': round(total_interference, 1),
                 'interference_types': interference_sources,
-                'interference_level': self._assess_interference_level(total_interference)
+                'interference_level': self._assess_interference_level(total_interference),
+                'interference_details': interference_details
             }
             
         except Exception as e:
             logger.error(f"Error classifying interference sources: {e}")
-            return {'total_interference_sources': 0, 'interference_types': {}, 'interference_level': 'unknown'}
+            return {'total_interference_sources': 0, 'interference_types': {}, 'interference_level': 'unknown', 'interference_details': {}}
+    
+    def _identify_potential_rf_sources(self, frequency_band, network_count):
+        """Identify potential RF interference sources based on frequency band and density"""
+        sources = []
+        
+        if frequency_band == '2.4 GHz':
+            if network_count > 20:
+                sources.extend(['Cordless phones (DECT)', 'Baby monitors', 'Wireless security cameras'])
+            if network_count > 15:
+                sources.extend(['Bluetooth devices', 'RC controllers'])
+            if network_count > 10:
+                sources.extend(['Microwave ovens', 'Wireless keyboards/mice'])
+        elif frequency_band == '5 GHz':
+            if network_count > 15:
+                sources.extend(['Radar systems', 'Wireless security cameras'])
+            if network_count > 10:
+                sources.extend(['Baby monitors (5.8GHz)', 'RC/Drone controllers'])
+        elif frequency_band == '6 GHz':
+            if network_count > 5:
+                sources.extend(['WiFi 6E devices', 'Industrial equipment'])
+        
+        return sources if sources else ['Unidentified RF sources']
     
     def _calculate_signal_variance(self, networks):
         """Calculate variance in signal strengths"""
