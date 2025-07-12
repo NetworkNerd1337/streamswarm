@@ -822,6 +822,45 @@
         </div>
     </div>
     
+    <!-- Channel Networks Modal -->
+    <div class="modal fade" id="channelNetworksModal" tabindex="-1" aria-labelledby="channelNetworksModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="channelNetworksModalLabel">
+                        <i class="fas fa-wifi me-2"></i>Networks on Channel <span id="channelNumber">0</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>SSID</th>
+                                    <th>Signal (dBm)</th>
+                                    <th>Frequency</th>
+                                    <th>Security</th>
+                                </tr>
+                            </thead>
+                            <tbody id="channelNetworksTable">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Loading networks...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <small class="text-muted me-auto">
+                        Showing <span id="channelModalNetworkCount">0</span> networks on this channel
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Detailed Process Monitoring -->
     <div class="row mt-4">
         <div class="col-12">
@@ -3854,7 +3893,11 @@ function displayAdvancedRFAnalysis(rfAnalysis) {
                     <div class="text-center p-2 border rounded">
                         <div class="fw-bold text-warning">Ch ${channel}</div>
                         <div class="small text-muted">${data.utilization_estimate || 0}% used</div>
-                        <div class="small text-info">${data.network_count || 0} networks</div>
+                        <div class="small text-info">
+                            <a href="#" class="text-decoration-none" onclick="showChannelNetworks(${channel}); return false;">
+                                ${data.network_count || 0} networks
+                            </a>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -3913,6 +3956,48 @@ function showAllNetworks() {
         
         // Update modal footer count
         document.getElementById('modalNetworkCount').textContent = sortedNetworks.length;
+    }
+    
+    modal.show();
+}
+
+function showChannelNetworks(channel) {
+    console.log('showChannelNetworks called for channel:', channel);
+    console.log('allWifiNetworks available:', allWifiNetworks.length);
+    
+    const modal = new bootstrap.Modal(document.getElementById('channelNetworksModal'));
+    
+    // Update modal title
+    document.getElementById('channelNumber').textContent = channel;
+    
+    // Filter networks for this channel
+    const channelNetworks = allWifiNetworks.filter(network => network.channel === channel);
+    console.log('Networks found for channel', channel, ':', channelNetworks.length);
+    
+    const tableBody = document.getElementById('channelNetworksTable');
+    
+    if (channelNetworks.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No networks found on this channel</td></tr>';
+        document.getElementById('channelModalNetworkCount').textContent = '0';
+    } else {
+        // Sort by signal strength (strongest first)
+        const sortedNetworks = channelNetworks.sort((a, b) => (b.signal_strength || -100) - (a.signal_strength || -100));
+        
+        tableBody.innerHTML = sortedNetworks.map((network, index) => `
+            <tr>
+                <td>
+                    ${network.ssid || 'Hidden Network'}
+                    ${index < 3 ? '<span class="badge bg-success ms-2">Strongest</span>' : ''}
+                </td>
+                <td>${network.signal_strength || 'N/A'}</td>
+                <td>${network.frequency || 'N/A'}</td>
+                <td>${network.encrypted ? 'Encrypted' : 'Open'}</td>
+            </tr>
+        `).join('');
+        
+        document.getElementById('channelModalNetworkCount').textContent = sortedNetworks.length;
+        
+        console.log('Channel', channel, 'networks:', sortedNetworks.map(n => n.ssid || 'Hidden'));
     }
     
     modal.show();
