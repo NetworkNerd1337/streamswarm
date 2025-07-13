@@ -321,7 +321,8 @@ def test_results(test_id):
                          results=results, 
                          clients=clients,
                          handshake_analysis_results=handshake_analysis_results,
-                         is_wifi_only=test.test_type == 'wifi_environment')
+                         is_wifi_only=test.test_type == 'wifi_environment',
+                         is_voip_only=test.test_type == 'voip_analysis')
 
 @app.route('/tutorial')
 @web_auth_required

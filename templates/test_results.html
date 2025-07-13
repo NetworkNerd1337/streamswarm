@@ -22,7 +22,7 @@
         <div class="col-auto">
             <div class="btn-group" role="group">
                 {% if test.status in ['completed', 'failed'] %}
-                    {% if test.test_type != 'wifi_environment' %}
+                    {% if test.test_type not in ['wifi_environment', 'voip_analysis'] %}
                     <a href="{{ url_for('diagnose_test', test_id=test.id) }}" class="btn btn-primary">
                         <i class="fas fa-robot me-1"></i> Get AI Opinion
                     </a>
@@ -57,7 +57,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3" {% if is_wifi_only %}style="display: none;"{% endif %}>
+        <div class="col-md-3 mb-3" {% if is_wifi_only or is_voip_only %}style="display: none;"{% endif %}>
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Avg Latency</h5>
@@ -65,7 +65,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3" {% if is_wifi_only %}style="display: none;"{% endif %}>
+        <div class="col-md-3 mb-3" {% if is_wifi_only or is_voip_only %}style="display: none;"{% endif %}>
             <div class="card">
                 <div class="card-body text-center">
                     <h5 class="card-title">Packet Loss</h5>
@@ -73,10 +73,29 @@
                 </div>
             </div>
         </div>
+        <!-- VoIP Analysis Summary Cards -->
+        {% if is_voip_only %}
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg MOS Score</h5>
+                    <h2 class="text-warning" id="avg-mos-score">--</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Voice Quality</h5>
+                    <h2 class="text-info" id="avg-voice-quality">--</h2>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Charts -->
-    <div class="row mb-4" {% if is_wifi_only %}style="display: none;"{% endif %}>
+    <div class="row mb-4" {% if is_wifi_only or is_voip_only %}style="display: none;"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -205,7 +224,7 @@
     </div>
 
     <!-- Client Details -->
-    <div class="row" {% if is_wifi_only %}style="display: none;"{% endif %}>
+    <div class="row" {% if is_wifi_only or is_voip_only %}style="display: none;"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -253,7 +272,7 @@
     </div>
     
     <!-- Network Path Geolocation Visualization -->
-    <div class="row mt-4 mb-4" id="geolocationSection" style="display: none;">
+    <div class="row mt-4 mb-4" id="geolocationSection" style="display: none;" {% if is_voip_only %}class="d-none"{% endif %}>
         <div class="col-12">
             <div class="card" style="position: relative; z-index: 0;">
                 <div class="card-header">
@@ -362,7 +381,7 @@
     </div>
     
     <!-- GNMI Network Path Analysis -->
-    <div class="row mt-4 mb-4" id="gnmiPathSection" style="display: none;" {% if is_wifi_only %}data-wifi-only="hide"{% endif %}>
+    <div class="row mt-4 mb-4" id="gnmiPathSection" style="display: none;" {% if is_wifi_only or is_voip_only %}data-wifi-only="hide"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -450,7 +469,7 @@
     </div>
     
     <!-- Client Infrastructure Analysis -->
-    <div class="row mt-4 mb-4" id="clientInfrastructureSection" style="display: none;" {% if is_wifi_only %}data-wifi-only="hide"{% endif %}>
+    <div class="row mt-4 mb-4" id="clientInfrastructureSection" style="display: none;" {% if is_wifi_only or is_voip_only %}data-wifi-only="hide"{% endif %}>
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -853,6 +872,176 @@
                                 <tbody id="wifiNetworksTable">
                                     <tr>
                                         <td colspan="5" class="text-center text-muted">No WiFi scan data available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- VoIP Analysis -->
+    <div class="row mt-4" id="voipAnalysisCard" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-phone me-2"></i>
+                        VoIP Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- VoIP Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge me-2" id="voipQualityBadge">Good</span>
+                                <h6 class="mb-0">Voice Quality Assessment</h6>
+                            </div>
+                            <p class="text-muted small mb-3" id="voipQualityDescription">
+                                VoIP call quality based on MOS score and network metrics
+                            </p>
+                            
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h4 mb-1" id="voipMOSScore">0.0</div>
+                                        <small class="text-muted">MOS Score</small>
+                                        <div class="mt-1">
+                                            <span class="badge" id="voipMOSBadge">Poor</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="h4 mb-1" id="voipVoiceQuality">0</div>
+                                        <small class="text-muted">Voice Quality %</small>
+                                        <div class="mt-1">
+                                            <span class="badge" id="voipVoiceQualityBadge">Poor</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- MOS Score Legend -->
+                            <div class="mt-3 p-2 bg-dark border rounded">
+                                <div class="small text-center">
+                                    <strong class="text-light">MOS Score Guide:</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2 small">
+                                    <span class="badge bg-success">4.0-5.0: Excellent</span>
+                                    <span class="badge bg-primary">3.0-4.0: Good</span>
+                                    <span class="badge bg-warning">2.0-3.0: Fair</span>
+                                    <span class="badge bg-danger">1.0-2.0: Poor</span>
+                                </div>
+                                <div class="text-center mt-1">
+                                    <small class="text-light">MOS (Mean Opinion Score) represents perceived voice quality</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-clock me-2"></i>SIP Protocol Timing
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-primary fw-bold" id="voipSIPRegistration">0ms</div>
+                                        <small class="text-muted">SIP Registration</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-info fw-bold" id="voipSIPCallSetup">0ms</div>
+                                        <small class="text-muted">Call Setup</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h6 class="text-primary mb-3 mt-4">
+                                <i class="fas fa-stream me-2"></i>RTP Stream Quality
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-warning fw-bold" id="voipRTPJitter">0ms</div>
+                                        <small class="text-muted">Jitter</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 border rounded">
+                                        <div class="text-danger fw-bold" id="voipRTPPacketLoss">0%</div>
+                                        <small class="text-muted">Packet Loss</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- VoIP Quality Thresholds -->
+                    <div class="mt-3">
+                        <div class="bg-dark border border-secondary rounded p-3">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-info-circle me-2"></i>VoIP Quality Thresholds
+                            </h6>
+                            <div class="row text-sm">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong class="text-light">Latency:</strong> <span class="text-muted">One-way delay acceptable for voice</span>
+                                        <br><span class="badge bg-success me-1">Excellent</span> &lt;50ms
+                                        <span class="badge bg-primary me-1">Good</span> 50-100ms
+                                        <span class="badge bg-warning me-1">Fair</span> 100-150ms
+                                        <span class="badge bg-danger">Poor</span> &gt;150ms
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong class="text-light">Jitter:</strong> <span class="text-muted">Variation in packet delay</span>
+                                        <br><span class="badge bg-success me-1">Excellent</span> &lt;20ms
+                                        <span class="badge bg-primary me-1">Good</span> 20-40ms
+                                        <span class="badge bg-warning me-1">Fair</span> 40-60ms
+                                        <span class="badge bg-danger">Poor</span> &gt;60ms
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <strong class="text-light">Packet Loss:</strong> <span class="text-muted">Percentage of lost voice packets</span>
+                                        <br><span class="badge bg-success me-1">Excellent</span> &lt;0.5%
+                                        <span class="badge bg-primary me-1">Good</span> 0.5-1%
+                                        <span class="badge bg-warning me-1">Fair</span> 1-2%
+                                        <span class="badge bg-danger">Poor</span> &gt;2%
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong class="text-light">MOS Score:</strong> <span class="text-muted">Mean Opinion Score for voice quality</span>
+                                        <br><span class="badge bg-success me-1">Excellent</span> 4.0-5.0
+                                        <span class="badge bg-primary me-1">Good</span> 3.0-4.0
+                                        <span class="badge bg-warning me-1">Fair</span> 2.0-3.0
+                                        <span class="badge bg-danger">Poor</span> 1.0-2.0
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- VoIP Test Results Summary -->
+                    <div class="mt-3">
+                        <h6 class="text-primary">
+                            <i class="fas fa-chart-bar me-2"></i>Test Results Summary
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Value</th>
+                                        <th>Status</th>
+                                        <th>Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="voipMetricsTable">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No VoIP analysis data available</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -2297,6 +2486,7 @@ async function loadTestData() {
             displayGNMIPathData();
             displayClientInfrastructureData();
             displayWiFiEnvironmentalAnalysis();
+            displayVoIPAnalysis();
             console.log('All components initialized successfully');
         } catch (error) {
             console.error('Error during component initialization:', error);
@@ -4720,6 +4910,219 @@ function showOtherRFDetails(contentElement, countElement) {
     
     contentElement.innerHTML = html;
     countElement.textContent = `${otherRFDetails.length} RF interference patterns detected`;
+}
+
+function displayVoIPAnalysis() {
+    console.log('Checking for VoIP analysis data...');
+    
+    // Check if this is a VoIP test by looking for VoIP-specific metrics
+    const isVoipTest = {{ 'true' if is_voip_only else 'false' }};
+    if (!isVoipTest) {
+        console.log('Not a VoIP test - skipping VoIP analysis');
+        return;
+    }
+    
+    // Check if any test results contain VoIP analysis data
+    let voipData = null;
+    
+    if (testData && testData.metrics && testData.metrics.voip_analysis_data) {
+        // Get the latest VoIP analysis data
+        const clientIds = Object.keys(testData.metrics.voip_analysis_data);
+        for (const clientId of clientIds) {
+            const clientData = testData.metrics.voip_analysis_data[clientId];
+            if (clientData && clientData.length > 0) {
+                // Get the most recent analysis data
+                const latestAnalysis = clientData[clientData.length - 1];
+                if (latestAnalysis && latestAnalysis.y) {
+                    try {
+                        voipData = JSON.parse(latestAnalysis.y);
+                        break;
+                    } catch (e) {
+                        console.warn('Failed to parse VoIP analysis data:', e);
+                    }
+                }
+            }
+        }
+    }
+    
+    if (!voipData) {
+        console.log('No VoIP analysis data found');
+        return;
+    }
+    
+    console.log('VoIP analysis data found:', voipData);
+    
+    // Show the VoIP analysis card
+    document.getElementById('voipAnalysisCard').style.display = 'block';
+    
+    // Update VoIP summary cards
+    updateVoIPSummaryCards();
+    
+    // Display VoIP analysis data
+    const mosScore = voipData.analysis_summary?.mos_score || 0;
+    const voiceQuality = voipData.analysis_summary?.voice_quality_score || 0;
+    const sipRegistration = voipData.sip_registration_time || 0;
+    const sipCallSetup = voipData.sip_call_setup_time || 0;
+    const rtpJitter = voipData.rtp_jitter || 0;
+    const rtpPacketLoss = voipData.rtp_packet_loss || 0;
+    
+    // Update VoIP metrics display
+    document.getElementById('voipMOSScore').textContent = mosScore.toFixed(1);
+    document.getElementById('voipVoiceQuality').textContent = Math.round(voiceQuality);
+    document.getElementById('voipSIPRegistration').textContent = (sipRegistration * 1000).toFixed(0) + 'ms';
+    document.getElementById('voipSIPCallSetup').textContent = (sipCallSetup * 1000).toFixed(0) + 'ms';
+    document.getElementById('voipRTPJitter').textContent = rtpJitter.toFixed(1) + 'ms';
+    document.getElementById('voipRTPPacketLoss').textContent = rtpPacketLoss.toFixed(1) + '%';
+    
+    // Update badges based on quality thresholds
+    updateVoIPBadges(mosScore, voiceQuality, sipRegistration * 1000, sipCallSetup * 1000, rtpJitter, rtpPacketLoss);
+    
+    // Populate VoIP metrics table
+    populateVoIPMetricsTable(voipData);
+}
+
+function updateVoIPSummaryCards() {
+    if (!testData || !testData.metrics) return;
+    
+    // Calculate averages from VoIP metrics
+    const mosScores = [];
+    const voiceQualityScores = [];
+    
+    if (testData.metrics.mos_score) {
+        Object.values(testData.metrics.mos_score).forEach(clientData => {
+            clientData.forEach(point => {
+                if (point && point.y !== null && point.y !== undefined) {
+                    mosScores.push(point.y);
+                }
+            });
+        });
+    }
+    
+    if (testData.metrics.voice_quality_score) {
+        Object.values(testData.metrics.voice_quality_score).forEach(clientData => {
+            clientData.forEach(point => {
+                if (point && point.y !== null && point.y !== undefined) {
+                    voiceQualityScores.push(point.y);
+                }
+            });
+        });
+    }
+    
+    // Update summary cards
+    const avgMOS = mosScores.length > 0 ? mosScores.reduce((a, b) => a + b, 0) / mosScores.length : 0;
+    const avgVoiceQuality = voiceQualityScores.length > 0 ? voiceQualityScores.reduce((a, b) => a + b, 0) / voiceQualityScores.length : 0;
+    
+    document.getElementById('avg-mos-score').textContent = avgMOS.toFixed(1);
+    document.getElementById('avg-voice-quality').textContent = Math.round(avgVoiceQuality) + '%';
+}
+
+function updateVoIPBadges(mosScore, voiceQuality, sipRegistration, sipCallSetup, rtpJitter, rtpPacketLoss) {
+    // MOS Score badge
+    let mosBadge = 'bg-danger';
+    if (mosScore >= 4.0) mosBadge = 'bg-success';
+    else if (mosScore >= 3.0) mosBadge = 'bg-primary';
+    else if (mosScore >= 2.0) mosBadge = 'bg-warning';
+    
+    document.getElementById('voipMOSBadge').className = `badge ${mosBadge}`;
+    document.getElementById('voipMOSBadge').textContent = mosScore >= 4.0 ? 'Excellent' : mosScore >= 3.0 ? 'Good' : mosScore >= 2.0 ? 'Fair' : 'Poor';
+    
+    // Voice Quality badge
+    let voiceQualityBadge = 'bg-danger';
+    if (voiceQuality >= 80) voiceQualityBadge = 'bg-success';
+    else if (voiceQuality >= 60) voiceQualityBadge = 'bg-primary';
+    else if (voiceQuality >= 40) voiceQualityBadge = 'bg-warning';
+    
+    document.getElementById('voipVoiceQualityBadge').className = `badge ${voiceQualityBadge}`;
+    document.getElementById('voipVoiceQualityBadge').textContent = voiceQuality >= 80 ? 'Excellent' : voiceQuality >= 60 ? 'Good' : voiceQuality >= 40 ? 'Fair' : 'Poor';
+    
+    // Overall quality badge
+    let overallBadge = 'bg-danger';
+    let overallText = 'Poor';
+    if (mosScore >= 4.0 && voiceQuality >= 80) {
+        overallBadge = 'bg-success';
+        overallText = 'Excellent';
+    } else if (mosScore >= 3.0 && voiceQuality >= 60) {
+        overallBadge = 'bg-primary';
+        overallText = 'Good';
+    } else if (mosScore >= 2.0 && voiceQuality >= 40) {
+        overallBadge = 'bg-warning';
+        overallText = 'Fair';
+    }
+    
+    document.getElementById('voipQualityBadge').className = `badge ${overallBadge} me-2`;
+    document.getElementById('voipQualityBadge').textContent = overallText;
+    
+    // Update quality description
+    const descriptions = {
+        'Excellent': 'High-quality VoIP call with minimal impairment',
+        'Good': 'Acceptable VoIP call quality with minor issues',
+        'Fair': 'VoIP call quality with noticeable impairments',
+        'Poor': 'VoIP call quality significantly degraded'
+    };
+    document.getElementById('voipQualityDescription').textContent = descriptions[overallText];
+}
+
+function populateVoIPMetricsTable(voipData) {
+    const tableBody = document.getElementById('voipMetricsTable');
+    tableBody.innerHTML = '';
+    
+    const metrics = [
+        {
+            name: 'MOS Score',
+            value: (voipData.analysis_summary?.mos_score || 0).toFixed(1),
+            getStatus: (val) => val >= 4.0 ? 'Excellent' : val >= 3.0 ? 'Good' : val >= 2.0 ? 'Fair' : 'Poor',
+            getImpact: (val) => val >= 4.0 ? 'No impairment' : val >= 3.0 ? 'Minor impairment' : val >= 2.0 ? 'Noticeable impairment' : 'Significant impairment'
+        },
+        {
+            name: 'Voice Quality Score',
+            value: Math.round(voipData.analysis_summary?.voice_quality_score || 0) + '%',
+            getStatus: (val) => val >= 80 ? 'Excellent' : val >= 60 ? 'Good' : val >= 40 ? 'Fair' : 'Poor',
+            getImpact: (val) => val >= 80 ? 'Clear voice' : val >= 60 ? 'Good clarity' : val >= 40 ? 'Some distortion' : 'Poor clarity'
+        },
+        {
+            name: 'SIP Registration Time',
+            value: ((voipData.sip_registration_time || 0) * 1000).toFixed(0) + 'ms',
+            getStatus: (val) => val < 1000 ? 'Excellent' : val < 3000 ? 'Good' : val < 5000 ? 'Fair' : 'Poor',
+            getImpact: (val) => val < 1000 ? 'Fast registration' : val < 3000 ? 'Normal registration' : val < 5000 ? 'Slow registration' : 'Very slow registration'
+        },
+        {
+            name: 'SIP Call Setup Time',
+            value: ((voipData.sip_call_setup_time || 0) * 1000).toFixed(0) + 'ms',
+            getStatus: (val) => val < 1000 ? 'Excellent' : val < 3000 ? 'Good' : val < 5000 ? 'Fair' : 'Poor',
+            getImpact: (val) => val < 1000 ? 'Fast call setup' : val < 3000 ? 'Normal call setup' : val < 5000 ? 'Slow call setup' : 'Very slow call setup'
+        },
+        {
+            name: 'RTP Jitter',
+            value: (voipData.rtp_jitter || 0).toFixed(1) + 'ms',
+            getStatus: (val) => val < 20 ? 'Excellent' : val < 40 ? 'Good' : val < 60 ? 'Fair' : 'Poor',
+            getImpact: (val) => val < 20 ? 'Smooth audio' : val < 40 ? 'Minor audio variation' : val < 60 ? 'Noticeable audio variation' : 'Choppy audio'
+        },
+        {
+            name: 'RTP Packet Loss',
+            value: (voipData.rtp_packet_loss || 0).toFixed(1) + '%',
+            getStatus: (val) => val < 0.5 ? 'Excellent' : val < 1.0 ? 'Good' : val < 2.0 ? 'Fair' : 'Poor',
+            getImpact: (val) => val < 0.5 ? 'No audio loss' : val < 1.0 ? 'Minor audio loss' : val < 2.0 ? 'Noticeable audio loss' : 'Significant audio loss'
+        }
+    ];
+    
+    metrics.forEach(metric => {
+        const numericValue = parseFloat(metric.value);
+        const status = metric.getStatus(numericValue);
+        const impact = metric.getImpact(numericValue);
+        
+        const statusBadge = status === 'Excellent' ? 'bg-success' : 
+                           status === 'Good' ? 'bg-primary' : 
+                           status === 'Fair' ? 'bg-warning' : 'bg-danger';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${metric.name}</td>
+            <td>${metric.value}</td>
+            <td><span class="badge ${statusBadge}">${status}</span></td>
+            <td>${impact}</td>
+        `;
+        tableBody.appendChild(row);
+    });
 }
 </script>
 {% endblock %}

@@ -107,6 +107,15 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **IMPLEMENTED** VoIP-specific UI display with dedicated analysis cards similar to WiFi environmental scanning
+  - Created comprehensive VoIP Analysis card with MOS scores, voice quality assessments, SIP timing metrics, and RTP stream quality
+  - Added VoIP-specific summary cards showing average MOS score and voice quality percentage in place of standard latency/packet loss metrics
+  - Implemented color-coded quality badges based on industry-standard VoIP thresholds (MOS 4.0+ excellent, 3.0+ good, 2.0+ fair, <2.0 poor)
+  - Hidden irrelevant sections for VoIP tests: network performance charts, geolocation analysis, GNMI path analysis, and client infrastructure analysis
+  - Added comprehensive VoIP metrics table with detailed status indicators and impact assessments for each metric
+  - Disabled "Get AI Opinion" button for VoIP tests since they use different metrics than standard network performance tests
+  - Enhanced VoIP quality thresholds documentation with latency (<150ms), jitter (<60ms), and packet loss (<2%) limits for voice communications
+  - VoIP tests now display professional voice quality analysis instead of generic network monitoring data
 - July 13, 2025: **FIXED** VoIP Analysis test execution bug - resolved missing method calls preventing result submission
   - Fixed missing `_submit_results()` method by replacing with proper HTTP POST request to `/api/test/results`
   - Fixed missing `_collect_system_metrics()` method by replacing with existing `_get_system_metrics()` method
