@@ -107,6 +107,10 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **FIXED** VoIP Analysis test creation error - updated server-side validation to accept "voip_analysis" test type
+  - Fixed "Invalid test type. Must be 'standard' or 'wifi_environment'" error when creating VoIP Analysis tests
+  - Updated routes.py test creation validation to accept "voip_analysis" alongside "standard" and "wifi_environment"
+  - VoIP Analysis tests can now be created successfully through the web interface
 - July 13, 2025: **CORRECTED** VoIP quality thresholds in tutorial documentation - 150ms is upper limit for acceptable VoIP calls, not "good" range
   - Updated tutorial Quality Thresholds section to reflect accurate VoIP latency standards where >150ms causes call degradation
   - Corrected misleading threshold ranges that suggested 300ms was acceptable for VoIP communications

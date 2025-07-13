@@ -879,8 +879,8 @@ def create_test():
     
     # Validate test type
     test_type = sanitize_string(data.get('test_type', 'standard'), 50)
-    if test_type not in ['standard', 'wifi_environment']:
-        return jsonify({'error': 'Invalid test type. Must be "standard" or "wifi_environment"'}), 400
+    if test_type not in ['standard', 'wifi_environment', 'voip_analysis']:
+        return jsonify({'error': 'Invalid test type. Must be "standard", "wifi_environment", or "voip_analysis"'}), 400
     
     # Validate client IDs
     client_ids = data.get('client_ids', [])
