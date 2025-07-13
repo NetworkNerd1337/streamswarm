@@ -14,7 +14,6 @@ import threading
 import time
 from pdf_generator import generate_test_report_pdf
 from ml_diagnostics import diagnostic_engine
-from voip_http_service import http_voip_service
 import bleach
 import re
 import ipaddress
@@ -2065,85 +2064,6 @@ def reset_ml_models():
             }), 500
     except Exception as e:
         logging.error(f"Error resetting models: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-# ================================
-# HTTP-BASED VOIP API ENDPOINTS
-# ================================
-
-@app.route('/api/voip/create-session', methods=['POST'])
-def create_voip_session():
-    """Create a new VoIP session for HTTP-based testing"""
-    try:
-        data = request.get_json()
-        client_id = data.get('client_id')
-        call_id = data.get('call_id')
-        
-        if not client_id or not call_id:
-            return jsonify({'error': 'client_id and call_id are required'}), 400
-        
-        result = http_voip_service.create_sip_session(client_id, call_id)
-        
-        if result.get('success'):
-            return jsonify(result)
-        else:
-            return jsonify(result), 500
-            
-    except Exception as e:
-        logging.error(f"Error creating VoIP session: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/voip/rtp-echo', methods=['POST'])
-def simulate_rtp_echo():
-    """Simulate RTP echo testing via HTTP"""
-    try:
-        data = request.get_json()
-        session_id = data.get('session_id')
-        packets_sent = data.get('packets_sent', 100)
-        
-        if not session_id:
-            return jsonify({'error': 'session_id is required'}), 400
-        
-        result = http_voip_service.simulate_rtp_echo(session_id, packets_sent)
-        
-        if result.get('success'):
-            return jsonify(result)
-        else:
-            return jsonify(result), 500
-            
-    except Exception as e:
-        logging.error(f"Error simulating RTP echo: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/voip/terminate-session', methods=['POST'])
-def terminate_voip_session():
-    """Terminate a VoIP session"""
-    try:
-        data = request.get_json()
-        session_id = data.get('session_id')
-        
-        if not session_id:
-            return jsonify({'error': 'session_id is required'}), 400
-        
-        result = http_voip_service.terminate_session(session_id)
-        
-        if result.get('success'):
-            return jsonify(result)
-        else:
-            return jsonify(result), 500
-            
-    except Exception as e:
-        logging.error(f"Error terminating VoIP session: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/voip/status')
-def voip_service_status():
-    """Get VoIP service status"""
-    try:
-        status = http_voip_service.get_service_status()
-        return jsonify(status)
-    except Exception as e:
-        logging.error(f"Error getting VoIP service status: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # ================================
