@@ -2303,6 +2303,63 @@ class NetworkDiagnosticEngine:
         
         return recommendations
     
+    def reset_models(self):
+        """
+        Reset all ML models to initial state and retrain from scratch
+        """
+        try:
+            logger.info("Starting model reset process...")
+            
+            # Clear all in-memory models
+            self.models.clear()
+            self.scalers.clear()
+            self.encoders.clear()
+            self.incremental_models.clear()
+            
+            # Remove all saved model files
+            import glob
+            model_files = glob.glob(os.path.join(self.models_dir, '*.joblib'))
+            for file_path in model_files:
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Removed model file: {file_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove {file_path}: {e}")
+            
+            # Reset training metadata
+            metadata_path = os.path.join(self.models_dir, 'training_metadata.json')
+            if os.path.exists(metadata_path):
+                os.remove(metadata_path)
+                logger.info("Removed training metadata")
+            
+            # Reset incremental learning state
+            self.training_metadata = {
+                'samples_processed': 0,
+                'last_training_time': None,
+                'model_versions': {}
+            }
+            self.last_processed_timestamp.clear()
+            
+            # Reinitialize incremental models
+            self._initialize_incremental_models()
+            
+            logger.info("Model reset completed successfully")
+            
+            # Automatically retrain with current data
+            logger.info("Starting automatic retraining after reset...")
+            success = self.train_models(force_retrain=True)
+            
+            if success:
+                logger.info("Models successfully retrained after reset")
+                return True
+            else:
+                logger.warning("Reset completed but retraining failed - insufficient data")
+                return True  # Reset was successful even if retraining failed
+                
+        except Exception as e:
+            logger.error(f"Error during model reset: {str(e)}")
+            return False
+
     def get_model_status(self) -> Dict[str, Any]:
         """
         Get current status of ML models

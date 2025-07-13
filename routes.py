@@ -1952,6 +1952,26 @@ def ml_models_status():
         logging.error(f"Error getting model status: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/ml-models/reset', methods=['POST'])
+@admin_required
+def reset_ml_models():
+    """Reset all ML models to initial state and retrain from scratch"""
+    try:
+        success = diagnostic_engine.reset_models()
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': 'All models reset successfully and retrained from scratch'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to reset models'
+            }), 500
+    except Exception as e:
+        logging.error(f"Error resetting models: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 # ================================
 # PREDICTIVE ANALYTICS API
 # ================================

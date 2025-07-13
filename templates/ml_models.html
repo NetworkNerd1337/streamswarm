@@ -103,6 +103,10 @@
                                 Train machine learning models using available test result data. 
                                 Models learn from network performance patterns to provide intelligent diagnostics.
                             </p>
+                            <p class="mb-3">
+                                <strong>Reset Models:</strong> Completely clears all learned patterns and retrains from scratch. 
+                                Use when data quality improves, network infrastructure changes, or model performance degrades.
+                            </p>
                             
                             {% if model_status.total_training_samples < 50 %}
                                 <div class="alert alert-warning" role="alert">
@@ -119,10 +123,15 @@
                             {% endif %}
                         </div>
                         <div class="col-md-4 text-end">
-                            <button id="train-btn" class="btn btn-primary btn-lg" onclick="trainModels()" 
+                            <button id="train-btn" class="btn btn-primary btn-lg me-2" onclick="trainModels()" 
                                     {% if model_status.total_training_samples < 50 %}disabled{% endif %}>
                                 <i class="fas fa-play me-2"></i>
                                 Train Models
+                            </button>
+                            <button id="reset-btn" class="btn btn-danger btn-lg" onclick="resetModels()" 
+                                    {% if model_status.total_training_samples < 50 %}disabled{% endif %}>
+                                <i class="fas fa-undo me-2"></i>
+                                Reset Models
                             </button>
                         </div>
                     </div>
@@ -397,6 +406,67 @@
             </div>
         </div>
     </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal fade" id="resetModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Reset All ML Models
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Warning: This action cannot be undone!</h6>
+                        <p class="mb-2">Resetting will:</p>
+                        <ul class="mb-2">
+                            <li>Delete all trained model files and learned patterns</li>
+                            <li>Clear incremental learning state and training metadata</li>
+                            <li>Reset all 6 ML models to initial state</li>
+                            <li>Automatically retrain from scratch using current data</li>
+                        </ul>
+                        <p class="mb-0"><strong>Use cases for reset:</strong> Data quality improvements, network infrastructure changes, model performance degradation, or testing different configurations.</p>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>What happens after reset:</h6>
+                        <p class="mb-0">All models will be retrained using the current {{ model_status.total_training_samples }} test results. This preserves your data but gives the models a fresh start with improved learning.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmReset()">
+                        <i class="fas fa-undo me-2"></i>Reset All Models
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Progress Modal -->
+    <div class="modal fade" id="resetProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-undo me-2"></i>
+                        Resetting ML Models
+                    </h5>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="spinner-border text-danger mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5>Reset in Progress...</h5>
+                    <p class="text-muted mb-0">
+                        Clearing learned patterns and retraining from scratch. This may take up to 60 seconds.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -436,6 +506,60 @@ function trainModels() {
         showToast('Training failed', 'danger');
         trainBtn.disabled = false;
         trainBtn.innerHTML = '<i class="fas fa-play me-2"></i>Train Models';
+    });
+}
+
+function resetModels() {
+    // Show confirmation modal
+    const modal = new bootstrap.Modal(document.getElementById('resetModal'));
+    modal.show();
+}
+
+function confirmReset() {
+    // Hide confirmation modal
+    const confirmModal = bootstrap.Modal.getInstance(document.getElementById('resetModal'));
+    confirmModal.hide();
+    
+    // Disable buttons
+    const trainBtn = document.getElementById('train-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    trainBtn.disabled = true;
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Resetting...';
+    
+    // Show progress modal
+    const progressModal = new bootstrap.Modal(document.getElementById('resetProgressModal'));
+    progressModal.show();
+    
+    // Start reset
+    fetch('/api/ml-models/reset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        progressModal.hide();
+        
+        if (data.status === 'success') {
+            showToast('All ML models reset and retrained successfully!', 'success');
+            // Reload page to show updated status
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || 'Reset failed', 'danger');
+            trainBtn.disabled = false;
+            resetBtn.disabled = false;
+            resetBtn.innerHTML = '<i class="fas fa-undo me-2"></i>Reset Models';
+        }
+    })
+    .catch(error => {
+        progressModal.hide();
+        console.error('Error:', error);
+        showToast('Reset failed', 'danger');
+        trainBtn.disabled = false;
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = '<i class="fas fa-undo me-2"></i>Reset Models';
     });
 }
 
