@@ -533,6 +533,8 @@ StreamSwarm collects 65+ comprehensive metrics:
 - MOS (Mean Opinion Score) calculation using ITU-T G.107 E-model
 - Voice quality scoring and codec efficiency analysis
 
+**Network Requirements:** Server must be accessible on TCP/UDP 5060 (SIP), TCP/UDP 5061 (SIPS), and UDP 10000-20000 (RTP media streams)
+
 ### Quality of Service (QoS)
 - DSCP/CoS detection and classification
 - Per-class latency measurements

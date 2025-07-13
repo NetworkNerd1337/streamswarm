@@ -107,6 +107,11 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **ENHANCED** VoIP Analysis documentation with network requirements - added comprehensive port and protocol information
+  - Added Network Requirements section to VoIP Analysis tutorial explaining required server ports (TCP/UDP 5060, 5061, UDP 10000-20000)
+  - Updated README.md VoIP Analysis section with network accessibility requirements for SIP and RTP protocols
+  - Enhanced tutorial with firewall configuration guidance for proper VoIP testing functionality
+  - Documentation now covers complete network infrastructure requirements for VoIP Analysis deployment
 - July 13, 2025: **FIXED** VoIP Analysis test creation error - updated server-side validation to accept "voip_analysis" test type
   - Fixed "Invalid test type. Must be 'standard' or 'wifi_environment'" error when creating VoIP Analysis tests
   - Updated routes.py test creation validation to accept "voip_analysis" alongside "standard" and "wifi_environment"

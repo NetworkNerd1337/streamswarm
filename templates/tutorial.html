@@ -2824,6 +2824,17 @@ nssm install StreamSwarmClient</code></pre>
                                 <h6><i class="fas fa-shield-alt me-2"></i>Zero-Trust Architecture</h6>
                                 <p class="mb-0 small">The StreamSwarm server acts as a SIP endpoint, eliminating the need for external VoIP servers and maintaining security compliance.</p>
                             </div>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-network-wired me-2"></i>Network Requirements</h6>
+                                <p class="small mb-2"><strong>Server must be accessible on:</strong></p>
+                                <ul class="small mb-0">
+                                    <li><strong>TCP/UDP 5060:</strong> SIP signaling protocol</li>
+                                    <li><strong>TCP/UDP 5061:</strong> Secure SIP (SIPS) protocol</li>
+                                    <li><strong>UDP 10000-20000:</strong> RTP media stream range</li>
+                                </ul>
+                                <p class="small mt-2 mb-0"><strong>Note:</strong> Ensure firewall rules allow these ports for proper VoIP analysis functionality.</p>
+                            </div>
                         </div>
                         
                         <div class="col-md-6">
