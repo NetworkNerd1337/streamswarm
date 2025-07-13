@@ -105,6 +105,12 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **FIXED** "Get AI Opinion" feature for WiFi Environmental Scan tests - hidden diagnostic button for incompatible test types
+  - WiFi Environmental Scan tests don't contain standard network performance metrics (latency, packet loss, etc.)
+  - Diagnostic engine expects standard network metrics and fails on WiFi-only tests causing infinite loading spinner
+  - Hidden "Get AI Opinion" button for wifi_environment test types since they lack compatible metrics for network performance diagnosis
+  - Standard network performance tests continue to show AI diagnostic functionality normally
+  - PDF export remains available for all test types including WiFi Environmental Scans
 - July 12, 2025: **FIXED** Critical security vulnerability - restricted /clients page access to admin users only
   - Added admin_required decorator to /clients route and all client management API endpoints
   - Fixed unauthorized access where non-admin users could access client management functionality
