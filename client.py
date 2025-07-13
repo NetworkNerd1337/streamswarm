@@ -2960,7 +2960,7 @@ class StreamSwarmClient:
             
             # Get device list from server
             response = requests.get(
-                f"{self.server_url}/api/gnmi/devices",
+                f"{self.server_url}/api/client/gnmi/devices",
                 headers={'Authorization': f'Bearer {self.api_token}'},
                 timeout=30
             )

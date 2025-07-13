@@ -2965,18 +2965,26 @@ def gnmi_manager():
     return render_template('gnmi_manager.html', devices=devices)
 
 @app.route('/api/gnmi/devices', methods=['GET'])
-@admin_required
+@require_api_token
 def get_gnmi_devices():
     """Get all GNMI devices for client synchronization"""
     try:
         devices = GnmiDevice.query.filter_by(enabled=True).all()
-        return jsonify({
-            'success': True,
-            'devices': [device.to_dict() for device in devices]
-        })
+        return jsonify([device.to_dict() for device in devices])
     except Exception as e:
         logging.error(f"Error getting GNMI devices: {str(e)}")
-        return jsonify({'success': False, 'message': 'Failed to fetch devices'}), 500
+        return jsonify({'error': 'Failed to fetch devices'}), 500
+
+@app.route('/api/client/gnmi/devices', methods=['GET'])
+@require_api_token
+def get_gnmi_devices_for_client():
+    """Get all GNMI devices for client synchronization (alternative endpoint)"""
+    try:
+        devices = GnmiDevice.query.filter_by(enabled=True).all()
+        return jsonify([device.to_dict() for device in devices])
+    except Exception as e:
+        logging.error(f"Error getting GNMI devices for client: {str(e)}")
+        return jsonify({'error': 'Failed to fetch devices'}), 500
 
 @app.route('/api/gnmi/devices', methods=['POST'])
 @admin_required

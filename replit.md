@@ -105,6 +105,12 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 12, 2025: **FIXED** GNMI device synchronization error - resolved JSON parsing issue in client logs
+  - Fixed "Expecting value: line 1 column 1 (char 0)" error caused by authentication mismatch between client and server
+  - Created new `/api/client/gnmi/devices` endpoint with proper API token authentication for client access
+  - Original `/api/gnmi/devices` endpoint required admin authentication which clients couldn't access
+  - Updated client code to use the new endpoint specifically designed for client API token authentication
+  - GNMI device synchronization now works correctly without authentication errors
 - July 12, 2025: **FIXED** "Get AI Opinion" feature for WiFi Environmental Scan tests - hidden diagnostic button for incompatible test types
   - WiFi Environmental Scan tests don't contain standard network performance metrics (latency, packet loss, etc.)
   - Diagnostic engine expects standard network metrics and fails on WiFi-only tests causing infinite loading spinner
