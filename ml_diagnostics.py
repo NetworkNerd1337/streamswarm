@@ -2370,20 +2370,29 @@ class NetworkDiagnosticEngine:
             'encoders_available': list(self.encoders.keys()),
             'models_trained': len(self.models) > 0,
             'total_training_samples': 0,
-            'last_training': None
+            'last_training': None,
+            'model_files_info': {}
         }
         
         # Get training data count
         total_results = TestResult.query.count()
         status['total_training_samples'] = total_results
         
-        # Check for model files and get timestamps
+        # Check for model files and get detailed timestamps
         model_files = ['anomaly_detector.joblib', 'health_classifier.joblib', 'performance_predictor.joblib', 'failure_predictor.joblib', 'qos_compliance_monitor.joblib', 'client_infrastructure_analyzer.joblib']
         for filename in model_files:
             filepath = os.path.join(self.models_dir, filename)
             if os.path.exists(filepath):
                 mtime = os.path.getmtime(filepath)
                 last_modified = datetime.fromtimestamp(mtime)
+                
+                # Store individual file info
+                status['model_files_info'][filename] = {
+                    'created': last_modified.isoformat(),
+                    'size': os.path.getsize(filepath),
+                    'exists': True
+                }
+                
                 # Compare with existing last_training timestamp
                 should_update = status['last_training'] is None
                 if not should_update and status['last_training']:
@@ -2395,6 +2404,12 @@ class NetworkDiagnosticEngine:
                 
                 if should_update:
                     status['last_training'] = last_modified.isoformat()
+            else:
+                status['model_files_info'][filename] = {
+                    'created': None,
+                    'size': 0,
+                    'exists': False
+                }
         
         return status
 

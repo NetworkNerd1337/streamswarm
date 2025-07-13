@@ -158,6 +158,72 @@
         </div>
     </div>
 
+    <!-- Model Files Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-code me-2"></i>
+                        Model Files Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Model File</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Size</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for filename, info in model_status.model_files_info.items() %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-code me-2"></i>
+                                        {{ filename }}
+                                    </td>
+                                    <td>
+                                        {% if info.exists %}
+                                            <span class="badge bg-success">Exists</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Missing</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if info.created %}
+                                            <small>{{ info.created | truncate(19, True, '') }}</small>
+                                        {% else %}
+                                            <small class="text-muted">N/A</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if info.size > 0 %}
+                                            <small>{{ (info.size / 1024) | round(1) }} KB</small>
+                                        {% else %}
+                                            <small class="text-muted">0 KB</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>Reset Verification:</strong> After reset, all model files will show fresh creation timestamps. 
+                            File sizes may vary slightly due to different training data patterns.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Model Details -->
     <div class="row mb-4">
         <div class="col-12">
@@ -543,7 +609,8 @@ function confirmReset() {
         progressModal.hide();
         
         if (data.status === 'success') {
-            showToast('All ML models reset and retrained successfully!', 'success');
+            const now = new Date().toLocaleString();
+            showToast(`All ML models reset and retrained successfully at ${now}!`, 'success');
             // Reload page to show updated status
             setTimeout(() => location.reload(), 1500);
         } else {
