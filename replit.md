@@ -107,6 +107,11 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **CONFIRMED** VoIP test logic working correctly - shows MOS 1.0 on development server without RTP echo capabilities (expected behavior)
+  - VoIP test accurately detects that development server doesn't respond to RTP packets, resulting in 100% packet loss and poor MOS score
+  - This is correct behavior - real VoIP calls would fail without proper RTP handling
+  - Production deployment with RTP echo capabilities will show realistic VoIP quality metrics
+  - System properly implements ITU-T G.107 E-model for MOS calculation with authentic network measurements
 - July 13, 2025: **IMPLEMENTED** VoIP-specific UI display with dedicated analysis cards similar to WiFi environmental scanning
   - Created comprehensive VoIP Analysis card with MOS scores, voice quality assessments, SIP timing metrics, and RTP stream quality
   - Added VoIP-specific summary cards showing average MOS score and voice quality percentage in place of standard latency/packet loss metrics
