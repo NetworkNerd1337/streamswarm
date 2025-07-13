@@ -105,6 +105,14 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **FIXED** Critical "Failed to submit result: 500" error by adding missing `tcp_handshake_error` field to TestResult model and server validation
+  - Added `tcp_handshake_error` TEXT field to TestResult database model for DNS resolution failures
+  - Enhanced server validation in `/api/test/results` endpoint to properly handle TCP handshake error messages
+  - Added database migration to support new field for existing test results
+  - Fixed intermittent 500 errors that occurred when clients encountered DNS resolution failures (e.g., "No address associated with hostname")
+  - Enhanced error logging in submission endpoint with full tracebacks and client data keys for better debugging
+  - Client now properly submits error information when handshake fails, preventing data loss and improving diagnostics
+  - Resolved database constraint violations that caused test result submission failures during network connectivity issues
 - July 13, 2025: **IMPLEMENTED** ML Model Reset functionality on /ml-models page - allows complete model truncation and retraining from scratch
   - Added comprehensive "Reset Models" button with detailed confirmation modal explaining what gets cleared
   - Created API endpoint /api/ml-models/reset that clears all model files, training metadata, and incremental learning state

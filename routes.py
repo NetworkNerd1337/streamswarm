@@ -764,6 +764,7 @@ def submit_test_results():
             tcp_handshake_network_delay=safe_float(data.get('tcp_handshake_network_delay'), 'tcp_handshake_network_delay'),
             tcp_handshake_server_processing=safe_float(data.get('tcp_handshake_server_processing'), 'tcp_handshake_server_processing'),
             tcp_handshake_analysis=sanitize_string(data.get('tcp_handshake_analysis'), 500) if data.get('tcp_handshake_analysis') else None,
+            tcp_handshake_error=sanitize_string(data.get('tcp_handshake_error'), 500) if data.get('tcp_handshake_error') else None,
             # Geolocation path analysis for enhanced traceroute visualization
             path_geolocation_data=path_geolocation_data,
             path_map_html=path_map_html,
@@ -778,8 +779,10 @@ def submit_test_results():
         return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
     
     try:
+        logging.info(f"Attempting to save TestResult for test_id={test_id}, client_id={client_id}")
         db.session.add(result)
         db.session.commit()
+        logging.info(f"Successfully saved TestResult for test_id={test_id}, client_id={client_id}")
         
         # Check if test should be marked as completed
         test = Test.query.get(result.test_id)
@@ -806,7 +809,10 @@ def submit_test_results():
         return jsonify({'status': 'success', 'message': 'Results submitted successfully'})
         
     except Exception as e:
+        import traceback
         logging.error(f"Error submitting test results: {str(e)}")
+        logging.error(f"Full traceback: {traceback.format_exc()}")
+        logging.error(f"Client data keys: {list(data.keys()) if data else 'No data'}")
         return jsonify({'error': 'Failed to submit results'}), 500
 
 @app.route('/api/test/create', methods=['POST'])

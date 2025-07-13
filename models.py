@@ -403,6 +403,7 @@ class TestResult(db.Model):
     tcp_handshake_network_delay = db.Column(db.Float)  # Estimated one-way network delay (ms)
     tcp_handshake_server_processing = db.Column(db.Float)  # Estimated server processing time (ms)
     tcp_handshake_analysis = db.Column(Text)  # Diagnostic analysis text
+    tcp_handshake_error = db.Column(Text)  # Error message when handshake fails
     
     # Advanced QoS Metrics
     per_dscp_latency = db.Column(Text)  # JSON string of latency per DSCP class
