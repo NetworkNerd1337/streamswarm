@@ -39,12 +39,15 @@ class NetworkDiagnosticEngine:
         self.models = {}
         self.scalers = {}
         self.encoders = {}
+        self.incremental_models = {}
+        self.training_metadata = {}
         
         # Ensure models directory exists
         os.makedirs(models_dir, exist_ok=True)
         
         # Load existing models if available
         self._load_models()
+        self._load_training_metadata()
         
     def _load_models(self):
         """Load pre-trained models from disk"""
@@ -94,6 +97,19 @@ class NetworkDiagnosticEngine:
             except Exception as e:
                 logger.warning(f"Failed to load feature columns: {e}")
     
+    def _load_training_metadata(self):
+        """Load training metadata for incremental learning"""
+        metadata_path = os.path.join(self.models_dir, "training_metadata.joblib")
+        if os.path.exists(metadata_path):
+            try:
+                self.training_metadata = joblib.load(metadata_path)
+                logger.info(f"Loaded training metadata: last training on {self.training_metadata.get('last_training_date', 'unknown')}")
+            except Exception as e:
+                logger.warning(f"Failed to load training metadata: {e}")
+                self.training_metadata = {}
+        else:
+            self.training_metadata = {}
+    
     def _save_models(self):
         """Save trained models to disk"""
         try:
@@ -116,8 +132,12 @@ class NetworkDiagnosticEngine:
             if hasattr(self, 'feature_columns'):
                 filepath = os.path.join(self.models_dir, "feature_columns.joblib")
                 joblib.dump(self.feature_columns, filepath)
+            
+            # Save training metadata
+            metadata_path = os.path.join(self.models_dir, "training_metadata.joblib")
+            joblib.dump(self.training_metadata, metadata_path)
                 
-            logger.info("Models saved successfully")
+            logger.info("Models and metadata saved successfully")
         except Exception as e:
             logger.error(f"Failed to save models: {e}")
     
@@ -432,12 +452,12 @@ class NetworkDiagnosticEngine:
         
         return max(0, min(100, total_score))
     
-    def train_models(self, min_samples=50, batch_size=1000):
+    def train_models(self, min_samples=50, batch_size=1000, force_full_retrain=False):
         """
-        Train ML models using available test result data with optimized scalability
+        Train ML models using incremental learning approach
         """
         try:
-            logger.info("Starting optimized model training...")
+            logger.info("Starting incremental model training...")
             
             # Get total count first to avoid loading all records
             total_count = TestResult.query.count()
@@ -447,20 +467,24 @@ class NetworkDiagnosticEngine:
                 logger.warning(f"Not enough data for training. Need at least {min_samples} samples, have {total_count}")
                 return False
             
-            # Use recent data for training (last 10,000 records for performance)
-            max_training_samples = min(total_count, 10000)
-            logger.info(f"Using {max_training_samples} most recent samples for training")
+            # Determine if this is initial training or incremental update
+            last_training_date = self.training_metadata.get('last_training_date')
+            last_training_count = self.training_metadata.get('last_training_count', 0)
             
-            # Get recent results in batches to avoid memory issues
-            results = TestResult.query.order_by(TestResult.timestamp.desc()).limit(max_training_samples).all()
-            
-            # Extract features in batches to manage memory
-            logger.info("Extracting features from test results...")
-            features_df = self._extract_features_batched(results, batch_size)
-            
-            if features_df.empty:
-                logger.error("No features extracted from test results")
-                return False
+            if force_full_retrain or not last_training_date or not self.models:
+                # Full retraining
+                logger.info("Performing full model retraining...")
+                return self._full_retrain(total_count, min_samples, batch_size)
+            else:
+                # Incremental training
+                logger.info(f"Performing incremental training from {last_training_date}")
+                return self._incremental_train(total_count, last_training_count, min_samples, batch_size)
+                
+        except Exception as e:
+            logger.error(f"Error in train_models: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False
             
             # Prepare training data - handle NaN and infinite values
             X = features_df.replace([float('inf'), float('-inf')], 0).fillna(0)
@@ -948,6 +972,91 @@ class NetworkDiagnosticEngine:
         except Exception as e:
             logger.error(f"Error adjusting probability for conditions: {str(e)}")
             return probability
+    
+    def _full_retrain(self, total_count, min_samples, batch_size):
+        """Perform full model retraining"""
+        try:
+            # Use recent data for training (last 10,000 records for performance)
+            max_training_samples = min(total_count, 10000)
+            logger.info(f"Full retraining with {max_training_samples} most recent samples")
+            
+            # Get recent results
+            results = TestResult.query.order_by(TestResult.timestamp.desc()).limit(max_training_samples).all()
+            
+            # Extract features in batches
+            features_df = self._extract_features_batched(results, batch_size)
+            
+            if features_df.empty:
+                logger.error("No features extracted from test results")
+                return False
+            
+            # Train all models from scratch
+            success = self._train_all_models(features_df, results)
+            
+            if success:
+                # Update training metadata
+                self.training_metadata.update({
+                    'last_training_date': datetime.now().isoformat(),
+                    'last_training_count': len(results),
+                    'training_type': 'full_retrain',
+                    'samples_used': len(features_df)
+                })
+                
+                # Save models and metadata
+                self._save_models()
+                
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error in full retrain: {str(e)}")
+            return False
+    
+    def _incremental_train(self, total_count, last_training_count, min_samples, batch_size):
+        """Perform incremental training with new data only"""
+        try:
+            # Calculate how many new samples we have
+            new_samples_count = total_count - last_training_count
+            
+            if new_samples_count < 10:
+                logger.info(f"Only {new_samples_count} new samples since last training. Skipping incremental update.")
+                return True
+            
+            logger.info(f"Incremental training with {new_samples_count} new samples")
+            
+            # Get only the new results since last training
+            new_results = TestResult.query.order_by(TestResult.timestamp.desc()).limit(new_samples_count).all()
+            
+            # Extract features for new data only
+            new_features_df = self._extract_features_batched(new_results, batch_size)
+            
+            if new_features_df.empty:
+                logger.info("No new features to process")
+                return True
+            
+            # Perform incremental updates
+            success = self._update_models_incrementally(new_features_df, new_results)
+            
+            if success:
+                # Update training metadata
+                self.training_metadata.update({
+                    'last_training_date': datetime.now().isoformat(),
+                    'last_training_count': total_count,
+                    'training_type': 'incremental',
+                    'new_samples_processed': len(new_features_df)
+                })
+                
+                # Save updated models and metadata
+                self._save_models()
+                
+            return success
+            
+        except Exception as e:
+            logger.error(f"Error in incremental training: {str(e)}")
+            return False
+    
+    def _train_all_models(self, features_df, results):
+        """Train all models from scratch (used in full retraining)"""
+        try:
     
     def _create_optimized_time_series_features(self, X: pd.DataFrame, results: List[TestResult], max_destinations: int = 10) -> pd.DataFrame:
         """
