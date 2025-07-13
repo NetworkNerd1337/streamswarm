@@ -4,7 +4,7 @@ StreamSwarm Client - Network and system monitoring client
 """
 
 # Client version - increment when making changes
-CLIENT_VERSION = "1.9.5"
+CLIENT_VERSION = "1.9.6"
 
 import os
 import sys
