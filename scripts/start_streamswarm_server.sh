@@ -75,12 +75,6 @@ if ! command_exists git; then
     exit 1
 fi
 
-# Check if gunicorn is installed
-if ! command_exists gunicorn; then
-    log_message "ERROR: gunicorn is not installed. Please install with: pip install gunicorn"
-    exit 1
-fi
-
 # Check if virtual environment exists
 if [ ! -d "$VENV_PATH" ]; then
     log_message "ERROR: Virtual environment not found at $VENV_PATH"
