@@ -107,12 +107,12 @@ The system operates on a distributed client-server architecture where:
 
 - July 13, 2025: **IMPLEMENTED** True incremental learning system to eliminate ML training timeouts - resolved O(n²) complexity bottlenecks with River streaming algorithms
   - Replaced batch training approach with River-based incremental learning for all 6 ML models: anomaly detection, health classification, performance prediction, failure prediction, QoS compliance, and client infrastructure analysis
-  - Implemented streaming algorithms: BaggingClassifier/Regressor with HoeffdingTree models, PAClassifier for failure prediction, LogisticRegression for QoS compliance, and LinearRegression for infrastructure correlation
+  - Implemented memory-efficient streaming algorithms: LogisticRegression for anomaly detection and QoS compliance, GaussianNB for health classification, LinearRegression for performance prediction and infrastructure correlation, PAClassifier for failure prediction
   - Added incremental training pipeline that processes data in batches of 50 samples to prevent memory issues while maintaining model accuracy
   - Eliminated 45-60 second training timeouts that occurred with 3,215+ datapoints by using online learning algorithms that update incrementally
-  - Preserved all historical pattern knowledge and model capabilities while dramatically improving scalability and training speed
-  - Fixed data type handling issues in incremental feature calculation methods with proper error handling and type conversion
-  - Created dual-mode training system: automatic incremental learning for existing models, fallback to batch training for full retraining scenarios
+  - Resolved River library memory issues by replacing resource-intensive HoeffdingTree models with stable linear and naive Bayes algorithms
+  - Fixed data type handling issues in incremental feature calculation methods with proper error handling and binary label conversion
+  - Created dual-mode training system: automatic incremental learning for existing models, fallback to batch training for full retraining scenarios  
   - Training now processes 65+ batches of network performance data without memory exhaustion or worker crashes
   - Maintained zero-trust architecture with all ML processing running locally using River streaming machine learning library
 - July 12, 2025: **FIXED** GNMI device synchronization error - resolved JSON parsing issue in client logs

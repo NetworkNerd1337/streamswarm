@@ -138,52 +138,44 @@ class NetworkDiagnosticEngine:
             self.incremental_models = {}
     
     def _initialize_river_models(self):
-        """Initialize River-based incremental learning models"""
+        """Initialize River-based incremental learning models with memory-efficient algorithms"""
         if not RIVER_AVAILABLE:
             return
             
         try:
-            # Anomaly Detection - Half-Space Trees for streaming anomaly detection
-            self.incremental_models['anomaly_detector'] = anomaly.HalfSpaceTrees(
-                n_trees=25,
-                height=8,
-                window_size=100,
-                limits={'latency': (0, 1000), 'packet_loss': (0, 50)}
+            from river import linear_model, naive_bayes, preprocessing
+            
+            # Use only memory-efficient, stable River models
+            # Anomaly Detection - Simple threshold-based detection
+            self.incremental_models['anomaly_detector'] = linear_model.LogisticRegression(
+                l2=0.1,
+                intercept_lr=0.01
             )
             
-            # Health Classification - Bagging Classifier with Hoeffding Trees
-            self.incremental_models['health_classifier'] = ensemble.BaggingClassifier(
-                model=tree.HoeffdingTreeClassifier(),
-                n_models=25,
-                seed=42
+            # Health Classification - Gaussian Naive Bayes (memory efficient)
+            self.incremental_models['health_classifier'] = naive_bayes.GaussianNB()
+            
+            # Performance Prediction - Linear Regression (memory efficient)
+            self.incremental_models['performance_predictor'] = linear_model.LinearRegression(
+                intercept_lr=0.01
             )
             
-            # Performance Prediction - Bagging Regressor with Hoeffding Trees
-            self.incremental_models['performance_predictor'] = ensemble.BaggingRegressor(
-                model=tree.HoeffdingTreeRegressor(),
-                n_models=25,
-                seed=42
-            )
-            
-            # Failure Prediction - Passive Aggressive Classifier
+            # Failure Prediction - Passive Aggressive Classifier (stable)
             self.incremental_models['failure_predictor'] = linear_model.PAClassifier(
                 C=1.0,
                 mode=1,
                 learn_intercept=True
             )
             
-            # QoS Compliance - Logistic Regression 
+            # QoS Compliance - Logistic Regression (memory efficient)
             self.incremental_models['qos_compliance_monitor'] = linear_model.LogisticRegression(
                 l2=0.1,
                 intercept_lr=0.01
             )
             
-            # Client Infrastructure Analysis - Passive Aggressive Regressor
-            self.incremental_models['client_infrastructure_analyzer'] = linear_model.PARegressor(
-                C=1.0,
-                mode=1,
-                eps=0.1,
-                learn_intercept=True
+            # Client Infrastructure Analysis - Linear Regression (memory efficient)
+            self.incremental_models['client_infrastructure_analyzer'] = linear_model.LinearRegression(
+                intercept_lr=0.01
             )
             
             logger.info("River-based incremental models initialized successfully")
@@ -4509,8 +4501,10 @@ class NetworkDiagnosticEngine:
             anomaly_model = self.incremental_models['anomaly_detector']
             for _, row in X_batch.iterrows():
                 row_dict = row.to_dict()
-                # River models expect dictionaries
-                anomaly_model.learn_one(row_dict)
+                # Train as binary classifier: 1 for normal, 0 for anomaly
+                health_score = self._calculate_health_score_for_row(row)
+                is_normal = 1 if health_score > 60 else 0
+                anomaly_model.learn_one(row_dict, is_normal)
         except Exception as e:
             logger.error(f"Error training incremental anomaly detector: {str(e)}")
     
@@ -4560,7 +4554,7 @@ class NetworkDiagnosticEngine:
                 row_dict = row.to_dict()
                 # Calculate failure risk for this row
                 failure_risk = self._calculate_failure_risk_for_row(row)
-                failure_label = 'high_risk' if failure_risk > 0.7 else 'low_risk'
+                failure_label = 1 if failure_risk > 0.7 else 0  # Use binary labels
                 
                 # River models expect dictionaries
                 failure_model.learn_one(row_dict, failure_label)
@@ -4578,7 +4572,7 @@ class NetworkDiagnosticEngine:
                 row_dict = row.to_dict()
                 # Calculate QoS compliance for this row
                 qos_compliance = self._calculate_qos_compliance_for_row(row)
-                qos_label = 'compliant' if qos_compliance > 0.8 else 'non_compliant'
+                qos_label = 1 if qos_compliance > 0.8 else 0  # Use binary labels
                 
                 # River models expect dictionaries
                 qos_model.learn_one(row_dict, qos_label)
