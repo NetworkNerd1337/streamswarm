@@ -112,6 +112,8 @@ The system operates on a distributed client-server architecture where:
   - Added proper warning dialogs explaining irreversible nature and use cases: data quality improvements, infrastructure changes, performance degradation
   - Reset feature enables A/B testing of model configurations and troubleshooting of model drift issues
   - Preserves all raw test data while giving models fresh start with improved learning capabilities
+  - **TRAINING MODES**: "Train" button uses incremental learning (new data only), "Reset" button retrains from all available data
+  - Enhanced with Model Files Status table showing Eastern Time timestamps and file sizes for verification
   - Maintains zero-trust architecture with all processing running locally during reset and retraining
 - July 13, 2025: **IMPLEMENTED** True incremental learning system to eliminate ML training timeouts - resolved O(n²) complexity bottlenecks with River streaming algorithms
   - Replaced batch training approach with River-based incremental learning for all 6 ML models: anomaly detection, health classification, performance prediction, failure prediction, QoS compliance, and client infrastructure analysis
