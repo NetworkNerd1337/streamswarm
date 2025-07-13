@@ -1190,7 +1190,21 @@ def get_test_data(test_id):
             'path_map_html': {},
             'path_total_distance_km': {},
             'path_geographic_efficiency': {},
-            'wifi_environment_data': {}
+            'wifi_environment_data': {},
+            'voip_analysis_data': {},
+            'mos_score': {},
+            'voice_quality_score': {},
+            'sip_registration_time': {},
+            'sip_call_setup_time': {},
+            'sip_call_teardown_time': {},
+            'rtp_jitter_avg': {},
+            'rtp_jitter_max': {},
+            'rtp_latency_avg': {},
+            'rtp_latency_max': {},
+            'rtp_packet_loss_rate': {},
+            'rtp_stream_duration': {},
+            'sip_response_codes': {},
+            'voip_test_status': {}
         }
     }
     
@@ -1342,6 +1356,62 @@ def get_test_data(test_id):
         data['metrics']['wifi_environment_data'][client_id].append({
             'x': timestamp,
             'y': result.wifi_environment_data
+        })
+        data['metrics']['voip_analysis_data'][client_id].append({
+            'x': timestamp,
+            'y': result.voip_analysis_data
+        })
+        data['metrics']['mos_score'][client_id].append({
+            'x': timestamp,
+            'y': result.mos_score
+        })
+        data['metrics']['voice_quality_score'][client_id].append({
+            'x': timestamp,
+            'y': result.voice_quality_score
+        })
+        data['metrics']['sip_registration_time'][client_id].append({
+            'x': timestamp,
+            'y': result.sip_registration_time
+        })
+        data['metrics']['sip_call_setup_time'][client_id].append({
+            'x': timestamp,
+            'y': result.sip_call_setup_time
+        })
+        data['metrics']['sip_call_teardown_time'][client_id].append({
+            'x': timestamp,
+            'y': result.sip_call_teardown_time
+        })
+        data['metrics']['rtp_jitter_avg'][client_id].append({
+            'x': timestamp,
+            'y': result.rtp_jitter_avg
+        })
+        data['metrics']['rtp_jitter_max'][client_id].append({
+            'x': timestamp,
+            'y': result.rtp_jitter_max
+        })
+        data['metrics']['rtp_latency_avg'][client_id].append({
+            'x': timestamp,
+            'y': result.rtp_latency_avg
+        })
+        data['metrics']['rtp_latency_max'][client_id].append({
+            'x': timestamp,
+            'y': result.rtp_latency_max
+        })
+        data['metrics']['rtp_packet_loss_rate'][client_id].append({
+            'x': timestamp,
+            'y': result.rtp_packet_loss_rate
+        })
+        data['metrics']['rtp_stream_duration'][client_id].append({
+            'x': timestamp,
+            'y': result.rtp_stream_duration
+        })
+        data['metrics']['sip_response_codes'][client_id].append({
+            'x': timestamp,
+            'y': result.sip_response_codes
+        })
+        data['metrics']['voip_test_status'][client_id].append({
+            'x': timestamp,
+            'y': result.voip_test_status
         })
         data['metrics']['bandwidth_upload'][client_id].append({
             'x': timestamp,
