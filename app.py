@@ -169,6 +169,14 @@ with app.app_context():
         logging.info("Recurring test processor started successfully")
     except Exception as e:
         logging.error(f"Failed to start recurring test processor: {e}")
+    
+    # Start SIP service for VoIP analysis
+    try:
+        from sip_service import start_sip_service
+        start_sip_service()
+        logging.info("SIP service started successfully")
+    except Exception as e:
+        logging.error(f"Failed to start SIP service: {e}")
 
 # Custom Jinja filters
 @app.template_filter('extract_numeric')

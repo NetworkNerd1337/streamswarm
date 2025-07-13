@@ -35,4 +35,7 @@ dependencies = [
     "geoip2>=5.1.0",
     "pygnmi>=0.8.15",
     "river>=0.22.0",
+    "pysip>=1.1.0",
+    "pyaudio>=0.2.14",
+    "sounddevice>=0.5.2",
 ]

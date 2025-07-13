@@ -770,7 +770,24 @@ def submit_test_results():
             path_map_html=path_map_html,
             path_total_distance_km=path_total_distance_km,
             path_geographic_efficiency=path_geographic_efficiency,
-            wifi_environment_data=wifi_environment_data
+            wifi_environment_data=wifi_environment_data,
+            
+            # VoIP analysis data
+            voip_analysis_data=safe_json_string(data.get('voip_analysis_data'), 'voip_analysis_data'),
+            sip_registration_time=safe_float(data.get('sip_registration_time'), 'sip_registration_time'),
+            sip_call_setup_time=safe_float(data.get('sip_call_setup_time'), 'sip_call_setup_time'),
+            sip_call_teardown_time=safe_float(data.get('sip_call_teardown_time'), 'sip_call_teardown_time'),
+            rtp_packet_loss_rate=safe_float(data.get('rtp_packet_loss_rate'), 'rtp_packet_loss_rate'),
+            rtp_jitter_avg=safe_float(data.get('rtp_jitter_avg'), 'rtp_jitter_avg'),
+            rtp_jitter_max=safe_float(data.get('rtp_jitter_max'), 'rtp_jitter_max'),
+            rtp_latency_avg=safe_float(data.get('rtp_latency_avg'), 'rtp_latency_avg'),
+            rtp_latency_max=safe_float(data.get('rtp_latency_max'), 'rtp_latency_max'),
+            mos_score=safe_float(data.get('mos_score'), 'mos_score'),
+            codec_efficiency=safe_float(data.get('codec_efficiency'), 'codec_efficiency'),
+            voice_quality_score=safe_float(data.get('voice_quality_score'), 'voice_quality_score'),
+            sip_response_codes=safe_json_string(data.get('sip_response_codes'), 'sip_response_codes'),
+            rtp_stream_duration=safe_float(data.get('rtp_stream_duration'), 'rtp_stream_duration'),
+            voip_test_status=sanitize_string(data.get('voip_test_status'), 50) if data.get('voip_test_status') else None
         )
         
     except ValueError as e:

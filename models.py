@@ -455,6 +455,23 @@ class TestResult(db.Model):
     # WiFi environmental scanning data
     wifi_environment_data = db.Column(Text)  # JSON string of WiFi environmental analysis
     
+    # VoIP Analysis Data
+    voip_analysis_data = db.Column(Text)  # JSON string of VoIP test results
+    sip_registration_time = db.Column(db.Float)  # Time to register with SIP server (ms)
+    sip_call_setup_time = db.Column(db.Float)  # Time for complete call setup (ms)
+    sip_call_teardown_time = db.Column(db.Float)  # Time for call teardown (ms)
+    rtp_packet_loss_rate = db.Column(db.Float)  # RTP packet loss percentage
+    rtp_jitter_avg = db.Column(db.Float)  # Average RTP jitter (ms)
+    rtp_jitter_max = db.Column(db.Float)  # Maximum RTP jitter (ms)
+    rtp_latency_avg = db.Column(db.Float)  # Average RTP round-trip latency (ms)
+    rtp_latency_max = db.Column(db.Float)  # Maximum RTP round-trip latency (ms)
+    mos_score = db.Column(db.Float)  # Mean Opinion Score (1-5)
+    codec_efficiency = db.Column(db.Float)  # Codec bandwidth efficiency percentage
+    voice_quality_score = db.Column(db.Float)  # Overall voice quality score (0-100)
+    sip_response_codes = db.Column(Text)  # JSON of SIP response codes encountered
+    rtp_stream_duration = db.Column(db.Float)  # Duration of RTP stream test (seconds)
+    voip_test_status = db.Column(db.String(50))  # completed, failed, timeout
+    
     def to_dict(self):
         return {
             'id': self.id,

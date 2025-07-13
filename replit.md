@@ -2,7 +2,7 @@
 
 ## Overview
 
-StreamSwarm is a comprehensive Python-based distributed network monitoring system that combines Flask web framework with AI-powered diagnostics. It enables distributed network performance testing across multiple client hosts with centralized management through a web dashboard. The system provides real-time analytics, machine learning-based anomaly detection, and professional reporting capabilities for enterprise network management.
+StreamSwarm is a comprehensive Python-based distributed network monitoring system that combines Flask web framework with AI-powered diagnostics. It enables distributed network performance testing across multiple client hosts with centralized management through a web dashboard. The system provides real-time analytics, machine learning-based anomaly detection, VoIP analysis capabilities, and professional reporting capabilities for enterprise network management.
 
 ## System Architecture
 
@@ -50,6 +50,8 @@ The system operates on a distributed client-server architecture where:
 - **System Monitoring**: CPU, memory, disk, network interface statistics
 - **Advanced Metrics**: QoS monitoring, TCP analysis, DNS resolution timing
 - **Geolocation**: Optional network path visualization with geographic mapping
+- **VoIP Analysis**: SIP/RTP protocol testing, MOS score calculation, codec performance analysis
+- **WiFi Environmental Scanning**: RF pollution analysis, channel congestion detection
 
 ## Data Flow
 
@@ -105,6 +107,18 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **IMPLEMENTED** VoIP Analysis as third test type with comprehensive SIP/RTP protocol testing capabilities
+  - Added complete VoIP Analysis test type alongside Standard and WiFi Environmental tests in test creation interface
+  - Implemented full SIP service architecture with server acting as SIP endpoint for zero-trust compliance
+  - Created comprehensive VoIP testing client capabilities including SIP registration, call setup/teardown, and RTP stream quality analysis
+  - Added extensive VoIP metrics collection: SIP registration time, call setup latency, RTP packet loss, jitter, MOS scores, codec efficiency, and voice quality scoring
+  - Integrated ITU-T G.107 E-model for accurate MOS (Mean Opinion Score) calculation based on packet loss, jitter, and latency measurements
+  - Enhanced database schema with 15 new VoIP-specific fields including voip_analysis_data, sip_registration_time, sip_call_setup_time, rtp_packet_loss_rate, mos_score, and voice_quality_score
+  - Created professional VoIP test interface with dedicated test type selection, appropriate UI descriptions, and SIP endpoint configuration
+  - Implemented comprehensive RTP stream quality testing with synthetic traffic generation, packet timing analysis, and quality metrics calculation
+  - Added sipsak system package integration for enterprise-grade SIP protocol testing with timeout handling and error recovery
+  - VoIP testing uses closed ecosystem approach - server acts as SIP endpoint, client as SIP client, maintaining zero-trust architecture
+  - Complete VoIP workflow: SIP registration → call setup → RTP stream quality → MOS calculation → voice quality assessment → codec efficiency analysis
 - July 13, 2025: **FIXED** Critical "Failed to submit result: 500" error by adding missing `tcp_handshake_error` field to TestResult model and server validation
   - Added `tcp_handshake_error` TEXT field to TestResult database model for DNS resolution failures
   - Enhanced server validation in `/api/test/results` endpoint to properly handle TCP handshake error messages

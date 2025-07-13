@@ -19,6 +19,7 @@ import socket
 import struct
 import fcntl
 import re
+import random
 from datetime import datetime, timezone
 import zoneinfo
 import psutil
@@ -71,6 +72,19 @@ try:
 except (subprocess.TimeoutExpired, FileNotFoundError):
     WIFI_SCANNING_AVAILABLE = False
     print("Warning: iw command not available. WiFi environmental scanning will be limited.")
+
+# Check for VoIP testing capabilities
+try:
+    result = subprocess.run(['sipsak', '--version'], capture_output=True, text=True, timeout=5)
+    if result.returncode == 0:
+        VOIP_TESTING_AVAILABLE = True
+        print("sipsak available - VoIP analysis testing enabled")
+    else:
+        VOIP_TESTING_AVAILABLE = False
+        print("Warning: sipsak not available. Install with: sudo apt-get install sipsak")
+except (subprocess.TimeoutExpired, FileNotFoundError):
+    VOIP_TESTING_AVAILABLE = False
+    print("Warning: sipsak not available. VoIP analysis testing will be limited.")
 
 # Configure logging
 logging.basicConfig(
@@ -660,6 +674,9 @@ class StreamSwarmClient:
         if test_type == 'wifi_environment':
             logger.info(f"Executing WiFi environmental test for test {test_id}")
             return self._wifi_environmental_test(test_id, destination, duration, interval)
+        elif test_type == 'voip_analysis':
+            logger.info(f"Executing VoIP analysis test for test {test_id}")
+            return self._voip_analysis_test(test_id, self.server_url, duration, interval)
         else:
             logger.info(f"Executing standard network test for test {test_id}")
         
@@ -4233,6 +4250,447 @@ class StreamSwarmClient:
             
         except Exception as e:
             logger.error(f"Error in WiFi environmental test {test_id}: {e}")
+
+    def _voip_analysis_test(self, test_id, server_url, duration, interval):
+        """
+        Perform VoIP analysis test with SIP/RTP communication
+        Tests call quality, codec performance, and MOS scores
+        """
+        logger.info(f"Starting VoIP analysis test {test_id} for {duration} seconds")
+        
+        if not VOIP_TESTING_AVAILABLE:
+            logger.error("VoIP testing not available - sipsak not installed")
+            return None
+        
+        try:
+            # Parse server URL to get host
+            from urllib.parse import urlparse
+            parsed_url = urlparse(server_url)
+            sip_server = parsed_url.hostname
+            sip_port = 5060  # Standard SIP port
+            
+            start_time = time.time()
+            test_results = []
+            
+            logger.info(f"VoIP analysis test against {sip_server}:{sip_port}")
+            
+            while time.time() - start_time < duration:
+                try:
+                    # Perform VoIP analysis
+                    voip_metrics = self._perform_voip_analysis(sip_server, sip_port)
+                    
+                    if voip_metrics:
+                        # Collect system metrics alongside VoIP metrics
+                        system_metrics = self._collect_system_metrics()
+                        
+                        # Merge VoIP and system metrics
+                        combined_metrics = {**system_metrics, **voip_metrics}
+                        
+                        # Add test metadata
+                        combined_metrics.update({
+                            'test_id': test_id,
+                            'client_id': self.client_id,
+                            'timestamp': datetime.now(timezone.utc).isoformat(),
+                            'test_type': 'voip_analysis'
+                        })
+                        
+                        # Submit results to server
+                        self._submit_results(combined_metrics)
+                        test_results.append(combined_metrics)
+                        
+                        logger.info(f"VoIP analysis result: MOS Score {voip_metrics.get('mos_score', 'N/A')}, "
+                                  f"Jitter {voip_metrics.get('rtp_jitter_avg', 'N/A')}ms, "
+                                  f"Packet Loss {voip_metrics.get('rtp_packet_loss_rate', 'N/A')}%")
+                    
+                    time.sleep(interval)
+                    
+                except Exception as e:
+                    logger.error(f"VoIP analysis iteration failed: {e}")
+                    time.sleep(interval)
+            
+            logger.info(f"VoIP analysis test completed after {time.time() - start_time:.1f} seconds")
+            return test_results
+        
+        except Exception as e:
+            logger.error(f"VoIP analysis test failed: {e}")
+            return None
+    
+    def _perform_voip_analysis(self, sip_server, sip_port):
+        """
+        Perform comprehensive VoIP analysis with SIP/RTP testing
+        Returns detailed VoIP metrics including MOS, jitter, packet loss
+        """
+        logger.info(f"Performing VoIP analysis against {sip_server}:{sip_port}")
+        
+        try:
+            voip_metrics = {}
+            
+            # Step 1: SIP Registration Test
+            registration_metrics = self._test_sip_registration(sip_server, sip_port)
+            voip_metrics.update(registration_metrics)
+            
+            # Step 2: SIP Call Setup Test
+            call_setup_metrics = self._test_sip_call_setup(sip_server, sip_port)
+            voip_metrics.update(call_setup_metrics)
+            
+            # Step 3: RTP Stream Quality Test
+            rtp_metrics = self._test_rtp_stream_quality(sip_server, sip_port)
+            voip_metrics.update(rtp_metrics)
+            
+            # Step 4: Calculate MOS Score
+            mos_score = self._calculate_mos_score(voip_metrics)
+            voip_metrics['mos_score'] = mos_score
+            
+            # Step 5: Calculate Voice Quality Score
+            voice_quality = self._calculate_voice_quality_score(voip_metrics)
+            voip_metrics['voice_quality_score'] = voice_quality
+            
+            # Step 6: Codec Efficiency Analysis
+            codec_efficiency = self._analyze_codec_efficiency(voip_metrics)
+            voip_metrics['codec_efficiency'] = codec_efficiency
+            
+            # Step 7: Overall VoIP test status
+            voip_metrics['voip_test_status'] = 'completed'
+            
+            # Store comprehensive analysis data
+            voip_metrics['voip_analysis_data'] = json.dumps({
+                'test_timestamp': datetime.now(timezone.utc).isoformat(),
+                'server': sip_server,
+                'port': sip_port,
+                'analysis_summary': {
+                    'mos_score': mos_score,
+                    'voice_quality_score': voice_quality,
+                    'codec_efficiency': codec_efficiency,
+                    'primary_issues': self._identify_voip_issues(voip_metrics)
+                }
+            })
+            
+            logger.info(f"VoIP analysis completed successfully - MOS: {mos_score:.2f}")
+            return voip_metrics
+            
+        except Exception as e:
+            logger.error(f"VoIP analysis failed: {e}")
+            return {
+                'voip_test_status': 'failed',
+                'mos_score': 1.0,  # Poor quality fallback
+                'voice_quality_score': 0.0,
+                'codec_efficiency': 0.0,
+                'voip_analysis_data': json.dumps({
+                    'error': str(e),
+                    'test_timestamp': datetime.now(timezone.utc).isoformat()
+                })
+            }
+    
+    def _test_sip_registration(self, sip_server, sip_port):
+        """Test SIP registration timing"""
+        try:
+            start_time = time.time()
+            
+            # Use sipsak to test SIP registration
+            cmd = [
+                'sipsak', '-s', f'sip:test@{sip_server}:{sip_port}',
+                '-f', '0',  # No follow redirects
+                '-n'        # No DNS lookup
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            
+            registration_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+            
+            sip_response_codes = {}
+            if result.returncode == 0:
+                # Parse successful response
+                sip_response_codes['200'] = 1
+                logger.info(f"SIP registration successful in {registration_time:.2f}ms")
+            else:
+                # Parse error response
+                sip_response_codes['error'] = 1
+                logger.warning(f"SIP registration failed after {registration_time:.2f}ms")
+            
+            return {
+                'sip_registration_time': registration_time,
+                'sip_response_codes': json.dumps(sip_response_codes)
+            }
+            
+        except subprocess.TimeoutExpired:
+            logger.error("SIP registration test timed out")
+            return {
+                'sip_registration_time': 30000.0,  # 30 second timeout
+                'sip_response_codes': json.dumps({'timeout': 1})
+            }
+        except Exception as e:
+            logger.error(f"SIP registration test failed: {e}")
+            return {
+                'sip_registration_time': None,
+                'sip_response_codes': json.dumps({'error': 1})
+            }
+    
+    def _test_sip_call_setup(self, sip_server, sip_port):
+        """Test SIP call setup and teardown timing"""
+        try:
+            # Call setup test
+            setup_start = time.time()
+            
+            cmd = [
+                'sipsak', '-s', f'sip:test@{sip_server}:{sip_port}',
+                '-M', 'INVITE',  # Send INVITE request
+                '-f', '0'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            setup_time = (time.time() - setup_start) * 1000
+            
+            # Call teardown test
+            teardown_start = time.time()
+            
+            cmd = [
+                'sipsak', '-s', f'sip:test@{sip_server}:{sip_port}',
+                '-M', 'BYE',  # Send BYE request
+                '-f', '0'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            teardown_time = (time.time() - teardown_start) * 1000
+            
+            logger.info(f"SIP call setup: {setup_time:.2f}ms, teardown: {teardown_time:.2f}ms")
+            
+            return {
+                'sip_call_setup_time': setup_time,
+                'sip_call_teardown_time': teardown_time
+            }
+            
+        except Exception as e:
+            logger.error(f"SIP call setup/teardown test failed: {e}")
+            return {
+                'sip_call_setup_time': None,
+                'sip_call_teardown_time': None
+            }
+    
+    def _test_rtp_stream_quality(self, sip_server, sip_port):
+        """Test RTP stream quality with synthetic traffic"""
+        try:
+            # Generate synthetic RTP traffic to test quality
+            rtp_port = 10000 + (os.getpid() % 10000)  # Use process ID for port selection
+            
+            # Create UDP socket for RTP simulation
+            rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            rtp_socket.settimeout(5.0)
+            
+            # RTP packet structure (simplified)
+            packets_sent = 0
+            packets_received = 0
+            jitter_samples = []
+            latency_samples = []
+            
+            stream_duration = 30  # 30 second RTP stream test
+            packet_interval = 0.02  # 20ms packet interval (50 packets/second)
+            
+            logger.info(f"Starting RTP stream quality test for {stream_duration} seconds")
+            
+            start_time = time.time()
+            last_packet_time = start_time
+            
+            while time.time() - start_time < stream_duration:
+                try:
+                    # Create RTP packet (simplified format)
+                    timestamp = int((time.time() - start_time) * 8000)  # 8kHz sample rate
+                    sequence = packets_sent
+                    
+                    # Basic RTP header (12 bytes)
+                    rtp_header = struct.pack('!BBHII', 
+                                           0x80,  # V=2, P=0, X=0, CC=0
+                                           0x00,  # M=0, PT=0 (PCMU)
+                                           sequence,
+                                           timestamp,
+                                           0x12345678)  # SSRC
+                    
+                    # Add payload (160 bytes for 20ms of PCMU audio)
+                    payload = b'\x00' * 160
+                    rtp_packet = rtp_header + payload
+                    
+                    # Send RTP packet to server
+                    packet_send_time = time.time()
+                    rtp_socket.sendto(rtp_packet, (sip_server, rtp_port))
+                    packets_sent += 1
+                    
+                    # Try to receive echoed packet (if server supports RTP echo)
+                    try:
+                        response, addr = rtp_socket.recvfrom(1024)
+                        packet_receive_time = time.time()
+                        packets_received += 1
+                        
+                        # Calculate latency
+                        latency = (packet_receive_time - packet_send_time) * 1000
+                        latency_samples.append(latency)
+                        
+                        # Calculate jitter (RFC 3550)
+                        current_time = packet_receive_time
+                        if last_packet_time:
+                            transit_time = current_time - packet_send_time
+                            if hasattr(self, '_last_transit_time'):
+                                jitter = abs(transit_time - self._last_transit_time)
+                                jitter_samples.append(jitter * 1000)  # Convert to ms
+                            self._last_transit_time = transit_time
+                        last_packet_time = current_time
+                        
+                    except socket.timeout:
+                        # No response received (normal for most servers)
+                        pass
+                    
+                    # Wait for next packet interval
+                    time.sleep(packet_interval)
+                    
+                except Exception as e:
+                    logger.debug(f"RTP packet error: {e}")
+                    continue
+            
+            rtp_socket.close()
+            
+            # Calculate RTP metrics
+            packet_loss_rate = ((packets_sent - packets_received) / packets_sent * 100) if packets_sent > 0 else 100.0
+            avg_jitter = sum(jitter_samples) / len(jitter_samples) if jitter_samples else 0.0
+            max_jitter = max(jitter_samples) if jitter_samples else 0.0
+            avg_latency = sum(latency_samples) / len(latency_samples) if latency_samples else 0.0
+            max_latency = max(latency_samples) if latency_samples else 0.0
+            
+            logger.info(f"RTP stream test completed: {packets_sent} sent, {packets_received} received, "
+                       f"Loss: {packet_loss_rate:.2f}%, Jitter: {avg_jitter:.2f}ms")
+            
+            return {
+                'rtp_packet_loss_rate': packet_loss_rate,
+                'rtp_jitter_avg': avg_jitter,
+                'rtp_jitter_max': max_jitter,
+                'rtp_latency_avg': avg_latency,
+                'rtp_latency_max': max_latency,
+                'rtp_stream_duration': stream_duration
+            }
+            
+        except Exception as e:
+            logger.error(f"RTP stream quality test failed: {e}")
+            return {
+                'rtp_packet_loss_rate': 100.0,  # Assume complete failure
+                'rtp_jitter_avg': 0.0,
+                'rtp_jitter_max': 0.0,
+                'rtp_latency_avg': 0.0,
+                'rtp_latency_max': 0.0,
+                'rtp_stream_duration': 0.0
+            }
+    
+    def _calculate_mos_score(self, voip_metrics):
+        """Calculate MOS (Mean Opinion Score) based on network metrics"""
+        try:
+            # Get key metrics
+            packet_loss = voip_metrics.get('rtp_packet_loss_rate', 0)
+            jitter = voip_metrics.get('rtp_jitter_avg', 0)
+            latency = voip_metrics.get('rtp_latency_avg', 0)
+            
+            # ITU-T G.107 E-model approximation
+            # Base transmission rating
+            R = 93.2  # Base R-factor for high quality
+            
+            # Packet loss impairment
+            if packet_loss > 0:
+                loss_factor = 11 + 40 * packet_loss
+                R -= loss_factor
+            
+            # Jitter impairment (affects buffering)
+            if jitter > 40:  # 40ms threshold
+                jitter_factor = (jitter - 40) / 10
+                R -= jitter_factor
+            
+            # Latency impairment (one-way delay)
+            if latency > 150:  # 150ms threshold
+                delay_factor = (latency - 150) / 50
+                R -= delay_factor
+            
+            # Convert R-factor to MOS
+            if R < 0:
+                mos = 1.0
+            elif R > 100:
+                mos = 4.5
+            else:
+                mos = 1 + 0.035 * R + 7e-6 * R * (R - 60) * (100 - R)
+            
+            # Clamp MOS to valid range
+            mos = max(1.0, min(5.0, mos))
+            
+            return round(mos, 2)
+            
+        except Exception as e:
+            logger.error(f"MOS calculation failed: {e}")
+            return 1.0  # Poor quality fallback
+    
+    def _calculate_voice_quality_score(self, voip_metrics):
+        """Calculate overall voice quality score (0-100)"""
+        try:
+            mos = voip_metrics.get('mos_score', 1.0)
+            
+            # Convert MOS (1-5) to percentage score (0-100)
+            # MOS 1 = 0%, MOS 5 = 100%
+            quality_score = ((mos - 1.0) / 4.0) * 100
+            
+            return round(quality_score, 1)
+            
+        except Exception as e:
+            logger.error(f"Voice quality calculation failed: {e}")
+            return 0.0
+    
+    def _analyze_codec_efficiency(self, voip_metrics):
+        """Analyze codec efficiency based on performance metrics"""
+        try:
+            # Simulated codec efficiency based on quality metrics
+            packet_loss = voip_metrics.get('rtp_packet_loss_rate', 0)
+            jitter = voip_metrics.get('rtp_jitter_avg', 0)
+            
+            # Base efficiency for G.711 PCMU (64 kbps)
+            base_efficiency = 85.0
+            
+            # Reduce efficiency based on packet loss
+            if packet_loss > 0:
+                loss_penalty = packet_loss * 2  # 2% penalty per 1% packet loss
+                base_efficiency -= loss_penalty
+            
+            # Reduce efficiency based on jitter
+            if jitter > 20:  # 20ms threshold
+                jitter_penalty = (jitter - 20) / 10  # 1% penalty per 10ms extra jitter
+                base_efficiency -= jitter_penalty
+            
+            # Clamp to valid range
+            efficiency = max(0.0, min(100.0, base_efficiency))
+            
+            return round(efficiency, 1)
+            
+        except Exception as e:
+            logger.error(f"Codec efficiency analysis failed: {e}")
+            return 0.0
+    
+    def _identify_voip_issues(self, voip_metrics):
+        """Identify primary VoIP quality issues"""
+        issues = []
+        
+        try:
+            packet_loss = voip_metrics.get('rtp_packet_loss_rate', 0)
+            jitter = voip_metrics.get('rtp_jitter_avg', 0)
+            latency = voip_metrics.get('rtp_latency_avg', 0)
+            mos = voip_metrics.get('mos_score', 5.0)
+            
+            if packet_loss > 1:
+                issues.append(f"High packet loss: {packet_loss:.1f}%")
+            
+            if jitter > 50:
+                issues.append(f"Excessive jitter: {jitter:.1f}ms")
+            
+            if latency > 150:
+                issues.append(f"High latency: {latency:.1f}ms")
+            
+            if mos < 3.0:
+                issues.append(f"Poor call quality: MOS {mos:.1f}")
+            
+            return issues if issues else ["No significant issues detected"]
+            
+        except Exception as e:
+            logger.error(f"VoIP issue identification failed: {e}")
+            return ["Analysis failed"]
     
     def _execute_reboot(self):
         """Execute system reboot with proper checks"""

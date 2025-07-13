@@ -273,6 +273,7 @@
                                 <select class="form-control" id="testType" onchange="updateTestTypeOptions()">
                                     <option value="standard">Standard Network Test</option>
                                     <option value="wifi_environment">WiFi Environmental Scan</option>
+                                    <option value="voip_analysis">VoIP Analysis</option>
                                 </select>
                                 <div class="form-text">
                                     <small class="text-muted" id="testTypeDescription">
@@ -285,6 +286,20 @@
                                     <i class="fas fa-wifi me-2"></i>
                                     <strong>WiFi Environmental Scan</strong><br>
                                     <small>Analyzes WiFi networks, channel congestion, signal interference, and RF pollution. Requires WiFi interface on client.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="voipTestInfo" style="display: none;">
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-phone me-2"></i>
+                                    <strong>VoIP Analysis</strong><br>
+                                    <small>Tests voice quality with SIP/RTP protocols, measures MOS scores, jitter, packet loss, and codec performance. Server acts as SIP endpoint.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="voipTestInfo" style="display: none;">
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-phone me-2"></i>
+                                    <strong>VoIP Analysis Test</strong><br>
+                                    <small>Simulates SIP/RTP voice communication to measure call quality, codec performance, and MOS scores. Self-contained testing within StreamSwarm.</small>
                                 </div>
                             </div>
                         </div>
@@ -1320,13 +1335,20 @@ function showMessage(message, type) {
 function updateTestTypeOptions() {
     const testType = document.getElementById('testType').value;
     const wifiTestInfo = document.getElementById('wifiTestInfo');
+    const voipTestInfo = document.getElementById('voipTestInfo');
     const testTypeDescription = document.getElementById('testTypeDescription');
+    
+    // Hide all test type info panels
+    wifiTestInfo.style.display = 'none';
+    voipTestInfo.style.display = 'none';
     
     if (testType === 'wifi_environment') {
         wifiTestInfo.style.display = 'block';
         testTypeDescription.textContent = 'WiFi environmental scan analyzes RF pollution, channel congestion, and interference patterns.';
+    } else if (testType === 'voip_analysis') {
+        voipTestInfo.style.display = 'block';
+        testTypeDescription.textContent = 'VoIP analysis tests SIP/RTP communication quality, codec performance, and call setup timing.';
     } else {
-        wifiTestInfo.style.display = 'none';
         testTypeDescription.textContent = 'Standard test includes ping, traceroute, bandwidth, and system monitoring.';
     }
 }
