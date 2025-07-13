@@ -4605,27 +4605,37 @@ class NetworkDiagnosticEngine:
     def _calculate_health_score_for_row(self, row):
         """Calculate health score for a single row"""
         network_score = 100
-        if row.get('ping_latency', 0) > 0:
-            network_score -= min(row['ping_latency'] / 2, 50)
-        if row.get('ping_packet_loss', 0) > 0:
-            network_score -= min(row['ping_packet_loss'] * 10, 40)
-        if row.get('jitter', 0) > 0:
-            network_score -= min(row['jitter'] / 2, 10)
-        
-        system_score = 100
-        if row.get('cpu_percent', 0) > 80:
-            system_score -= 30
-        elif row.get('cpu_percent', 0) > 60:
-            system_score -= 15
-        if row.get('memory_percent', 0) > 90:
-            system_score -= 20
-        elif row.get('memory_percent', 0) > 75:
-            system_score -= 10
-        
-        # Calculate weighted average
-        weights = {'network': 0.6, 'system': 0.4}
-        score = (network_score * weights['network'] + system_score * weights['system'])
-        return max(0, min(100, score))
+        try:
+            ping_latency = float(row.get('ping_latency', 0))
+            ping_packet_loss = float(row.get('ping_packet_loss', 0))
+            jitter = float(row.get('jitter', 0))
+            cpu_percent = float(row.get('cpu_percent', 0))
+            memory_percent = float(row.get('memory_percent', 0))
+            
+            if ping_latency > 0:
+                network_score -= min(ping_latency / 2, 50)
+            if ping_packet_loss > 0:
+                network_score -= min(ping_packet_loss * 10, 40)
+            if jitter > 0:
+                network_score -= min(jitter / 2, 10)
+            
+            system_score = 100
+            if cpu_percent > 80:
+                system_score -= 30
+            elif cpu_percent > 60:
+                system_score -= 15
+            if memory_percent > 90:
+                system_score -= 20
+            elif memory_percent > 75:
+                system_score -= 10
+            
+            # Calculate weighted average
+            weights = {'network': 0.6, 'system': 0.4}
+            score = (network_score * weights['network'] + system_score * weights['system'])
+            return max(0, min(100, score))
+        except (ValueError, TypeError):
+            # If we can't parse values, return neutral score
+            return 50.0
     
     def _calculate_failure_risk_for_row(self, row):
         """Calculate failure risk for a single row"""
