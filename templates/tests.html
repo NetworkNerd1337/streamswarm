@@ -292,14 +292,7 @@
                                 <div class="alert alert-success mb-0">
                                     <i class="fas fa-phone me-2"></i>
                                     <strong>VoIP Analysis</strong><br>
-                                    <small>Tests voice quality with SIP/RTP protocols, measures MOS scores, jitter, packet loss, and codec performance. Server acts as SIP endpoint.</small>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3" id="voipTestInfo" style="display: none;">
-                                <div class="alert alert-success mb-0">
-                                    <i class="fas fa-phone me-2"></i>
-                                    <strong>VoIP Analysis Test</strong><br>
-                                    <small>Simulates SIP/RTP voice communication to measure call quality, codec performance, and MOS scores. Self-contained testing within StreamSwarm.</small>
+                                    <small>Tests voice quality with SIP/RTP protocols, measures MOS scores, jitter, packet loss, and codec performance. Server acts as SIP endpoint. Destination is automatically set to server URL.</small>
                                 </div>
                             </div>
                         </div>
@@ -1337,6 +1330,9 @@ function updateTestTypeOptions() {
     const wifiTestInfo = document.getElementById('wifiTestInfo');
     const voipTestInfo = document.getElementById('voipTestInfo');
     const testTypeDescription = document.getElementById('testTypeDescription');
+    const destinationField = document.getElementById('testDestination');
+    const destinationLabel = document.querySelector('label[for="testDestination"]');
+    const destinationFormText = document.querySelector('#testDestination + .form-text');
     
     // Hide all test type info panels
     wifiTestInfo.style.display = 'none';
@@ -1345,11 +1341,32 @@ function updateTestTypeOptions() {
     if (testType === 'wifi_environment') {
         wifiTestInfo.style.display = 'block';
         testTypeDescription.textContent = 'WiFi environmental scan analyzes RF pollution, channel congestion, and interference patterns.';
+        
+        // Reset destination field for WiFi tests
+        destinationField.readOnly = false;
+        destinationField.placeholder = 'e.g., google.com, 8.8.8.8, example.com';
+        destinationLabel.textContent = 'Destination';
+        destinationFormText.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>Enter hostname or IP address only. Protocol prefixes (http://, https://) will be automatically removed.</small>';
+        
     } else if (testType === 'voip_analysis') {
         voipTestInfo.style.display = 'block';
         testTypeDescription.textContent = 'VoIP analysis tests SIP/RTP communication quality, codec performance, and call setup timing.';
+        
+        // Auto-populate destination with server URL for VoIP tests
+        destinationField.value = window.location.hostname;
+        destinationField.readOnly = true;
+        destinationField.placeholder = 'Server URL (automatically set)';
+        destinationLabel.textContent = 'Server Destination';
+        destinationFormText.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>VoIP tests always use the server as destination. Field is automatically populated.</small>';
+        
     } else {
         testTypeDescription.textContent = 'Standard test includes ping, traceroute, bandwidth, and system monitoring.';
+        
+        // Reset destination field for standard tests
+        destinationField.readOnly = false;
+        destinationField.placeholder = 'e.g., google.com, 8.8.8.8, example.com';
+        destinationLabel.textContent = 'Destination';
+        destinationFormText.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle me-1"></i>Enter hostname or IP address only. Protocol prefixes (http://, https://) will be automatically removed.</small>';
     }
 }
 

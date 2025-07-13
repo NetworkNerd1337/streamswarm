@@ -107,6 +107,13 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **IMPROVED** VoIP Analysis test creation UX - auto-populates destination field with server URL for logical test workflow
+  - Updated test creation modal to automatically set destination field to server hostname when VoIP Analysis test type is selected
+  - Made destination field read-only for VoIP tests since server is always the destination for SIP/RTP communication
+  - Updated field label to "Server Destination" with explanatory help text for VoIP Analysis tests
+  - Enhanced VoIP test info alert to clarify that destination is automatically set to server URL
+  - Fixed duplicate VoIP test info div in modal for cleaner interface presentation
+  - Improved user experience by eliminating confusion about destination field for server-to-client VoIP testing
 - July 13, 2025: **ENHANCED** VoIP Analysis documentation with network requirements - added comprehensive port and protocol information
   - Added Network Requirements section to VoIP Analysis tutorial explaining required server ports (TCP/UDP 5060, 5061, UDP 10000-20000)
   - Updated README.md VoIP Analysis section with network accessibility requirements for SIP and RTP protocols
