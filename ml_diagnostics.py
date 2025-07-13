@@ -2384,7 +2384,10 @@ class NetworkDiagnosticEngine:
             filepath = os.path.join(self.models_dir, filename)
             if os.path.exists(filepath):
                 mtime = os.path.getmtime(filepath)
-                last_modified = datetime.fromtimestamp(mtime)
+                # Convert to Eastern Time (America/New_York)
+                import zoneinfo
+                eastern_tz = zoneinfo.ZoneInfo("America/New_York")
+                last_modified = datetime.fromtimestamp(mtime, tz=eastern_tz)
                 
                 # Store individual file info
                 status['model_files_info'][filename] = {
