@@ -4281,7 +4281,7 @@ class StreamSwarmClient:
                     
                     if voip_metrics:
                         # Collect system metrics alongside VoIP metrics
-                        system_metrics = self._collect_system_metrics()
+                        system_metrics = self._get_system_metrics()
                         
                         # Merge VoIP and system metrics
                         combined_metrics = {**system_metrics, **voip_metrics}
@@ -4295,7 +4295,18 @@ class StreamSwarmClient:
                         })
                         
                         # Submit results to server
-                        self._submit_results(combined_metrics)
+                        headers = {'Authorization': f'Bearer {self.api_token}'} if self.api_token else {}
+                        response = requests.post(
+                            urljoin(self.server_url, '/api/test/results'),
+                            json=combined_metrics,
+                            headers=headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            logger.debug(f"Submitted VoIP test result for test {test_id}")
+                        else:
+                            logger.warning(f"Failed to submit VoIP result: {response.status_code}")
                         test_results.append(combined_metrics)
                         
                         logger.info(f"VoIP analysis result: MOS Score {voip_metrics.get('mos_score', 'N/A')}, "

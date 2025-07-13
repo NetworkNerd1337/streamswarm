@@ -107,6 +107,12 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **FIXED** VoIP Analysis test execution bug - resolved missing method calls preventing result submission
+  - Fixed missing `_submit_results()` method by replacing with proper HTTP POST request to `/api/test/results`
+  - Fixed missing `_collect_system_metrics()` method by replacing with existing `_get_system_metrics()` method
+  - VoIP tests now properly submit results to server using same API endpoint as standard tests
+  - VoIP test results will now display data instead of showing blank results cards
+  - Tests that were previously marked "completed" but showed no data will now function correctly
 - July 13, 2025: **IMPROVED** VoIP Analysis test creation UX - auto-populates destination field with server URL for logical test workflow
   - Updated test creation modal to automatically set destination field to server hostname when VoIP Analysis test type is selected
   - Made destination field read-only for VoIP tests since server is always the destination for SIP/RTP communication
