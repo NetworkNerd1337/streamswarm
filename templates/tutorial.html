@@ -410,23 +410,45 @@ xcode-select --install
                                             <code class="text-light small">
 # Core web framework packages<br>
 pip install flask>=2.3.0 flask-sqlalchemy>=3.0.0<br>
+pip install flask-login>=0.6.0 flask-wtf>=1.1.0<br>
 pip install sqlalchemy>=2.0.0 gunicorn>=21.0.0<br>
-pip install werkzeug>=2.3.0 email-validator>=2.0.0<br><br>
+pip install werkzeug>=2.3.0 wtforms>=3.0.0<br>
+pip install email-validator>=2.0.0 bleach>=6.0.0<br><br>
 # Database support<br>
 pip install psycopg2-binary>=2.9.0<br><br>
 # System monitoring<br>
 pip install psutil>=5.9.0 requests>=2.28.0<br><br>
-# PDF reporting<br>
-pip install reportlab>=4.4.0 matplotlib>=3.10.0<br><br>
-# AI/ML packages (optional but recommended)<br>
+# Authentication and security<br>
+pip install oauthlib>=3.2.0 pyjwt>=2.8.0<br><br>
+# PDF reporting and visualization<br>
+pip install reportlab>=4.4.0 matplotlib>=3.10.0<br>
+pip install folium>=0.14.0<br><br>
+# AI/ML packages (required for analytics)<br>
 pip install scikit-learn>=1.0.0 pandas>=1.3.0<br>
-pip install numpy>=1.20.0 joblib>=1.0.0<br><br>
-# Network packet analysis<br>
-pip install scapy>=2.5.0<br><br>
-# All-in-one command:<br>
-pip install flask flask-sqlalchemy psutil requests gunicorn psycopg2-binary werkzeug email-validator scapy reportlab matplotlib scikit-learn pandas numpy joblib
+pip install numpy>=1.20.0 joblib>=1.0.0<br>
+pip install river>=0.16.0<br><br>
+# Network analysis and tools<br>
+pip install scapy>=2.5.0 speedtest-cli>=2.1.0<br>
+pip install geoip2>=4.6.0<br><br>
+# VoIP and network testing<br>
+pip install pyaudio>=0.2.11 sounddevice>=0.4.6<br>
+pip install pysip>=0.0.9<br><br>
+# Advanced networking<br>
+pip install pygnmi>=0.8.15 iwlib>=1.7.0<br><br>
+# Data processing<br>
+pip install marshmallow>=3.19.0<br><br>
+# All-in-one command (essential server packages):<br>
+pip install flask flask-login flask-sqlalchemy flask-wtf gunicorn psycopg2-binary werkzeug wtforms email-validator bleach psutil requests scikit-learn pandas numpy joblib river marshmallow matplotlib reportlab folium geoip2 scapy speedtest-cli oauthlib pyjwt<br><br>
+# Optional packages for advanced features:<br>
+pip install pyaudio sounddevice pysip pygnmi iwlib
                                             </code>
                                         </div>
+                                    </div>
+                                    <div class="alert alert-danger small">
+                                        <strong>Critical Server Dependencies:</strong> All packages above are required for server operation. Missing packages like <code>flask-login</code>, <code>flask-wtf</code>, or <code>scikit-learn</code> will cause server startup failures with import errors.
+                                    </div>
+                                    <div class="alert alert-info small">
+                                        <strong>Client vs Server:</strong> Clients only need basic packages (requests, psutil, speedtest-cli). Servers need the complete package set above for web interface, database, ML analytics, and all advanced features.
                                     </div>
                                 </div>
                             </div>
