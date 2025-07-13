@@ -1,0 +1,50 @@
+2025-07-13 15:21:07,394 - INFO - Starting new test: VoIP Test
+2025-07-13 15:21:07,395 - INFO - Starting test 236 to swarm.ryanthomashuff.com for 600s (type: voip_analysis)
+2025-07-13 15:21:07,395 - INFO - Executing VoIP analysis test for test 236
+2025-07-13 15:21:07,395 - INFO - Starting VoIP analysis test 236 for 600 seconds
+2025-07-13 15:21:07,395 - INFO - VoIP analysis test against swarm.ryanthomashuff.com:5060
+2025-07-13 15:21:07,395 - INFO - Performing VoIP analysis against swarm.ryanthomashuff.com:5060
+2025-07-13 15:21:07,401 - WARNING - SIP registration failed after 5.65ms
+2025-07-13 15:21:07,412 - INFO - SIP call setup: 5.29ms, teardown: 5.43ms
+2025-07-13 15:21:07,412 - INFO - Starting RTP stream quality test for 30 seconds
+2025-07-13 15:21:28,843 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 15:21:28,843 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 15:21:37,565 - INFO - RTP stream test completed: 6 sent, 0 received, Loss: 100.00%, Jitter: 0.00ms
+2025-07-13 15:21:37,565 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 15:21:38,730 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 15:21:38,734 - INFO - iw found SSID: RTHNET
+2025-07-13 15:21:38,734 - INFO - iw found signal strength: -27
+2025-07-13 15:21:38,736 - INFO - ✓ Wireless info collected for wlan0: SSID=RTHNET, Signal=-27, Freq=5200 MHz, Channel=40, MAC=2c:cf:67:4f:13:6d, TxPower=31.00 dBm
+2025-07-13 15:21:39,584 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 15:21:49,584 - INFO - Performing VoIP analysis against swarm.ryanthomashuff.com:5060
+2025-07-13 15:21:49,590 - WARNING - SIP registration failed after 5.62ms
+2025-07-13 15:21:49,601 - INFO - SIP call setup: 5.43ms, teardown: 5.31ms
+2025-07-13 15:21:49,601 - INFO - Starting RTP stream quality test for 30 seconds
+2025-07-13 15:21:59,367 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 15:21:59,368 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 15:22:19,751 - INFO - RTP stream test completed: 6 sent, 0 received, Loss: 100.00%, Jitter: 0.00ms
+2025-07-13 15:22:19,751 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 15:22:20,915 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 15:22:20,919 - INFO - iw found SSID: RTHNET
+2025-07-13 15:22:20,919 - INFO - iw found signal strength: -27
+2025-07-13 15:22:20,921 - INFO - ✓ Wireless info collected for wlan0: SSID=RTHNET, Signal=-27, Freq=5200 MHz, Channel=40, MAC=2c:cf:67:4f:13:6d, TxPower=31.00 dBm
+2025-07-13 15:22:21,669 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 15:22:29,898 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 15:22:29,898 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 15:22:31,670 - INFO - Performing VoIP analysis against swarm.ryanthomashuff.com:5060
+2025-07-13 15:22:31,675 - WARNING - SIP registration failed after 5.04ms
+2025-07-13 15:22:31,685 - INFO - SIP call setup: 4.94ms, teardown: 4.92ms
+2025-07-13 15:22:31,685 - INFO - Starting RTP stream quality test for 30 seconds
+^[[A^[[A^[[A^[[A^[[B^[[B2025-07-13 15:23:00,445 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 15:23:00,446 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 15:23:01,838 - INFO - RTP stream test completed: 6 sent, 0 received, Loss: 100.00%, Jitter: 0.00ms
+2025-07-13 15:23:01,839 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 15:23:03,004 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 15:23:03,007 - INFO - iw found SSID: RTHNET
+2025-07-13 15:23:03,007 - INFO - iw found signal strength: -27
+2025-07-13 15:23:03,010 - INFO - ✓ Wireless info collected for wlan0: SSID=RTHNET, Signal=-27, Freq=5200 MHz, Channel=40, MAC=2c:cf:67:4f:13:6d, TxPower=31.00 dBm
+2025-07-13 15:23:03,833 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 15:23:13,833 - INFO - Performing VoIP analysis against swarm.ryanthomashuff.com:5060
+2025-07-13 15:23:13,839 - WARNING - SIP registration failed after 5.60ms
+2025-07-13 15:23:13,850 - INFO - SIP call setup: 5.43ms, teardown: 5.47ms
+2025-07-13 15:23:13,850 - INFO - Starting RTP stream quality test for 30 seconds

@@ -4480,8 +4480,21 @@ class StreamSwarmClient:
     def _test_rtp_stream_quality(self, sip_server, sip_port):
         """Test RTP stream quality with synthetic traffic"""
         try:
-            # Generate synthetic RTP traffic to test quality
-            rtp_port = 10000 + (os.getpid() % 10000)  # Use process ID for port selection
+            # Step 1: Establish SIP session first to get RTP port allocation
+            sip_session = self._establish_sip_session(sip_server, sip_port)
+            if not sip_session:
+                logger.error("Failed to establish SIP session for RTP testing")
+                return {
+                    'rtp_packet_loss_rate': 100.0,
+                    'rtp_jitter_avg': 0.0,
+                    'rtp_latency_avg': 0.0,
+                    'rtp_packets_sent': 0,
+                    'rtp_packets_received': 0
+                }
+            
+            # Step 2: Use RTP port from SIP session
+            rtp_port = sip_session['rtp_port']
+            session_id = sip_session['session_id']
             
             # Create UDP socket for RTP simulation
             rtp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -4494,9 +4507,9 @@ class StreamSwarmClient:
             latency_samples = []
             
             stream_duration = 30  # 30 second RTP stream test
-            packet_interval = 0.02  # 20ms packet interval (50 packets/second)
+            packet_interval = 5.0  # 5 second interval for testing (instead of 20ms)
             
-            logger.info(f"Starting RTP stream quality test for {stream_duration} seconds")
+            logger.info(f"Starting RTP stream quality test for {stream_duration} seconds to port {rtp_port}")
             
             start_time = time.time()
             last_packet_time = start_time
@@ -4519,12 +4532,12 @@ class StreamSwarmClient:
                     payload = b'\x00' * 160
                     rtp_packet = rtp_header + payload
                     
-                    # Send RTP packet to server
+                    # Send RTP packet to server RTP port
                     packet_send_time = time.time()
                     rtp_socket.sendto(rtp_packet, (sip_server, rtp_port))
                     packets_sent += 1
                     
-                    # Try to receive echoed packet (if server supports RTP echo)
+                    # Try to receive echoed packet (server should echo back)
                     try:
                         response, addr = rtp_socket.recvfrom(1024)
                         packet_receive_time = time.time()
@@ -4555,7 +4568,9 @@ class StreamSwarmClient:
                     logger.debug(f"RTP packet error: {e}")
                     continue
             
+            # Close socket and SIP session
             rtp_socket.close()
+            self._terminate_sip_session(sip_server, sip_port, session_id)
             
             # Calculate RTP metrics
             packet_loss_rate = ((packets_sent - packets_received) / packets_sent * 100) if packets_sent > 0 else 100.0
@@ -4586,6 +4601,96 @@ class StreamSwarmClient:
                 'rtp_latency_max': 0.0,
                 'rtp_stream_duration': 0.0
             }
+    
+    def _establish_sip_session(self, sip_server, sip_port):
+        """Establish SIP session using INVITE to get RTP port allocation"""
+        try:
+            # Create SIP socket
+            sip_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sip_socket.settimeout(10.0)
+            
+            # Generate unique session identifiers
+            call_id = f"rtp-test-{int(time.time())}-{os.getpid()}"
+            from_tag = f"client-{int(time.time())}"
+            
+            # Create SIP INVITE request
+            invite_request = f"""INVITE sip:test@{sip_server}:{sip_port} SIP/2.0
+Via: SIP/2.0/UDP {sip_server}:{sip_port};branch=z9hG4bK-{call_id}
+From: <sip:client@{sip_server}>;tag={from_tag}
+To: <sip:test@{sip_server}>
+Call-ID: {call_id}
+CSeq: 1 INVITE
+Content-Type: application/sdp
+Content-Length: 0
+
+"""
+            
+            # Send INVITE request
+            sip_socket.sendto(invite_request.encode('utf-8'), (sip_server, sip_port))
+            
+            # Receive response
+            response, addr = sip_socket.recvfrom(4096)
+            response_text = response.decode('utf-8')
+            
+            # Parse RTP port from SDP response
+            rtp_port = None
+            for line in response_text.split('\n'):
+                if line.startswith('m=audio'):
+                    parts = line.split()
+                    if len(parts) >= 2:
+                        rtp_port = int(parts[1])
+                        break
+            
+            sip_socket.close()
+            
+            if rtp_port and '200 OK' in response_text:
+                logger.info(f"SIP session established: Call-ID={call_id}, RTP port={rtp_port}")
+                return {
+                    'session_id': call_id,
+                    'rtp_port': rtp_port,
+                    'sip_server': sip_server,
+                    'sip_port': sip_port,
+                    'from_tag': from_tag
+                }
+            else:
+                logger.error(f"SIP INVITE failed: {response_text[:200]}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to establish SIP session: {e}")
+            return None
+    
+    def _terminate_sip_session(self, sip_server, sip_port, session_id):
+        """Terminate SIP session using BYE request"""
+        try:
+            sip_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sip_socket.settimeout(5.0)
+            
+            # Create SIP BYE request
+            bye_request = f"""BYE sip:test@{sip_server}:{sip_port} SIP/2.0
+Via: SIP/2.0/UDP {sip_server}:{sip_port};branch=z9hG4bK-bye-{session_id}
+From: <sip:client@{sip_server}>;tag=client-{session_id}
+To: <sip:test@{sip_server}>
+Call-ID: {session_id}
+CSeq: 2 BYE
+Content-Length: 0
+
+"""
+            
+            # Send BYE request
+            sip_socket.sendto(bye_request.encode('utf-8'), (sip_server, sip_port))
+            
+            # Receive response (optional)
+            try:
+                response, addr = sip_socket.recvfrom(4096)
+                logger.info(f"SIP session terminated: {session_id}")
+            except socket.timeout:
+                pass
+            
+            sip_socket.close()
+            
+        except Exception as e:
+            logger.error(f"Failed to terminate SIP session {session_id}: {e}")
     
     def _calculate_mos_score(self, voip_metrics):
         """Calculate MOS (Mean Opinion Score) based on network metrics"""
