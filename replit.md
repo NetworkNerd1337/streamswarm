@@ -107,6 +107,10 @@ The system operates on a distributed client-server architecture where:
 
 ## Changelog
 
+- July 13, 2025: **CORRECTED** VoIP quality thresholds in tutorial documentation - 150ms is upper limit for acceptable VoIP calls, not "good" range
+  - Updated tutorial Quality Thresholds section to reflect accurate VoIP latency standards where >150ms causes call degradation
+  - Corrected misleading threshold ranges that suggested 300ms was acceptable for VoIP communications
+  - Enhanced documentation to emphasize 150ms as absolute upper limit for VoIP call quality
 - July 13, 2025: **IMPLEMENTED** VoIP Analysis as third test type with comprehensive SIP/RTP protocol testing capabilities
   - Added complete VoIP Analysis test type alongside Standard and WiFi Environmental tests in test creation interface
   - Implemented full SIP service architecture with server acting as SIP endpoint for zero-trust compliance
