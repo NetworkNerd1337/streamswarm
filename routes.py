@@ -1924,22 +1924,76 @@ def ml_models():
 @app.route('/api/ml-models/train', methods=['POST'])
 @admin_required
 def train_ml_models():
-    """Train ML models with available data"""
+    """Train ML models with available data using optimized approach"""
+    import time
+    import signal
+    import psutil
+    import os
+    
+    def timeout_handler(signum, frame):
+        raise TimeoutError("Model training timed out after 120 seconds")
+    
     try:
+        # Set up timeout protection (2 minutes)
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(120)  # 2 minute timeout
+        
+        # Monitor memory usage
+        process = psutil.Process(os.getpid())
+        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        
+        logging.info(f"Starting ML model training with initial memory usage: {initial_memory:.1f} MB")
+        
+        start_time = time.time()
         success = diagnostic_engine.train_models()
+        end_time = time.time()
+        
+        # Clear timeout
+        signal.alarm(0)
+        
+        final_memory = process.memory_info().rss / 1024 / 1024  # MB
+        memory_delta = final_memory - initial_memory
+        
+        logging.info(f"Training completed in {end_time - start_time:.1f} seconds, memory delta: {memory_delta:.1f} MB")
+        
         if success:
             return jsonify({
                 'status': 'success',
-                'message': 'Models trained successfully'
+                'message': f'Models trained successfully in {end_time - start_time:.1f} seconds',
+                'training_time': round(end_time - start_time, 1),
+                'memory_used': round(memory_delta, 1)
             })
         else:
             return jsonify({
                 'status': 'warning',
                 'message': 'Not enough data for training. Need at least 50 samples.'
             }), 400
+            
+    except TimeoutError as e:
+        signal.alarm(0)
+        logging.error(f"Model training timed out: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Training timed out. Please try again or contact support if the issue persists.'
+        }), 408
+        
+    except MemoryError as e:
+        signal.alarm(0)
+        logging.error(f"Memory error during training: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Insufficient memory for training. Please try again later.'
+        }), 507
+        
     except Exception as e:
+        signal.alarm(0)
         logging.error(f"Error training models: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        logging.error(traceback.format_exc())
+        return jsonify({
+            'status': 'error',
+            'message': 'Training failed. Please try again or contact support if the issue persists.'
+        }), 500
 
 @app.route('/api/ml-models/status')
 @admin_required

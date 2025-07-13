@@ -259,6 +259,35 @@ class NetworkDiagnosticEngine:
         
         return pd.DataFrame(features_list)
     
+    def _extract_features_batched(self, results: List[TestResult], batch_size: int = 1000) -> pd.DataFrame:
+        """
+        Extract features in batches to manage memory usage efficiently
+        """
+        if not results:
+            return pd.DataFrame()
+            
+        all_features = []
+        
+        # Process results in batches
+        for i in range(0, len(results), batch_size):
+            batch = results[i:i + batch_size]
+            logger.info(f"Processing batch {i//batch_size + 1}/{(len(results) + batch_size - 1)//batch_size}")
+            
+            # Extract features for this batch
+            batch_features = self.extract_features(batch)
+            if not batch_features.empty:
+                all_features.append(batch_features)
+            
+            # Force garbage collection after each batch
+            import gc
+            gc.collect()
+        
+        # Combine all batches
+        if all_features:
+            return pd.concat(all_features, ignore_index=True)
+        else:
+            return pd.DataFrame()
+    
     def _calculate_wifi_environment_score(self, wifi_data: dict) -> float:
         """
         Calculate a comprehensive WiFi environment quality score (0-100)
@@ -403,22 +432,31 @@ class NetworkDiagnosticEngine:
         
         return max(0, min(100, total_score))
     
-    def train_models(self, min_samples=50):
+    def train_models(self, min_samples=50, batch_size=1000):
         """
-        Train ML models using available test result data
+        Train ML models using available test result data with optimized scalability
         """
         try:
-            logger.info("Starting model training...")
+            logger.info("Starting optimized model training...")
             
-            # Get all test results from database
-            results = TestResult.query.all()
+            # Get total count first to avoid loading all records
+            total_count = TestResult.query.count()
+            logger.info(f"Total test results available: {total_count}")
             
-            if len(results) < min_samples:
-                logger.warning(f"Not enough data for training. Need at least {min_samples} samples, have {len(results)}")
+            if total_count < min_samples:
+                logger.warning(f"Not enough data for training. Need at least {min_samples} samples, have {total_count}")
                 return False
             
-            # Extract features
-            features_df = self.extract_features(results)
+            # Use recent data for training (last 10,000 records for performance)
+            max_training_samples = min(total_count, 10000)
+            logger.info(f"Using {max_training_samples} most recent samples for training")
+            
+            # Get recent results in batches to avoid memory issues
+            results = TestResult.query.order_by(TestResult.timestamp.desc()).limit(max_training_samples).all()
+            
+            # Extract features in batches to manage memory
+            logger.info("Extracting features from test results...")
+            features_df = self._extract_features_batched(results, batch_size)
             
             if features_df.empty:
                 logger.error("No features extracted from test results")
@@ -426,6 +464,31 @@ class NetworkDiagnosticEngine:
             
             # Prepare training data - handle NaN and infinite values
             X = features_df.replace([float('inf'), float('-inf')], 0).fillna(0)
+            
+            # Monitor memory usage and optimize if needed
+            import psutil
+            import os
+            process = psutil.Process(os.getpid())
+            memory_mb = process.memory_info().rss / 1024 / 1024
+            
+            # If memory usage is high or dataset is large, use smart sampling
+            if memory_mb > 1000 or len(X) > 5000:  # 1GB threshold or 5000 samples
+                logger.info(f"Large dataset detected ({len(X)} samples, {memory_mb:.1f} MB memory). Using smart sampling.")
+                
+                # Smart sampling: keep recent data and sample older data
+                if len(X) > 3000:
+                    # Keep most recent 2000 samples, sample 1000 from the rest
+                    recent_samples = X.tail(2000)
+                    older_samples = X.head(len(X) - 2000)
+                    
+                    if len(older_samples) > 1000:
+                        sampled_older = older_samples.sample(n=1000, random_state=42)
+                        X = pd.concat([sampled_older, recent_samples], ignore_index=True)
+                        logger.info(f"Smart sampling applied: using {len(X)} samples from {len(features_df)} total")
+                    
+                # Force garbage collection
+                import gc
+                gc.collect()
             
             # Create health labels based on calculated scores
             health_scores = []
@@ -487,8 +550,15 @@ class NetworkDiagnosticEngine:
             X_scaled = scaler.fit_transform(X)
             self.scalers['main'] = scaler
             
-            # Train anomaly detection model (fixed contamination parameter)
-            anomaly_model = IsolationForest(contamination='auto', random_state=42)
+            # Train anomaly detection model with optimized parameters
+            logger.info("Training anomaly detection model...")
+            anomaly_model = IsolationForest(
+                contamination='auto', 
+                random_state=42, 
+                n_estimators=50,  # Reduced from default 100 for speed
+                max_samples='auto',
+                n_jobs=1  # Single thread to avoid memory issues
+            )
             anomaly_model.fit(X_scaled)
             self.models['anomaly_detector'] = anomaly_model
             
@@ -533,14 +603,15 @@ class NetworkDiagnosticEngine:
                     # Store the feature columns used for performance prediction
                     # Note: Using self.feature_columns which is already loaded from saved model
             
-            # Train network failure predictor using Time Series approach
+            # Train network failure predictor using optimized Time Series approach
+            logger.info("Training failure prediction model...")
             failure_risk_scores = self._calculate_failure_risk_scores(X)
-            if len(failure_risk_scores) > 20:  # Proper minimum requirement for quality
-                # Create time series features for failure prediction
-                time_series_data = self._create_time_series_features(X, results)
+            if len(failure_risk_scores) > 20:
+                # Use optimized time series features for top destinations only
+                time_series_data = self._create_optimized_time_series_features(X, results, max_destinations=10)
                 
                 if time_series_data is not None and len(time_series_data) > 0:
-                    failure_predictor = self._train_time_series_failure_predictor(time_series_data, failure_risk_scores)
+                    failure_predictor = self._train_optimized_failure_predictor(time_series_data, failure_risk_scores)
                     
                     if failure_predictor is not None:
                         self.models['failure_predictor'] = failure_predictor
@@ -550,21 +621,23 @@ class NetworkDiagnosticEngine:
                 else:
                     logger.warning("Insufficient time series data for failure prediction")
             
-            # Train Client Infrastructure Correlation Model
-            client_infrastructure_scores = self._calculate_client_infrastructure_scores(X, results)
-            if len(client_infrastructure_scores) > 25:  # Minimum samples for correlation analysis
-                # Extract client infrastructure features
-                infrastructure_features = self._extract_client_infrastructure_features(X, results)
+            # Train Client Infrastructure Correlation Model with optimization
+            logger.info("Training client infrastructure model...")
+            client_infrastructure_scores = self._calculate_client_infrastructure_scores_optimized(X, results)
+            if len(client_infrastructure_scores) > 25:
+                # Use optimized feature extraction
+                infrastructure_features = self._extract_client_infrastructure_features_optimized(X, results)
                 
                 if infrastructure_features is not None and len(infrastructure_features) > 0:
-                    # Use PCA + Linear Regression for correlation analysis
-                    client_infrastructure_analyzer = self._train_client_infrastructure_analyzer(
+                    client_infrastructure_analyzer = self._train_client_infrastructure_analyzer_optimized(
                         infrastructure_features, client_infrastructure_scores
                     )
                     
                     if client_infrastructure_analyzer is not None:
                         self.models['client_infrastructure_analyzer'] = client_infrastructure_analyzer
-                        logger.info("Client Infrastructure Correlation Model trained successfully")
+                        logger.info("Client Infrastructure Analyzer trained with R² score: {:.3f}".format(
+                            getattr(client_infrastructure_analyzer, 'score_', 0.0)
+                        ))
                     else:
                         logger.warning("Failed to train client infrastructure analyzer")
                 else:
@@ -572,18 +645,19 @@ class NetworkDiagnosticEngine:
             else:
                 logger.warning("Not enough client infrastructure samples for correlation analysis")
             
-            # Train QoS Compliance Monitoring Model
-            qos_compliance_scores = self._calculate_qos_compliance_scores(X, results)
-            if len(qos_compliance_scores) > 20:  # Minimum samples for quality training
-                # Extract QoS-specific features
-                qos_features = self._extract_qos_features(X, results)
+            # Train QoS Compliance Monitoring Model with optimization
+            logger.info("Training QoS compliance model...")
+            qos_compliance_scores = self._calculate_qos_compliance_scores_optimized(X, results)
+            if len(qos_compliance_scores) > 20:
+                # Use optimized QoS features
+                qos_features = self._extract_qos_features_optimized(X, results)
                 
                 if qos_features is not None and len(qos_features) > 0:
                     qos_scaler = StandardScaler()
                     X_qos_scaled = qos_scaler.fit_transform(qos_features)
                     
-                    # Use Support Vector Machine for QoS compliance classification
-                    qos_classifier = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42, probability=True)
+                    # Use optimized SVM with linear kernel for better scalability
+                    qos_classifier = SVC(kernel='linear', C=1.0, random_state=42, probability=True)
                     qos_classifier.fit(X_qos_scaled, qos_compliance_scores)
                     
                     self.models['qos_compliance_monitor'] = qos_classifier
@@ -874,6 +948,272 @@ class NetworkDiagnosticEngine:
         except Exception as e:
             logger.error(f"Error adjusting probability for conditions: {str(e)}")
             return probability
+    
+    def _create_optimized_time_series_features(self, X: pd.DataFrame, results: List[TestResult], max_destinations: int = 10) -> pd.DataFrame:
+        """
+        Create optimized time series features for top destinations only
+        """
+        try:
+            # Get top destinations by frequency
+            destinations = {}
+            for result in results:
+                if hasattr(result, 'test') and result.test and result.test.destination:
+                    dest = result.test.destination
+                    destinations[dest] = destinations.get(dest, 0) + 1
+            
+            # Sort by frequency and take top destinations
+            top_destinations = sorted(destinations.items(), key=lambda x: x[1], reverse=True)[:max_destinations]
+            
+            logger.info(f"Creating time series features for top {len(top_destinations)} destinations")
+            
+            time_series_features = []
+            for dest, count in top_destinations:
+                if count >= 15:  # Minimum for time series
+                    # Get results for this destination
+                    dest_results = [r for r in results if hasattr(r, 'test') and r.test and r.test.destination == dest]
+                    if len(dest_results) >= 15:
+                        # Create basic time series features
+                        latencies = [r.ping_latency or 0 for r in dest_results[-50:]]  # Last 50 measurements
+                        
+                        features = {
+                            'destination': dest,
+                            'avg_latency': np.mean(latencies) if latencies else 0,
+                            'latency_std': np.std(latencies) if latencies else 0,
+                            'latency_trend': self._calculate_trend(latencies) if len(latencies) > 3 else 0,
+                            'measurement_count': len(dest_results)
+                        }
+                        time_series_features.append(features)
+            
+            return pd.DataFrame(time_series_features) if time_series_features else None
+            
+        except Exception as e:
+            logger.error(f"Error creating optimized time series features: {str(e)}")
+            return None
+    
+    def _calculate_trend(self, values: List[float]) -> float:
+        """Calculate simple trend (slope) for time series"""
+        try:
+            if len(values) < 2:
+                return 0.0
+            
+            x = np.arange(len(values))
+            y = np.array(values)
+            
+            # Simple linear regression
+            slope = np.corrcoef(x, y)[0, 1] if len(values) > 1 else 0.0
+            return slope if not np.isnan(slope) else 0.0
+            
+        except Exception:
+            return 0.0
+    
+    def _train_optimized_failure_predictor(self, time_series_data: pd.DataFrame, failure_risk_scores: List[float]) -> Any:
+        """
+        Train optimized failure predictor using simplified approach
+        """
+        try:
+            if time_series_data is None or len(time_series_data) == 0:
+                return None
+            
+            # Use basic features for failure prediction
+            feature_cols = ['avg_latency', 'latency_std', 'latency_trend', 'measurement_count']
+            X = time_series_data[feature_cols].fillna(0)
+            
+            # Use subset of failure risk scores matching time series data
+            y = failure_risk_scores[:len(X)]
+            
+            # Use lighter model for better performance
+            from sklearn.linear_model import Ridge
+            failure_predictor = Ridge(alpha=1.0, random_state=42)
+            failure_predictor.fit(X, y)
+            
+            return failure_predictor
+            
+        except Exception as e:
+            logger.error(f"Error training optimized failure predictor: {str(e)}")
+            return None
+    
+    def _calculate_client_infrastructure_scores_optimized(self, X: pd.DataFrame, results: List[TestResult]) -> List[float]:
+        """
+        Calculate client infrastructure scores with optimization
+        """
+        try:
+            scores = []
+            
+            # Sample subset for performance if dataset is large
+            sample_size = min(1000, len(X))
+            indices = np.random.choice(len(X), sample_size, replace=False) if len(X) > sample_size else range(len(X))
+            
+            for i in indices:
+                row = X.iloc[i]
+                
+                # Simplified scoring based on key metrics
+                score = 50.0  # Base score
+                
+                # CPU impact
+                cpu_usage = row.get('cpu_percent', 0)
+                if cpu_usage > 90:
+                    score -= 20
+                elif cpu_usage > 75:
+                    score -= 10
+                
+                # Memory impact
+                memory_usage = row.get('memory_percent', 0)
+                if memory_usage > 90:
+                    score -= 15
+                elif memory_usage > 75:
+                    score -= 8
+                
+                # Network errors impact
+                network_errors = row.get('total_network_errors', 0)
+                if network_errors > 50:
+                    score -= 10
+                
+                scores.append(max(0, min(100, score)))
+            
+            return scores
+            
+        except Exception as e:
+            logger.error(f"Error calculating optimized client infrastructure scores: {str(e)}")
+            return []
+    
+    def _extract_client_infrastructure_features_optimized(self, X: pd.DataFrame, results: List[TestResult]) -> pd.DataFrame:
+        """
+        Extract optimized client infrastructure features
+        """
+        try:
+            # Use key infrastructure features only
+            key_features = [
+                'cpu_percent', 'memory_percent', 'disk_percent',
+                'cpu_load_1min', 'network_errors_in', 'network_errors_out',
+                'ping_latency', 'jitter', 'ping_packet_loss'
+            ]
+            
+            # Filter to available features
+            available_features = [f for f in key_features if f in X.columns]
+            
+            if not available_features:
+                return None
+            
+            # Sample subset for performance
+            sample_size = min(1000, len(X))
+            if len(X) > sample_size:
+                sampled_X = X.sample(n=sample_size, random_state=42)
+            else:
+                sampled_X = X
+            
+            return sampled_X[available_features].fillna(0)
+            
+        except Exception as e:
+            logger.error(f"Error extracting optimized client infrastructure features: {str(e)}")
+            return None
+    
+    def _train_client_infrastructure_analyzer_optimized(self, infrastructure_features: pd.DataFrame, scores: List[float]) -> Any:
+        """
+        Train optimized client infrastructure analyzer
+        """
+        try:
+            if infrastructure_features is None or len(infrastructure_features) == 0:
+                return None
+            
+            # Use simplified approach with Linear Regression
+            from sklearn.linear_model import LinearRegression
+            from sklearn.preprocessing import StandardScaler
+            
+            # Scale features
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(infrastructure_features)
+            
+            # Train model
+            analyzer = LinearRegression()
+            analyzer.fit(X_scaled, scores)
+            
+            # Store scaler with the model
+            analyzer.scaler = scaler
+            analyzer.feature_names = list(infrastructure_features.columns)
+            analyzer.score_ = analyzer.score(X_scaled, scores)
+            
+            # Store scaler separately
+            self.scalers['client_infrastructure'] = scaler
+            
+            return analyzer
+            
+        except Exception as e:
+            logger.error(f"Error training optimized client infrastructure analyzer: {str(e)}")
+            return None
+    
+    def _calculate_qos_compliance_scores_optimized(self, X: pd.DataFrame, results: List[TestResult]) -> List[str]:
+        """
+        Calculate QoS compliance scores with optimization
+        """
+        try:
+            compliance_scores = []
+            
+            # Sample subset for performance
+            sample_size = min(1000, len(X))
+            indices = np.random.choice(len(X), sample_size, replace=False) if len(X) > sample_size else range(len(X))
+            
+            for i in indices:
+                row = X.iloc[i]
+                
+                # Simplified QoS compliance check
+                violations = 0
+                
+                # Check latency thresholds
+                if row.get('ping_latency', 0) > 100:  # 100ms threshold
+                    violations += 1
+                
+                # Check jitter thresholds
+                if row.get('jitter', 0) > 50:  # 50ms jitter threshold
+                    violations += 1
+                
+                # Check packet loss
+                if row.get('ping_packet_loss', 0) > 1:  # 1% packet loss threshold
+                    violations += 1
+                
+                # Determine compliance level
+                if violations == 0:
+                    compliance_scores.append('compliant')
+                elif violations == 1:
+                    compliance_scores.append('warning')
+                else:
+                    compliance_scores.append('violation')
+            
+            return compliance_scores
+            
+        except Exception as e:
+            logger.error(f"Error calculating optimized QoS compliance scores: {str(e)}")
+            return []
+    
+    def _extract_qos_features_optimized(self, X: pd.DataFrame, results: List[TestResult]) -> pd.DataFrame:
+        """
+        Extract optimized QoS features
+        """
+        try:
+            # Use key QoS features only
+            qos_features = [
+                'ping_latency', 'ping_packet_loss', 'jitter',
+                'bandwidth_download', 'bandwidth_upload',
+                'dns_resolution_time', 'tcp_connect_time'
+            ]
+            
+            # Filter to available features
+            available_features = [f for f in qos_features if f in X.columns]
+            
+            if not available_features:
+                return None
+            
+            # Sample subset for performance
+            sample_size = min(1000, len(X))
+            if len(X) > sample_size:
+                sampled_X = X.sample(n=sample_size, random_state=42)
+            else:
+                sampled_X = X
+            
+            return sampled_X[available_features].fillna(0)
+            
+        except Exception as e:
+            logger.error(f"Error extracting optimized QoS features: {str(e)}")
+            return None
 
     def _identify_failure_contributing_factors_for_destination(self, destination: str, recent_metrics: List[Dict], current_conditions: str) -> List[str]:
         """Identify factors contributing to failure risk for destination"""
