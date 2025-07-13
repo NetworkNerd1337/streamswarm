@@ -21,13 +21,23 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, mean_squared_error
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, SGDClassifier, SGDRegressor, PassiveAggressiveClassifier
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import r2_score
 import joblib
 
 from models import TestResult, Test, Client, db
 
 logger = logging.getLogger(__name__)
+
+# River imports for true incremental learning
+try:
+    from river import anomaly, tree, compose, feature_extraction, linear_model, ensemble, preprocessing, metrics, time_series
+    RIVER_AVAILABLE = True
+    logger.info("River library available for incremental learning")
+except ImportError as e:
+    RIVER_AVAILABLE = False
+    logger.warning(f"River library not available: {e}, using sklearn partial_fit methods")
 
 class NetworkDiagnosticEngine:
     """
@@ -40,11 +50,19 @@ class NetworkDiagnosticEngine:
         self.scalers = {}
         self.encoders = {}
         
+        # Incremental learning state
+        self.incremental_models = {}
+        self.training_metadata = {}
+        self.last_processed_timestamp = {}
+        
         # Ensure models directory exists
         os.makedirs(models_dir, exist_ok=True)
         
         # Load existing models if available
         self._load_models()
+        
+        # Initialize incremental learning models
+        self._initialize_incremental_models()
         
     def _load_models(self):
         """Load pre-trained models from disk"""
@@ -93,6 +111,137 @@ class NetworkDiagnosticEngine:
                 logger.info(f"Loaded feature columns: {len(self.feature_columns)} features")
             except Exception as e:
                 logger.warning(f"Failed to load feature columns: {e}")
+    
+    def _initialize_incremental_models(self):
+        """Initialize incremental learning models"""
+        try:
+            if RIVER_AVAILABLE:
+                self._initialize_river_models()
+            else:
+                self._initialize_sklearn_incremental_models()
+            
+            # Load training metadata
+            metadata_path = os.path.join(self.models_dir, 'training_metadata.json')
+            if os.path.exists(metadata_path):
+                with open(metadata_path, 'r') as f:
+                    self.training_metadata = json.load(f)
+                logger.info("Loaded training metadata for incremental learning")
+            else:
+                self.training_metadata = {
+                    'samples_processed': 0,
+                    'last_training_time': None,
+                    'model_versions': {}
+                }
+                
+        except Exception as e:
+            logger.error(f"Error initializing incremental models: {e}")
+            self.incremental_models = {}
+    
+    def _initialize_river_models(self):
+        """Initialize River-based incremental learning models"""
+        if not RIVER_AVAILABLE:
+            return
+            
+        try:
+            # Anomaly Detection - Half-Space Trees for streaming anomaly detection
+            self.incremental_models['anomaly_detector'] = anomaly.HalfSpaceTrees(
+                n_trees=25,
+                height=8,
+                window_size=100,
+                limits={'latency': (0, 1000), 'packet_loss': (0, 50)}
+            )
+            
+            # Health Classification - Bagging Classifier with Hoeffding Trees
+            self.incremental_models['health_classifier'] = ensemble.BaggingClassifier(
+                model=tree.HoeffdingTreeClassifier(),
+                n_models=25,
+                seed=42
+            )
+            
+            # Performance Prediction - Bagging Regressor with Hoeffding Trees
+            self.incremental_models['performance_predictor'] = ensemble.BaggingRegressor(
+                model=tree.HoeffdingTreeRegressor(),
+                n_models=25,
+                seed=42
+            )
+            
+            # Failure Prediction - Passive Aggressive Classifier
+            self.incremental_models['failure_predictor'] = linear_model.PAClassifier(
+                C=1.0,
+                mode=1,
+                learn_intercept=True
+            )
+            
+            # QoS Compliance - Logistic Regression 
+            self.incremental_models['qos_compliance_monitor'] = linear_model.LogisticRegression(
+                l2=0.1,
+                intercept_lr=0.01
+            )
+            
+            # Client Infrastructure Analysis - Passive Aggressive Regressor
+            self.incremental_models['client_infrastructure_analyzer'] = linear_model.PARegressor(
+                C=1.0,
+                mode=1,
+                eps=0.1,
+                learn_intercept=True
+            )
+            
+            logger.info("River-based incremental models initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing River models: {e}")
+            self.incremental_models = {}
+    
+    def _initialize_sklearn_incremental_models(self):
+        """Initialize scikit-learn partial_fit-based incremental learning models"""
+        try:
+            # Anomaly Detection - One-Class SVM with kernel approximation
+            self.incremental_models['anomaly_detector'] = {
+                'model': SGDClassifier(loss='hinge', random_state=42),
+                'type': 'classification',
+                'initialized': False
+            }
+            
+            # Health Classification - SGD Classifier
+            self.incremental_models['health_classifier'] = {
+                'model': SGDClassifier(loss='log_loss', random_state=42),
+                'type': 'classification',
+                'initialized': False
+            }
+            
+            # Performance Prediction - SGD Regressor
+            self.incremental_models['performance_predictor'] = {
+                'model': SGDRegressor(loss='squared_error', random_state=42),
+                'type': 'regression',
+                'initialized': False
+            }
+            
+            # Failure Prediction - Passive Aggressive Classifier
+            self.incremental_models['failure_predictor'] = {
+                'model': PassiveAggressiveClassifier(random_state=42),
+                'type': 'classification',
+                'initialized': False
+            }
+            
+            # QoS Compliance - Multinomial Naive Bayes
+            self.incremental_models['qos_compliance_monitor'] = {
+                'model': MultinomialNB(alpha=1.0),
+                'type': 'classification',
+                'initialized': False
+            }
+            
+            # Client Infrastructure Analysis - SGD Regressor
+            self.incremental_models['client_infrastructure_analyzer'] = {
+                'model': SGDRegressor(loss='squared_error', random_state=42),
+                'type': 'regression',
+                'initialized': False
+            }
+            
+            logger.info("Scikit-learn incremental models initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing sklearn incremental models: {e}")
+            self.incremental_models = {}
     
     def _save_models(self):
         """Save trained models to disk"""
@@ -403,9 +552,9 @@ class NetworkDiagnosticEngine:
         
         return max(0, min(100, total_score))
     
-    def train_models(self, min_samples=50):
+    def train_models(self, min_samples=50, force_retrain=False):
         """
-        Train ML models using available test result data
+        Train ML models using available test result data with incremental learning support
         """
         try:
             logger.info("Starting model training...")
@@ -416,6 +565,144 @@ class NetworkDiagnosticEngine:
             if len(results) < min_samples:
                 logger.warning(f"Not enough data for training. Need at least {min_samples} samples, have {len(results)}")
                 return False
+            
+            # Check if we can use incremental learning
+            if not force_retrain and self.incremental_models and len(self.incremental_models) > 0:
+                logger.info("Using incremental learning approach...")
+                return self._incremental_train_models(results, min_samples)
+            else:
+                logger.info("Using batch training approach...")
+                return self._batch_train_models(results, min_samples)
+            
+        except Exception as e:
+            logger.error(f"Error in train_models: {str(e)}")
+            return False
+    
+    def _incremental_train_models(self, results: List[TestResult], min_samples: int):
+        """
+        Train models using incremental learning approach
+        """
+        try:
+            logger.info(f"Starting incremental training with {len(results)} samples")
+            
+            # Extract features
+            features_df = self.extract_features(results)
+            if features_df.empty:
+                logger.error("No features extracted for incremental training")
+                return False
+            
+            # Prepare training data
+            X = features_df.replace([float('inf'), float('-inf')], 0).fillna(0)
+            
+            # Process in small batches to avoid memory issues
+            batch_size = 50  # Smaller batch size for better memory management
+            total_batches = len(X) // batch_size + (1 if len(X) % batch_size > 0 else 0)
+            
+            logger.info(f"Processing {total_batches} batches of {batch_size} samples each")
+            
+            for batch_idx in range(total_batches):
+                start_idx = batch_idx * batch_size
+                end_idx = min((batch_idx + 1) * batch_size, len(X))
+                
+                X_batch = X.iloc[start_idx:end_idx]
+                results_batch = results[start_idx:end_idx]
+                
+                # Train each model incrementally
+                self._train_incremental_anomaly_detector(X_batch)
+                self._train_incremental_health_classifier(X_batch)
+                self._train_incremental_performance_predictor(X_batch)
+                self._train_incremental_failure_predictor(X_batch, results_batch)
+                self._train_incremental_qos_monitor(X_batch, results_batch)
+                self._train_incremental_infrastructure_analyzer(X_batch, results_batch)
+                
+                if batch_idx % 10 == 0:  # Log progress every 10 batches
+                    logger.info(f"Processed batch {batch_idx + 1}/{total_batches}")
+            
+            # Update training metadata
+            self.training_metadata['samples_processed'] += len(results)
+            self.training_metadata['last_training_time'] = datetime.now().isoformat()
+            
+            # Save updated models and metadata
+            self._save_incremental_models()
+            
+            logger.info(f"Incremental training completed successfully. Total samples processed: {self.training_metadata['samples_processed']}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error in incremental training: {str(e)}")
+            return False
+    
+    def _batch_train_models(self, results: List[TestResult], min_samples: int):
+        """
+        Original batch training method (fallback)
+        """
+        try:
+            logger.info("Performing batch training (original method)")
+            
+            # Extract features
+            features_df = self.extract_features(results)
+            
+            if features_df.empty:
+                logger.error("No features extracted from test results")
+                return False
+            
+            # Prepare training data - handle NaN and infinite values
+            X = features_df.replace([float('inf'), float('-inf')], 0).fillna(0)
+            
+            # Create health labels based on calculated scores
+            health_scores = []
+            for i in range(len(X)):
+                row = X.iloc[i]
+                
+                # Calculate health score for individual row
+                network_score = 100
+                if row['ping_latency'] > 0:
+                    network_score -= min(row['ping_latency'] / 2, 50)
+                if row['ping_packet_loss'] > 0:
+                    network_score -= min(row['ping_packet_loss'] * 10, 40)
+                if row['jitter'] > 0:
+                    network_score -= min(row['jitter'] / 2, 10)
+                
+                system_score = 100
+                if row['cpu_percent'] > 80:
+                    system_score -= 30
+                elif row['cpu_percent'] > 60:
+                    system_score -= 15
+                if row['memory_percent'] > 90:
+                    system_score -= 20
+                elif row['memory_percent'] > 75:
+                    system_score -= 10
+                
+                reliability_score = 100
+                if row['total_network_errors'] > 0:
+                    reliability_score -= min(row['total_network_errors'], 30)
+                if row['tcp_retransmission_rate'] > 5:
+                    reliability_score -= 20
+                elif row['tcp_retransmission_rate'] > 2:
+                    reliability_score -= 10
+                
+                efficiency_score = 100
+                if row['bandwidth_download'] < 100:
+                    efficiency_score -= 20
+                if row['compression_ratio'] < 20:
+                    efficiency_score -= 10
+                
+                # Calculate weighted average
+                weights = {'network': 0.4, 'system': 0.3, 'reliability': 0.2, 'efficiency': 0.1}
+                score = (
+                    network_score * weights['network'] +
+                    system_score * weights['system'] +
+                    reliability_score * weights['reliability'] +
+                    efficiency_score * weights['efficiency']
+                )
+                score = max(0, min(100, score))
+                
+                if score >= 80:
+                    health_scores.append('healthy')
+                elif score >= 60:
+                    health_scores.append('warning')
+                else:
+                    health_scores.append('critical')
             
             # Extract features
             features_df = self.extract_features(results)
@@ -4212,6 +4499,218 @@ class NetworkDiagnosticEngine:
         except Exception as e:
             logger.error(f"Error generating client infrastructure recommendations: {str(e)}")
             return []
+
+    def _train_incremental_anomaly_detector(self, X_batch):
+        """Train anomaly detector incrementally using River"""
+        if 'anomaly_detector' not in self.incremental_models:
+            return
+        
+        try:
+            anomaly_model = self.incremental_models['anomaly_detector']
+            for _, row in X_batch.iterrows():
+                row_dict = row.to_dict()
+                # River models expect dictionaries
+                anomaly_model.learn_one(row_dict)
+        except Exception as e:
+            logger.error(f"Error training incremental anomaly detector: {str(e)}")
+    
+    def _train_incremental_health_classifier(self, X_batch):
+        """Train health classifier incrementally using River"""
+        if 'health_classifier' not in self.incremental_models:
+            return
+        
+        try:
+            health_model = self.incremental_models['health_classifier']
+            for _, row in X_batch.iterrows():
+                row_dict = row.to_dict()
+                # Calculate health score for this row
+                health_score = self._calculate_health_score_for_row(row)
+                health_label = 'healthy' if health_score >= 80 else 'warning' if health_score >= 60 else 'critical'
+                
+                # River models expect dictionaries
+                health_model.learn_one(row_dict, health_label)
+        except Exception as e:
+            logger.error(f"Error training incremental health classifier: {str(e)}")
+    
+    def _train_incremental_performance_predictor(self, X_batch):
+        """Train performance predictor incrementally using River"""
+        if 'performance_predictor' not in self.incremental_models:
+            return
+        
+        try:
+            performance_model = self.incremental_models['performance_predictor']
+            for _, row in X_batch.iterrows():
+                if 'ping_latency' in row:
+                    row_dict = row.to_dict()
+                    target_latency = row_dict.pop('ping_latency', 0)  # Remove target from features
+                    
+                    # River models expect dictionaries
+                    performance_model.learn_one(row_dict, target_latency)
+        except Exception as e:
+            logger.error(f"Error training incremental performance predictor: {str(e)}")
+    
+    def _train_incremental_failure_predictor(self, X_batch, results_batch):
+        """Train failure predictor incrementally using River"""
+        if 'failure_predictor' not in self.incremental_models:
+            return
+        
+        try:
+            failure_model = self.incremental_models['failure_predictor']
+            for i, (_, row) in enumerate(X_batch.iterrows()):
+                row_dict = row.to_dict()
+                # Calculate failure risk for this row
+                failure_risk = self._calculate_failure_risk_for_row(row)
+                failure_label = 'high_risk' if failure_risk > 0.7 else 'low_risk'
+                
+                # River models expect dictionaries
+                failure_model.learn_one(row_dict, failure_label)
+        except Exception as e:
+            logger.error(f"Error training incremental failure predictor: {str(e)}")
+    
+    def _train_incremental_qos_monitor(self, X_batch, results_batch):
+        """Train QoS compliance monitor incrementally using River"""
+        if 'qos_compliance_monitor' not in self.incremental_models:
+            return
+        
+        try:
+            qos_model = self.incremental_models['qos_compliance_monitor']
+            for i, (_, row) in enumerate(X_batch.iterrows()):
+                row_dict = row.to_dict()
+                # Calculate QoS compliance for this row
+                qos_compliance = self._calculate_qos_compliance_for_row(row)
+                qos_label = 'compliant' if qos_compliance > 0.8 else 'non_compliant'
+                
+                # River models expect dictionaries
+                qos_model.learn_one(row_dict, qos_label)
+        except Exception as e:
+            logger.error(f"Error training incremental QoS monitor: {str(e)}")
+    
+    def _train_incremental_infrastructure_analyzer(self, X_batch, results_batch):
+        """Train infrastructure analyzer incrementally using River"""
+        if 'client_infrastructure_analyzer' not in self.incremental_models:
+            return
+        
+        try:
+            infrastructure_model = self.incremental_models['client_infrastructure_analyzer']
+            for i, (_, row) in enumerate(X_batch.iterrows()):
+                row_dict = row.to_dict()
+                # Calculate infrastructure correlation for this row
+                infrastructure_correlation = self._calculate_infrastructure_correlation_for_row(row)
+                
+                # River models expect dictionaries
+                infrastructure_model.learn_one(row_dict, infrastructure_correlation)
+        except Exception as e:
+            logger.error(f"Error training incremental infrastructure analyzer: {str(e)}")
+    
+    def _calculate_health_score_for_row(self, row):
+        """Calculate health score for a single row"""
+        network_score = 100
+        if row.get('ping_latency', 0) > 0:
+            network_score -= min(row['ping_latency'] / 2, 50)
+        if row.get('ping_packet_loss', 0) > 0:
+            network_score -= min(row['ping_packet_loss'] * 10, 40)
+        if row.get('jitter', 0) > 0:
+            network_score -= min(row['jitter'] / 2, 10)
+        
+        system_score = 100
+        if row.get('cpu_percent', 0) > 80:
+            system_score -= 30
+        elif row.get('cpu_percent', 0) > 60:
+            system_score -= 15
+        if row.get('memory_percent', 0) > 90:
+            system_score -= 20
+        elif row.get('memory_percent', 0) > 75:
+            system_score -= 10
+        
+        # Calculate weighted average
+        weights = {'network': 0.6, 'system': 0.4}
+        score = (network_score * weights['network'] + system_score * weights['system'])
+        return max(0, min(100, score))
+    
+    def _calculate_failure_risk_for_row(self, row):
+        """Calculate failure risk for a single row"""
+        risk = 0.0
+        try:
+            ping_latency = float(row.get('ping_latency', 0))
+            ping_packet_loss = float(row.get('ping_packet_loss', 0))
+            cpu_percent = float(row.get('cpu_percent', 0))
+            memory_percent = float(row.get('memory_percent', 0))
+            
+            if ping_latency > 500:
+                risk += 0.3
+            if ping_packet_loss > 5:
+                risk += 0.4
+            if cpu_percent > 90:
+                risk += 0.2
+            if memory_percent > 95:
+                risk += 0.1
+        except (ValueError, TypeError):
+            # If we can't parse values, assume low risk
+            pass
+        return min(1.0, risk)
+    
+    def _calculate_qos_compliance_for_row(self, row):
+        """Calculate QoS compliance for a single row"""
+        compliance = 1.0
+        try:
+            jitter = float(row.get('jitter', 0))
+            ping_packet_loss = float(row.get('ping_packet_loss', 0))
+            ping_latency = float(row.get('ping_latency', 0))
+            
+            if jitter > 50:
+                compliance -= 0.3
+            if ping_packet_loss > 1:
+                compliance -= 0.4
+            if ping_latency > 200:
+                compliance -= 0.3
+        except (ValueError, TypeError):
+            # If we can't parse values, assume full compliance
+            pass
+        return max(0.0, compliance)
+    
+    def _calculate_infrastructure_correlation_for_row(self, row):
+        """Calculate infrastructure correlation for a single row"""
+        correlation = 0.0
+        try:
+            cpu_percent = float(row.get('cpu_percent', 0))
+            ping_latency = float(row.get('ping_latency', 0))
+            memory_percent = float(row.get('memory_percent', 0))
+            ping_packet_loss = float(row.get('ping_packet_loss', 0))
+            disk_usage = float(row.get('disk_usage', 0))
+            
+            if cpu_percent > 80 and ping_latency > 100:
+                correlation += 0.5
+            if memory_percent > 85 and ping_packet_loss > 0:
+                correlation += 0.3
+            if disk_usage > 90:
+                correlation += 0.2
+        except (ValueError, TypeError):
+            # If we can't parse values, assume no correlation
+            pass
+        return min(1.0, correlation)
+    
+    def _save_incremental_models(self):
+        """Save River incremental models"""
+        try:
+            models_dir = self.models_dir
+            os.makedirs(models_dir, exist_ok=True)
+            
+            # Save River models using pickle
+            import pickle
+            
+            for model_name, model in self.incremental_models.items():
+                model_path = os.path.join(models_dir, f"{model_name}_river.pkl")
+                with open(model_path, 'wb') as f:
+                    pickle.dump(model, f)
+            
+            # Save training metadata
+            metadata_path = os.path.join(models_dir, "training_metadata.json")
+            with open(metadata_path, 'w') as f:
+                json.dump(self.training_metadata, f)
+            
+            logger.info("Incremental models saved successfully")
+        except Exception as e:
+            logger.error(f"Error saving incremental models: {str(e)}")
 
 # Global diagnostic engine instance
 diagnostic_engine = NetworkDiagnosticEngine()
