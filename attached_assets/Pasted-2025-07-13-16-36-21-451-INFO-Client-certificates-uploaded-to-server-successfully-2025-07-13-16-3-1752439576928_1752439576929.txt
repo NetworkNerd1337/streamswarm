@@ -1,0 +1,97 @@
+2025-07-13 16:36:21,451 - INFO - Client certificates uploaded to server successfully
+2025-07-13 16:36:21,452 - INFO - Starting StreamSwarm client...
+2025-07-13 16:36:21,453 - INFO - ✓ Client connected and ready! Monitoring server for tests...
+2025-07-13 16:36:21,453 - INFO - ✓ Client ID: 15 | Server: https://1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev
+2025-07-13 16:36:21,453 - INFO - ✓ Heartbeat active | Test monitoring active
+2025-07-13 16:36:22,288 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:36:22,288 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:36:54,051 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:36:54,051 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:37:24,893 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:37:24,893 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:37:55,739 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:37:55,740 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:38:26,584 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:38:26,584 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:38:56,259 - INFO - Starting new test: voice test
+2025-07-13 16:38:56,260 - INFO - Starting test 238 to 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev for 600s (type: voip_analysis)
+2025-07-13 16:38:56,260 - INFO - Executing VoIP analysis test for test 238
+2025-07-13 16:38:56,260 - INFO - Starting VoIP analysis test 238 for 600 seconds
+2025-07-13 16:38:56,260 - INFO - VoIP analysis test against 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev:5060
+2025-07-13 16:38:56,260 - INFO - Performing VoIP analysis against 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev:5060
+2025-07-13 16:38:56,266 - WARNING - SIP registration failed after 5.60ms
+2025-07-13 16:38:56,277 - INFO - SIP call setup: 5.57ms, teardown: 5.41ms
+2025-07-13 16:38:57,427 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:38:57,427 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:39:06,288 - ERROR - Failed to establish SIP session: timed out
+2025-07-13 16:39:06,288 - ERROR - Failed to establish SIP session for RTP testing
+2025-07-13 16:39:06,288 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 16:39:07,479 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 16:39:07,483 - INFO - iw found SSID: RTH_BACKUP5G
+2025-07-13 16:39:07,483 - INFO - iw found signal strength: -29
+2025-07-13 16:39:07,485 - INFO - ✓ Wireless info collected for wlan0: SSID=RTH_BACKUP5G, Signal=-29, Freq=5640 MHz, Channel=128, MAC=2c:cf:67:3e:eb:d7, TxPower=31.00 dBm
+2025-07-13 16:39:08,705 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 16:39:28,250 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:39:28,251 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:39:59,154 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:39:59,154 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:40:08,705 - INFO - Performing VoIP analysis against 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev:5060
+2025-07-13 16:40:08,711 - WARNING - SIP registration failed after 5.80ms
+2025-07-13 16:40:08,723 - INFO - SIP call setup: 5.54ms, teardown: 5.67ms
+2025-07-13 16:40:18,733 - ERROR - Failed to establish SIP session: timed out
+2025-07-13 16:40:18,734 - ERROR - Failed to establish SIP session for RTP testing
+2025-07-13 16:40:18,734 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 16:40:19,905 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 16:40:19,908 - INFO - iw found SSID: RTH_BACKUP5G
+2025-07-13 16:40:19,909 - INFO - iw found signal strength: -29
+2025-07-13 16:40:19,911 - INFO - ✓ Wireless info collected for wlan0: SSID=RTH_BACKUP5G, Signal=-29, Freq=5640 MHz, Channel=128, MAC=2c:cf:67:3e:eb:d7, TxPower=31.00 dBm
+2025-07-13 16:40:21,088 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 16:40:29,978 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:40:29,978 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:41:00,801 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:41:00,801 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:41:21,088 - INFO - Performing VoIP analysis against 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev:5060
+2025-07-13 16:41:21,094 - WARNING - SIP registration failed after 5.80ms
+2025-07-13 16:41:21,105 - INFO - SIP call setup: 5.54ms, teardown: 5.51ms
+2025-07-13 16:41:31,116 - ERROR - Failed to establish SIP session: timed out
+2025-07-13 16:41:31,116 - ERROR - Failed to establish SIP session for RTP testing
+2025-07-13 16:41:31,116 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 16:41:31,635 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:41:31,635 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:41:32,281 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 16:41:32,284 - INFO - iw found SSID: RTH_BACKUP5G
+2025-07-13 16:41:32,284 - INFO - iw found signal strength: -30
+2025-07-13 16:41:32,287 - INFO - ✓ Wireless info collected for wlan0: SSID=RTH_BACKUP5G, Signal=-30, Freq=5640 MHz, Channel=128, MAC=2c:cf:67:3e:eb:d7, TxPower=31.00 dBm
+2025-07-13 16:41:33,630 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 16:42:03,053 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:42:03,053 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:42:33,630 - INFO - Performing VoIP analysis against 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev:5060
+2025-07-13 16:42:33,636 - WARNING - SIP registration failed after 5.65ms
+2025-07-13 16:42:33,647 - INFO - SIP call setup: 5.51ms, teardown: 5.44ms
+2025-07-13 16:42:34,477 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:42:34,477 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:42:43,658 - ERROR - Failed to establish SIP session: timed out
+2025-07-13 16:42:43,658 - ERROR - Failed to establish SIP session for RTP testing
+2025-07-13 16:42:43,658 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 16:42:44,825 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 16:42:44,828 - INFO - iw found SSID: RTH_BACKUP5G
+2025-07-13 16:42:44,828 - INFO - iw found signal strength: -30
+2025-07-13 16:42:44,831 - INFO - ✓ Wireless info collected for wlan0: SSID=RTH_BACKUP5G, Signal=-30, Freq=5640 MHz, Channel=128, MAC=2c:cf:67:3e:eb:d7, TxPower=31.00 dBm
+2025-07-13 16:42:46,018 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+2025-07-13 16:43:05,307 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:43:05,307 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:43:36,125 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:43:36,125 - INFO - HEARTBEAT: No reboot requested in server response
+2025-07-13 16:43:46,018 - INFO - Performing VoIP analysis against 1c754f36-836a-415b-9318-899ca81361e5-00-zt5cy39lyg1m.janeway.replit.dev:5060
+2025-07-13 16:43:46,024 - WARNING - SIP registration failed after 5.86ms
+2025-07-13 16:43:46,035 - INFO - SIP call setup: 5.55ms, teardown: 5.47ms
+2025-07-13 16:43:56,046 - ERROR - Failed to establish SIP session: timed out
+2025-07-13 16:43:56,046 - ERROR - Failed to establish SIP session for RTP testing
+2025-07-13 16:43:56,047 - INFO - VoIP analysis completed successfully - MOS: 1.00
+2025-07-13 16:43:57,216 - INFO - Confirmed wlan0 is wireless interface
+2025-07-13 16:43:57,219 - INFO - iw found SSID: RTH_BACKUP5G
+2025-07-13 16:43:57,219 - INFO - iw found signal strength: -29
+2025-07-13 16:43:57,222 - INFO - ✓ Wireless info collected for wlan0: SSID=RTH_BACKUP5G, Signal=-29, Freq=5640 MHz, Channel=128, MAC=2c:cf:67:3e:eb:d7, TxPower=31.00 dBm
+2025-07-13 16:43:58,399 - INFO - VoIP analysis result: MOS Score 1.0, Jitter 0.0ms, Packet Loss 100.0%
+^[^[[A^[[A^[[A^[[A^[[A^[[A2025-07-13 16:44:06,957 - INFO - HEARTBEAT: Received response from server - {'reboot_requested': False, 'status': 'ok'}
+2025-07-13 16:44:06,957 - INFO - HEARTBEAT: No reboot requested in server response
