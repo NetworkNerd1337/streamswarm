@@ -51,6 +51,7 @@
                             <ul class="list-unstyled">
                                 <li><a href="#ai-ml-setup" class="text-decoration-none">AI/ML Diagnostic Setup</a></li>
                                 <li><a href="#geolocation-features" class="text-decoration-none">Geolocation Mapping</a></li>
+                                <li><a href="#voip-analysis" class="text-decoration-none">VoIP Analysis Testing</a></li>
                                 <li><a href="#gnmi-analysis" class="text-decoration-none">GNMI Network Analysis</a></li>
                                 <li><a href="#recurring-tests" class="text-decoration-none">Recurring Tests & Scheduling</a></li>
                                 <li><a href="#metrics-definition" class="text-decoration-none">Metrics Definition Guide</a></li>
@@ -452,11 +453,13 @@ pip install speedtest-cli>=2.1.3<br><br>
 pip install scapy>=2.5.0<br><br>
 # Wireless detection (Linux only)<br>
 sudo apt-get install iw  # Modern WiFi scanning tool<br><br>
+# VoIP Analysis testing (Linux only)<br>
+sudo apt-get install sipsak  # SIP Swiss Army Knife for VoIP testing<br><br>
 # GNMI network telemetry (enterprise)<br>
 pip install pygnmi>=0.8.15<br><br>
 # All-in-one command:<br>
 pip install requests psutil speedtest-cli scapy pygnmi<br>
-                                        sudo apt-get install iw  # For WiFi environmental scanning<br><br>
+                                        sudo apt-get install iw sipsak  # For WiFi and VoIP testing<br><br>
 # Minimal installation (without packet analysis):<br>
 pip install requests psutil speedtest-cli
                                             </code>
@@ -2790,6 +2793,163 @@ nssm install StreamSwarmClient</code></pre>
                                                 </code>
                                             </div>
                                             <p class="small mt-2 mb-0"><strong>Note:</strong> Geolocation processing occurs automatically in the background. Maps may take a few moments to appear for new test results.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VoIP Analysis Testing Tutorial -->
+    <div class="row mb-4" id="voip-analysis">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-phone me-2"></i>
+                        VoIP Analysis Testing
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-info-circle me-2"></i>What is VoIP Analysis?</h6>
+                            <p><strong>VoIP Analysis</strong> tests voice communication quality using SIP/RTP protocols, measuring call setup times, packet loss, jitter, and voice quality scores.</p>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-shield-alt me-2"></i>Zero-Trust Architecture</h6>
+                                <p class="mb-0 small">The StreamSwarm server acts as a SIP endpoint, eliminating the need for external VoIP servers and maintaining security compliance.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-success"><i class="fas fa-cogs me-2"></i>Key Metrics</h6>
+                            <ul class="small">
+                                <li><strong>SIP Registration:</strong> Time to register with SIP server</li>
+                                <li><strong>Call Setup Latency:</strong> Time to establish calls</li>
+                                <li><strong>RTP Packet Loss:</strong> Voice packet loss rate</li>
+                                <li><strong>Jitter:</strong> Voice packet timing variation</li>
+                                <li><strong>MOS Score:</strong> Mean Opinion Score using ITU-T G.107</li>
+                                <li><strong>Voice Quality:</strong> Overall voice quality assessment</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Dependencies -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Client Dependencies
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-danger">Required Package</h6>
+                                            <div class="bg-dark p-3 rounded">
+                                                <code class="text-light">
+                                                    # Ubuntu/Debian<br>
+                                                    sudo apt-get install sipsak<br><br>
+                                                    # CentOS/RHEL/Fedora<br>
+                                                    sudo yum install sipsak<br>
+                                                    # or<br>
+                                                    sudo dnf install sipsak
+                                                </code>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">What is sipsak?</h6>
+                                            <p class="small"><strong>sipsak</strong> (SIP Swiss Army Knife) is a command-line tool for testing SIP servers and measuring VoIP performance.</p>
+                                            <div class="alert alert-info">
+                                                <p class="mb-0 small"><strong>Note:</strong> If sipsak is not installed, VoIP Analysis tests will fail with an error message indicating the missing dependency.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Creating VoIP Tests -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Creating VoIP Analysis Tests
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Step-by-Step Guide</h6>
+                                            <ol class="small">
+                                                <li>Navigate to Tests page</li>
+                                                <li>Click "New Test" button</li>
+                                                <li>Select "VoIP Analysis" from Test Type dropdown</li>
+                                                <li>Configure test duration and interval</li>
+                                                <li>Assign to clients with sipsak installed</li>
+                                                <li>Click "Create Test"</li>
+                                            </ol>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">Test Configuration</h6>
+                                            <div class="bg-dark p-2 rounded">
+                                                <code class="text-light small">
+                                                    • Test Type: VoIP Analysis<br>
+                                                    • Duration: 60-300 seconds recommended<br>
+                                                    • Interval: 10-30 seconds between tests<br>
+                                                    • Destination: Automatic (server endpoint)<br>
+                                                    • Clients: Linux systems with sipsak
+                                                </code>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Understanding Results -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-chart-line me-2"></i>
+                                        Understanding VoIP Results
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-success">MOS Score Guide</h6>
+                                            <ul class="small">
+                                                <li><strong>4.0-5.0:</strong> Excellent voice quality</li>
+                                                <li><strong>3.0-4.0:</strong> Good voice quality</li>
+                                                <li><strong>2.0-3.0:</strong> Fair voice quality</li>
+                                                <li><strong>1.0-2.0:</strong> Poor voice quality</li>
+                                                <li><strong>Below 1.0:</strong> Unacceptable quality</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary">Quality Thresholds</h6>
+                                            <div class="bg-dark p-2 rounded">
+                                                <code class="text-light small">
+                                                    • Packet Loss: &lt;1% excellent, &lt;3% good<br>
+                                                    • Jitter: &lt;20ms excellent, &lt;50ms good<br>
+                                                    • Latency: &lt;150ms excellent, &lt;300ms good<br>
+                                                    • Registration: &lt;2s excellent, &lt;5s good
+                                                </code>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

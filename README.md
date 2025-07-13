@@ -47,11 +47,13 @@ Install system dependencies:
 sudo apt update
 sudo apt install iputils-ping traceroute lm-sensors smartmontools ethtool libpcap-dev tcpdump
 sudo apt install iw wireless-tools libiw-dev network-manager
+sudo apt install sipsak  # For VoIP Analysis testing
 sudo apt install python3-numpy python3-scipy python3-sklearn libatlas-base-dev liblapack-dev gfortran
 
 # CentOS/RHEL/Fedora
 sudo dnf install iputils traceroute lm_sensors smartmontools ethtool libpcap-devel tcpdump
 sudo dnf install iw wireless-tools NetworkManager
+sudo dnf install sipsak  # For VoIP Analysis testing
 sudo dnf install python3-numpy python3-scipy python3-scikit-learn atlas-devel lapack-devel gcc-gfortran
 ```
 
@@ -117,6 +119,7 @@ python client.py --server http://your-server-ip:5000 --name "Client-Name"
 - **Network Testing**: Ping, traceroute, bandwidth, and QoS analysis
 - **System Monitoring**: CPU, memory, disk, and network interface tracking
 - **Wireless Detection**: Signal strength and wireless network analysis
+- **VoIP Analysis**: SIP/RTP protocol testing with MOS score calculation and codec performance analysis
 
 ## Authentication System
 
@@ -523,6 +526,12 @@ StreamSwarm collects 65+ comprehensive metrics:
 - Bandwidth upload/download speeds
 - DNS resolution time, TCP connect time
 - SSL handshake time, time to first byte
+
+### VoIP Analysis
+- SIP registration timing and call setup latency
+- RTP packet loss rate and jitter measurements
+- MOS (Mean Opinion Score) calculation using ITU-T G.107 E-model
+- Voice quality scoring and codec efficiency analysis
 
 ### Quality of Service (QoS)
 - DSCP/CoS detection and classification
