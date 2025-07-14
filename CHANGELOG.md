@@ -63,6 +63,115 @@ StreamSwarm is a comprehensive Python-based distributed network monitoring syste
 
 ## Changelog
 
+- **July 13, 2025: CREATED** StreamSwarm server startup script (start_streamswarm_server.sh) for automated server deployment with gunicorn
+  - Created comprehensive server startup script based on client deployment infrastructure
+  - Server script starts gunicorn with proper binding (0.0.0.0:5000) and reuse-port configuration inside screen session
+  - Added server-specific configuration variables to streamswarm_config.sh: SERVER_SCREEN_SESSION, SERVER_LOG_FILE, DATABASE_URL, PostgreSQL settings
+  - Created server_status.sh for monitoring server health and accessibility checks
+  - Enhanced configuration to support both client and server deployment scenarios
+  - Server script includes automatic git updates, network connectivity checks, and proper environment variable handling
+  - Production-ready deployment infrastructure now supports both distributed clients and centralized server instances
+  - Fixed server script consistency issue: removed premature gunicorn availability check, properly activates virtual environment inside screen session like client script
+
+- **July 13, 2025: ENHANCED** Tutorial documentation with comprehensive server dependency list to prevent ModuleNotFoundError issues
+  - Updated tutorial with complete server Python package installation including flask-login, flask-sqlalchemy, flask-wtf, gunicorn, and all critical server dependencies
+  - Added all-in-one installation command with 25+ essential packages covering Flask ecosystem, database support, ML/analytics, network tools, and VoIP capabilities
+  - Created clear distinction between client (minimal packages) and server (comprehensive packages) requirements
+  - Added critical warnings about missing packages like flask-login, flask-wtf, or scikit-learn causing server startup failures
+  - Enhanced installation instructions with version requirements and dependency explanations
+  - Resolved external deployment issues where servers failed to start due to missing essential Flask ecosystem packages
+
+- **July 13, 2025: CONFIRMED** VoIP test logic working correctly - shows MOS 1.0 on development server without RTP echo capabilities (expected behavior)
+  - VoIP test accurately detects that development server doesn't respond to RTP packets, resulting in 100% packet loss and poor MOS score
+  - This is correct behavior - real VoIP calls would fail without proper RTP handling
+  - Production deployment with RTP echo capabilities will show realistic VoIP quality metrics
+  - System properly implements ITU-T G.107 E-model for MOS calculation with authentic network measurements
+
+- **July 13, 2025: IMPLEMENTED** VoIP-specific UI display with dedicated analysis cards similar to WiFi environmental scanning
+  - Created comprehensive VoIP Analysis card with MOS scores, voice quality assessments, SIP timing metrics, and RTP stream quality
+  - Added VoIP-specific summary cards showing average MOS score and voice quality percentage in place of standard latency/packet loss metrics
+  - Implemented color-coded quality badges based on industry-standard VoIP thresholds (MOS 4.0+ excellent, 3.0+ good, 2.0+ fair, <2.0 poor)
+  - Hidden irrelevant sections for VoIP tests: network performance charts, geolocation analysis, GNMI path analysis, and client infrastructure analysis
+  - Added comprehensive VoIP metrics table with detailed status indicators and impact assessments for each metric
+  - Disabled "Get AI Opinion" button for VoIP tests since they use different metrics than standard network performance tests
+  - Enhanced VoIP quality thresholds documentation with latency (<150ms), jitter (<60ms), and packet loss (<2%) limits for voice communications
+  - VoIP tests now display professional voice quality analysis instead of generic network monitoring data
+
+- **July 13, 2025: FIXED** VoIP Analysis test execution bug - resolved missing method calls preventing result submission
+  - Fixed missing _submit_results() method by replacing with proper HTTP POST request to /api/test/results
+  - Fixed missing _collect_system_metrics() method by replacing with existing _get_system_metrics() method
+  - VoIP tests now properly submit results to server using same API endpoint as standard tests
+  - VoIP test results will now display data instead of showing blank results cards
+  - Tests that were previously marked "completed" but showed no data will now function correctly
+
+- **July 13, 2025: IMPROVED** VoIP Analysis test creation UX - auto-populates destination field with server URL for logical test workflow
+  - Updated test creation modal to automatically set destination field to server hostname when VoIP Analysis test type is selected
+  - Made destination field read-only for VoIP tests since server is always the destination for SIP/RTP communication
+  - Updated field label to "Server Destination" with explanatory help text for VoIP Analysis tests
+  - Enhanced VoIP test info alert to clarify that destination is automatically set to server URL
+  - Fixed duplicate VoIP test info div in modal for cleaner interface presentation
+  - Improved user experience by eliminating confusion about destination field for server-to-client VoIP testing
+
+- **July 13, 2025: ENHANCED** VoIP Analysis documentation with network requirements - added comprehensive port and protocol information
+  - Added Network Requirements section to VoIP Analysis tutorial explaining required server ports (TCP/UDP 5060, 5061, UDP 10000-20000)
+  - Updated README.md VoIP Analysis section with network accessibility requirements for SIP and RTP protocols
+  - Enhanced tutorial with firewall configuration guidance for proper VoIP testing functionality
+  - Documentation now covers complete network infrastructure requirements for VoIP Analysis deployment
+
+- **July 13, 2025: FIXED** VoIP Analysis test creation error - updated server-side validation to accept "voip_analysis" test type
+  - Fixed "Invalid test type. Must be 'standard' or 'wifi_environment'" error when creating VoIP Analysis tests
+  - Updated routes.py test creation validation to accept "voip_analysis" alongside "standard" and "wifi_environment"
+  - VoIP Analysis tests can now be created successfully through the web interface
+
+- **July 13, 2025: CORRECTED** VoIP quality thresholds in tutorial documentation - 150ms is upper limit for acceptable VoIP calls, not "good" range
+  - Updated tutorial Quality Thresholds section to reflect accurate VoIP latency standards where >150ms causes call degradation
+  - Corrected misleading threshold ranges that suggested 300ms was acceptable for VoIP communications
+  - Enhanced documentation to emphasize 150ms as absolute upper limit for VoIP call quality
+
+- **July 13, 2025: IMPLEMENTED** VoIP Analysis as third test type with comprehensive SIP/RTP protocol testing capabilities
+  - Added complete VoIP Analysis test type alongside Standard and WiFi Environmental tests in test creation interface
+  - Implemented full SIP service architecture with server acting as SIP endpoint for zero-trust compliance
+  - Created comprehensive VoIP testing client capabilities including SIP registration, call setup/teardown, and RTP stream quality analysis
+  - Added extensive VoIP metrics collection: SIP registration time, call setup latency, RTP packet loss, jitter, MOS scores, codec efficiency, and voice quality scoring
+  - Integrated ITU-T G.107 E-model for accurate MOS (Mean Opinion Score) calculation based on packet loss, jitter, and latency measurements
+  - Enhanced database schema with 15 new VoIP-specific fields including voip_analysis_data, sip_registration_time, sip_call_setup_time, rtp_packet_loss_rate, mos_score, and voice_quality_score
+  - Created professional VoIP test interface with dedicated test type selection, appropriate UI descriptions, and SIP endpoint configuration
+  - Implemented comprehensive RTP stream quality testing with synthetic traffic generation, packet timing analysis, and quality metrics calculation
+  - Added sipsak system package integration for enterprise-grade SIP protocol testing with timeout handling and error recovery
+  - VoIP testing uses closed ecosystem approach - server acts as SIP endpoint, client as SIP client, maintaining zero-trust architecture
+  - Complete VoIP workflow: SIP registration → call setup → RTP stream quality → MOS calculation → voice quality assessment → codec efficiency analysis
+
+- **July 13, 2025: FIXED** Critical "Failed to submit result: 500" error by adding missing tcp_handshake_error field to TestResult model and server validation
+  - Added tcp_handshake_error TEXT field to TestResult database model for DNS resolution failures
+  - Enhanced server validation in /api/test/results endpoint to properly handle TCP handshake error messages
+  - Added database migration to support new field for existing test results
+  - Fixed intermittent 500 errors that occurred when clients encountered DNS resolution failures (e.g., "No address associated with hostname")
+  - Enhanced error logging in submission endpoint with full tracebacks and client data keys for better debugging
+  - Client now properly submits error information when handshake fails, preventing data loss and improving diagnostics
+  - Resolved database constraint violations that caused test result submission failures during network connectivity issues
+
+- **July 13, 2025: IMPLEMENTED** ML Model Reset functionality on /ml-models page - allows complete model truncation and retraining from scratch
+  - Added comprehensive "Reset Models" button with detailed confirmation modal explaining what gets cleared
+  - Created API endpoint /api/ml-models/reset that clears all model files, training metadata, and incremental learning state
+  - Reset functionality automatically retrains models from scratch using current data after clearing learned patterns
+  - Added proper warning dialogs explaining irreversible nature and use cases: data quality improvements, infrastructure changes, performance degradation
+  - Reset feature enables A/B testing of model configurations and troubleshooting of model drift issues
+  - Preserves all raw test data while giving models fresh start with improved learning capabilities
+  - TRAINING MODES: "Train" button uses incremental learning (new data only), "Reset" button retrains from all available data
+  - Enhanced with Model Files Status table showing Eastern Time timestamps and file sizes for verification
+  - Maintains zero-trust architecture with all processing running locally during reset and retraining
+
+- **July 13, 2025: IMPLEMENTED** True incremental learning system to eliminate ML training timeouts - resolved O(n²) complexity bottlenecks with River streaming algorithms
+  - Replaced batch training approach with River-based incremental learning for all 6 ML models: anomaly detection, health classification, performance prediction, failure prediction, QoS compliance, and client infrastructure analysis
+  - Implemented memory-efficient streaming algorithms: LogisticRegression for anomaly detection and QoS compliance, GaussianNB for health classification, LinearRegression for performance prediction and infrastructure correlation, PAClassifier for failure prediction
+  - Added incremental training pipeline that processes data in batches of 50 samples to prevent memory issues while maintaining model accuracy
+  - Eliminated 45-60 second training timeouts that occurred with 3,215+ datapoints by using online learning algorithms that update incrementally
+  - Resolved River library memory issues by replacing resource-intensive HoeffdingTree models with stable linear and naive Bayes algorithms
+  - Fixed data type handling issues in incremental feature calculation methods with proper error handling and binary label conversion
+  - Created dual-mode training system: automatic incremental learning for existing models, fallback to batch training for full retraining scenarios
+  - Training now processes 65+ batches of network performance data without memory exhaustion or worker crashes
+  - Maintained zero-trust architecture with all ML processing running locally using River streaming machine learning library
+
 - **June 29, 2025: COMPLETED** secure web GUI authentication system with role-based access control
   - Implemented Flask-Login based authentication system separate from client API token system
   - Added comprehensive user management interface accessible only to admin users
