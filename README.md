@@ -26,7 +26,7 @@ StreamSwarm provides distributed network performance testing and system resource
 
 Clone the repository:
 ```bash
-git clone https://github.com/NetworkNerd1337/Swarm.git
+git clone https://github.com/NetworkNerd1337/streamswarm.git
 cd Swarm
 ```
 
