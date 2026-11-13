@@ -1,4 +1,12 @@
+![StreamSwarm demo: dashboard, a scheduled test, and results charts](docs/demo.gif)
+
 # StreamSwarm - Distributed Network Monitoring System
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![Version 1.9.6](https://img.shields.io/badge/version-1.9.6-2ea44f.svg)](https://github.com/NetworkNerd1337/streamswarm)
+
+**More from me:** [ryanthomashuff.com](https://ryanthomashuff.com/software/#streamswarm)
 
 A comprehensive Python-based distributed network monitoring system with AI-powered diagnostics, secure web authentication, and real-time analytics for enterprise network management.
 
@@ -27,7 +35,7 @@ StreamSwarm provides distributed network performance testing and system resource
 Clone the repository:
 ```bash
 git clone https://github.com/NetworkNerd1337/streamswarm.git
-cd Swarm
+cd streamswarm
 ```
 
 Install Python dependencies:
@@ -833,3 +841,9 @@ This project is open source. See LICENSE file for details.
 - **Separate authentication systems** for web GUI and client API
 - **Professional PDF reporting** with charts and recommendations
 - **Real-time dashboard** with interactive visualizations
+
+## About
+
+StreamSwarm is maintained by Ryan Huff ([NetworkNerd1337](https://github.com/NetworkNerd1337)).
+
+**More from me:** [ryanthomashuff.com](https://ryanthomashuff.com/software/#streamswarm)
